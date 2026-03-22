@@ -61,11 +61,10 @@
 - 위시 토글 mutation
 - 리뷰 작성 mutation
 
-## 주요 개선 포인트
+## 주요 포인트
 
 ### 보안
 
-- 리뷰 API에서 클라이언트 `userId` 신뢰 제거
 - Refresh Token 재발급 시 CSRF 검증 추가
 - JWT 토큰 타입 claim 추가
 - 명시 Origin 기반 CORS 적용
