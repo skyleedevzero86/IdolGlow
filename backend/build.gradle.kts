@@ -34,21 +34,19 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 
-	// DB
+	//DB
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("org.postgresql:postgresql")
 	runtimeOnly("com.mysql:mysql-connector-j")
 
-	// mockk
+	//mockk
 	testImplementation("com.ninja-squad:springmockk:4.0.2")
 	testImplementation("io.mockk:mockk:1.13.8")
 
-	// kotest
+	//kotest
 	val kotestVersion = "5.5.4"
 	testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
 	testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
-
-	// Test
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
@@ -57,30 +55,30 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("io.rest-assured:rest-assured:5.4.0")
 
-	// Jasypt
+	//Jsypt
 	implementation("com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5")
 	implementation("org.flywaydb:flyway-core")
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
-	// Spring Data JPA
+	// Spring Data jpa
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-	// WebClient
+	//webclient
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64")
 
-	// Querydsl
+	// QueryDsl
 	implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
 	kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
 	kapt("jakarta.annotation:jakarta.annotation-api")
 	kapt("jakarta.persistence:jakarta.persistence-api")
 
-	// JWT
+	//JWT
 	compileOnly("io.jsonwebtoken:jjwt-api:0.11.2")
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2")
 
-	// Swagger
+	// SWAGGER
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 }
 
