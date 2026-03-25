@@ -7,7 +7,7 @@ build/
 gradle/
 application-*.yml
 application.yml
-src/test/com/sleekydz86/idolglow/BackendApplicationTests.kt
+src/test/kotlin/com/sleekydz86/idolglow/BackendApplicationTests.kt
 
 ### STS ###
 .apt_generated
