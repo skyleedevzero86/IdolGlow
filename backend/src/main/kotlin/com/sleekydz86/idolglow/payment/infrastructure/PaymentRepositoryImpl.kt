@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.payment.infrastructure
 
+import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import org.springframework.stereotype.Repository
 
 @Repository

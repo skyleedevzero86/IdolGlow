@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.reservation.application
 
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
+import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotRepository
 import com.sleekydz86.idolglow.schedule.domain.ScheduleRepository

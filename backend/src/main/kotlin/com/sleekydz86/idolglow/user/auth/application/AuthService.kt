@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.user.auth.application
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.security.AuthProvider
 
 @Service
 class AuthService(

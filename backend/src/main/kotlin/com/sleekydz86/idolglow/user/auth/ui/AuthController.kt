@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.ui
 
+import com.nimbusds.oauth2.sdk.AccessTokenResponse
+import com.sleekydz86.idolglow.user.auth.application.AuthService
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity

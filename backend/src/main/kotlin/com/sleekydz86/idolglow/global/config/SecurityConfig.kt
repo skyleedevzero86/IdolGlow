@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.global.config
 
+import com.sleekydz86.idolglow.user.auth.oauth.OAuth2SuccessHandler
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest
 import org.springframework.context.annotation.Bean

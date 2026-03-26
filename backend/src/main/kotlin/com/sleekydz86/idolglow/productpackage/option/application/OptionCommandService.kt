@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.option.application
 
+import com.sleekydz86.idolglow.image.application.ImageEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

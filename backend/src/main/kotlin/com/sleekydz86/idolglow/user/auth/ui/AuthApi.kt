@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.user.auth.ui
 
+import com.nimbusds.oauth2.sdk.AccessTokenResponse
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
