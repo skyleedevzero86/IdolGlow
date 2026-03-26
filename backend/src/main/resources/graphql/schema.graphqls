@@ -1,0 +1,138 @@
+type Query {
+    health: String!
+    products(lastId: ID, size: Int = 20, tag: String): ProductSlice!
+    product(id: ID!): ProductDetail!
+    reservations: [ReservationSummary!]!
+    upcomingReservations: [ReservationSummary!]!
+    reservation(id: ID!): ReservationSummary!
+    productReviews(productId: ID!): [ProductReview!]!
+    myReviews: [ProductReview!]!
+}
+
+type Mutation {
+    createReservation(productId: ID!, input: CreateReservationInput!): ReservationCreatedPayload!
+    cancelReservation(reservationId: ID!): ReservationSummary!
+    toggleWish(productId: ID!): WishToggle!
+    createProductReview(productId: ID!, input: CreateProductReviewInput!): ProductReview!
+}
+
+type ProductSlice {
+    items: [ProductSummary!]!
+    nextCursor: ID
+}
+
+type ProductSummary {
+    id: ID!
+    name: String!
+    description: String!
+    minPrice: String!
+    totalPrice: String!
+    tagNames: [String!]!
+}
+
+type ProductDetail {
+    id: ID!
+    name: String!
+    description: String!
+    options: [ProductOption!]!
+    tagNames: [String!]!
+    slotStartDate: String
+    slotEndDate: String
+    slotStartTime: String
+    slotEndTime: String
+    reservationSlotCount: Int!
+    minPrice: String!
+    totalPrice: String!
+}
+
+type ProductOption {
+    id: ID!
+    name: String!
+    description: String!
+    price: String!
+    location: String!
+}
+
+type ReservationSummary {
+    reservationId: ID!
+    status: ReservationStatus!
+    productId: ID!
+    productName: String!
+    productDescription: String!
+    totalPrice: String!
+    visitDate: String!
+    visitStartTime: String!
+    visitEndTime: String!
+    attractions: [String!]!
+    expiresAt: String
+    confirmedAt: String
+    canceledAt: String
+    cancelReason: ReservationCancelReason
+}
+
+type ReservationCreatedPayload {
+    id: ID!
+    status: String!
+    expiresAt: String
+    payment: Payment!
+}
+
+type Payment {
+    paymentId: ID!
+    reservationId: ID!
+    provider: String!
+    paymentReference: String!
+    amount: String!
+    status: String!
+    approvedAt: String
+    failedAt: String
+    expiredAt: String
+    failureReason: String
+}
+
+type WishToggle {
+    id: ID!
+    wished: Boolean!
+}
+
+enum ReservationStatus {
+    PREBOOK
+    PENDING
+    BOOKED
+    COMPLETED
+    CANCELED
+}
+
+enum ReservationCancelReason {
+    USER_REQUESTED
+    PAYMENT_FAILED
+    PAYMENT_EXPIRED
+    ADMIN_CANCELED
+}
+
+type ProductReview {
+    reviewId: ID!
+    productId: ID!
+    userId: ID!
+    rating: Int!
+    content: String!
+    createdAt: String!
+    images: [ProductReviewImage!]!
+}
+
+type ProductReviewImage {
+    id: ID!
+    originalFilename: String!
+    url: String!
+    sortOrder: Int!
+}
+
+input CreateReservationInput {
+    reservationSlotId: ID!
+    totalPrice: String!
+}
+
+input CreateProductReviewInput {
+    rating: Int!
+    content: String!
+}

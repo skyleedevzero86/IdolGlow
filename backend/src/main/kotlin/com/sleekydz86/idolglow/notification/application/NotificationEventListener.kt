@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.notification.application.notification.application
+package com.sleekydz86.idolglow.notification.application
 
-import com.sleekydz86.idolglow.notification.application.NotificationStreamService
 import com.sleekydz86.idolglow.notification.application.dto.NotificationResponse
 import com.sleekydz86.idolglow.notification.application.event.NotificationCreatedEvent
+import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
@@ -18,7 +18,7 @@ class NotificationEventListener(
         val notification = notificationRepository.findById(event.notificationId) ?: return
         notificationStreamService.sendToUser(
             event.userId,
-            NotificationResponse.from(notification)
+            NotificationResponse.Companion.from(notification)
         )
     }
 }
