@@ -1,0 +1,28 @@
+package com.sleekydz86.idolglow.productpackage.product.application
+
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+
+@Transactional(readOnly = true)
+@Service
+class ProductQueryService(
+    private val productRepository: ProductRepository,
+) {
+
+    fun findProductsByNoOffset(
+        lastId: Long?,
+        size: Int,
+        tagName: String?,
+    ): List<ProductPagingQueryResponse> =
+        productRepository.findProductsByNoOffset(
+            lastId = lastId,
+            size = size,
+            tagName = tagName
+        )
+
+    fun findProductSpecificById(productId: Long): ProductSpecificResponse {
+        return productRepository.findProductSpecificById(productId)
+            ?: throw IllegalArgumentException("Product with id $productId does not exist.")
+    }
+}
