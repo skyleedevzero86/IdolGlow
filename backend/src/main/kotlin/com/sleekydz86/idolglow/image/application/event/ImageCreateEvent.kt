@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.image.application.event
 
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+
 data class ImageCreateEvent(
     val aggregateType: ImageAggregateType,
     val aggregateId: Long,

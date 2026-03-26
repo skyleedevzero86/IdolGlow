@@ -1,7 +1,15 @@
 package com.sleekydz86.idolglow.review.application
 
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
+import com.sleekydz86.idolglow.review.application.dto.CreateProductReviewCommand
+import com.sleekydz86.idolglow.review.application.dto.ReviewImageFile
+import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
 import com.sleekydz86.idolglow.review.domain.ProductReview
+import com.sleekydz86.idolglow.review.domain.ProductReviewRepository
+import com.sleekydz86.idolglow.review.domain.ReviewRating
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

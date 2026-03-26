@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.global.aop.concurrency
 
 import com.sleekydz86.idolglow.global.aop.concurrency.distribution.DistributedLockAspect
+import com.sleekydz86.idolglow.global.aop.concurrency.distribution.DistributedLockProvider
+import com.sleekydz86.idolglow.global.aop.concurrency.distribution.LocalDistributedLockProvider
 import com.sleekydz86.idolglow.global.aop.concurrency.idempotent.IdempotencyAspect
 import com.sleekydz86.idolglow.global.aop.concurrency.idempotent.IdempotencyStore
 import com.sleekydz86.idolglow.global.aop.concurrency.idempotent.LocalIdempotencyStore

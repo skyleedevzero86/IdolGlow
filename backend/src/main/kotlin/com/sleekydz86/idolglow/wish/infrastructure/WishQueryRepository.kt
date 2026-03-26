@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.wish.infrastructure
 
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductTag
 import com.sleekydz86.idolglow.wish.application.dto.WishedProductPagingResponse
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository

@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.wish.infrastructure
 
+import com.sleekydz86.idolglow.wish.application.dto.WishedProductPagingResponse
+import com.sleekydz86.idolglow.wish.domain.Wish
+import com.sleekydz86.idolglow.wish.domain.WishRepository
 import org.springframework.stereotype.Repository
 
 @Repository

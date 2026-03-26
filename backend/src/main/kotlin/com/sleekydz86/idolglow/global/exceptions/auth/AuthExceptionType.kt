@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.global.exceptions.auth
 
+import com.sleekydz86.idolglow.global.exceptions.CustomExceptionType
+
 
 enum class AuthExceptionType(
     override val errorCode: String,

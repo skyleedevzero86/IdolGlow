@@ -1,5 +1,9 @@
 package com.sleekydz86.idolglow.productpackage.reservation.application.dto
 
+import com.sleekydz86.idolglow.payment.application.dto.PaymentResponse
+import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 

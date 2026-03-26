@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.image.application
 
+import com.sleekydz86.idolglow.image.application.event.ImageCreateEvent
+import com.sleekydz86.idolglow.image.application.event.ImageDeleteEvent
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
