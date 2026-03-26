@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.product.application
 
+import com.sleekydz86.idolglow.image.application.ImageEventPublisher
 import com.sleekydz86.idolglow.productpackage.product.application.event.ProductCreateEvent
 import com.sleekydz86.idolglow.wish.application.WishEventPublisher
 import org.springframework.context.ApplicationEventPublisher

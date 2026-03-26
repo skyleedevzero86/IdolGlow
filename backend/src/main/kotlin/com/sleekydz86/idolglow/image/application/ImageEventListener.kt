@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.image.application
 
+import com.sleekydz86.idolglow.image.domain.ImageRepository
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation

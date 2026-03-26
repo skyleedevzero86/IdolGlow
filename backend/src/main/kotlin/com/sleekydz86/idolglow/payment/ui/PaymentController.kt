@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.payment.ui
 
+import com.sleekydz86.idolglow.payment.application.ReservationPaymentService
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity

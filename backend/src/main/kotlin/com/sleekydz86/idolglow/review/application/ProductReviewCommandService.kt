@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.review.application
 
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
+import com.sleekydz86.idolglow.review.domain.ProductReview
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
