@@ -38,9 +38,9 @@ class ApiSpecConfig {
     }
 
     companion object {
-        private const val API_TITLE = "DOKI API"
+        private const val API_TITLE = "IdolGlow API"
         private const val API_VERSION = "0.0.1"
-        private const val API_DESCRIPTION = "DOKI API"
+        private const val API_DESCRIPTION = "IdolGlow API"
         private const val SECURITY_SCHEME_NAME = "bearerAuth"
     }
 }
