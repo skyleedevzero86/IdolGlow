@@ -114,3 +114,7 @@ tasks.named("clean") {
 tasks.withType<Test>().configureEach {
 	useJUnitPlatform()
 }
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+	jvmArgs("--enable-native-access=ALL-UNNAMED")
+}

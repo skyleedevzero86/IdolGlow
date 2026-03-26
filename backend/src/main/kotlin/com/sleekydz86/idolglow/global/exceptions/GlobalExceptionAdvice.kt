@@ -1,0 +1,174 @@
+package com.sleekydz86.idolglow.global.exceptions
+
+import com.fasterxml.jackson.databind.JsonMappingException
+import jakarta.persistence.EntityNotFoundException
+import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+
+@RestControllerAdvice
+class GlobalExceptionAdvice {
+
+    private val log = LoggerFactory.getLogger(this::class.java)
+
+    @ExceptionHandler(Exception::class)
+    fun handleUnexpectedException(
+        request: HttpServletRequest,
+        exception: Exception
+    ): ResponseEntity<ExceptionResponse> {
+        log.error(
+            "Unexpected error: {} {} | Message: {}",
+            request.method, request.requestURI, exception.message, exception
+        )
+
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ExceptionResponse(
+                    name = "INTERNAL_SERVER_ERROR",
+                    errorCode = "INTERNAL_SERVER_ERROR",
+                    message = exception.message ?: "서버 내부 오류가 발생했습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationException(
+        request: HttpServletRequest,
+        exception: MethodArgumentNotValidException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("Validation failed: {} {}", request.method, request.requestURI)
+
+        val errors = exception.bindingResult.fieldErrors
+            .joinToString("; ") { "${it.field}: ${it.defaultMessage ?: "유효하지 않음"}" }
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "VALIDATION_ERROR",
+                    errorCode = "BAD_REQUEST",
+                    message = if (errors.isNotBlank()) errors else "요청 파라미터가 유효하지 않습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleDeserializationException(
+        exception: HttpMessageNotReadableException
+    ): ResponseEntity<ExceptionResponse> {
+        val message = when (val cause = exception.cause) {
+            is JsonMappingException -> {
+                when {
+                    cause.message?.contains("Required request body is missing") == true ->
+                        "요청 본문이 필요합니다."
+
+                    cause.message?.contains("null") == true -> {
+                        val fieldPath = cause.path.joinToString(".") { it.fieldName }
+                        "필수 필드 '$fieldPath'는 null일 수 없습니다."
+                    }
+
+                    else -> {
+                        val fieldPath = cause.path.joinToString(".") { it.fieldName }
+                        "JSON 형식이 올바르지 않습니다. (필드: $fieldPath)"
+                    }
+                }
+            }
+            else -> "요청 본문을 읽을 수 없습니다."
+        }
+
+        log.warn("Deserialization error: {}", message, exception)
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "DESERIALIZATION_ERROR",
+                    errorCode = "BAD_REQUEST",
+                    message = message
+                )
+            )
+    }
+
+    @ExceptionHandler(CustomException::class)
+    fun handleCustomException(
+        request: HttpServletRequest,
+        exception: CustomException
+    ): ResponseEntity<ExceptionResponse> {
+        val type = exception.getExceptionType()
+
+        log.warn(
+            "Custom exception: {} | URI: {} {} | Message: {}",
+            type.errorCode, request.method, request.requestURI, type.message, exception
+        )
+
+        return ResponseEntity
+            .status(type.httpStatusCode)
+            .body(
+                ExceptionResponse(
+                    name = type::class.simpleName ?: type.errorCode,
+                    errorCode = type.errorCode,
+                    message = type.message
+                )
+            )
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(
+        request: HttpServletRequest,
+        exception: IllegalArgumentException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("Bad request: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "BAD_REQUEST",
+                    errorCode = "BAD_REQUEST",
+                    message = exception.message ?: "잘못된 요청입니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(IllegalStateException::class)
+    fun handleIllegalStateException(
+        request: HttpServletRequest,
+        exception: IllegalStateException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("Conflict: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(
+                ExceptionResponse(
+                    name = "CONFLICT",
+                    errorCode = "CONFLICT",
+                    message = exception.message ?: "요청을 처리할 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(EntityNotFoundException::class)
+    fun handleEntityNotFoundException(
+        request: HttpServletRequest,
+        exception: EntityNotFoundException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("Not found: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                ExceptionResponse(
+                    name = "NOT_FOUND",
+                    errorCode = "NOT_FOUND",
+                    message = exception.message ?: "대상을 찾을 수 없습니다."
+                )
+            )
+    }
+}
