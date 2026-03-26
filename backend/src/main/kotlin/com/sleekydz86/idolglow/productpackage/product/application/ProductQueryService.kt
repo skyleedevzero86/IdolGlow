@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.productpackage.product.application
 
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

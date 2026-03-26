@@ -1,5 +1,12 @@
 package com.sleekydz86.idolglow.wish.application
 
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
+import com.sleekydz86.idolglow.user.user.domain.User
+import com.sleekydz86.idolglow.user.user.domain.UserRepository
+import com.sleekydz86.idolglow.wish.application.dto.WishToggleResponse
+import com.sleekydz86.idolglow.wish.domain.Wish
+import com.sleekydz86.idolglow.wish.domain.WishRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

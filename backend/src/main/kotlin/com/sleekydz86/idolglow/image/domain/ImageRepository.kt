@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.image.domain
 
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+
 interface ImageRepository {
     fun save(image: Image): Image
     fun saveAll(images: Collection<Image>): List<Image>

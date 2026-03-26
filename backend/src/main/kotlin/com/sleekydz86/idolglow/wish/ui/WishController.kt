@@ -3,6 +3,8 @@ package com.sleekydz86.idolglow.wish.ui
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.wish.application.WishCommandService
 import com.sleekydz86.idolglow.wish.application.WishQueryService
+import com.sleekydz86.idolglow.wish.application.dto.WishToggleResponse
+import com.sleekydz86.idolglow.wish.application.dto.WishedProductPagingResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 

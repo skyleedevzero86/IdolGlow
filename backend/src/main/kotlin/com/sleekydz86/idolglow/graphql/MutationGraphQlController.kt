@@ -1,5 +1,15 @@
 package com.sleekydz86.idolglow.graphql
 
+import com.sleekydz86.idolglow.global.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
+import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
+import com.sleekydz86.idolglow.productpackage.reservation.graphql.ReservationSummaryGraphQlResponse
+import com.sleekydz86.idolglow.review.application.ProductReviewCommandService
+import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
+import com.sleekydz86.idolglow.review.application.dto.CreateProductReviewCommand
+import com.sleekydz86.idolglow.review.graphql.ProductReviewGraphQlResponse
+import com.sleekydz86.idolglow.wish.application.WishCommandService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.stereotype.Controller
@@ -42,7 +52,7 @@ class MutationGraphQlController(
             userId = userId
         )
         return ReservationSummaryGraphQlResponse.from(
-            com.doki.productpackage.reservation.application.dto.ReservationSummaryResponse.from(
+            ReservationSummaryResponse.from(
                 reservation,
                 reservation.resolveStatus()
             )

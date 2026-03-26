@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.global.resolver
 
+import com.sleekydz86.idolglow.global.exceptions.CustomException
+import com.sleekydz86.idolglow.global.exceptions.auth.AuthExceptionType
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 

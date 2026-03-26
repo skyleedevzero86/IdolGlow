@@ -1,7 +1,10 @@
 package com.sleekydz86.idolglow.review.application
 
 import com.sleekydz86.idolglow.image.domain.ImageRepository
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
 import com.sleekydz86.idolglow.review.domain.ProductReview
+import com.sleekydz86.idolglow.review.domain.ProductReviewRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
