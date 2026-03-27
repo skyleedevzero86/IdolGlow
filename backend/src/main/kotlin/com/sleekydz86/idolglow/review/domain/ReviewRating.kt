@@ -6,7 +6,7 @@ import jakarta.persistence.Embeddable
 @Embeddable
 data class ReviewRating(
     @Column(name = "rating", nullable = false)
-    val value: Int
+    val value: Int = 1
 ) {
 
     companion object {

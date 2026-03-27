@@ -132,6 +132,7 @@ class LocalProfileMySqlDataWarmer(
         val savedProduct = productJpaRepository.save(product)
 
         val reservationSlot = savedProduct.reservationSlots.first()
+        val reservationExpiresAt = LocalDateTime.now().plusMinutes(15)
         val reservation = Reservation(
             reservationSlot = reservationSlot,
             userId = user1.id,
@@ -139,8 +140,10 @@ class LocalProfileMySqlDataWarmer(
             visitStartTime = reservationSlot.startTime,
             visitEndTime = reservationSlot.endTime,
             totalPrice = savedProduct.totalPrice
-        ).request(LocalDateTime.now().plusMinutes(15)).confirm()
-        reservationJpaRepository.save(reservation)
+        ).request(reservationExpiresAt)
+        val savedReservation = reservationJpaRepository.save(reservation)
+        reservationSlot.hold(savedReservation.id, reservationExpiresAt)
+        savedReservation.confirm()
 
         val scheduleStart = LocalDateTime.of(reservationSlot.reservationDate, reservationSlot.startTime)
         val scheduleEnd = LocalDateTime.of(reservationSlot.reservationDate, reservationSlot.endTime)
