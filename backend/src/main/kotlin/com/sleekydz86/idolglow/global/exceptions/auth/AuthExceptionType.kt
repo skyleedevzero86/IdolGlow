@@ -2,7 +2,6 @@ package com.sleekydz86.idolglow.global.exceptions.auth
 
 import com.sleekydz86.idolglow.global.exceptions.CustomExceptionType
 
-
 enum class AuthExceptionType(
     override val errorCode: String,
     override val message: String,
@@ -35,7 +34,7 @@ enum class AuthExceptionType(
 
     INVALID_REFRESH_CSRF(
         "INVALID_REFRESH_CSRF",
-        "재발급 요청 검증에 실패했습니다.",
+        "새로고침 요청 검증에 실패했습니다.",
         403
     ),
 

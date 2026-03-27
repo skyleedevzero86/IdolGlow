@@ -15,7 +15,7 @@ class ProductReviewGraphQlController(
     @QueryMapping
     fun productReviews(@Argument productId: String): List<ProductReviewGraphQlResponse> {
         val parsedProductId = productId.toLongOrNull()
-            ?: throw IllegalArgumentException("productId must be numeric.")
+            ?: throw IllegalArgumentException("productId는 숫자여야 합니다.")
 
         return productReviewQueryService.findReviewsByProduct(parsedProductId)
             .map(ProductReviewGraphQlResponse::from)

@@ -69,14 +69,14 @@ class ReservationCommandService(
         reservation.validateOwner(userId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
         if (payment?.status == PaymentStatus.PENDING) {
-            payment.markCanceled("reservation canceled by user")
+            payment.markCanceled("사용자가 예약을 취소했습니다.")
         }
         cancelReservationInternal(
             reservation = reservation,
             reason = ReservationCancelReason.USER_REQUESTED,
             notificationType = NotificationType.RESERVATION_CANCELED,
-            notificationTitle = "Reservation canceled",
-            notificationMessage = "Your reservation #${reservation.id} has been canceled."
+            notificationTitle = "예약 취소",
+            notificationMessage = "예약 #${reservation.id} 이(가) 취소되었습니다."
         )
         return reservation
     }
@@ -85,14 +85,14 @@ class ReservationCommandService(
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
         if (payment?.status == PaymentStatus.PENDING) {
-            payment.markCanceled("reservation canceled by admin")
+            payment.markCanceled("운영자가 예약을 취소했습니다.")
         }
         cancelReservationInternal(
             reservation = reservation,
             reason = ReservationCancelReason.ADMIN_CANCELED,
             notificationType = NotificationType.RESERVATION_CANCELED,
-            notificationTitle = "Reservation canceled by admin",
-            notificationMessage = "Your reservation #${reservation.id} has been canceled by the operator."
+            notificationTitle = "운영자 예약 취소",
+            notificationMessage = "예약 #${reservation.id} 이(가) 운영자에 의해 취소되었습니다."
         )
         return reservation
     }
@@ -104,15 +104,15 @@ class ReservationCommandService(
             ensureScheduleExists(reservation)
             return reservation
         }
-        require(reservation.status == ReservationStatus.PENDING) { "Only pending reservations can be confirmed." }
-        require(!reservation.isExpired(now)) { "Reservation already expired." }
+        require(reservation.status == ReservationStatus.PENDING) { "대기 중인 예약만 확정할 수 있습니다." }
+        require(!reservation.isExpired(now)) { "이미 만료된 예약입니다." }
         reservation.confirm(now)
         ensureScheduleExists(reservation)
         notificationCommandService.create(
             userId = reservation.userId,
             type = NotificationType.RESERVATION_CONFIRMED,
-            title = "Reservation confirmed",
-            message = "Your reservation #${reservation.id} has been confirmed.",
+            title = "예약 확정",
+            message = "예약 #${reservation.id} 이(가) 확정되었습니다.",
             link = "/reservations/${reservation.id}"
         )
         return reservation
@@ -144,23 +144,23 @@ class ReservationCommandService(
             reservation = reservation,
             reason = ReservationCancelReason.PAYMENT_EXPIRED,
             notificationType = NotificationType.PAYMENT_EXPIRED,
-            notificationTitle = "Reservation expired",
-            notificationMessage = "Your reservation #${reservation.id} expired before payment was completed."
+            notificationTitle = "예약 만료",
+            notificationMessage = "예약 #${reservation.id} 결제가 완료되기 전에 예약이 만료되었습니다."
         )
         return reservation
     }
 
     private fun findReservationTimeSlotByReservationSlotIdWithPessimisticLock(reservationSlotId: Long): ReservationSlot =
         reservationSlotRepository.findByIdForUpdate(reservationSlotId)
-            ?: throw IllegalArgumentException("Reservation slot not found: $reservationSlotId")
+            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다: $reservationSlotId")
 
     private fun findProductByProductId(productId: Long): Product =
         productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("Product not found: $productId")
+            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다: $productId")
 
     private fun findReservationByReservationIdForUpdate(reservationId: Long): Reservation =
         reservationRepository.findByIdForUpdate(reservationId)
-            ?: throw IllegalArgumentException("Reservation not found: $reservationId")
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
 
     private fun cancelReservationInternal(
         reservation: Reservation,

@@ -19,10 +19,10 @@ class JasyptConfig(
                 ?: readDirectProperty("jasypt.encryptor.password")
                 ?: readSpringProperty("jasypt.encryptor.password")
                 ?: error(
-                    "Missing Jasypt password. " +
-                        "Set JASYPT_ENCRYPTOR_PASSWORD as an environment variable, " +
-                        "pass -Djasypt.encryptor.password=... to the JVM, " +
-                        "or provide jasypt.encryptor.password in a local secret config file."
+                    "Jasypt 비밀번호가 없습니다. " +
+                        "환경변수 JASYPT_ENCRYPTOR_PASSWORD를 설정하거나, " +
+                        "JVM 옵션 -Djasypt.encryptor.password=... 를 전달하거나, " +
+                        "로컬 시크릿 설정 파일에 jasypt.encryptor.password 값을 넣어주세요."
                 )
 
         return PooledPBEStringEncryptor().apply {

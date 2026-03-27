@@ -16,13 +16,15 @@ class GoogleLoginStrategy(
 
     override fun login(request: LoginRequest): TokenResponse {
         val attributes = request.attributes
-            ?: throw IllegalArgumentException("attributes required")
+            ?: throw IllegalArgumentException("구글 로그인 속성 정보가 필요합니다.")
         val userInfo = OAuth2UserInfo.of(AuthProvider.GOOGLE, attributes)
 
         return authService.login(
             provider = AuthProvider.GOOGLE,
             providerId = userInfo.id,
-            email = userInfo.email
+            email = userInfo.email,
+            name = userInfo.name,
+            picture = userInfo.picture,
         )
     }
 }

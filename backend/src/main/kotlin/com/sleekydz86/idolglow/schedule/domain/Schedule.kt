@@ -44,9 +44,9 @@ class Schedule(
     }
 
     private fun validate(title: String, startAt: LocalDateTime, endAt: LocalDateTime, productId: Long) {
-        require(title.isNotBlank()) { "Schedule title must not be blank." }
-        require(productId > 0) { "Schedule productId must be greater than zero." }
-        require(!endAt.isBefore(startAt)) { "Schedule end time must be after start time." }
+        require(title.isNotBlank()) { "일정 제목은 비어 있을 수 없습니다." }
+        require(productId > 0) { "상품 ID는 1 이상이어야 합니다." }
+        require(!endAt.isBefore(startAt)) { "일정 종료 시간은 시작 시간보다 빨라질 수 없습니다." }
     }
 
     fun update(title: String, startAt: LocalDateTime, endAt: LocalDateTime) {

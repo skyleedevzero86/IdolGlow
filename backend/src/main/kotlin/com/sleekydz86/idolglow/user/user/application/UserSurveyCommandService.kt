@@ -17,7 +17,7 @@ class UserSurveyCommandService(
 
     fun saveUserSurvey(userId: Long, command: UpsertUserSurveyCommand): UserSurveyUpsertResponse {
         val user = userRepository.findById(userId)
-            ?: throw IllegalArgumentException("User with id $userId does not exist.")
+            ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
 
         val survey = userSurveyRepository.findByUserId(userId)
             ?.apply { update(command) }

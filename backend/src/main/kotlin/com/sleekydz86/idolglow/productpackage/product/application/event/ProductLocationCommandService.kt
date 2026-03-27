@@ -34,6 +34,6 @@ class ProductLocationCommandService(
 
     private fun findProduct(productId: Long): Product {
         return productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("Product not found: $productId")
+            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
     }
 }

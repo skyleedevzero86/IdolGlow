@@ -24,8 +24,8 @@ class LocalImageStorage(
         ?: Paths.get(System.getProperty("user.home"), "Desktop", "image")
 
     override fun store(uniqueFilename: String, content: ByteArray): StoredImage {
-        require(uniqueFilename.isNotBlank()) { "uniqueFilename must not be blank." }
-        require(content.isNotEmpty()) { "content must not be empty." }
+        require(uniqueFilename.isNotBlank()) { "저장 파일명은 비어 있을 수 없습니다." }
+        require(content.isNotEmpty()) { "이미지 내용은 비어 있을 수 없습니다." }
 
         Files.createDirectories(rootPath)
         val targetPath = rootPath.resolve(uniqueFilename)

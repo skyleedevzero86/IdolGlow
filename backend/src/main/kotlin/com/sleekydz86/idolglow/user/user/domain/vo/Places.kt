@@ -13,7 +13,7 @@ class Places private constructor(
                 .distinct()
                 .toList()
 
-            require(normalized.isNotEmpty()) { "place must not be empty" }
+            require(normalized.isNotEmpty()) { "장소는 하나 이상 입력해야 합니다." }
 
             return Places(normalized)
         }

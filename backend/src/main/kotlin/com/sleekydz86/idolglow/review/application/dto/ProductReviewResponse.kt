@@ -28,7 +28,7 @@ data class ProductReviewResponse(
             val createdAt = productReview.createdAt ?: LocalDateTime.now()
             return ProductReviewResponse(
                 reviewId = productReview.id,
-                productId = requireNotNull(productReview.product.id) { "productId is required." },
+                productId = requireNotNull(productReview.product.id) { "productId 값이 필요합니다." },
                 userId = productReview.userId,
                 rating = productReview.rating.value,
                 content = productReview.content,

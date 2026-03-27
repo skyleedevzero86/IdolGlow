@@ -23,7 +23,7 @@ class ProductGraphQlController(
         val parsedLastId = when {
             lastId.isNullOrBlank() -> null
             else -> lastId.toLongOrNull()
-                ?: throw IllegalArgumentException("lastId must be numeric.")
+                ?: throw IllegalArgumentException("lastId는 숫자여야 합니다.")
         }
 
         val items = productQueryService.findProductsByNoOffset(parsedLastId, pageSize, tag)
@@ -39,7 +39,7 @@ class ProductGraphQlController(
     @QueryMapping
     fun product(@Argument id: String): ProductDetailGraphQlResponse {
         val productId = id.toLongOrNull()
-            ?: throw IllegalArgumentException("id must be numeric.")
+            ?: throw IllegalArgumentException("id는 숫자여야 합니다.")
 
         return ProductDetailGraphQlResponse.from(
             productQueryService.findProductSpecificById(productId)

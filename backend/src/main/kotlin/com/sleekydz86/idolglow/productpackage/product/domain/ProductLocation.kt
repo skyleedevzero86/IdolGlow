@@ -54,13 +54,13 @@ class ProductLocation(
     }
 
     private fun validate() {
-        require(name.isNotBlank()) { "Location name must not be blank" }
-        require(latitude in LAT_MIN..LAT_MAX) { "Latitude must be between -90 and 90" }
-        require(longitude in LNG_MIN..LNG_MAX) { "Longitude must be between -180 and 180" }
+        require(name.isNotBlank()) { "장소 이름은 비어 있을 수 없습니다." }
+        require(latitude in LAT_MIN..LAT_MAX) { "위도는 -90 이상 90 이하여야 합니다." }
+        require(longitude in LNG_MIN..LNG_MAX) { "경도는 -180 이상 180 이하여야 합니다." }
         require(!roadAddressName.isNullOrBlank() || !addressName.isNullOrBlank()) {
-            "Either road address or address must be provided"
+            "도로명 주소 또는 지번 주소 중 하나는 입력되어야 합니다."
         }
-        require(kakaoPlaceId.isNotBlank()) { "kakaoPlaceId must not be blank" }
+        require(kakaoPlaceId.isNotBlank()) { "카카오 장소 ID는 비어 있을 수 없습니다." }
     }
 
     companion object {
@@ -84,6 +84,4 @@ class ProductLocation(
             )
         }
     }
-
-
 }

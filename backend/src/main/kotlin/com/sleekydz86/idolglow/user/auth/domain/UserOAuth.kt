@@ -20,20 +20,35 @@ class UserOAuth(
     val providerId: String,
 
     @Column(nullable = false)
-    val email: String
+    val email: String,
+
+    @Column(name = "profile_name", length = 255)
+    var profileName: String? = null,
+
+    @Column(name = "profile_image_url", length = 500)
+    var profileImageUrl: String? = null,
 ) {
+    fun updateProfile(name: String?, picture: String?) {
+        profileName = name?.trim()?.takeIf { it.isNotEmpty() }
+        profileImageUrl = picture?.trim()?.takeIf { it.isNotEmpty() }
+    }
+
     companion object {
         fun of(
             userId: Long,
             provider: AuthProvider,
             providerId: String,
-            email: String
+            email: String,
+            profileName: String? = null,
+            profileImageUrl: String? = null,
         ): UserOAuth =
             UserOAuth(
                 userId = userId,
                 provider = provider,
                 providerId = providerId,
-                email = email
+                email = email,
+                profileName = profileName?.trim()?.takeIf { it.isNotEmpty() },
+                profileImageUrl = profileImageUrl?.trim()?.takeIf { it.isNotEmpty() },
             )
     }
 }

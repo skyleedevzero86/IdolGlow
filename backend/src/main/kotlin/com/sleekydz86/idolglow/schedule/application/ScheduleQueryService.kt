@@ -15,7 +15,7 @@ class ScheduleQueryService(
 
     fun findSchedule(scheduleId: Long, userId: Long): ScheduleResponse {
         val schedule = scheduleRepository.findByIdAndUserId(scheduleId, userId)
-            ?: throw IllegalArgumentException("Schedule $scheduleId not found.")
+            ?: throw IllegalArgumentException("일정을 찾을 수 없습니다: $scheduleId")
         return ScheduleResponse.from(schedule)
     }
 

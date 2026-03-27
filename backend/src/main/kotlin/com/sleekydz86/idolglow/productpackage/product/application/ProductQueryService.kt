@@ -26,6 +26,6 @@ class ProductQueryService(
 
     fun findProductSpecificById(productId: Long): ProductSpecificResponse {
         return productRepository.findProductSpecificById(productId)
-            ?: throw IllegalArgumentException("Product with id $productId does not exist.")
+            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
     }
 }

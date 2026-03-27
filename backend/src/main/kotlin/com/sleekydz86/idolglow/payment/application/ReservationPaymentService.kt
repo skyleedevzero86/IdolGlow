@@ -32,11 +32,11 @@ class ReservationPaymentService(
         }
 
         require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.SUCCEEDED) {
-            "Payment $paymentReference cannot be marked as succeeded from ${payment.status}."
+            "결제 $paymentReference 는 ${payment.status} 상태에서 성공 처리할 수 없습니다."
         }
 
         if (reservation.status == ReservationStatus.CANCELED) {
-            throw IllegalStateException("Canceled reservation cannot be confirmed.")
+            throw IllegalStateException("취소된 예약은 확정할 수 없습니다.")
         }
 
         if (reservation.isExpired(now)) {
@@ -69,7 +69,7 @@ class ReservationPaymentService(
         }
 
         require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.FAILED) {
-            "Payment $paymentReference cannot fail from ${payment.status}."
+            "결제 $paymentReference 는 ${payment.status} 상태에서 실패 처리할 수 없습니다."
         }
 
         if (payment.status == PaymentStatus.PENDING) {
@@ -81,8 +81,8 @@ class ReservationPaymentService(
             notificationCommandService.create(
                 userId = reservation.userId,
                 type = NotificationType.PAYMENT_FAILED,
-                title = "Payment failed",
-                message = "Payment for reservation #${reservation.id} failed.",
+                title = "결제 실패",
+                message = "예약 #${reservation.id} 결제에 실패했습니다.",
                 link = "/reservations/${reservation.id}"
             )
         }
@@ -101,7 +101,7 @@ class ReservationPaymentService(
         }
 
         require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.CANCELED) {
-            "Payment $paymentReference cannot be canceled from ${payment.status}."
+            "결제 $paymentReference 는 ${payment.status} 상태에서 취소 처리할 수 없습니다."
         }
 
         if (payment.status == PaymentStatus.PENDING) {
@@ -113,8 +113,8 @@ class ReservationPaymentService(
             notificationCommandService.create(
                 userId = reservation.userId,
                 type = NotificationType.PAYMENT_FAILED,
-                title = "Payment canceled",
-                message = "Payment for reservation #${reservation.id} was canceled.",
+                title = "결제 취소",
+                message = "예약 #${reservation.id} 결제가 취소되었습니다.",
                 link = "/reservations/${reservation.id}"
             )
         }
@@ -124,9 +124,9 @@ class ReservationPaymentService(
 
     private fun findPaymentForUpdate(paymentReference: String): Payment =
         paymentRepository.findByPaymentReferenceForUpdate(paymentReference)
-            ?: throw IllegalArgumentException("Payment not found: $paymentReference")
+            ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
 
     private fun findReservationForUpdate(reservationId: Long) =
         reservationRepository.findByIdForUpdate(reservationId)
-            ?: throw IllegalArgumentException("Reservation not found: $reservationId")
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
 }

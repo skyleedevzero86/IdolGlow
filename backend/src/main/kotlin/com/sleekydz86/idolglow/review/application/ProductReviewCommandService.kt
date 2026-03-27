@@ -43,12 +43,12 @@ class ProductReviewCommandService(
 
     private fun loadProduct(productId: Long): Product {
         return productRepository.findById(productId)
-            ?: throw EntityNotFoundException("Product $productId does not exist.")
+            ?: throw EntityNotFoundException("상품을 찾을 수 없습니다: $productId")
     }
 
     private fun ensureNotReviewed(productId: Long, userId: Long) {
         val existing = productReviewRepository.findByProductIdAndUserId(productId, userId)
-        require(existing == null) { "You already wrote a review for this product." }
+        require(existing == null) { "이 상품에는 이미 리뷰를 작성했습니다." }
     }
 
     fun updateReview(
@@ -71,7 +71,7 @@ class ProductReviewCommandService(
 
     private fun findProductByReviewId(reviewId: Long) =
         productReviewRepository.findById(reviewId)
-            ?: throw IllegalArgumentException("Review $reviewId not found.")
+            ?: throw IllegalArgumentException("리뷰를 찾을 수 없습니다: $reviewId")
 
     fun deleteReview(productId: Long, reviewId: Long, userId: Long) {
         val review = findProductByReviewId(reviewId)

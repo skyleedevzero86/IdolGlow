@@ -21,9 +21,15 @@ class AuthService(
 ) {
 
     @Transactional
-    fun login(provider: AuthProvider, providerId: String, email: String): TokenResponse {
-        // 소셜계정 등록 여부 검사
+    fun login(
+        provider: AuthProvider,
+        providerId: String,
+        email: String,
+        name: String? = null,
+        picture: String? = null,
+    ): TokenResponse {
         val oauthUser = userOAuthRepository.findByProviderAndProviderId(provider, providerId)
+        oauthUser?.updateProfile(name = name, picture = picture)
 
         val userId: Long = oauthUser?.userId
             ?: run {
@@ -36,7 +42,9 @@ class AuthService(
                     userId = user.id,
                     provider = provider,
                     providerId = providerId,
-                    email = email
+                    email = email,
+                    profileName = name,
+                    profileImageUrl = picture,
                 ).let { userOAuthRepository.save(it) }
                 user.id
             }

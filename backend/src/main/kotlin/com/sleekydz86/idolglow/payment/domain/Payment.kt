@@ -65,7 +65,7 @@ class Payment(
         if (status == PaymentStatus.SUCCEEDED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "Only pending payments can be approved." }
+        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 승인할 수 있습니다." }
         status = PaymentStatus.SUCCEEDED
         this.approvedAt = approvedAt
         failedAt = null
@@ -77,7 +77,7 @@ class Payment(
         if (status == PaymentStatus.FAILED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "Only pending payments can fail." }
+        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 실패 처리할 수 있습니다." }
         status = PaymentStatus.FAILED
         this.failedAt = failedAt
         approvedAt = null
@@ -89,7 +89,7 @@ class Payment(
         if (status == PaymentStatus.CANCELED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "Only pending payments can be canceled." }
+        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 취소할 수 있습니다." }
         status = PaymentStatus.CANCELED
         failureReason = reason?.trim()?.takeIf { it.isNotBlank() }
         approvedAt = null
@@ -101,12 +101,12 @@ class Payment(
         if (status == PaymentStatus.EXPIRED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "Only pending payments can expire." }
+        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 만료 처리할 수 있습니다." }
         status = PaymentStatus.EXPIRED
         this.expiredAt = expiredAt
         approvedAt = null
         failedAt = null
-        failureReason = "payment expired"
+        failureReason = "결제 시간이 만료되었습니다."
     }
 
     companion object {

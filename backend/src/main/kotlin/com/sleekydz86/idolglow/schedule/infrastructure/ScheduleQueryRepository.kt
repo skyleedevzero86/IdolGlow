@@ -23,7 +23,7 @@ class ScheduleQueryRepository(
     fun findByUserId(userId: Long, cursorId: Long?, size: Int): List<Schedule> {
         val cursorSchedule = cursorId?.let { findByIdAndUserId(it, userId) }
         if (cursorId != null && cursorSchedule == null) {
-            throw IllegalArgumentException("Schedule $cursorId not found.")
+            throw IllegalArgumentException("일정을 찾을 수 없습니다: $cursorId")
         }
 
         val predicate = schedule.userId.eq(userId).let { base ->

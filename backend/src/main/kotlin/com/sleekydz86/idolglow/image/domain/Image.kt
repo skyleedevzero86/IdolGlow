@@ -47,7 +47,7 @@ class Image(
 ) : BaseEntity() {
 
     fun changeSortOrder(targetSortOrder: Int): Image {
-        require(targetSortOrder >= 0) { "sortOrder must be zero or positive." }
+        require(targetSortOrder >= 0) { "정렬 순서는 0 이상이어야 합니다." }
         sortOrder = targetSortOrder
         return this
     }
@@ -61,18 +61,18 @@ class Image(
             sortOrder: Int = 0,
             imageStorage: ImageStorage,
         ): Image {
-            require(aggregateId > 0) { "aggregateId must be positive." }
-            require(content.isNotEmpty()) { "content must not be empty." }
-            require(sortOrder >= 0) { "sortOrder must be zero or positive." }
+            require(aggregateId > 0) { "연결 대상 ID는 1 이상이어야 합니다." }
+            require(content.isNotEmpty()) { "이미지 내용은 비어 있을 수 없습니다." }
+            require(sortOrder >= 0) { "정렬 순서는 0 이상이어야 합니다." }
 
             val normalizedOriginal = originalFilename.trim()
-            require(normalizedOriginal.isNotEmpty()) { "originalFilename must not be blank." }
+            require(normalizedOriginal.isNotEmpty()) { "원본 파일명은 비어 있을 수 없습니다." }
 
             val generatedFilename = generateUniqueFilename(normalizedOriginal)
             val storedImage = imageStorage.store(generatedFilename.uniqueFilename, content)
 
-            require(storedImage.url.isNotBlank()) { "url must not be blank." }
-            require(storedImage.fileSize > 0) { "fileSize must be greater than zero." }
+            require(storedImage.url.isNotBlank()) { "이미지 URL은 비어 있을 수 없습니다." }
+            require(storedImage.fileSize > 0) { "파일 크기는 0보다 커야 합니다." }
 
             return Image(
                 aggregateType = aggregateType,
@@ -88,7 +88,7 @@ class Image(
 
         fun generateUniqueFilename(originalFilename: String): GeneratedFilename {
             val normalizedOriginal = originalFilename.trim()
-            require(normalizedOriginal.isNotEmpty()) { "originalFilename must not be blank." }
+            require(normalizedOriginal.isNotEmpty()) { "원본 파일명은 비어 있을 수 없습니다." }
             val extension = extractExtension(normalizedOriginal)
             return GeneratedFilename(
                 uniqueFilename = "${UUID.randomUUID()}.$extension",
@@ -98,7 +98,7 @@ class Image(
 
         private fun extractExtension(filename: String): String {
             val extension = filename.substringAfterLast('.', "").lowercase()
-            require(extension.isNotEmpty()) { "filename must contain an extension." }
+            require(extension.isNotEmpty()) { "파일명에는 확장자가 포함되어야 합니다." }
             return extension
         }
     }

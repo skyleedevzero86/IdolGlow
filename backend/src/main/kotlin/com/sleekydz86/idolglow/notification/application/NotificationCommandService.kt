@@ -36,8 +36,8 @@ class NotificationCommandService(
 
     fun markRead(notificationId: Long, userId: Long): Notification {
         val notification = notificationRepository.findById(notificationId)
-            ?: throw IllegalArgumentException("Notification not found: $notificationId")
-        require(notification.userId == userId) { "Notification can be handled only by its owner." }
+            ?: throw IllegalArgumentException("알림을 찾을 수 없습니다: $notificationId")
+        require(notification.userId == userId) { "본인 알림만 처리할 수 있습니다." }
         notification.markRead(LocalDateTime.now())
         return notification
     }

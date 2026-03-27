@@ -37,7 +37,7 @@ class ReservationQueryService(
 
     fun findReservationDetail(reservationId: Long, userId: Long, today: LocalDate = LocalDate.now()): ReservationSummaryResponse {
         val reservation = reservationQueryRepository.findByIdAndUserId(reservationId, userId)
-            ?: throw IllegalArgumentException("Reservation not found: $reservationId")
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
         return ReservationSummaryResponse.from(reservation, reservation.resolveStatus(today))
     }
 }

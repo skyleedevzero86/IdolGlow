@@ -14,7 +14,7 @@ data class ReviewRating(
         private const val MAX = 5
 
         fun of(value: Int): ReviewRating {
-            require(value in MIN..MAX) { "Rating must be between $MIN and $MAX." }
+            require(value in MIN..MAX) { "평점은 $MIN 점 이상 $MAX 점 이하여야 합니다." }
             return ReviewRating(value)
         }
     }

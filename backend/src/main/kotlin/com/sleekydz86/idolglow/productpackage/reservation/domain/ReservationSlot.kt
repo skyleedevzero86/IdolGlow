@@ -60,26 +60,26 @@ class ReservationSlot(
 
     init {
         val duration = Duration.between(startTime, endTime)
-        require(startTime.minute == 0 && endTime.minute == 0) { "Reservation slots must start and end on the hour." }
-        require(startTime.hour in 9..15) { "Reservation slots must start between 09:00 and 15:00." }
-        require(endTime == startTime.plusHours(1)) { "Reservation slots must be exactly one hour long." }
-        require(!duration.isZero && !duration.isNegative) { "Reservation slot end time must be after start time." }
+        require(startTime.minute == 0 && endTime.minute == 0) { "예약 슬롯은 정각 단위로만 생성할 수 있습니다." }
+        require(startTime.hour in 9..15) { "예약 시작 시간은 09:00부터 15:00 사이여야 합니다." }
+        require(endTime == startTime.plusHours(1)) { "예약 슬롯은 정확히 1시간이어야 합니다." }
+        require(!duration.isZero && !duration.isNegative) { "예약 종료 시간은 시작 시간보다 늦어야 합니다." }
     }
 
     fun validateAvailability(productId: Long, now: LocalDateTime = LocalDateTime.now()) {
         clearExpiredHold(now)
-        require(!isStatusBooked) { "Reservation slot is already booked." }
-        require(this.product.id == productId) { "Slot does not belong to product $productId." }
-        require(!isHeld(now)) { "Reservation slot is already held by another reservation." }
+        require(!isStatusBooked) { "이미 예약된 슬롯입니다." }
+        require(this.product.id == productId) { "해당 슬롯은 상품 ID $productId 에 속하지 않습니다." }
+        require(!isHeld(now)) { "다른 예약이 이미 선점한 슬롯입니다." }
     }
 
     fun hold(reservationId: Long, expiresAt: LocalDateTime, now: LocalDateTime = LocalDateTime.now()) {
         clearExpiredHold(now)
         if (isStatusBooked) {
-            throw IllegalStateException("Reservation slot is already booked.")
+            throw IllegalStateException("이미 예약된 슬롯입니다.")
         }
         if (isHeld(now) && holdReservationId != reservationId) {
-            throw IllegalStateException("Reservation slot is already held.")
+            throw IllegalStateException("이미 선점 중인 슬롯입니다.")
         }
         holdReservationId = reservationId
         holdExpiresAt = expiresAt
@@ -87,9 +87,9 @@ class ReservationSlot(
 
     fun confirmBooking(reservationId: Long, now: LocalDateTime = LocalDateTime.now()) {
         clearExpiredHold(now)
-        require(!isStatusBooked) { "Reservation slot is already booked." }
-        require(holdReservationId == reservationId) { "Reservation slot is not held by this reservation." }
-        require(holdExpiresAt?.isAfter(now) == true) { "Reservation hold already expired." }
+        require(!isStatusBooked) { "이미 예약된 슬롯입니다." }
+        require(holdReservationId == reservationId) { "현재 예약이 선점한 슬롯이 아닙니다." }
+        require(holdExpiresAt?.isAfter(now) == true) { "슬롯 선점 시간이 이미 만료되었습니다." }
         isStatusBooked = true
         clearHold()
     }
@@ -98,7 +98,7 @@ class ReservationSlot(
         if (holdReservationId == null) {
             return
         }
-        require(holdReservationId == reservationId) { "Reservation slot hold belongs to another reservation." }
+        require(holdReservationId == reservationId) { "다른 예약이 선점한 슬롯입니다." }
         clearHold()
     }
 

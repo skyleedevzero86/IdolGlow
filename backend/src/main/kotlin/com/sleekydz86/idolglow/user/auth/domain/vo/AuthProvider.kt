@@ -14,6 +14,6 @@ enum class AuthProvider(val registrationId: String) {
 
         fun fromRegistrationId(registrationId: String): AuthProvider =
             entries.firstOrNull { it.registrationId.equals(registrationId, ignoreCase = true) }
-                ?: throw IllegalArgumentException("Unsupported provider: $registrationId")
+                ?: throw IllegalArgumentException("지원하지 않는 로그인 제공자입니다: $registrationId")
     }
 }

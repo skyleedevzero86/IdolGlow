@@ -24,7 +24,7 @@ class AuthController(
     @GetMapping("/login/{provider}")
     override fun login(response: HttpServletResponse, @PathVariable("provider") provider: String) {
         if (!AuthProvider.isAllowedRegistrationId(provider)) {
-            throw IllegalArgumentException("Unsupported provider: $provider")
+            throw IllegalArgumentException("지원하지 않는 로그인 제공자입니다: $provider")
         }
         response.sendRedirect("/oauth2/authorization/$provider")
     }

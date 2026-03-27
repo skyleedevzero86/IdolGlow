@@ -15,10 +15,10 @@ class UserSurveyQueryService(
 
     fun findUserSurvey(userId: Long): UserSurveyResponse {
         val user = userRepository.findById(userId)
-            ?: throw IllegalArgumentException("User with id $userId does not exist.")
+            ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
 
         val survey = userSurveyRepository.findByUserId(userId)
-            ?: throw IllegalArgumentException("UserSurvey does not exist.")
+            ?: throw IllegalArgumentException("사용자 설문 정보를 찾을 수 없습니다.")
 
         return UserSurveyResponse.from(survey)
     }
