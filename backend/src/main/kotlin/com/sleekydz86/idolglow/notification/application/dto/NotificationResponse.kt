@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.notification.application.dto
 
+import com.sleekydz86.idolglow.notification.domain.Notification
+import com.sleekydz86.idolglow.notification.domain.NotificationType
 import java.time.LocalDateTime
 
 data class NotificationResponse(

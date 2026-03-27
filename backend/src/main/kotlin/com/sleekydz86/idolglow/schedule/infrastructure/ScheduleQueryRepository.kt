@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.schedule.infrastructure
 
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.sleekydz86.idolglow.schedule.domain.QSchedule
 import com.sleekydz86.idolglow.schedule.domain.Schedule
 import org.springframework.stereotype.Repository
 

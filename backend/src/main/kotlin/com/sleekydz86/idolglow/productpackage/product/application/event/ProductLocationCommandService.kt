@@ -1,6 +1,10 @@
 package com.sleekydz86.idolglow.productpackage.product.application.event
 
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLocationPayload
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductLocation
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductLocationRepository
+import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

@@ -2,6 +2,11 @@ package com.sleekydz86.idolglow.productpackage.product.ui
 
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
+import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
+import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.wish.application.dto
 
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 

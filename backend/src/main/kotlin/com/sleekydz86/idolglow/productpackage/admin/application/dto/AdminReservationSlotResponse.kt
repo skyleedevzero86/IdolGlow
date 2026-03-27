@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.admin.application.dto
 
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 import java.time.LocalDateTime

@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.user.auth.domain
 
-import java.security.AuthProvider
+import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 
 interface UserOAuthRepository {
     fun save(userOAuth: UserOAuth): UserOAuth

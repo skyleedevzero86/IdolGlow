@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.schedule.infrastructure
 
+import com.sleekydz86.idolglow.schedule.domain.Schedule
 import com.sleekydz86.idolglow.schedule.domain.ScheduleRepository
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime

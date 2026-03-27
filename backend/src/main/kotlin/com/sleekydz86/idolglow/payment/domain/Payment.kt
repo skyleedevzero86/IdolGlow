@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.domain
 
 import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

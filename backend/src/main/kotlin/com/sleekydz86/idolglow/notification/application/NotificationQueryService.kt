@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.notification.application
 
 import com.sleekydz86.idolglow.notification.application.dto.NotificationResponse
+import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.user.user.domain.dto
 
+import com.sleekydz86.idolglow.user.user.domain.UserSurvey
+import com.sleekydz86.idolglow.user.user.domain.vo.ConceptType
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 

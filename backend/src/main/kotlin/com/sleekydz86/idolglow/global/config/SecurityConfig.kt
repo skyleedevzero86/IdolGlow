@@ -4,9 +4,9 @@ import com.sleekydz86.idolglow.global.security.JsonAccessDeniedHandler
 import com.sleekydz86.idolglow.global.security.JsonAuthenticationEntryPoint
 import com.sleekydz86.idolglow.global.security.JwtFilter
 import com.sleekydz86.idolglow.global.security.JwtProvider
+import com.sleekydz86.idolglow.user.auth.oauth.CustomOAuth2UserService
 import com.sleekydz86.idolglow.user.auth.oauth.OAuth2SuccessHandler
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -39,7 +39,7 @@ class SecurityConfig(
     @Order(0)
     fun h2ConsoleSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .securityMatcher(PathRequest.toH2Console())
+            .securityMatcher("/h2-console/**")
             .csrf { it.disable() }
             .authorizeHttpRequests { it.anyRequest().permitAll() }
             .headers {

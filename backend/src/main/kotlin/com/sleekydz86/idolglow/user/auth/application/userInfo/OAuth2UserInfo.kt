@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.user.auth.application.userInfo
 
-import java.security.AuthProvider
+import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 
 interface OAuth2UserInfo {
     val id : String

@@ -1,8 +1,15 @@
 package com.sleekydz86.idolglow.productpackage.admin.application
 
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
+import com.sleekydz86.idolglow.productpackage.admin.infrastructure.ProductOptionAdminRepository
+import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
+import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
+import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

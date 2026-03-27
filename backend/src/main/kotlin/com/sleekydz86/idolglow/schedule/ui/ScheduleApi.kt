@@ -1,5 +1,10 @@
 package com.sleekydz86.idolglow.schedule.ui
 
+import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
+import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
+import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
+import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
+import com.sleekydz86.idolglow.schedule.ui.request.UpdateScheduleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

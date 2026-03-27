@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.option.application
 
+import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionResponse
+import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

@@ -1,6 +1,12 @@
 package com.sleekydz86.idolglow.productpackage.option.application
 
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+import com.sleekydz86.idolglow.productpackage.option.application.dto.CreateOptionCommand
+import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionImageFile
+import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionResponse
+import com.sleekydz86.idolglow.productpackage.option.domain.Option
+import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

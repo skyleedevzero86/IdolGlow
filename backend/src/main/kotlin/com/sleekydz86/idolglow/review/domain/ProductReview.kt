@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.review.domain
 
 import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity

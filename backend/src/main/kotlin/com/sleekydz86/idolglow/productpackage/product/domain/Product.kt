@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.productpackage.product.domain
 
 import com.sleekydz86.idolglow.global.BaseEntity
 import com.sleekydz86.idolglow.productpackage.option.domain.Option
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

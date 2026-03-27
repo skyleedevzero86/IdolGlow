@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.wish.application
 
+import com.sleekydz86.idolglow.wish.application.dto.WishedProductPagingResponse
+import com.sleekydz86.idolglow.wish.domain.WishRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

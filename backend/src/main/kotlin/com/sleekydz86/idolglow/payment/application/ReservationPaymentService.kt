@@ -1,10 +1,14 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
+import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime

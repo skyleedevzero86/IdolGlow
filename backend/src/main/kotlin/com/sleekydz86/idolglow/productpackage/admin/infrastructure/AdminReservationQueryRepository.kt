@@ -2,10 +2,11 @@ package com.sleekydz86.idolglow.productpackage.admin.infrastructure
 
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationPaymentProjection
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
-import kotlin.jvm.java
 
 @Repository
 class AdminReservationQueryRepository(

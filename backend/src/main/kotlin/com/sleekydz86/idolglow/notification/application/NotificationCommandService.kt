@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.notification.application
 
+import com.sleekydz86.idolglow.notification.domain.Notification
+import com.sleekydz86.idolglow.notification.domain.NotificationRepository
+import com.sleekydz86.idolglow.notification.domain.NotificationType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime

@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.reservation.ui.request
 
+import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
