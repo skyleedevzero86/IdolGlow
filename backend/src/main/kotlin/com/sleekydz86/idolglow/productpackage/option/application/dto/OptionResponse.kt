@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.productpackage.option.domain.Option
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 
+@Schema(description = "옵션 응답 DTO")
 data class OptionResponse(
     @field:Schema(description = "옵션 ID", example = "1")
     val id: Long,

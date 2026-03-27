@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
 
+@Schema(description = "옵션 생성 요청 DTO")
 data class CreateOptionRequest(
     @field:Schema(description = "옵션명", example = "뷰티 스파 이용권")
     @field:NotBlank

@@ -7,20 +7,21 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Schema(description = "상품 상세 조회 응답 DTO")
 data class ProductSpecificResponse(
     @field:Schema(description = "상품 ID", example = "1")
     val id: Long,
 
-    @field:Schema(description = "상품명", example = "스파 + 디너 패키지")
+    @field:Schema(description = "상품명", example = "스파 + 브런치 패키지")
     val name: String,
 
-    @field:Schema(description = "상품 설명", example = "스파 이용권과 디너 코스를 포함합니다.")
+    @field:Schema(description = "상품 설명", example = "스파 이용권과 브런치 코스가 포함된 상품입니다.")
     val description: String,
 
     @field:Schema(description = "포함 옵션 목록")
     val options: List<ProductOptionResponse>,
 
-    @field:Schema(description = "태그 목록", example = "[\"스파\",\"맛집\"]")
+    @field:Schema(description = "태그 목록", example = "[\"스파\", \"브런치\"]")
     val tagNames: List<String>,
 
     @field:Schema(description = "예약 시작 가능 날짜", example = "2025-01-01")
@@ -38,10 +39,10 @@ data class ProductSpecificResponse(
     @field:Schema(description = "예약 슬롯 개수", example = "56")
     val reservationSlotCount: Int,
 
-    @field:Schema(description = "최저가", example = "100000.00")
+    @field:Schema(description = "최소 가격", example = "100000.00")
     val minPrice: BigDecimal,
 
-    @field:Schema(description = "총합 가격", example = "300000.00")
+    @field:Schema(description = "총 가격", example = "300000.00")
     val totalPrice: BigDecimal,
 ) {
     companion object {
@@ -69,6 +70,7 @@ data class ProductSpecificResponse(
     }
 }
 
+@Schema(description = "상품 포함 옵션 응답 DTO")
 data class ProductOptionResponse(
     @field:Schema(description = "옵션 ID", example = "1")
     val id: Long,
