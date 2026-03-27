@@ -14,29 +14,29 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "Reservation", description = "Reservation API")
+@Tag(name = "Reservation", description = "상품 예약 생성 및 취소 API")
 interface ReservationApi {
 
     @Operation(
-        summary = "Create reservation",
-        description = "Create a pending reservation and return payment information."
+        summary = "예약 생성",
+        description = "로그인한 사용자가 상품 예약을 생성하고 결제 대기 정보를 받습니다."
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "201",
-                description = "Created",
+                description = "생성 성공",
                 headers = [
                     Header(
                         name = "Location",
-                        description = "Reservation URI",
+                        description = "생성된 예약 URI",
                         schema = Schema(type = "string")
                     )
                 ]
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "Invalid request",
+                description = "잘못된 요청",
                 content = [Content(schema = Schema(hidden = true))]
             )
         ]
@@ -44,21 +44,31 @@ interface ReservationApi {
     fun createReservation(
         @Parameter(hidden = true)
         userId: Long,
-        @Parameter(description = "Product id", example = "1")
+        @Parameter(description = "상품 ID", example = "1")
         productId: Long,
         @Valid request: CreateReservationRequest
     ): ResponseEntity<ReservationCreatedResponse>
 
     @Operation(
-        summary = "Cancel reservation",
-        description = "Cancel the reservation owned by the authenticated user."
+        summary = "예약 취소",
+        description = "로그인한 사용자가 자신의 예약을 취소합니다."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "취소 성공"),
+            ApiResponse(
+                responseCode = "404",
+                description = "예약을 찾을 수 없음",
+                content = [Content(schema = Schema(hidden = true))]
+            )
+        ]
     )
     fun cancelReservation(
         @Parameter(hidden = true)
         userId: Long,
-        @Parameter(description = "Product id", example = "1")
+        @Parameter(description = "상품 ID", example = "1")
         productId: Long,
-        @Parameter(description = "Reservation id", example = "1")
+        @Parameter(description = "예약 ID", example = "1")
         reservationId: Long,
     ): ResponseEntity<ReservationSummaryResponse>
 }

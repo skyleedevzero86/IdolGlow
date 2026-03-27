@@ -7,14 +7,15 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStat
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
+@Schema(description = "예약 생성 응답 DTO")
 data class ReservationCreatedResponse(
-    @field:Schema(description = "Reservation id", example = "1")
+    @field:Schema(description = "예약 ID", example = "1")
     val id: Long,
-    @field:Schema(description = "Reservation status", example = "PENDING")
+    @field:Schema(description = "예약 상태", example = "PENDING")
     val status: ReservationStatus,
-    @field:Schema(description = "Reservation expiration time", example = "2026-03-21T12:15:00")
+    @field:Schema(description = "예약 만료 시각", example = "2026-03-21T12:15:00")
     val expiresAt: LocalDateTime?,
-    @field:Schema(description = "Payment information")
+    @field:Schema(description = "결제 정보")
     val payment: PaymentResponse,
 ) {
     companion object {

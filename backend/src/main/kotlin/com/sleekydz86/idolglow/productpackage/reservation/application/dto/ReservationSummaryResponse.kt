@@ -9,34 +9,35 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+@Schema(description = "예약 요약 응답 DTO")
 data class ReservationSummaryResponse(
-    @Schema(description = "Reservation id", example = "1")
+    @field:Schema(description = "예약 ID", example = "1")
     val reservationId: Long,
-    @Schema(description = "Reservation status", example = "PENDING")
+    @field:Schema(description = "예약 상태", example = "PENDING")
     val status: ReservationStatus,
-    @Schema(description = "Product id", example = "12")
+    @field:Schema(description = "상품 ID", example = "12")
     val productId: Long,
-    @Schema(description = "Product name", example = "Hair and makeup package")
+    @field:Schema(description = "상품명", example = "헤어 메이크업 패키지")
     val productName: String,
-    @Schema(description = "Product description", example = "Hair and makeup course included")
+    @field:Schema(description = "상품 설명", example = "헤어와 메이크업이 포함된 상품입니다.")
     val productDescription: String,
-    @Schema(description = "Total price", example = "300000.00")
+    @field:Schema(description = "총액", example = "300000.00")
     val totalPrice: BigDecimal,
-    @Schema(description = "Visit date", example = "2026-03-21")
+    @field:Schema(description = "방문 날짜", example = "2026-03-21")
     val visitDate: LocalDate,
-    @Schema(description = "Visit start time", example = "09:00:00")
+    @field:Schema(description = "방문 시작 시각", example = "09:00:00")
     val visitStartTime: LocalTime,
-    @Schema(description = "Visit end time", example = "10:00:00")
+    @field:Schema(description = "방문 종료 시각", example = "10:00:00")
     val visitEndTime: LocalTime,
-    @Schema(description = "Selected attractions", example = "[\"Hair\", \"Makeup\"]")
+    @field:Schema(description = "선택된 구성 항목", example = "[\"헤어\", \"메이크업\"]")
     val attractions: List<String>,
-    @Schema(description = "Expiration time", example = "2026-03-21T12:15:00")
+    @field:Schema(description = "예약 만료 시각", example = "2026-03-21T12:15:00")
     val expiresAt: LocalDateTime?,
-    @Schema(description = "Confirmation time", example = "2026-03-21T12:05:00")
+    @field:Schema(description = "예약 확정 시각", example = "2026-03-21T12:05:00")
     val confirmedAt: LocalDateTime?,
-    @Schema(description = "Cancellation time", example = "2026-03-21T12:06:00")
+    @field:Schema(description = "예약 취소 시각", example = "2026-03-21T12:06:00")
     val canceledAt: LocalDateTime?,
-    @Schema(description = "Cancellation reason", example = "PAYMENT_FAILED")
+    @field:Schema(description = "취소 사유", example = "PAYMENT_FAILED")
     val cancelReason: ReservationCancelReason?,
 ) {
     companion object {
