@@ -217,7 +217,7 @@ class LocalProfileMySqlDataWarmer(
     private fun logTokenForUser(user: User) {
         val token = jwtProvider.generateToken(user.id, user.role)
         log.info(
-            "Local test token for userId={}: accessToken={}, refreshToken={}",
+            "로컬 테스트 토큰(userId={}): 액세스 토큰={}, 리프레시 토큰={}",
             user.id,
             token.accessToken,
             token.refreshToken

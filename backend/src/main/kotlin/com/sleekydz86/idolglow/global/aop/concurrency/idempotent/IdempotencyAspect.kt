@@ -35,16 +35,16 @@ class IdempotencyAspect(
         return try {
             entry.future.get(idempotent.waitTimeoutMillis, TimeUnit.MILLISECONDS)
         } catch (ex: TimeoutException) {
-            throw IllegalStateException("Idempotency wait timed out for key=$storeKey", ex)
+            throw IllegalStateException("멱등성 대기 시간이 초과되었습니다. 식별키=$storeKey", ex)
         } catch (ex: InterruptedException) {
             Thread.currentThread().interrupt()
-            throw IllegalStateException("Idempotency wait interrupted for key=$storeKey", ex)
+            throw IllegalStateException("멱등성 대기가 중단되었습니다. 식별키=$storeKey", ex)
         } catch (ex: ExecutionException) {
             val cause = ex.cause
             if (cause is RuntimeException) {
                 throw cause
             }
-            throw IllegalStateException("Idempotency execution failed for key=$storeKey", cause)
+            throw IllegalStateException("멱등성 처리 중 실행에 실패했습니다. 식별키=$storeKey", cause)
         }
     }
 }

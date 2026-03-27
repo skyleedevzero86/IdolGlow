@@ -22,7 +22,7 @@ class GlobalExceptionAdvice {
         exception: Exception
     ): ResponseEntity<ExceptionResponse> {
         log.error(
-            "Unexpected error: {} {} | Message: {}",
+            "예상하지 못한 오류 발생: {} {} | 메시지: {}",
             request.method, request.requestURI, exception.message, exception
         )
 
@@ -42,7 +42,7 @@ class GlobalExceptionAdvice {
         request: HttpServletRequest,
         exception: MethodArgumentNotValidException
     ): ResponseEntity<ExceptionResponse> {
-        log.warn("Validation failed: {} {}", request.method, request.requestURI)
+        log.warn("검증 실패: {} {}", request.method, request.requestURI)
 
         val errors = exception.bindingResult.fieldErrors
             .joinToString("; ") { "${it.field}: ${it.defaultMessage ?: "유효하지 않음"}" }
@@ -82,7 +82,7 @@ class GlobalExceptionAdvice {
             else -> "요청 본문을 읽을 수 없습니다."
         }
 
-        log.warn("Deserialization error: {}", message, exception)
+        log.warn("역직렬화 오류: {}", message, exception)
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
@@ -103,7 +103,7 @@ class GlobalExceptionAdvice {
         val type = exception.getExceptionType()
 
         log.warn(
-            "Custom exception: {} | URI: {} {} | Message: {}",
+            "커스텀 예외 발생: {} | URI: {} {} | 메시지: {}",
             type.errorCode, request.method, request.requestURI, type.message, exception
         )
 
@@ -123,7 +123,7 @@ class GlobalExceptionAdvice {
         request: HttpServletRequest,
         exception: IllegalArgumentException
     ): ResponseEntity<ExceptionResponse> {
-        log.warn("Bad request: {} {} | {}", request.method, request.requestURI, exception.message)
+        log.warn("잘못된 요청: {} {} | {}", request.method, request.requestURI, exception.message)
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
@@ -141,7 +141,7 @@ class GlobalExceptionAdvice {
         request: HttpServletRequest,
         exception: IllegalStateException
     ): ResponseEntity<ExceptionResponse> {
-        log.warn("Conflict: {} {} | {}", request.method, request.requestURI, exception.message)
+        log.warn("충돌 발생: {} {} | {}", request.method, request.requestURI, exception.message)
 
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
@@ -159,7 +159,7 @@ class GlobalExceptionAdvice {
         request: HttpServletRequest,
         exception: EntityNotFoundException
     ): ResponseEntity<ExceptionResponse> {
-        log.warn("Not found: {} {} | {}", request.method, request.requestURI, exception.message)
+        log.warn("대상을 찾을 수 없음: {} {} | {}", request.method, request.requestURI, exception.message)
 
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
