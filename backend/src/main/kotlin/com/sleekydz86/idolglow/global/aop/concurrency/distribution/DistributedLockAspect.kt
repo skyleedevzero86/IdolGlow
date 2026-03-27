@@ -19,7 +19,7 @@ class DistributedLockAspect(
             lockKey,
             distributedLock.waitTimeMillis,
             distributedLock.leaseTimeMillis
-        ) ?: throw IllegalStateException("Failed to acquire lock for key=$lockKey")
+        ) ?: throw IllegalStateException("락 획득에 실패했습니다. 식별키=$lockKey")
 
         return try {
             joinPoint.proceed()

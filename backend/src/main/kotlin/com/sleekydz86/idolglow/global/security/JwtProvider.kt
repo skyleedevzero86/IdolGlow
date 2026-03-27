@@ -60,8 +60,8 @@ class JwtProvider(
             .compact()
 
         if (logToken) {
-            log.debug("accessToken: $accessToken")
-            log.debug("refreshToken: $refreshToken")
+            log.debug("액세스 토큰: $accessToken")
+            log.debug("리프레시 토큰: $refreshToken")
         }
 
         return TokenResponse(
@@ -106,7 +106,7 @@ class JwtProvider(
         val userId = claims.subject.toLong()
         val role = UserRole.valueOf(
             claims[AUTHORITIES_KEY]?.toString()
-                ?: throw IllegalArgumentException("Missing authority claim.")
+                ?: throw IllegalArgumentException("권한 클레임이 없습니다.")
         )
         return UsernamePasswordAuthenticationToken(
             userId.toString(),
@@ -137,7 +137,7 @@ class JwtProvider(
     private fun extractTokenType(claims: Claims): JwtTokenType =
         JwtTokenType.valueOf(
             claims[TOKEN_TYPE_KEY]?.toString()
-                ?: throw IllegalArgumentException("Missing token type.")
+                ?: throw IllegalArgumentException("토큰 타입 클레임이 없습니다.")
         )
 
     companion object {

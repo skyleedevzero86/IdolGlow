@@ -3,22 +3,32 @@ package com.sleekydz86.idolglow.global.config
 import org.jasypt.encryption.StringEncryptor
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 
 @Configuration
-class JasyptConfig {
-
-    @Value("\${jasypt.encryptor.password}")
-    private lateinit var ENCRYPT_KEY: String
+class JasyptConfig(
+    private val environment: Environment
+) {
 
     @Bean("jasyptStringEncryptor")
-    fun encrypt(): StringEncryptor =
-        PooledPBEStringEncryptor().apply {
+    fun encrypt(): StringEncryptor {
+        val encryptKey =
+            readDirectProperty("JASYPT_ENCRYPTOR_PASSWORD")
+                ?: readDirectProperty("jasypt.encryptor.password")
+                ?: readSpringProperty("jasypt.encryptor.password")
+                ?: error(
+                    "Missing Jasypt password. " +
+                        "Set JASYPT_ENCRYPTOR_PASSWORD as an environment variable, " +
+                        "pass -Djasypt.encryptor.password=... to the JVM, " +
+                        "or provide jasypt.encryptor.password in a local secret config file."
+                )
+
+        return PooledPBEStringEncryptor().apply {
             val config =
                 SimpleStringPBEConfig().apply {
-                    password = ENCRYPT_KEY
+                    password = encryptKey
                     algorithm = "PBEWithMD5AndDES"
                     keyObtentionIterations = 1000
                     poolSize = 1
@@ -27,5 +37,20 @@ class JasyptConfig {
                 }
             setConfig(config)
         }
-}
+    }
 
+    private fun readDirectProperty(name: String): String? {
+        val fromEnv = System.getenv(name)?.takeUnless { it.isBlank() || isPlaceholder(it) }
+        if (fromEnv != null) {
+            return fromEnv
+        }
+
+        return System.getProperty(name)?.takeUnless { it.isBlank() || isPlaceholder(it) }
+    }
+
+    private fun readSpringProperty(name: String): String? =
+        environment.getProperty(name)?.takeUnless { it.isBlank() || isPlaceholder(it) }
+
+    private fun isPlaceholder(value: String): Boolean =
+        value.startsWith("\${") && value.endsWith("}")
+}

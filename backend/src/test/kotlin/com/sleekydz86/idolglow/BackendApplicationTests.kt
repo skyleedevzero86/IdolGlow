@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class BackendApplicationTests {
 
