@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.global.security
 
-import com.nimbusds.oauth2.sdk.TokenResponse
+import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException

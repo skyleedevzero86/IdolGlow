@@ -2,6 +2,8 @@ package com.sleekydz86.idolglow.user.user.ui
 
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.user.user.application.UserService
+import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
+import com.sleekydz86.idolglow.user.user.ui.request.UpdateNicknameRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping

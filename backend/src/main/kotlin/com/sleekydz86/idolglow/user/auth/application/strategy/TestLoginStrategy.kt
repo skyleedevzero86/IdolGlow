@@ -1,9 +1,10 @@
 package com.sleekydz86.idolglow.user.auth.application.strategy
 
 import com.sleekydz86.idolglow.user.auth.application.AuthService
+import com.sleekydz86.idolglow.user.auth.application.LoginRequest
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
+import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import org.springframework.stereotype.Service
-import java.security.AuthProvider
 
 @Service
 class TestLoginStrategy(

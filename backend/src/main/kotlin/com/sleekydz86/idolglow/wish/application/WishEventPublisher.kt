@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.wish.application
 
+import com.sleekydz86.idolglow.wish.application.event.WishDeleteEvent
+import com.sleekydz86.idolglow.wish.domain.vo.WishAggregateType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 

@@ -6,7 +6,7 @@ import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
-import com.sleekydz86.idolglow.productpackage.product.domain.ProductCommandRepository
+import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation

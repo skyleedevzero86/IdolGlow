@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.discovery.infrastructure
 
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductTag
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
 

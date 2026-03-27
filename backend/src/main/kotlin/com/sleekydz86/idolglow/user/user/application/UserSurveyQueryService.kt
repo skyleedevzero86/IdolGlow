@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.user.user.application
 
+import com.sleekydz86.idolglow.user.user.domain.UserRepository
+import com.sleekydz86.idolglow.user.user.domain.UserSurveyRepository
+import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

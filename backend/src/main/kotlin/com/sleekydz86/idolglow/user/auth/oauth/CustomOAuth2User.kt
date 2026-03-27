@@ -1,7 +1,8 @@
 package com.sleekydz86.idolglow.user.auth.oauth
 
+import com.sleekydz86.idolglow.user.auth.application.userInfo.OAuth2UserInfo
+import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import org.springframework.security.oauth2.core.user.OAuth2User
-import java.security.AuthProvider
 
 class CustomOAuth2User(
     val provider: AuthProvider,

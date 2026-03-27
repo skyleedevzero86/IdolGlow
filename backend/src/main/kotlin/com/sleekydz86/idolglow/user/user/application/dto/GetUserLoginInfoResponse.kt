@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.user.user.application.dto
 
+import com.sleekydz86.idolglow.user.user.domain.User
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 

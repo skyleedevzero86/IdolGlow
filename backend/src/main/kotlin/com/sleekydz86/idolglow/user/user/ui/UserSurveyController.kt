@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.user.user.application.UserSurveyQueryService
 import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyResponse
 import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyUpsertResponse
 import com.sleekydz86.idolglow.user.user.ui.request.CreateUserSurveyRequest
+import com.sleekydz86.idolglow.user.user.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

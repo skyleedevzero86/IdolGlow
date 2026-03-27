@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.schedule.application
 
 import com.sleekydz86.idolglow.schedule.domain.ScheduleRepository
+import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
+import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.collections.map

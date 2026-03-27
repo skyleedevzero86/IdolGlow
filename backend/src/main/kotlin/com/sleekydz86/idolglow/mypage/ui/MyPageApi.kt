@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.mypage.ui
 
+import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
+import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
+import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

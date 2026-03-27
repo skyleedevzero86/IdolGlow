@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.wish.application
 
+import com.sleekydz86.idolglow.wish.application.event.WishDeleteEvent
+import com.sleekydz86.idolglow.wish.domain.WishRepository
+import com.sleekydz86.idolglow.wish.domain.vo.WishAggregateType
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional

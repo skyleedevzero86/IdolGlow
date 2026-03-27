@@ -3,6 +3,12 @@ package com.sleekydz86.idolglow.schedule.ui
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.schedule.application.ScheduleCommandService
 import com.sleekydz86.idolglow.schedule.application.ScheduleQueryService
+import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
+import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
+import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
+import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
+import com.sleekydz86.idolglow.schedule.ui.request.UpdateScheduleRequest
+import com.sleekydz86.idolglow.schedule.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

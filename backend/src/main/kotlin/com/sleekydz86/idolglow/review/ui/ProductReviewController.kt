@@ -3,6 +3,12 @@ package com.sleekydz86.idolglow.review.ui
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.review.application.ProductReviewCommandService
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
+import com.sleekydz86.idolglow.review.application.dto.CreateProductReviewCommand
+import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
+import com.sleekydz86.idolglow.review.application.dto.ReviewImageFile
+import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
+import com.sleekydz86.idolglow.review.ui.request.CreateProductReviewRequest
+import com.sleekydz86.idolglow.review.ui.request.UpdateProductReviewRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

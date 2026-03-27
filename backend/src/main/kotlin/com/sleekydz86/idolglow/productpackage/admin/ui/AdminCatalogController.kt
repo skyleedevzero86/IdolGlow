@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.productpackage.admin.ui
 
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminCatalogService
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
+import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize

@@ -1,8 +1,15 @@
 package com.sleekydz86.idolglow.productpackage.product.application
 
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
+import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
+import com.sleekydz86.idolglow.productpackage.option.domain.Option
+import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
+import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
 import com.sleekydz86.idolglow.productpackage.product.application.event.ProductCreateEvent
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.wish.application.WishEventPublisher
+import com.sleekydz86.idolglow.wish.domain.vo.WishAggregateType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

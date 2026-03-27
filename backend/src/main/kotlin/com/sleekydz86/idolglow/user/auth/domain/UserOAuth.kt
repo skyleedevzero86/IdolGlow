@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.domain
 
+import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import jakarta.persistence.*
-import java.security.AuthProvider
 
 @Entity
 @Table(name = "user_oauths")

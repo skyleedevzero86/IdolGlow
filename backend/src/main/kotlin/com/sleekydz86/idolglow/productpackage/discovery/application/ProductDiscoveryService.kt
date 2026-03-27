@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.discovery.application
 
+import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
+import com.sleekydz86.idolglow.productpackage.discovery.infrastructure.ProductDiscoveryQueryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.collections.sortedWith

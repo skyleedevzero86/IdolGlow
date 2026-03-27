@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.user.user.application.dto
 
+import com.sleekydz86.idolglow.user.user.domain.vo.ConceptType
 import java.time.LocalDate
 
 data class UpsertUserSurveyCommand (

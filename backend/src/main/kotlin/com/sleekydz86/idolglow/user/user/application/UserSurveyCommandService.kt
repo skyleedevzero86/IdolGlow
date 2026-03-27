@@ -1,6 +1,10 @@
 package com.sleekydz86.idolglow.user.user.application
 
 import com.sleekydz86.idolglow.user.user.application.dto.UpsertUserSurveyCommand
+import com.sleekydz86.idolglow.user.user.domain.UserSurvey
+import com.sleekydz86.idolglow.user.user.domain.UserSurveyRepository
+import com.sleekydz86.idolglow.user.user.domain.UserRepository
+import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyUpsertResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
