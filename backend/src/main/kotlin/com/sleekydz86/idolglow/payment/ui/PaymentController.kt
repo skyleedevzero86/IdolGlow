@@ -46,7 +46,7 @@ class PaymentController(
         @RequestHeader("X-Mock-Payment-Secret", required = false) secret: String?,
         @Valid @RequestBody request: MockPaymentWebhookRequest
     ): ResponseEntity<PaymentResponse> {
-        require(secret == webhookSecret) { "Invalid webhook secret." }
+        require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
 
         val payment = when (request.status) {
             MockPaymentWebhookStatus.SUCCEEDED ->
@@ -55,13 +55,13 @@ class PaymentController(
             MockPaymentWebhookStatus.FAILED ->
                 reservationPaymentService.handlePaymentFailed(
                     paymentReference = request.paymentReference,
-                    reason = request.failureReason ?: "mock payment failed"
+                    reason = request.failureReason ?: "모의 결제가 실패했습니다."
                 )
 
             MockPaymentWebhookStatus.CANCELED ->
                 reservationPaymentService.handlePaymentCanceled(
                     paymentReference = request.paymentReference,
-                    reason = request.failureReason ?: "mock payment canceled"
+                    reason = request.failureReason ?: "모의 결제가 취소되었습니다."
                 )
         }
 

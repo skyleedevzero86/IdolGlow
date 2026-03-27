@@ -22,7 +22,7 @@ class ImageEventListener(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleImageCreate(event: ImageCreateEvent) {
-        require(event.content.isNotEmpty()) { "content must not be empty." }
+        require(event.content.isNotEmpty()) { "이미지 내용은 비어 있을 수 없습니다." }
 
         val image = Image.createAndStore(
             aggregateType = event.aggregateType,

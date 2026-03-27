@@ -54,7 +54,7 @@ class ProductCommandService(
 
     fun deleteProduct(productId: Long) {
         val product = productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("Product not found: $productId")
+            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
 
         productCommandRepository.delete(product)
 
@@ -70,7 +70,7 @@ class ProductCommandService(
 
     private fun findOptions(optionIds: List<Long>): List<Option> {
         val options = optionRepository.findAllByIdIn(optionIds)
-        require(options.size == optionIds.size) { "One or more options are not found." }
+        require(options.size == optionIds.size) { "옵션 중 일부를 찾을 수 없습니다." }
         return options
     }
 }

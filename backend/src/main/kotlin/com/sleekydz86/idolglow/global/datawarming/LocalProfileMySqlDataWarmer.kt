@@ -64,16 +64,16 @@ class LocalProfileMySqlDataWarmer(
         }
 
         val user1 = userJpaRepository.save(
-            User.Companion.of(
+            User.of(
                 email = "alice@example.com",
                 nickname = "alice01",
                 role = UserRole.ADMIN
             )
         )
-        val user2 = userJpaRepository.save(User.Companion.of(email = "bob@example.com", nickname = "bob02"))
+        val user2 = userJpaRepository.save(User.of(email = "bob@example.com", nickname = "bob02"))
 
         userOAuthJpaRepository.save(
-            UserOAuth.Companion.of(
+            UserOAuth.of(
                 userId = user1.id,
                 provider = AuthProvider.TEST,
                 providerId = "google",
@@ -85,49 +85,49 @@ class LocalProfileMySqlDataWarmer(
             UserSurvey.of(
                 user = user1,
                 concept = ConceptType.DREAMY,
-                idolName = "Sample Idol name~",
+                idolName = "샘플 아이돌",
                 visitStartDate = LocalDate.now().plusDays(3),
                 visitEndDate = LocalDate.now().plusDays(5),
-                places = listOf("Seoul", "Hongdae")
+                places = listOf("서울", "홍대")
             )
         )
 
         val option1 = optionJpaRepository.save(
             Option(
-                name = "Photo Shoot",
-                description = "Studio photo shoot option.",
+                name = "포토 촬영",
+                description = "스튜디오 포토 촬영 옵션입니다.",
                 price = BigDecimal("5000.00"),
-                location = "Seoul Studio"
+                location = "서울 스튜디오"
             )
         )
         val option2 = optionJpaRepository.save(
             Option(
-                name = "Makeup Session",
-                description = "Professional makeup session.",
+                name = "메이크업 세션",
+                description = "전문 메이크업 세션 옵션입니다.",
                 price = BigDecimal("8000.00"),
-                location = "Seoul Salon"
+                location = "서울 살롱"
             )
         )
 
         val slotStartDate = LocalDate.now().plusDays(1)
         val slotEndDate = slotStartDate.plusDays(1)
-        val product = Product.Companion.createWithTimeSlots(
-            name = "Idol Experience",
-            description = "One-day idol experience with photos and styling.",
+        val product = Product.createWithTimeSlots(
+            name = "아이돌 체험",
+            description = "사진 촬영과 스타일링이 포함된 원데이 아이돌 체험입니다.",
             options = listOf(option1, option2),
-            tagNames = listOf("idol", "photo", "makeup"),
+            tagNames = listOf("아이돌", "촬영", "메이크업"),
             slotStartDate = slotStartDate,
             slotEndDate = slotEndDate
         )
         val locationPayload = ProductLocationPayload(
-            name = "Doki Studio",
+            name = "도키 스튜디오",
             latitude = BigDecimal("37.5665"),
             longitude = BigDecimal("126.9780"),
-            roadAddressName = "1 Seoul-ro",
-            addressName = "Seoul, Korea",
+            roadAddressName = "서울로 1",
+            addressName = "서울특별시",
             kakaoPlaceId = "kakao-1234"
         )
-        val productLocation = ProductLocation.Companion.of(product, locationPayload)
+        val productLocation = ProductLocation.of(product, locationPayload)
         product.setLocation(productLocation)
         val savedProduct = productJpaRepository.save(product)
 
@@ -151,7 +151,7 @@ class LocalProfileMySqlDataWarmer(
             Schedule.of(
                 userId = user1.id,
                 productId = savedProduct.id,
-                title = "Local sample visit",
+                title = "로컬 샘플 방문",
                 startAt = scheduleStart,
                 endAt = scheduleEnd
             )
@@ -162,7 +162,7 @@ class LocalProfileMySqlDataWarmer(
                 product = savedProduct,
                 userId = user1.id,
                 ratingScore = 5,
-                content = "So bad..."
+                content = "정말 만족스러운 체험이었어요."
             )
         )
 

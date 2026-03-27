@@ -35,11 +35,11 @@ class AdminCatalogService(
             .map(AdminReservationSlotResponse::from)
 
     fun createSlots(productId: Long, request: CreateReservationSlotsRequest): List<AdminReservationSlotResponse> {
-        require(!request.endDate.isBefore(request.startDate)) { "endDate must not be before startDate." }
-        require(request.startHour < request.endHour) { "startHour must be before endHour." }
+        require(!request.endDate.isBefore(request.startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
+        require(request.startHour < request.endHour) { "시작 시간은 종료 시간보다 빨라야 합니다." }
 
         val product = productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("Product not found: $productId")
+            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
 
         val existingKeys = product.reservationSlots
             .map { slotKey(it.reservationDate, it.startTime) }
@@ -71,28 +71,28 @@ class AdminCatalogService(
 
     fun deleteSlot(slotId: Long) {
         val slot = reservationSlotRepository.findByIdForUpdate(slotId)
-            ?: throw IllegalArgumentException("Reservation slot not found: $slotId")
+            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
         val now = LocalDateTime.now()
         slot.validateAvailability(slot.product.id, now)
         require(!reservationRepository.existsByReservationSlotId(slotId)) {
-            "Reservation slot with reservation history cannot be deleted."
+            "예약 이력이 있는 예약 슬롯은 삭제할 수 없습니다."
         }
         reservationSlotRepository.delete(slot)
     }
 
     fun deleteProduct(productId: Long) {
         require(!reservationRepository.existsByProductId(productId)) {
-            "Product with reservation history cannot be deleted."
+            "예약 이력이 있는 상품은 삭제할 수 없습니다."
         }
         productCommandService.deleteProduct(productId)
     }
 
     fun deleteOption(optionId: Long) {
         require(!productOptionAdminRepository.existsByOptionId(optionId)) {
-            "Option attached to a product cannot be deleted."
+            "상품에 연결된 옵션은 삭제할 수 없습니다."
         }
         val option = optionRepository.findById(optionId)
-            ?: throw IllegalArgumentException("Option not found: $optionId")
+            ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
         imageEventPublisher.publishDelete(ImageAggregateType.OPTION, optionId)
         optionRepository.delete(option)
     }

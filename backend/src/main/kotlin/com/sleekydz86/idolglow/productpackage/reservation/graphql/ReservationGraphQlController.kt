@@ -25,7 +25,7 @@ class ReservationGraphQlController(
     @QueryMapping
     fun reservation(@Argument id: String): ReservationSummaryGraphQlResponse {
         val reservationId = id.toLongOrNull()
-            ?: throw IllegalArgumentException("id must be numeric.")
+            ?: throw IllegalArgumentException("id는 숫자여야 합니다.")
 
         return ReservationSummaryGraphQlResponse.from(
             reservationQueryService.findReservationDetail(

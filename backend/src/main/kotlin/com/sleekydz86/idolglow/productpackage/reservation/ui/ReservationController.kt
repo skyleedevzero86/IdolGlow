@@ -44,7 +44,7 @@ class ReservationController(
         @PathVariable reservationId: Long,
     ): ResponseEntity<ReservationSummaryResponse> {
         val existing = reservationQueryService.findReservationDetail(reservationId, userId)
-        require(existing.productId == productId) { "Reservation does not belong to product $productId." }
+        require(existing.productId == productId) { "해당 예약은 상품 ID $productId 에 속하지 않습니다." }
         reservationCommandService.cancelReservationByUser(reservationId, userId)
         return ResponseEntity.ok(
             reservationQueryService.findReservationDetail(reservationId, userId)

@@ -107,7 +107,7 @@ class Reservation(
     }
 
     fun validateOwner(userId: Long) {
-        require(this.userId == userId) { "Reservation can be handled only by its owner." }
+        require(this.userId == userId) { "본인 예약만 처리할 수 있습니다." }
     }
 
     fun isPending(): Boolean = status == ReservationStatus.PENDING
@@ -116,8 +116,8 @@ class Reservation(
         status == ReservationStatus.PENDING && expiresAt?.let { !it.isAfter(now) } == true
 
     fun reschedule(newSlot: ReservationSlot): Reservation {
-        require(newSlot.product == reservationSlot.product) { "Reservation slot must belong to the same product." }
-        require(!newSlot.isStatusBooked) { "Reservation slot is already booked." }
+        require(newSlot.product == reservationSlot.product) { "같은 상품의 예약 슬롯으로만 변경할 수 있습니다." }
+        require(!newSlot.isStatusBooked) { "이미 예약된 슬롯입니다." }
         ensureActive()
         reservationSlot = newSlot
         alignWithSlot(newSlot)
@@ -126,7 +126,7 @@ class Reservation(
 
     private fun ensureActive() {
         if (status == ReservationStatus.BOOKED || status == ReservationStatus.CANCELED) {
-            throw IllegalStateException("Booked or canceled reservation cannot be modified.")
+            throw IllegalStateException("확정되었거나 취소된 예약은 변경할 수 없습니다.")
         }
     }
 
@@ -149,7 +149,7 @@ class Reservation(
         }
 
         if (!allowed) {
-            throw IllegalStateException("Cannot change status from $status to $targetStatus.")
+            throw IllegalStateException("$status 상태에서 $targetStatus 상태로 변경할 수 없습니다.")
         }
 
         beforeChange?.invoke()

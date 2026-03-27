@@ -15,7 +15,7 @@ class TestLoginStrategy(
 
     override fun login(request: LoginRequest): TokenResponse {
         val email = request.email?.trim()
-            ?: throw IllegalArgumentException("email is required for test login")
+            ?: throw IllegalArgumentException("테스트 로그인에는 이메일이 필요합니다.")
 
         val providerId = "test:$email"
 

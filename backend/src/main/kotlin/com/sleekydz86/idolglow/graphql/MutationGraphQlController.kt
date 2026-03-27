@@ -32,12 +32,12 @@ class MutationGraphQlController(
         val created = reservationCommandService.createReservation(
             CreateReservationCommand(
                 productId = productId.toLongOrNull()
-                    ?: throw IllegalArgumentException("productId must be numeric."),
+                    ?: throw IllegalArgumentException("productId는 숫자여야 합니다."),
                 reservationSlotId = input.reservationSlotId.toLongOrNull()
-                    ?: throw IllegalArgumentException("reservationSlotId must be numeric."),
+                    ?: throw IllegalArgumentException("reservationSlotId는 숫자여야 합니다."),
                 userId = userId,
                 totalPrice = input.totalPrice.toBigDecimalOrNull()
-                    ?: throw IllegalArgumentException("totalPrice must be numeric.")
+                    ?: throw IllegalArgumentException("totalPrice는 숫자여야 합니다.")
             )
         )
         return ReservationCreatedGraphQlResponse.from(created)
@@ -48,7 +48,7 @@ class MutationGraphQlController(
         val userId = authenticatedUserIdResolver.resolveRequired()
         val reservation = reservationCommandService.cancelReservationByUser(
             reservationId = reservationId.toLongOrNull()
-                ?: throw IllegalArgumentException("reservationId must be numeric."),
+                ?: throw IllegalArgumentException("reservationId는 숫자여야 합니다."),
             userId = userId
         )
         return ReservationSummaryGraphQlResponse.from(
@@ -65,7 +65,7 @@ class MutationGraphQlController(
         val response = wishCommandService.toggle(
             userId = userId,
             productId = productId.toLongOrNull()
-                ?: throw IllegalArgumentException("productId must be numeric.")
+                ?: throw IllegalArgumentException("productId는 숫자여야 합니다.")
         )
         return WishToggleGraphQlResponse.from(response)
     }
@@ -79,7 +79,7 @@ class MutationGraphQlController(
         val review = productReviewCommandService.createReview(
             CreateProductReviewCommand(
                 productId = productId.toLongOrNull()
-                    ?: throw IllegalArgumentException("productId must be numeric."),
+                    ?: throw IllegalArgumentException("productId는 숫자여야 합니다."),
                 userId = userId,
                 rating = input.rating,
                 content = input.content

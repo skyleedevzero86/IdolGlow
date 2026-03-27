@@ -69,7 +69,7 @@ class UserSurvey(
         places: Places
     ) {
         require(!visitEndDate.isBefore(visitStartDate)) {
-            "visitEndDate must be on or after visitStartDate"
+            "방문 종료일은 방문 시작일과 같거나 이후여야 합니다."
         }
 
         this.concept = concept

@@ -61,7 +61,7 @@ class Product(
 
     fun validateTotalPrice(requestedTotalPrice: BigDecimal) {
         if (totalPrice.compareTo(requestedTotalPrice) != 0) {
-            throw IllegalArgumentException("Total price mismatch for product ${id}.")
+            throw IllegalArgumentException("상품 ${id}의 총금액이 일치하지 않습니다.")
         }
     }
 
@@ -87,12 +87,12 @@ class Product(
         startHour: Int = DEFAULT_RESERVATION_START_HOUR,
         endHour: Int = DEFAULT_RESERVATION_END_HOUR
     ) {
-        require(!endDate.isBefore(startDate)) { "endDate must not be before startDate." }
+        require(!endDate.isBefore(startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
         require(
             startHour in DEFAULT_RESERVATION_START_HOUR..(DEFAULT_RESERVATION_END_HOUR - 1) &&
                     endHour in (DEFAULT_RESERVATION_START_HOUR + 1)..DEFAULT_RESERVATION_END_HOUR &&
                     startHour < endHour
-        ) { "Slot hours must be between 09 and 16." }
+        ) { "예약 가능 시간은 09시부터 16시 사이여야 합니다." }
 
         var currentDate = startDate
         while (!currentDate.isAfter(endDate)) {

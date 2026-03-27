@@ -35,9 +35,9 @@ class WishCommandService(
 
     private fun loadUser(userId: Long): User =
         userRepository.findById(userId)
-            ?: throw EntityNotFoundException("User with id $userId does not exist.")
+            ?: throw EntityNotFoundException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
 
     private fun loadProduct(productId: Long): Product =
         productRepository.findById(productId)
-            ?: throw EntityNotFoundException("Product with id $productId does not exist.")
+            ?: throw EntityNotFoundException("ID가 $productId 인 상품을 찾을 수 없습니다.")
 }

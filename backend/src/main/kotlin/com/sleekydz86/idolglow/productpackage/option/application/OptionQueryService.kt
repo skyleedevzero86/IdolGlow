@@ -18,5 +18,5 @@ class OptionQueryService(
     fun findOption(optionId: Long): OptionResponse =
         optionRepository.findById(optionId)
             ?.let { OptionResponse.from(it) }
-            ?: throw IllegalArgumentException("Option with id $optionId does not exist.")
+            ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
 }

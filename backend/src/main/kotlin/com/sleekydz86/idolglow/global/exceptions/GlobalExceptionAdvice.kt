@@ -79,6 +79,7 @@ class GlobalExceptionAdvice {
                     }
                 }
             }
+
             else -> "요청 본문을 읽을 수 없습니다."
         }
 

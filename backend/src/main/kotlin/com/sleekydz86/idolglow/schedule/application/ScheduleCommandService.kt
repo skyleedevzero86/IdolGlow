@@ -41,5 +41,5 @@ class ScheduleCommandService(
 
     private fun findUserSchedule(scheduleId: Long, userId: Long): Schedule =
         scheduleRepository.findByIdAndUserId(scheduleId, userId)
-            ?: throw IllegalArgumentException("Schedule $scheduleId not found.")
+            ?: throw IllegalArgumentException("일정을 찾을 수 없습니다: $scheduleId")
 }

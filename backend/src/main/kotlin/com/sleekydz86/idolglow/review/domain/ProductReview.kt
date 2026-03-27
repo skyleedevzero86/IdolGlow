@@ -44,8 +44,8 @@ class ProductReview(
 ) : BaseEntity() {
 
     fun validateOwner(userId: Long, productId: Long) {
-        require(this.userId == userId) { "You can handle only your own review." }
-        require(this.product.id == productId) { "Review does not belong to product ${productId}." }
+        require(this.userId == userId) { "본인이 작성한 리뷰만 처리할 수 있습니다." }
+        require(this.product.id == productId) { "해당 리뷰는 상품 ID $productId 에 속하지 않습니다." }
     }
 
     fun changeReview(rating: ReviewRating, content: String): ProductReview {
@@ -72,7 +72,7 @@ class ProductReview(
         }
 
         private fun validateContent(content: String) {
-            require(content.isNotBlank()) { "Review content must not be blank." }
+            require(content.isNotBlank()) { "리뷰 내용은 비어 있을 수 없습니다." }
         }
     }
 }
