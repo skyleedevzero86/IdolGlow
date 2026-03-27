@@ -57,7 +57,7 @@ dependencies {
 
 	//Jsypt
 	implementation("com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5")
-	implementation("org.flywaydb:flyway-core")
+	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
 	// Spring Data jpa
