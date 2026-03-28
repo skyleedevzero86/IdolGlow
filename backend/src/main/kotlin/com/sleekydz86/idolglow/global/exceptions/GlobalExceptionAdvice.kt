@@ -16,27 +16,6 @@ class GlobalExceptionAdvice {
 
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    @ExceptionHandler(Exception::class)
-    fun handleUnexpectedException(
-        request: HttpServletRequest,
-        exception: Exception
-    ): ResponseEntity<ExceptionResponse> {
-        log.error(
-            "예상하지 못한 오류 발생: {} {} | 메시지: {}",
-            request.method, request.requestURI, exception.message, exception
-        )
-
-        return ResponseEntity
-            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(
-                ExceptionResponse(
-                    name = "INTERNAL_SERVER_ERROR",
-                    errorCode = "INTERNAL_SERVER_ERROR",
-                    message = exception.message ?: "서버 내부 오류가 발생했습니다."
-                )
-            )
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationException(
         request: HttpServletRequest,
@@ -169,6 +148,27 @@ class GlobalExceptionAdvice {
                     name = "NOT_FOUND",
                     errorCode = "NOT_FOUND",
                     message = exception.message ?: "대상을 찾을 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleUnexpectedException(
+        request: HttpServletRequest,
+        exception: Exception
+    ): ResponseEntity<ExceptionResponse> {
+        log.error(
+            "예상하지 못한 오류 발생: {} {} | 메시지: {}",
+            request.method, request.requestURI, exception.message, exception
+        )
+
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ExceptionResponse(
+                    name = "INTERNAL_SERVER_ERROR",
+                    errorCode = "INTERNAL_SERVER_ERROR",
+                    message = exception.message ?: "서버 내부 오류가 발생했습니다."
                 )
             )
     }

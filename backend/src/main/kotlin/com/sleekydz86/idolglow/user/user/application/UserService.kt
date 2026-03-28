@@ -20,7 +20,7 @@ class UserService(
 
     fun getUser(userId: Long): GetUserLoginInfoResponse {
         val user = findUser(userId)
-        return GetUserLoginInfoResponse.from(user, findPreferredOAuthProfile(user.id))
+        return buildLoginResponse(user)
     }
 
     private fun findUser(userId: Long): User =
@@ -39,7 +39,7 @@ class UserService(
         if (profileImageUrl != null) {
             applyProfileImageUrl(user, profileImageUrl)
         }
-        return GetUserLoginInfoResponse.from(userRepository.save(user), findPreferredOAuthProfile(user.id))
+        return buildLoginResponse(userRepository.save(user))
     }
 
     private fun applyProfileImageUrl(user: User, raw: String) {
@@ -61,8 +61,16 @@ class UserService(
         user.profileImageUrl = t
     }
 
-    private fun findPreferredOAuthProfile(userId: Long) =
-        userOAuthRepository.findAllByUserId(userId)
-            .sortedWith(compareByDescending { it.provider == AuthProvider.GOOGLE })
-            .firstOrNull { !it.profileName.isNullOrBlank() || !it.profileImageUrl.isNullOrBlank() }
+    private fun buildLoginResponse(user: User): GetUserLoginInfoResponse {
+        val rows = userOAuthRepository.findAllByUserId(user.id)
+        if (rows.isEmpty()) {
+            return GetUserLoginInfoResponse.from(user, false, null, null)
+        }
+        val sorted = rows.sortedWith(compareByDescending { it.provider == AuthProvider.GOOGLE })
+        val primary = sorted.first()
+        val oauthProfileName = primary.profileName?.trim()?.takeIf { it.isNotEmpty() }
+        val pictureRow = sorted.firstOrNull { !it.profileImageUrl.isNullOrBlank() || !it.profileName.isNullOrBlank() }
+        val profileImageFallback = pictureRow?.profileImageUrl?.trim()?.takeIf { it.isNotEmpty() }
+        return GetUserLoginInfoResponse.from(user, true, oauthProfileName, profileImageFallback)
+    }
 }
