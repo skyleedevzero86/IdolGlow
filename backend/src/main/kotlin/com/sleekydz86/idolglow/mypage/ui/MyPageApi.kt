@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.mypage.ui
 
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
+import com.sleekydz86.idolglow.mypage.application.dto.MypagePromoStripResponse
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -75,4 +76,14 @@ interface MyPageApi {
         @Parameter(hidden = true)
         userId: Long
     ): ResponseEntity<List<ProductReviewResponse>>
+
+    @Operation(
+        summary = "마이페이지 프로모 2칸",
+        description = "추천 패키지 문구와 예약·일정 기반 두 번째 카드 문구를 한 번에 반환합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    fun promoStrip(
+        @Parameter(hidden = true)
+        userId: Long
+    ): ResponseEntity<MypagePromoStripResponse>
 }

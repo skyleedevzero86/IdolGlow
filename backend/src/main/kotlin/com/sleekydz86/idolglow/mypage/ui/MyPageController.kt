@@ -5,6 +5,8 @@ import com.sleekydz86.idolglow.productpackage.reservation.application.Reservatio
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
+import com.sleekydz86.idolglow.mypage.application.MypagePromoService
+import com.sleekydz86.idolglow.mypage.application.dto.MypagePromoStripResponse
 import com.sleekydz86.idolglow.user.user.application.UserService
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
 import org.springframework.http.ResponseEntity
@@ -18,7 +20,8 @@ import org.springframework.web.bind.annotation.RestController
 class MyPageController(
     private val reservationQueryService: ReservationQueryService,
     private val productReviewQueryService: ProductReviewQueryService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val mypagePromoService: MypagePromoService,
 ) : MyPageApi {
 
     @GetMapping("/user")
@@ -43,4 +46,8 @@ class MyPageController(
     @GetMapping("/reviews")
     override fun findMyReviews(@LoginUser userId: Long): ResponseEntity<List<ProductReviewResponse>> =
         ResponseEntity.ok(productReviewQueryService.findReviewsByUser(userId))
+
+    @GetMapping("/promo")
+    override fun promoStrip(@LoginUser userId: Long): ResponseEntity<MypagePromoStripResponse> =
+        ResponseEntity.ok(mypagePromoService.promoStrip(userId))
 }
