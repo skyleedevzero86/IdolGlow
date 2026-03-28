@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.user.user.ui
 
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
-import com.sleekydz86.idolglow.user.user.ui.request.UpdateNicknameRequest
+import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -29,9 +29,9 @@ interface UserApi {
             )
         ]
     )
-    fun updateNickname(
+    fun updateProfile(
         @Parameter(hidden = true)
         userId: Long,
-        @Valid request: UpdateNicknameRequest
+        @Valid request: UpdateProfileRequest
     ): ResponseEntity<GetUserLoginInfoResponse>
 }

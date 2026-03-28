@@ -26,6 +26,9 @@ class User(
     @Embedded
     var nickname: Nickname,
 
+    @Column(name = "profile_image_url", length = 500)
+    var profileImageUrl: String? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var role: UserRole = UserRole.USER,

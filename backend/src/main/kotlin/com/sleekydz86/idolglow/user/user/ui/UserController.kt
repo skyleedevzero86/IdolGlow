@@ -3,7 +3,7 @@ package com.sleekydz86.idolglow.user.user.ui
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.user.user.application.UserService
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
-import com.sleekydz86.idolglow.user.user.ui.request.UpdateNicknameRequest
+import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping
@@ -18,9 +18,9 @@ class UserController(
 ) : UserApi {
 
     @PatchMapping
-    override fun updateNickname(
+    override fun updateProfile(
         @LoginUser userId: Long,
-        @Valid @RequestBody request: UpdateNicknameRequest
+        @Valid @RequestBody request: UpdateProfileRequest
     ): ResponseEntity<GetUserLoginInfoResponse> =
-        ResponseEntity.ok(userService.updateNickname(userId, request.nickname))
+        ResponseEntity.ok(userService.updateProfile(userId, request.nickname, request.profileImageUrl))
 }
