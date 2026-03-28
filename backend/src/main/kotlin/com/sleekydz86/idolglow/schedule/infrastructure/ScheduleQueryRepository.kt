@@ -1,44 +1,57 @@
 package com.sleekydz86.idolglow.schedule.infrastructure
 
-import com.querydsl.jpa.impl.JPAQueryFactory
-import com.sleekydz86.idolglow.schedule.domain.QSchedule
 import com.sleekydz86.idolglow.schedule.domain.Schedule
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
 import org.springframework.stereotype.Repository
 
 @Repository
-class ScheduleQueryRepository(
-    private val queryFactory: JPAQueryFactory
-) {
+class ScheduleQueryRepository {
 
-    private val schedule = QSchedule.schedule
+    @PersistenceContext
+    private lateinit var entityManager: EntityManager
 
-    fun findByIdAndUserId(scheduleId: Long, userId: Long): Schedule? =
-        queryFactory.selectFrom(schedule)
-            .where(
-                schedule.id.eq(scheduleId),
-                schedule.userId.eq(userId)
-            )
-            .fetchOne()
+    fun findByIdAndUserId(scheduleId: Long, userId: Long): Schedule? {
+        return entityManager.createQuery(
+            """
+            select s
+            from Schedule s
+            where s.id = :scheduleId
+              and s.userId = :userId
+            """.trimIndent(),
+            Schedule::class.java
+        )
+            .setParameter("scheduleId", scheduleId)
+            .setParameter("userId", userId)
+            .resultList
+            .firstOrNull()
+    }
 
     fun findByUserId(userId: Long, cursorId: Long?, size: Int): List<Schedule> {
         val cursorSchedule = cursorId?.let { findByIdAndUserId(it, userId) }
         if (cursorId != null && cursorSchedule == null) {
-            throw IllegalArgumentException("일정을 찾을 수 없습니다: $cursorId")
+            throw IllegalArgumentException("일정을 찾을 수 없습니다. scheduleId=$cursorId")
         }
 
-        val predicate = schedule.userId.eq(userId).let { base ->
-            cursorSchedule?.let {
-                base.and(
-                    schedule.startAt.lt(it.startAt)
-                        .or(schedule.startAt.eq(it.startAt).and(schedule.id.lt(it.id)))
-                )
-            } ?: base
+        val queryString = buildString {
+            appendLine("select s")
+            appendLine("from Schedule s")
+            appendLine("where s.userId = :userId")
+            if (cursorSchedule != null) {
+                appendLine("  and (s.startAt < :cursorStartAt or (s.startAt = :cursorStartAt and s.id < :cursorId))")
+            }
+            appendLine("order by s.startAt desc, s.id desc")
         }
 
-        return queryFactory.selectFrom(schedule)
-            .where(predicate)
-            .orderBy(schedule.startAt.desc(), schedule.id.desc())
-            .limit((size + 1).toLong())
-            .fetch()
+        val query = entityManager.createQuery(queryString, Schedule::class.java)
+            .setParameter("userId", userId)
+            .setMaxResults(size + 1)
+
+        if (cursorSchedule != null) {
+            query.setParameter("cursorStartAt", cursorSchedule.startAt)
+            query.setParameter("cursorId", cursorSchedule.id)
+        }
+
+        return query.resultList
     }
 }

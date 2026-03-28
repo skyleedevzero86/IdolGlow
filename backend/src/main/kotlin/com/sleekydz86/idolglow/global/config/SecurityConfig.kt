@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.global.security.JsonAuthenticationEntryPoint
 import com.sleekydz86.idolglow.global.security.JwtFilter
 import com.sleekydz86.idolglow.global.security.JwtProvider
 import com.sleekydz86.idolglow.user.auth.oauth.CustomOAuth2UserService
+import com.sleekydz86.idolglow.user.auth.oauth.OAuth2LoginFailureHandler
 import com.sleekydz86.idolglow.user.auth.oauth.OAuth2SuccessHandler
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -13,6 +14,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
@@ -27,6 +29,7 @@ class SecurityConfig(
     private val jwtProvider: JwtProvider,
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val oAuth2SuccessHandler: OAuth2SuccessHandler,
+    private val oAuth2LoginFailureHandler: OAuth2LoginFailureHandler,
     private val authenticationEntryPoint: JsonAuthenticationEntryPoint,
     private val accessDeniedHandler: JsonAccessDeniedHandler,
     @Value("\${app.auth.test-login.enabled:false}")
@@ -34,6 +37,12 @@ class SecurityConfig(
     @Value("#{'\${app.security.allowed-origins:http://localhost:3000}'.split(',')}")
     private val allowedOrigins: List<String>,
 ) {
+
+    @Bean
+    fun webSecurityCustomizer(): WebSecurityCustomizer =
+        WebSecurityCustomizer { web ->
+            web.ignoring().requestMatchers("/", "/favicon.ico")
+        }
 
     @Bean
     @Order(0)
@@ -60,7 +69,7 @@ class SecurityConfig(
                 it.accessDeniedHandler(accessDeniedHandler)
             }
             .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/health/check").permitAll()
@@ -78,6 +87,7 @@ class SecurityConfig(
                     endpoint.userService(customOAuth2UserService)
                 }
                 oauth.successHandler(oAuth2SuccessHandler)
+                oauth.failureHandler(oAuth2LoginFailureHandler)
             }
             .addFilterBefore(
                 JwtFilter(jwtProvider),
@@ -114,8 +124,11 @@ class SecurityConfig(
             "/auth/reissue",
             "/auth/logout",
             "/oauth2/**",
+            "/login/oauth2/**",
+            "/login",
+            "/login/**",
             "/auth/callback",
-            "/payments/mock/webhook"
+            "/payments/mock/webhook",
         )
     }
 }
