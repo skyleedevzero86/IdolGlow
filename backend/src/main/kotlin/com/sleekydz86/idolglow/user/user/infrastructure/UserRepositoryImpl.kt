@@ -18,4 +18,7 @@ class UserRepositoryImpl(
 
     override fun save(user: User): User =
         userJpaRepository.save(user)
+
+    override fun saveAndFlush(user: User): User =
+        userJpaRepository.saveAndFlush(user)
 }

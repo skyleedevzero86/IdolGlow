@@ -4,6 +4,7 @@ plugins {
 	id("org.springframework.boot") version "4.0.4"
 	id("io.spring.dependency-management") version "1.1.7"
 	kotlin("kapt") version "2.2.21"
+	kotlin("plugin.jpa") version "2.2.21"
 }
 
 group = "com.sleekydz86"
@@ -69,8 +70,8 @@ dependencies {
 	implementation("io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64")
 
 	// QueryDsl
-	implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
-	kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
+	implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+	kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
 	kapt("jakarta.annotation:jakarta.annotation-api")
 	kapt("jakarta.persistence:jakarta.persistence-api")
 
@@ -102,7 +103,7 @@ kapt {
 
 sourceSets {
 	main {
-		kotlin.srcDir(querydslDir)
+		kotlin.srcDir("build/generated/source/kapt/main")
 	}
 }
 

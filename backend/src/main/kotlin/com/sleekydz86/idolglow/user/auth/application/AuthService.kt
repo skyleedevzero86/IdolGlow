@@ -35,8 +35,7 @@ class AuthService(
             ?: run {
 
                 val user: User = userRepository.findByEmail(email)
-
-                    ?: userRepository.save(User.of(email = email))
+                    ?: userRepository.saveAndFlush(User.of(email = email))
 
                 UserOAuth.of(
                     userId = user.id,
