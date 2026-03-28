@@ -26,7 +26,8 @@ data class GetUserLoginInfoResponse(
                 email = user.email,
                 nickname = user.nickname.value,
                 name = oauthProfile?.profileName,
-                picture = oauthProfile?.profileImageUrl,
+                picture = user.profileImageUrl?.takeIf { it.isNotBlank() }
+                    ?: oauthProfile?.profileImageUrl,
                 lastLoginAt = user.lastLoginAt
             )
     }
