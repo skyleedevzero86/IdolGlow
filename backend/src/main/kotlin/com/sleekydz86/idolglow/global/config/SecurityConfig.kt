@@ -13,9 +13,12 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -73,6 +76,7 @@ class SecurityConfig(
             }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/health/check").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
                 val permitList = PERMIT_LIST.toMutableList()
                 if (testLoginEnabled) {
@@ -98,6 +102,9 @@ class SecurityConfig(
     }
 
     @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
+    @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
         configuration.allowedOrigins = allowedOrigins.map { it.trim() }.filter { it.isNotEmpty() }
@@ -121,6 +128,9 @@ class SecurityConfig(
 
         private val PERMIT_LIST = arrayOf(
             "/auth/login/**",
+            "/auth/signup",
+            "/auth/signup/check-email",
+            "/auth/signup/check-nickname",
             "/auth/reissue",
             "/auth/logout",
             "/oauth2/**",
