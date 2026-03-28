@@ -59,7 +59,7 @@ dependencies {
 	implementation("com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
-	runtimeOnly("org.flywaydb:flyway-database-mysql")
+	runtimeOnly("org.flywaydb:flyway-mysql:11.14.1")
 
 	// Spring Data jpa
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
