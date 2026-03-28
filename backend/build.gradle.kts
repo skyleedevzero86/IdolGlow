@@ -75,6 +75,9 @@ dependencies {
 	kapt("jakarta.annotation:jakarta.annotation-api")
 	kapt("jakarta.persistence:jakarta.persistence-api")
 
+	// 로컬 스토리지서버
+	implementation("io.minio:minio:8.5.17")
+
 	//JWT
 	compileOnly("io.jsonwebtoken:jjwt-api:0.11.2")
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")

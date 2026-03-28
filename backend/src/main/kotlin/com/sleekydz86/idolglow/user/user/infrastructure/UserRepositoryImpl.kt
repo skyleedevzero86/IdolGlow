@@ -16,6 +16,9 @@ class UserRepositoryImpl(
     override fun findByEmail(email: String): User? =
         userJpaRepository.findByEmail(email)
 
+    override fun findByNicknameValue(nickname: String): User? =
+        userJpaRepository.findByNicknameValue(nickname)
+
     override fun save(user: User): User =
         userJpaRepository.save(user)
 

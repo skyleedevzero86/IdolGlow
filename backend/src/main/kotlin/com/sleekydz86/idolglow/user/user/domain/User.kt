@@ -29,6 +29,9 @@ class User(
     @Column(name = "profile_image_url", length = 500)
     var profileImageUrl: String? = null,
 
+    @Column(name = "password_hash", length = 255)
+    var passwordHash: String? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var role: UserRole = UserRole.USER,
@@ -56,7 +59,13 @@ class User(
         ): User {
             nickname.trim()
             val resolvedNickname = if (nickname.isBlank()) Nickname.defaultFromEmail(email) else Nickname.of(nickname)
-            return User(email = email, nickname = resolvedNickname, role = role)
+            return User(
+                email = email,
+                nickname = resolvedNickname,
+                profileImageUrl = null,
+                passwordHash = null,
+                role = role
+            )
         }
     }
 }
