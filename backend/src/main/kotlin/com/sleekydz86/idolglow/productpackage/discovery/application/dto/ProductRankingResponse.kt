@@ -25,7 +25,10 @@ data class ProductRankingResponse(
     val averageRating: BigDecimal,
     @field:Schema(description = "리뷰 개수", example = "42")
     val reviewCount: Long,
-    @field:Schema(description = "추천에 매칭된 태그", example = "[\"아이돌\", \"메이크업\"]")
+    @field:Schema(
+        description = "추천 신호와 겹친 상품 태그(찜/리뷰 선호 태그 및 설문 컨셉명과 일치하는 태그)",
+        example = "[\"DREAMY\", \"메이크업\"]"
+    )
     val matchedTags: List<String>,
 ) {
     companion object {

@@ -23,11 +23,31 @@ data class ProductPagingQueryResponse(
 
     @field:Schema(description = "태그 목록", example = "[\"뷰티\", \"메이크업\"]")
     val tagNames: List<String>,
+
+    @field:Schema(description = "대표 위치(지도)")
+    val location: ProductLocationSummaryResponse? = null,
+
+    @field:Schema(description = "검색 기준점으로부터 거리(미터). 위경도 검색 시에만 채워짐")
+    val distanceMeters: Double? = null,
+
+    @field:Schema(description = "찜 수")
+    val wishCount: Long = 0L,
+
+    @field:Schema(description = "평균 별점")
+    val averageRating: Double = 0.0,
+
+    @field:Schema(description = "리뷰 수")
+    val reviewCount: Long = 0L,
 ) {
     companion object {
         fun from(
             product: Product,
             tagNames: List<String> = product.productTags.map { it.tagName }.distinct(),
+            location: ProductLocationSummaryResponse? = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },
+            distanceMeters: Double? = null,
+            wishCount: Long = 0L,
+            averageRating: Double = 0.0,
+            reviewCount: Long = 0L,
         ): ProductPagingQueryResponse =
             ProductPagingQueryResponse(
                 id = product.id,
@@ -35,7 +55,12 @@ data class ProductPagingQueryResponse(
                 description = product.description,
                 minPrice = product.minPrice,
                 totalPrice = product.totalPrice,
-                tagNames = tagNames
+                tagNames = tagNames,
+                location = location,
+                distanceMeters = distanceMeters,
+                wishCount = wishCount,
+                averageRating = averageRating,
+                reviewCount = reviewCount,
             )
     }
 }

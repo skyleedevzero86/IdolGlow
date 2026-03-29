@@ -9,8 +9,11 @@ import org.springframework.data.repository.query.Param
 
 interface ReservationSlotJpaRepository : JpaRepository<ReservationSlot, Long> {
 
+    @Query("select s from ReservationSlot s join fetch s.product where s.id = :id")
+    fun findWithProductById(@Param("id") id: Long): ReservationSlot?
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select rs from ReservationSlot rs where rs.id = :id")
+    @Query("select rs from ReservationSlot rs join fetch rs.product where rs.id = :id")
     fun findByIdForUpdate(@Param("id") id: Long): ReservationSlot?
 
     fun findAllByProductIdOrderByReservationDateAscStartTimeAsc(productId: Long): List<ReservationSlot>

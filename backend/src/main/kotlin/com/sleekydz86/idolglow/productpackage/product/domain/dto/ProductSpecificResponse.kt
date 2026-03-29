@@ -44,6 +44,9 @@ data class ProductSpecificResponse(
 
     @field:Schema(description = "총 가격", example = "300000.00")
     val totalPrice: BigDecimal,
+
+    @field:Schema(description = "대표 위치(지도)")
+    val location: ProductLocationSummaryResponse?,
 ) {
     companion object {
         fun from(product: Product): ProductSpecificResponse {
@@ -64,7 +67,8 @@ data class ProductSpecificResponse(
                 slotEndTime = slotEndTime,
                 reservationSlotCount = product.reservationSlots.size,
                 minPrice = product.minPrice,
-                totalPrice = product.totalPrice
+                totalPrice = product.totalPrice,
+                location = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },
             )
         }
     }

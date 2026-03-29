@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationSlotWaitlistService
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
@@ -20,10 +21,15 @@ class ReservationPaymentService(
     private val reservationRepository: ReservationRepository,
     private val reservationCommandService: ReservationCommandService,
     private val notificationCommandService: NotificationCommandService,
+    private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
 ) {
 
     fun handlePaymentSucceeded(paymentReference: String): Payment {
         val payment = findPaymentForUpdate(paymentReference)
+        return finalizeAfterGatewaySuccess(payment)
+    }
+
+    fun finalizeAfterGatewaySuccess(payment: Payment): Payment {
         val reservation = findReservationForUpdate(payment.reservation.id)
         val now = LocalDateTime.now()
 
@@ -32,7 +38,7 @@ class ReservationPaymentService(
         }
 
         require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.SUCCEEDED) {
-            "결제 $paymentReference 는 ${payment.status} 상태에서 성공 처리할 수 없습니다."
+            "결제는 ${payment.status} 상태에서 확정할 수 없습니다."
         }
 
         if (reservation.status == ReservationStatus.CANCELED) {
@@ -85,6 +91,7 @@ class ReservationPaymentService(
                 message = "예약 #${reservation.id} 결제에 실패했습니다.",
                 link = "/reservations/${reservation.id}"
             )
+            reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
         }
 
         return payment
@@ -117,6 +124,7 @@ class ReservationPaymentService(
                 message = "예약 #${reservation.id} 결제가 취소되었습니다.",
                 link = "/reservations/${reservation.id}"
             )
+            reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
         }
 
         return payment

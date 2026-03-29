@@ -4,6 +4,8 @@ import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductTag
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Repository
 class ProductDiscoveryQueryRepository(
@@ -16,7 +18,7 @@ class ProductDiscoveryQueryRepository(
             select p.id
             from products p
             left join wishes w on w.product_id = p.id
-            left join product_reviews r on r.product_id = p.id
+            left join product_reviews r on r.product_id = p.id and r.hidden_at is null
             group by p.id
             order by count(distinct w.id) desc, coalesce(avg(r.rating), 0) desc, count(distinct r.id) desc, p.id desc
             """.trimIndent()
@@ -89,6 +91,7 @@ class ProductDiscoveryQueryRepository(
             select distinct p from Product p
             left join fetch p.productOptions po
             left join fetch po.option o
+            left join fetch p.productLocation
             where p.id in :ids
             """.trimIndent(),
             Product::class.java
@@ -96,6 +99,118 @@ class ProductDiscoveryQueryRepository(
             .setParameter("ids", productIds)
             .resultList
     }
+
+    
+    fun findPersonalizedCandidateProductIds(
+        signalTags: List<String>,
+        visitStart: LocalDate?,
+        visitEnd: LocalDate?,
+        placeKeywords: List<String>,
+        now: LocalDateTime,
+        limit: Int,
+    ): List<Long> {
+        val acc = LinkedHashSet<Long>()
+
+        if (signalTags.isNotEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            val tagIds = entityManager.createQuery(
+                """
+                select distinct p.id from Product p
+                join p.productTags pt
+                where pt.tagName in :tags
+                """.trimIndent(),
+                java.lang.Long::class.java
+            )
+                .setParameter("tags", signalTags)
+                .resultList as List<java.lang.Long>
+            acc.addAll(tagIds.map { it.toLong() })
+        }
+
+        if (visitStart != null && visitEnd != null) {
+            @Suppress("UNCHECKED_CAST")
+            val slotIds = entityManager.createQuery(
+                """
+                select distinct rs.product.id from ReservationSlot rs
+                where rs.reservationDate between :start and :end
+                and rs.isStatusBooked = false
+                and (rs.holdExpiresAt is null or rs.holdExpiresAt < :now)
+                """.trimIndent(),
+                java.lang.Long::class.java
+            )
+                .setParameter("start", visitStart)
+                .setParameter("end", visitEnd)
+                .setParameter("now", now)
+                .resultList as List<java.lang.Long>
+            acc.addAll(slotIds.map { it.toLong() })
+        }
+
+        for (raw in placeKeywords) {
+            val kw = sanitizeLikeKeyword(raw)
+            if (kw.isEmpty()) continue
+            val pattern = "%${kw.lowercase()}%"
+            @Suppress("UNCHECKED_CAST")
+            val locIds = entityManager.createQuery(
+                """
+                select distinct pl.product.id from ProductLocation pl
+                where lower(concat(concat(coalesce(pl.roadAddressName,''), coalesce(pl.addressName,'')), pl.name)) like :p
+                """.trimIndent(),
+                java.lang.Long::class.java
+            )
+                .setParameter("p", pattern)
+                .resultList as List<java.lang.Long>
+            acc.addAll(locIds.map { it.toLong() })
+
+            @Suppress("UNCHECKED_CAST")
+            val optIds = entityManager.createQuery(
+                """
+                select distinct po.product.id from ProductOption po
+                join po.option o
+                where lower(o.location) like :p
+                """.trimIndent(),
+                java.lang.Long::class.java
+            )
+                .setParameter("p", pattern)
+                .resultList as List<java.lang.Long>
+            acc.addAll(optIds.map { it.toLong() })
+        }
+
+        return acc.sorted().take(limit.coerceAtLeast(1))
+    }
+
+    fun countAvailableTripDaysByProduct(
+        productIds: List<Long>,
+        visitStart: LocalDate,
+        visitEnd: LocalDate,
+        now: LocalDateTime,
+    ): Map<Long, Int> {
+        if (productIds.isEmpty()) {
+            return emptyMap()
+        }
+        @Suppress("UNCHECKED_CAST")
+        val rows = entityManager.createQuery(
+            """
+            select rs.product.id, count(distinct rs.reservationDate)
+            from ReservationSlot rs
+            where rs.product.id in :ids
+            and rs.reservationDate between :start and :end
+            and rs.isStatusBooked = false
+            and (rs.holdExpiresAt is null or rs.holdExpiresAt < :now)
+            group by rs.product.id
+            """.trimIndent()
+        )
+            .setParameter("ids", productIds)
+            .setParameter("start", visitStart)
+            .setParameter("end", visitEnd)
+            .setParameter("now", now)
+            .resultList as List<Array<Any>>
+
+        return rows.associate { row ->
+            (row[0] as Number).toLong() to (row[1] as Number).toInt()
+        }
+    }
+
+    private fun sanitizeLikeKeyword(raw: String): String =
+        raw.trim().replace("%", "").replace("_", "").replace("\\", "")
 
     fun findTagNamesByProductIds(productIds: List<Long>): Map<Long, List<String>> {
         if (productIds.isEmpty()) {
@@ -145,6 +260,7 @@ class ProductDiscoveryQueryRepository(
             select r.product.id, coalesce(avg(r.rating.value), 0), count(r.id)
             from ProductReview r
             where r.product.id in :ids
+            and r.hiddenAt is null
             group by r.product.id
             """.trimIndent()
         )

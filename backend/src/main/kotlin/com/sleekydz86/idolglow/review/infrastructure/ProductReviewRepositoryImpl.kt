@@ -24,6 +24,9 @@ class ProductReviewRepositoryImpl(
     override fun findByUserId(userId: Long): List<ProductReview> =
         productReviewJpaRepository.findAllByUserId(userId)
 
+    override fun existsByReservationId(reservationId: Long): Boolean =
+        productReviewJpaRepository.existsByReservationId(reservationId)
+
     override fun delete(review: ProductReview) =
         productReviewJpaRepository.delete(review)
 }
