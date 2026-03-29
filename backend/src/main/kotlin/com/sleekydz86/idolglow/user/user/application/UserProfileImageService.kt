@@ -4,8 +4,11 @@ import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import com.sleekydz86.idolglow.global.exceptions.CustomException
 import com.sleekydz86.idolglow.global.exceptions.UserExceptionType
+import io.minio.BucketExistsArgs
+import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
+import io.minio.errors.ErrorResponseException
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -42,6 +45,8 @@ class UserProfileImageService(
         return if (minioProps.enabled) {
             val client = minioClientProvider.getIfAvailable()
                 ?: throw IllegalStateException("app.storage.minio.enabled=true 인데 MinioClient 빈이 없습니다.")
+            val bucket = minioProps.bucket
+            ensureProfileBucket(client, bucket)
             val key = "profiles/$userId/$filename"
             val objectContentType = contentType.ifBlank {
                 when (ext) {
@@ -51,15 +56,20 @@ class UserProfileImageService(
                     else -> "application/octet-stream"
                 }
             }
-            ByteArrayInputStream(bytes).use { stream ->
-                client.putObject(
-                    PutObjectArgs.builder()
-                        .bucket(minioProps.bucket)
-                        .`object`(key)
-                        .stream(stream, bytes.size.toLong(), -1)
-                        .contentType(objectContentType)
-                        .build()
-                )
+            try {
+                ByteArrayInputStream(bytes).use { stream ->
+                    client.putObject(
+                        PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .`object`(key)
+                            .stream(stream, bytes.size.toLong(), -1)
+                            .contentType(objectContentType)
+                            .build()
+                    )
+                }
+            } catch (e: Exception) {
+                if (e is CustomException) throw e
+                throw CustomException(UserExceptionType.PROFILE_IMAGE_STORAGE_UNAVAILABLE)
             }
             "${minioProps.publicBaseUrl.trimEnd('/')}/$key"
         } else {
@@ -70,6 +80,19 @@ class UserProfileImageService(
             val path = dir.resolve(filename)
             Files.write(path, bytes)
             "${publicUrlProps.publicBaseUrl.trimEnd('/')}/uploads/profile-avatars/$userId/$filename"
+        }
+    }
+
+    private fun ensureProfileBucket(client: MinioClient, bucket: String) {
+        try {
+            val exists = client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())
+            if (!exists) {
+                client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
+            }
+        } catch (_: ErrorResponseException) {
+            throw CustomException(UserExceptionType.PROFILE_IMAGE_STORAGE_UNAVAILABLE)
+        } catch (_: Exception) {
+            throw CustomException(UserExceptionType.PROFILE_IMAGE_STORAGE_UNAVAILABLE)
         }
     }
 
