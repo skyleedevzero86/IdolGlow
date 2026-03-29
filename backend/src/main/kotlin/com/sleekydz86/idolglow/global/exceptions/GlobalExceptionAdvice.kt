@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.global.exceptions
 
-import tools.jackson.databind.JsonMappingException
+import tools.jackson.databind.DatabindException
 import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
@@ -43,18 +43,18 @@ class GlobalExceptionAdvice {
         exception: HttpMessageNotReadableException
     ): ResponseEntity<ExceptionResponse> {
         val message = when (val cause = exception.cause) {
-            is JsonMappingException -> {
+            is DatabindException -> {
                 when {
                     cause.message?.contains("Required request body is missing") == true ->
                         "요청 본문이 필요합니다."
 
                     cause.message?.contains("null") == true -> {
-                        val fieldPath = cause.path.joinToString(".") { it.fieldName }
+                        val fieldPath = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
                         "필수 필드 '$fieldPath'는 null일 수 없습니다."
                     }
 
                     else -> {
-                        val fieldPath = cause.path.joinToString(".") { it.fieldName }
+                        val fieldPath = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
                         "JSON 형식이 올바르지 않습니다. (필드: $fieldPath)"
                     }
                 }
