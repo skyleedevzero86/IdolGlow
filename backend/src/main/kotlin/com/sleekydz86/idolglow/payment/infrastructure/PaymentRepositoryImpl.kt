@@ -23,4 +23,13 @@ class PaymentRepositoryImpl(
 
     override fun findByReservationIdForUpdate(reservationId: Long): Payment? =
         paymentJpaRepository.findByReservationIdForUpdate(reservationId)
+
+    override fun findByOrderIdForUpdate(orderId: String): Payment? =
+        paymentJpaRepository.findByOrderIdForUpdate(orderId)
+
+    override fun findByIdempotencyKeyForUpdate(idempotencyKey: String): Payment? =
+        paymentJpaRepository.findByIdempotencyKeyForUpdate(idempotencyKey)
+
+    override fun findByIdForUpdate(paymentId: Long): Payment? =
+        paymentJpaRepository.findPaymentByIdForUpdate(paymentId)
 }

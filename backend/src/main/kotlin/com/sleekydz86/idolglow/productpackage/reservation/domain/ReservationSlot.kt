@@ -110,6 +110,14 @@ class ReservationSlot(
     fun hasExpiredHold(now: LocalDateTime = LocalDateTime.now()): Boolean =
         holdReservationId != null && holdExpiresAt?.isAfter(now) == false
 
+    fun isUnavailableForWaitlistRegistration(now: LocalDateTime = LocalDateTime.now()): Boolean {
+        clearExpiredHold(now)
+        if (isStatusBooked) {
+            return true
+        }
+        return holdReservationId != null && holdExpiresAt?.isAfter(now) == true
+    }
+
     private fun isHeld(now: LocalDateTime): Boolean =
         holdReservationId != null && holdExpiresAt?.isAfter(now) == true
 

@@ -19,6 +19,9 @@ class ReservationRepositoryImpl(
     override fun findById(id: Long): Reservation? =
         reservationJpaRepository.findByIdOrNull(id)
 
+    override fun findByIdWithSlotAndProduct(id: Long): Reservation? =
+        reservationJpaRepository.findByIdWithSlotAndProduct(id)
+
     override fun findByIdForUpdate(id: Long): Reservation? =
         reservationJpaRepository.findByIdForUpdate(id)
 
@@ -28,6 +31,9 @@ class ReservationRepositoryImpl(
             now = now,
             pageable = PageRequest.of(0, limit)
         )
+
+    override fun findExpiringSoonPendingIds(threshold: LocalDateTime, now: LocalDateTime): List<Long> =
+        reservationJpaRepository.findExpiringSoonPendingIds(threshold = threshold, now = now)
 
     override fun existsByReservationSlotId(reservationSlotId: Long): Boolean =
         reservationJpaRepository.existsByReservationSlotId(reservationSlotId)

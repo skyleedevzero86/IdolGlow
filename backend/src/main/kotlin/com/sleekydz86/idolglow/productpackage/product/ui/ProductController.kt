@@ -3,7 +3,7 @@ package com.sleekydz86.idolglow.productpackage.product.ui
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
-import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
 import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
@@ -31,19 +31,38 @@ class ProductController(
     @GetMapping
     override fun findProducts(
         @RequestParam(required = false) lastId: Long?,
+        @RequestParam(required = false) offset: Int?,
         @RequestParam(required = false, defaultValue = "20") size: Int?,
         @RequestParam(required = false) tag: String?,
-    ): ResponseEntity<List<ProductPagingQueryResponse>> {
+        @RequestParam(required = false) tags: List<String>?,
+        @RequestParam(required = false) keyword: String?,
+        @RequestParam(required = false) minPrice: String?,
+        @RequestParam(required = false) maxPrice: String?,
+        @RequestParam(required = false) visitDate: String?,
+        @RequestParam(required = false) reservableOnly: Boolean?,
+        @RequestParam(required = false) sort: String?,
+        @RequestParam(required = false) nearLatitude: String?,
+        @RequestParam(required = false) nearLongitude: String?,
+        @RequestParam(required = false) radiusMeters: Int?,
+    ): ResponseEntity<ProductBrowseResult> {
         val resolvedSize = (size ?: 20).coerceIn(1, 50)
-        val resolvedTag = tag?.trim()
-            ?.takeIf { it.isNotEmpty() }
-
-        val result = productQueryService.findProductsByNoOffset(
+        val params = ProductBrowseRequestParser.parse(
             lastId = lastId,
+            offset = offset,
             size = resolvedSize,
-            tagName = resolvedTag
+            tag = tag,
+            tags = tags,
+            keyword = keyword,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            visitDate = visitDate,
+            reservableOnly = reservableOnly,
+            sort = sort,
+            nearLatitude = nearLatitude,
+            nearLongitude = nearLongitude,
+            radiusMeters = radiusMeters,
         )
-        return ResponseEntity.ok(result)
+        return ResponseEntity.ok(productQueryService.browseProducts(params))
     }
 
     @GetMapping("/{productId}")

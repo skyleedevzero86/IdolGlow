@@ -1,6 +1,29 @@
+enum ProductSort {
+    NEWEST
+    POPULARITY
+    RATING
+    REVIEW_COUNT
+    DISTANCE
+}
+
 type Query {
     health: String!
-    products(lastId: ID, size: Int = 20, tag: String): ProductSlice!
+    products(
+        lastId: ID
+        offset: Int
+        size: Int = 20
+        tag: String
+        tags: [String!]
+        keyword: String
+        minPrice: String
+        maxPrice: String
+        visitDate: String
+        reservableOnly: Boolean
+        sort: ProductSort
+        nearLatitude: String
+        nearLongitude: String
+        radiusMeters: Int
+    ): ProductSlice!
     product(id: ID!): ProductDetail!
     popularProducts(size: Int = 10): [ProductRanking!]!
     recommendedProducts(size: Int = 10): [ProductRanking!]!
@@ -9,6 +32,7 @@ type Query {
     reservations: [ReservationSummary!]!
     upcomingReservations: [ReservationSummary!]!
     reservation(id: ID!): ReservationSummary!
+    mySlotWaitlist: [SlotWaitlistEntry!]!
     wishes(lastWishId: ID, size: Int = 20): [WishProduct!]!
     productReviews(productId: ID!): [ProductReview!]!
     myReviews: [ProductReview!]!
@@ -18,6 +42,7 @@ type Query {
     mySurvey: UserSurvey!
     schedules(cursorId: ID, size: Int = 20): ScheduleSlice!
     schedule(id: ID!): Schedule!
+    scheduleCalendarExport(scheduleId: ID!): ScheduleCalendarExport!
     checkSignupEmail(email: String): SignupCheck!
     checkSignupNickname(nickname: String): SignupCheck!
     adminSubscriptionOverview: AdminSubscriptionOverview!
@@ -29,10 +54,14 @@ type Query {
 type Mutation {
     createReservation(productId: ID!, input: CreateReservationInput!): ReservationCreatedPayload!
     cancelReservation(reservationId: ID!): ReservationSummary!
+    registerSlotWaitlist(productId: ID!, reservationSlotId: ID!): SlotWaitlistEntry!
+    unregisterSlotWaitlist(productId: ID!, reservationSlotId: ID!): Boolean!
     toggleWish(productId: ID!): WishToggle!
     createProductReview(productId: ID!, input: CreateProductReviewInput!): ProductReview!
     updateProductReview(productId: ID!, reviewId: ID!, input: UpdateProductReviewInput!): ProductReview!
     deleteProductReview(productId: ID!, reviewId: ID!): Boolean!
+    toggleProductReviewHelpful(productId: ID!, reviewId: ID!): Int!
+    reportProductReview(productId: ID!, reviewId: ID!, reason: String!): Boolean!
     markNotificationRead(notificationId: ID!): Notification!
     updateProfile(input: UpdateProfileInput!): UserProfile!
     upsertUserSurvey(input: UpsertUserSurveyInput!): UserSurveyUpsertPayload!
@@ -54,6 +83,16 @@ type Mutation {
 type ProductSlice {
     items: [ProductSummary!]!
     nextCursor: ID
+    nextOffset: Int
+}
+
+type ProductLocationSummary {
+    name: String!
+    latitude: String!
+    longitude: String!
+    roadAddressName: String
+    addressName: String
+    displayAddress: String!
 }
 
 type ProductSummary {
@@ -63,6 +102,11 @@ type ProductSummary {
     minPrice: String!
     totalPrice: String!
     tagNames: [String!]!
+    location: ProductLocationSummary
+    distanceMeters: String
+    wishCount: Int!
+    averageRating: String!
+    reviewCount: Int!
 }
 
 type ProductDetail {
@@ -78,6 +122,9 @@ type ProductDetail {
     reservationSlotCount: Int!
     minPrice: String!
     totalPrice: String!
+    location: ProductLocationSummary
+    thumbnailUrl: String
+    imageUrls: [String!]!
 }
 
 type ProductRanking {
@@ -99,6 +146,7 @@ type ProductOption {
     description: String!
     price: String!
     location: String!
+    imageUrls: [String!]!
 }
 
 type OptionItem {
@@ -107,6 +155,16 @@ type OptionItem {
     description: String!
     price: String!
     location: String!
+}
+
+type SlotWaitlistEntry {
+    id: ID!
+    productId: ID!
+    productName: String!
+    reservationSlotId: ID!
+    reservationDate: String!
+    startTime: String!
+    endTime: String!
 }
 
 type ReservationSummary {
@@ -138,12 +196,18 @@ type Payment {
     reservationId: ID!
     provider: String!
     paymentReference: String!
+    paymentNo: String!
+    orderId: String!
+    paymentKey: String
     amount: String!
     status: String!
+    externalStatus: String
     approvedAt: String
     failedAt: String
     expiredAt: String
     failureReason: String
+    failCode: String
+    cancelAmount: String!
 }
 
 type WishToggle {
@@ -156,6 +220,7 @@ type WishProduct {
     name: String!
     minPrice: String!
     tagNames: [String!]!
+    thumbnailUrl: String
 }
 
 type Notification {
@@ -223,6 +288,11 @@ type Schedule {
     title: String!
     startAt: String!
     endAt: String!
+}
+
+type ScheduleCalendarExport {
+    googleCalendarUrl: String!
+    icsRelativePath: String!
 }
 
 type ScheduleSlice {
@@ -333,6 +403,10 @@ type ProductReview {
     content: String!
     createdAt: String!
     images: [ProductReviewImage!]!
+    verifiedPurchase: Boolean!
+    helpfulCount: Int!
+    hidden: Boolean!
+    previewImageUrl: String
 }
 
 type ProductReviewImage {
@@ -348,6 +422,7 @@ input CreateReservationInput {
 }
 
 input CreateProductReviewInput {
+    reservationId: ID!
     rating: Int!
     content: String!
 }
@@ -422,6 +497,7 @@ input CreateAdminReservationSlotsInput {
     endDate: String!
     startHour: Int = 9
     endHour: Int = 16
+    excludeWeekends: Boolean = false
 }
 
 input MockPaymentWebhookInput {

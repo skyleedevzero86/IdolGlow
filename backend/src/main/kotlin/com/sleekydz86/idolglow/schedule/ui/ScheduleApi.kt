@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.schedule.ui
 
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
+import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
 import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
 import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
 import com.sleekydz86.idolglow.schedule.ui.request.UpdateScheduleRequest
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.core.io.Resource
 import org.springframework.http.ResponseEntity
 
 @Tag(name = "Schedule", description = "마이페이지 일정 관리 API")
@@ -96,4 +98,46 @@ interface ScheduleApi {
         @Parameter(description = "가져올 일정 개수", example = "20")
         size: Int
     ): ResponseEntity<ScheduleSliceResponse>
+
+    @Operation(
+        summary = "외부 캘린더용 링크",
+        description = "Google Calendar 템플릿 URL과 .ics 다운로드 경로를 반환합니다. .ics에는 D-1·3시간·1시간 전 알람이 포함됩니다."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "조회 성공"),
+            ApiResponse(
+                responseCode = "404",
+                description = "일정을 찾을 수 없음",
+                content = [Content(schema = Schema(hidden = true))]
+            )
+        ]
+    )
+    fun scheduleCalendarExport(
+        @Parameter(hidden = true)
+        userId: Long,
+        @Parameter(description = "일정 ID", example = "1")
+        scheduleId: Long,
+    ): ResponseEntity<ScheduleCalendarExportResponse>
+
+    @Operation(
+        summary = "일정 .ics 다운로드",
+        description = "Apple/Google 등에서 가져올 수 있는 iCalendar 파일입니다. VALARM: 하루 전, 3시간 전, 1시간 전."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "파일 반환"),
+            ApiResponse(
+                responseCode = "404",
+                description = "일정을 찾을 수 없음",
+                content = [Content(schema = Schema(hidden = true))]
+            )
+        ]
+    )
+    fun downloadScheduleIcs(
+        @Parameter(hidden = true)
+        userId: Long,
+        @Parameter(description = "일정 ID", example = "1")
+        scheduleId: Long,
+    ): ResponseEntity<Resource>
 }

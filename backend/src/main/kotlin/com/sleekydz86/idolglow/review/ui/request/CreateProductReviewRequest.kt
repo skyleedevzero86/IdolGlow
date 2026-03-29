@@ -3,11 +3,16 @@ package com.sleekydz86.idolglow.review.ui.request
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "상품 리뷰 생성 요청 DTO")
 data class CreateProductReviewRequest(
+    @field:NotNull
+    @field:Schema(description = "방문 완료 예약 ID(확정·과거 방문일)", example = "12")
+    val reservationId: Long,
+
     @field:Min(1)
     @field:Max(5)
     @field:Schema(description = "상품 평점(1~5)", example = "4")

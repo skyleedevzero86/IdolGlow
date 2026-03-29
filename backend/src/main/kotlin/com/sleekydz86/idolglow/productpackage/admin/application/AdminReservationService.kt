@@ -15,6 +15,7 @@ import java.time.LocalDate
 class AdminReservationService(
     private val adminReservationQueryRepository: AdminReservationQueryRepository,
     private val reservationCommandService: ReservationCommandService,
+    private val adminAuditService: AdminAuditService,
 ) {
 
     fun findDashboard(
@@ -63,6 +64,12 @@ class AdminReservationService(
     fun cancelReservation(reservationId: Long): AdminReservationSummaryResponse {
         val reservation = reservationCommandService.cancelReservationByAdmin(reservationId)
         val payments = adminReservationQueryRepository.findPaymentsByReservationIds(listOf(reservation.id))
+        adminAuditService.log(
+            actionCode = "RESERVATION_CANCEL",
+            targetType = "RESERVATION",
+            targetId = reservationId,
+            detail = null,
+        )
         return AdminReservationSummaryResponse.from(reservation, payments[reservation.id])
     }
 }

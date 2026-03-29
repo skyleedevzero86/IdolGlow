@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -41,7 +42,24 @@ class ProductReview(
 
     @Column(nullable = false, length = 2000)
     var content: String,
+
+    @Column(name = "reservation_id")
+    val reservationId: Long? = null,
+
+    @Column(name = "helpful_count", nullable = false)
+    var helpfulCount: Long = 0L,
+
+    @Column(name = "hidden_at")
+    var hiddenAt: LocalDateTime? = null,
+
+    @Column(name = "hidden_reason", length = 80)
+    var hiddenReason: String? = null,
 ) : BaseEntity() {
+
+    val verifiedPurchase: Boolean
+        get() = reservationId != null
+
+    fun isHidden(): Boolean = hiddenAt != null
 
     fun validateOwner(userId: Long, productId: Long) {
         require(this.userId == userId) { "본인이 작성한 리뷰만 처리할 수 있습니다." }
@@ -55,19 +73,26 @@ class ProductReview(
         return this
     }
 
+    fun hide(now: LocalDateTime, reason: String) {
+        hiddenAt = now
+        hiddenReason = reason.take(80)
+    }
+
     companion object {
         fun of(
             product: Product,
             userId: Long,
-            ratingScore:
-            Int, content: String
+            ratingScore: Int,
+            content: String,
+            reservationId: Long? = null,
         ): ProductReview {
             validateContent(content)
             return ProductReview(
                 product = product,
                 userId = userId,
                 rating = ReviewRating.of(ratingScore),
-                content = content
+                content = content,
+                reservationId = reservationId,
             )
         }
 

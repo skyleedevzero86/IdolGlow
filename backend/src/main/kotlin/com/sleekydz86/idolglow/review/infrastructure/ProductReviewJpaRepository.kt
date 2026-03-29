@@ -7,4 +7,5 @@ interface ProductReviewJpaRepository : JpaRepository<ProductReview, Long> {
     fun findAllByProductId(productId: Long): List<ProductReview>
     fun findByProductIdAndUserId(productId: Long, userId: Long): ProductReview?
     fun findAllByUserId(userId: Long): List<ProductReview>
+    fun existsByReservationId(reservationId: Long): Boolean
 }

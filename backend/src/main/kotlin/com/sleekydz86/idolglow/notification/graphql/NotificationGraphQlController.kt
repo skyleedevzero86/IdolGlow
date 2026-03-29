@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.application.NotificationQueryService
+import com.sleekydz86.idolglow.notification.domain.NotificationType
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
@@ -19,9 +20,16 @@ class NotificationGraphQlController(
 ) {
 
     @QueryMapping
-    fun notifications(): List<NotificationGraphQlResponse> =
-        notificationQueryService.findNotifications(authenticatedUserIdResolver.resolveRequired())
+    fun notifications(@Argument type: String?): List<NotificationGraphQlResponse> {
+        val userId = authenticatedUserIdResolver.resolveRequired()
+        val notificationType = type?.let { NotificationType.valueOf(it) }
+        return notificationQueryService.findNotifications(userId, notificationType)
             .map(NotificationGraphQlResponse::from)
+    }
+
+    @QueryMapping
+    fun notificationUnreadCount(): Long =
+        notificationQueryService.countUnread(authenticatedUserIdResolver.resolveRequired()).count
 
     @MutationMapping
     fun markNotificationRead(@Argument notificationId: String): NotificationGraphQlResponse =
@@ -31,4 +39,10 @@ class NotificationGraphQlController(
                 userId = authenticatedUserIdResolver.resolveRequired()
             )
         )
+
+    @MutationMapping
+    fun markAllNotificationsRead(): Boolean {
+        notificationCommandService.markAllRead(authenticatedUserIdResolver.resolveRequired())
+        return true
+    }
 }

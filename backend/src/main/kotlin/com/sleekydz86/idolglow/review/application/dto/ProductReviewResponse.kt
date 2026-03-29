@@ -20,7 +20,16 @@ data class ProductReviewResponse(
     @Schema(description = "리뷰 작성 일시", example = "2025-12-07T10:15:30")
     val createdAt: LocalDateTime,
     @Schema(description = "리뷰 이미지 목록")
-    val images: List<ProductReviewImageResponse> = emptyList()
+    val images: List<ProductReviewImageResponse> = emptyList(),
+
+    @Schema(description = "방문 완료 예약 기반 인증 리뷰 여부")
+    val verifiedPurchase: Boolean = false,
+
+    @Schema(description = "도움돼요 수")
+    val helpfulCount: Long = 0L,
+
+    @Schema(description = "비공개(신고 누적 등) 여부 — 본인 마이페이지에서만 true일 수 있음")
+    val hidden: Boolean = false,
 ) {
 
     companion object {
@@ -33,7 +42,10 @@ data class ProductReviewResponse(
                 rating = productReview.rating.value,
                 content = productReview.content,
                 createdAt = createdAt,
-                images = images.map { ProductReviewImageResponse.from(it) }
+                images = images.map { ProductReviewImageResponse.from(it) },
+                verifiedPurchase = productReview.verifiedPurchase,
+                helpfulCount = productReview.helpfulCount,
+                hidden = productReview.isHidden(),
             )
         }
     }
