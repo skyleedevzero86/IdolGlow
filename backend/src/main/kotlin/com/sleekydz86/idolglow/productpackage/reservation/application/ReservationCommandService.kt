@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.productpackage.reservation.application
 
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
+import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
 import com.sleekydz86.idolglow.payment.domain.Payment
@@ -35,6 +36,7 @@ class ReservationCommandService(
     private val paymentRepository: PaymentRepository,
     private val scheduleRepository: ScheduleRepository,
     private val notificationCommandService: NotificationCommandService,
+    private val notificationRepository: NotificationRepository,
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
     private val paymentRefundService: PaymentRefundService,
     private val tossPaymentProperties: TossPaymentProperties,
@@ -155,6 +157,25 @@ class ReservationCommandService(
             expiredIds.forEach { reservationId ->
                 expirePendingReservation(reservationId, now)
             }
+        }
+    }
+
+    fun notifyExpiringSoonReservations(warningSeconds: Long = 300) {
+        val now = LocalDateTime.now()
+        val warningThreshold = now.plusSeconds(warningSeconds)
+        val soonExpiredIds = reservationRepository.findExpiringSoonPendingIds(warningThreshold, now)
+        soonExpiredIds.forEach { reservationId ->
+            val reservation = reservationRepository.findByIdForUpdate(reservationId) ?: return@forEach
+            if (reservation.status != ReservationStatus.PENDING) return@forEach
+            val link = "/reservations/${reservation.id}"
+            if (notificationRepository.existsByUserIdAndTypeAndLink(reservation.userId, NotificationType.RESERVATION_EXPIRING_SOON, link)) return@forEach
+            notificationCommandService.create(
+                userId = reservation.userId,
+                type = NotificationType.RESERVATION_EXPIRING_SOON,
+                title = "예약 만료 임박",
+                message = "예약 #${reservation.id} 결제 시간이 곧 만료됩니다. 지금 결제를 완료해 주세요.",
+                link = link,
+            )
         }
     }
 

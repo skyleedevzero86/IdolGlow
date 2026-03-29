@@ -26,6 +26,9 @@ interface ReservationJpaRepository : JpaRepository<Reservation, Long> {
         pageable: Pageable
     ): List<Long>
 
+    @Query("SELECT r.id FROM Reservation r WHERE r.status = 'PENDING' AND r.expiresAt > :now AND r.expiresAt <= :threshold")
+    fun findExpiringSoonPendingIds(@Param("threshold") threshold: LocalDateTime, @Param("now") now: LocalDateTime): List<Long>
+
     @Query("select count(r) > 0 from Reservation r where r.reservationSlot.id = :reservationSlotId")
     fun existsByReservationSlotId(@Param("reservationSlotId") reservationSlotId: Long): Boolean
 

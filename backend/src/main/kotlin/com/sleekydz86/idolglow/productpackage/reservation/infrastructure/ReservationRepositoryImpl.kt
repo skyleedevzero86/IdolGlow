@@ -32,6 +32,9 @@ class ReservationRepositoryImpl(
             pageable = PageRequest.of(0, limit)
         )
 
+    override fun findExpiringSoonPendingIds(threshold: LocalDateTime, now: LocalDateTime): List<Long> =
+        reservationJpaRepository.findExpiringSoonPendingIds(threshold = threshold, now = now)
+
     override fun existsByReservationSlotId(reservationSlotId: Long): Boolean =
         reservationJpaRepository.existsByReservationSlotId(reservationSlotId)
 
