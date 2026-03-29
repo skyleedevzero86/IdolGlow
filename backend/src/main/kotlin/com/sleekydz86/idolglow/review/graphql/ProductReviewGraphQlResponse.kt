@@ -11,6 +11,9 @@ data class ProductReviewGraphQlResponse(
     val content: String,
     val createdAt: String,
     val images: List<ProductReviewImageGraphQlResponse>,
+    val verifiedPurchase: Boolean,
+    val helpfulCount: Int,
+    val hidden: Boolean,
 ) {
     companion object {
         fun from(response: ProductReviewResponse): ProductReviewGraphQlResponse =
@@ -21,7 +24,10 @@ data class ProductReviewGraphQlResponse(
                 rating = response.rating,
                 content = response.content,
                 createdAt = response.createdAt.toString(),
-                images = response.images.map(ProductReviewImageGraphQlResponse::from)
+                images = response.images.map(ProductReviewImageGraphQlResponse::from),
+                verifiedPurchase = response.verifiedPurchase,
+                helpfulCount = response.helpfulCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                hidden = response.hidden,
             )
     }
 }

@@ -19,6 +19,9 @@ class ReservationRepositoryImpl(
     override fun findById(id: Long): Reservation? =
         reservationJpaRepository.findByIdOrNull(id)
 
+    override fun findByIdWithSlotAndProduct(id: Long): Reservation? =
+        reservationJpaRepository.findByIdWithSlotAndProduct(id)
+
     override fun findByIdForUpdate(id: Long): Reservation? =
         reservationJpaRepository.findByIdForUpdate(id)
 
