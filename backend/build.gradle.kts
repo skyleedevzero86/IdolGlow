@@ -21,8 +21,6 @@ repositories {
 	mavenCentral()
 }
 
-val querydslDir = "src/main/generated"
-
 extra["snippetsDir"] = file("build/generated-snippets")
 
 dependencies {
@@ -98,21 +96,9 @@ tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
 	options.release.set(24)
 }
 
-kapt {
-	arguments {
-		arg("querydsl.sourcesDir", querydslDir)
-	}
-}
-
 sourceSets {
 	main {
 		kotlin.srcDir("build/generated/source/kapt/main")
-	}
-}
-
-tasks.named("clean") {
-	doLast {
-		file(querydslDir).deleteRecursively()
 	}
 }
 
