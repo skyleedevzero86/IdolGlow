@@ -20,4 +20,16 @@ interface PaymentJpaRepository : JpaRepository<Payment, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Payment p join fetch p.reservation where p.reservation.id = :reservationId")
     fun findByReservationIdForUpdate(@Param("reservationId") reservationId: Long): Payment?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Payment p join fetch p.reservation where p.orderId = :orderId")
+    fun findByOrderIdForUpdate(@Param("orderId") orderId: String): Payment?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Payment p join fetch p.reservation where p.idempotencyKey = :idempotencyKey")
+    fun findByIdempotencyKeyForUpdate(@Param("idempotencyKey") idempotencyKey: String): Payment?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Payment p join fetch p.reservation where p.id = :id")
+    fun findPaymentByIdForUpdate(@Param("id") id: Long): Payment?
 }

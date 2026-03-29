@@ -1,10 +1,14 @@
 package com.sleekydz86.idolglow.productpackage.reservation.application
 
+import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
+import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
+import com.sleekydz86.idolglow.payment.application.PaymentRefundService
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
@@ -32,6 +36,10 @@ class ReservationCommandService(
     private val paymentRepository: PaymentRepository,
     private val scheduleRepository: ScheduleRepository,
     private val notificationCommandService: NotificationCommandService,
+    private val notificationRepository: NotificationRepository,
+    private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
+    private val paymentRefundService: PaymentRefundService,
+    private val tossPaymentProperties: TossPaymentProperties,
     @Value("\${reservation.pending-timeout-seconds:900}")
     private val pendingTimeoutSeconds: Long,
 ) {
@@ -57,8 +65,13 @@ class ReservationCommandService(
 
         val savedReservation = reservationRepository.save(reservation)
         reservationSlot.hold(savedReservation.id, expiresAt, now)
+        val paymentRef = createPaymentReference(savedReservation.id, now)
         val payment = paymentRepository.save(
-            Payment.createMock(savedReservation, createPaymentReference(savedReservation.id, now))
+            if (tossPaymentProperties.useTossProvider) {
+                Payment.createPendingForToss(savedReservation, paymentRef)
+            } else {
+                Payment.createMock(savedReservation, paymentRef)
+            }
         )
 
         return ReservationCreatedResponse.from(savedReservation, payment)
@@ -68,6 +81,14 @@ class ReservationCommandService(
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         reservation.validateOwner(userId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
+            paymentRefundService.refundBeforeReservationCancel(
+                payment = payment,
+                reservation = reservation,
+                cancelReason = "사용자가 예약을 취소했습니다.",
+                requestedBy = RefundRequestedBy.USER,
+            )
+        }
         if (payment?.status == PaymentStatus.PENDING) {
             payment.markCanceled("사용자가 예약을 취소했습니다.")
         }
@@ -84,6 +105,14 @@ class ReservationCommandService(
     fun cancelReservationByAdmin(reservationId: Long): Reservation {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
+            paymentRefundService.refundBeforeReservationCancel(
+                payment = payment,
+                reservation = reservation,
+                cancelReason = "운영자가 예약을 취소했습니다.",
+                requestedBy = RefundRequestedBy.ADMIN,
+            )
+        }
         if (payment?.status == PaymentStatus.PENDING) {
             payment.markCanceled("운영자가 예약을 취소했습니다.")
         }
@@ -128,6 +157,25 @@ class ReservationCommandService(
             expiredIds.forEach { reservationId ->
                 expirePendingReservation(reservationId, now)
             }
+        }
+    }
+
+    fun notifyExpiringSoonReservations(warningSeconds: Long = 300) {
+        val now = LocalDateTime.now()
+        val warningThreshold = now.plusSeconds(warningSeconds)
+        val soonExpiredIds = reservationRepository.findExpiringSoonPendingIds(warningThreshold, now)
+        soonExpiredIds.forEach { reservationId ->
+            val reservation = reservationRepository.findByIdForUpdate(reservationId) ?: return@forEach
+            if (reservation.status != ReservationStatus.PENDING) return@forEach
+            val link = "/reservations/${reservation.id}"
+            if (notificationRepository.existsByUserIdAndTypeAndLink(reservation.userId, NotificationType.RESERVATION_EXPIRING_SOON, link)) return@forEach
+            notificationCommandService.create(
+                userId = reservation.userId,
+                type = NotificationType.RESERVATION_EXPIRING_SOON,
+                title = "예약 만료 임박",
+                message = "예약 #${reservation.id} 결제 시간이 곧 만료됩니다. 지금 결제를 완료해 주세요.",
+                link = link,
+            )
         }
     }
 
@@ -181,6 +229,7 @@ class ReservationCommandService(
             message = notificationMessage,
             link = "/reservations/${reservation.id}"
         )
+        reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
     }
 
     private fun ensureScheduleExists(reservation: Reservation) {

@@ -12,6 +12,9 @@ import java.time.LocalDateTime
 
 interface ReservationJpaRepository : JpaRepository<Reservation, Long> {
 
+    @Query("select r from Reservation r join fetch r.reservationSlot rs join fetch rs.product where r.id = :id")
+    fun findByIdWithSlotAndProduct(@Param("id") id: Long): Reservation?
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Reservation r join fetch r.reservationSlot rs join fetch rs.product where r.id = :id")
     fun findByIdForUpdate(@Param("id") id: Long): Reservation?
@@ -23,9 +26,22 @@ interface ReservationJpaRepository : JpaRepository<Reservation, Long> {
         pageable: Pageable
     ): List<Long>
 
+    @Query("SELECT r.id FROM Reservation r WHERE r.status = 'PENDING' AND r.expiresAt > :now AND r.expiresAt <= :threshold")
+    fun findExpiringSoonPendingIds(@Param("threshold") threshold: LocalDateTime, @Param("now") now: LocalDateTime): List<Long>
+
     @Query("select count(r) > 0 from Reservation r where r.reservationSlot.id = :reservationSlotId")
     fun existsByReservationSlotId(@Param("reservationSlotId") reservationSlotId: Long): Boolean
 
     @Query("select count(r) > 0 from Reservation r join r.reservationSlot rs where rs.product.id = :productId")
     fun existsByProductId(@Param("productId") productId: Long): Boolean
+
+    @Query(
+        "select count(r) > 0 from Reservation r where r.userId = :userId and r.reservationSlot.id = :slotId " +
+            "and r.status in :statuses"
+    )
+    fun existsByUserIdAndReservationSlotIdAndStatusIn(
+        @Param("userId") userId: Long,
+        @Param("slotId") slotId: Long,
+        @Param("statuses") statuses: Collection<ReservationStatus>,
+    ): Boolean
 }
