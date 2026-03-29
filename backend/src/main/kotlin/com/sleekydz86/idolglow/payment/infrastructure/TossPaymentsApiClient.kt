@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.payment.infrastructure
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
