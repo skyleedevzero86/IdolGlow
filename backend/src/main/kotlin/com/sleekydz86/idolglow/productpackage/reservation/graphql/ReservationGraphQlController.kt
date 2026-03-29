@@ -4,9 +4,11 @@ import com.sleekydz86.idolglow.global.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationQueryService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 
 @Controller
+@PreAuthorize("isAuthenticated()")
 class ReservationGraphQlController(
     private val reservationQueryService: ReservationQueryService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,

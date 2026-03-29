@@ -17,6 +17,8 @@ data class GetUserLoginInfoResponse(
     val picture: String?,
     @Schema(description = "OAuth 연동 여부 (user_oauths 존재)")
     val oauthLinked: Boolean,
+    @Schema(description = "로컬 비밀번호(해시) 보유 여부 — 이메일 가입 등")
+    val hasPassword: Boolean,
     @Schema(description = "회원 역할", example = "USER")
     val role: String,
     @Schema(description = "마지막 로그인 시각", example = "2025-12-19T16:48:23.105699")
@@ -36,6 +38,7 @@ data class GetUserLoginInfoResponse(
                 name = oauthProfileName,
                 picture = user.profileImageUrl?.takeIf { it.isNotBlank() } ?: profileImageFallback,
                 oauthLinked = oauthLinked,
+                hasPassword = !user.passwordHash.isNullOrBlank(),
                 role = user.role.name,
                 lastLoginAt = user.lastLoginAt
             )

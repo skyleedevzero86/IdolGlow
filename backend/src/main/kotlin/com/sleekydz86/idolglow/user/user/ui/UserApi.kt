@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.user.user.ui
 
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
+import com.sleekydz86.idolglow.user.user.ui.request.ChangePasswordRequest
 import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -49,4 +50,17 @@ interface UserApi {
         @Parameter(description = "이미지 파일", required = true)
         file: MultipartFile,
     ): ResponseEntity<GetUserLoginInfoResponse>
+
+    @Operation(summary = "비밀번호 변경", description = "이메일·비밀번호로 가입한 계정만 가능합니다.")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "204", description = "변경 성공"),
+            ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치·정책 위반·비밀번호 미사용 계정"),
+        ]
+    )
+    fun changePassword(
+        @Parameter(hidden = true)
+        userId: Long,
+        @Valid request: ChangePasswordRequest,
+    ): ResponseEntity<Unit>
 }
