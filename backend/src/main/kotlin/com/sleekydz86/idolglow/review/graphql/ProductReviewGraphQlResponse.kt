@@ -14,6 +14,7 @@ data class ProductReviewGraphQlResponse(
     val verifiedPurchase: Boolean,
     val helpfulCount: Int,
     val hidden: Boolean,
+    val previewImageUrl: String?,
 ) {
     companion object {
         fun from(response: ProductReviewResponse): ProductReviewGraphQlResponse =
@@ -28,6 +29,7 @@ data class ProductReviewGraphQlResponse(
                 verifiedPurchase = response.verifiedPurchase,
                 helpfulCount = response.helpfulCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                 hidden = response.hidden,
+                previewImageUrl = response.images.firstOrNull()?.url,
             )
     }
 }

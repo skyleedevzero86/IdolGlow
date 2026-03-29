@@ -9,6 +9,7 @@ data class WishProductGraphQlResponse(
     val name: String,
     val minPrice: String,
     val tagNames: List<String>,
+    val thumbnailUrl: String?,
 ) {
     companion object {
         fun from(response: WishedProductPagingResponse): WishProductGraphQlResponse =
@@ -16,7 +17,8 @@ data class WishProductGraphQlResponse(
                 id = response.id.asGraphQlId(),
                 name = response.name,
                 minPrice = response.minPrice.asGraphQlNumber(),
-                tagNames = response.tagNames
+                tagNames = response.tagNames,
+                thumbnailUrl = response.thumbnailUrl,
             )
     }
 }

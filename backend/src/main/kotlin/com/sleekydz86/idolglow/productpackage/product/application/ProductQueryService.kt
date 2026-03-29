@@ -25,12 +25,15 @@ class ProductQueryService(
         lastId: Long?,
         size: Int,
         tagName: String?,
-    ): List<ProductPagingQueryResponse> =
-        productRepository.findProductsByNoOffset(
+    ): List<ProductPagingQueryResponse> {
+        val list = productRepository.findProductsByNoOffset(
             lastId = lastId,
             size = size,
             tagName = tagName
         )
+        val thumbs = aggregateImageQueryService.firstProductImageUrlByProductIds(list.map { it.id })
+        return list.map { it.copy(thumbnailUrl = thumbs[it.id]) }
+    }
 
     fun browseProducts(params: ProductBrowseParams): ProductBrowseResult {
         var sort = params.sort
@@ -61,12 +64,26 @@ class ProductQueryService(
             now = LocalDateTime.now(ZoneOffset.UTC),
             today = LocalDate.now(ZoneOffset.UTC),
         )
-        return productRepository.browseProducts(criteria)
+        val slice = productRepository.browseProducts(criteria)
+        val thumbs = aggregateImageQueryService.firstProductImageUrlByProductIds(slice.items.map { it.id })
+        return slice.copy(
+            items = slice.items.map { it.copy(thumbnailUrl = thumbs[it.id]) },
+        )
     }
 
     fun findProductSpecificById(productId: Long): ProductSpecificResponse {
-        return productRepository.findProductSpecificById(productId)
+        val base = productRepository.findProductSpecificById(productId)
             ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
+        val gallery = aggregateImageQueryService.orderedProductImageUrls(productId)
+        val optionIds = base.options.map { it.id }
+        val optionImages = aggregateImageQueryService.orderedOptionImageUrlsByOptionIds(optionIds)
+        return base.copy(
+            thumbnailUrl = gallery.firstOrNull(),
+            imageUrls = gallery,
+            options = base.options.map { opt ->
+                opt.copy(imageUrls = optionImages[opt.id].orEmpty())
+            },
+        )
     }
 
     companion object {

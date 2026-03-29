@@ -123,6 +123,8 @@ type ProductDetail {
     minPrice: String!
     totalPrice: String!
     location: ProductLocationSummary
+    thumbnailUrl: String
+    imageUrls: [String!]!
 }
 
 type ProductRanking {
@@ -144,6 +146,7 @@ type ProductOption {
     description: String!
     price: String!
     location: String!
+    imageUrls: [String!]!
 }
 
 type OptionItem {
@@ -217,6 +220,7 @@ type WishProduct {
     name: String!
     minPrice: String!
     tagNames: [String!]!
+    thumbnailUrl: String
 }
 
 type Notification {
@@ -399,6 +403,10 @@ type ProductReview {
     content: String!
     createdAt: String!
     images: [ProductReviewImage!]!
+    verifiedPurchase: Boolean!
+    helpfulCount: Int!
+    hidden: Boolean!
+    previewImageUrl: String
 }
 
 type ProductReviewImage {

@@ -19,6 +19,8 @@ data class ProductDetailGraphQlResponse(
     val minPrice: String,
     val totalPrice: String,
     val location: ProductLocationSummaryGraphQlResponse?,
+    val thumbnailUrl: String?,
+    val imageUrls: List<String>,
 ) {
     companion object {
         fun from(response: ProductSpecificResponse): ProductDetailGraphQlResponse =
@@ -36,6 +38,8 @@ data class ProductDetailGraphQlResponse(
                 minPrice = response.minPrice.asGraphQlNumber(),
                 totalPrice = response.totalPrice.asGraphQlNumber(),
                 location = response.location?.let { ProductLocationSummaryGraphQlResponse.from(it) },
+                thumbnailUrl = response.thumbnailUrl,
+                imageUrls = response.imageUrls,
             )
     }
 }
