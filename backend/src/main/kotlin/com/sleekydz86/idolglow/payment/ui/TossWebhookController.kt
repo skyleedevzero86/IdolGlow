@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.ui
 
 import com.sleekydz86.idolglow.payment.application.PaymentLogCommandService
+import com.sleekydz86.idolglow.payment.application.TossWebhookService
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.infrastructure.TossWebhookSignatureVerifier
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 class TossWebhookController(
     private val signatureVerifier: TossWebhookSignatureVerifier,
     private val paymentLogCommandService: PaymentLogCommandService,
+    private val tossWebhookService: TossWebhookService,
 ) {
 
     @PostMapping("/webhook", consumes = [org.springframework.http.MediaType.APPLICATION_JSON_VALUE])
@@ -40,15 +42,7 @@ class TossWebhookController(
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
-        paymentLogCommandService.append(
-            payment = null,
-            orderId = null,
-            paymentKey = null,
-            logType = PaymentLogType.WEBHOOK_RECEIVED,
-            step = PaymentLogStep.SERVER,
-            httpStatus = 200,
-            requestBody = rawBody,
-        )
+        tossWebhookService.handleSignedPayload(rawBody)
         return ResponseEntity.ok().build()
     }
 }
