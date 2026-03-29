@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -28,6 +29,7 @@ class AdminCatalogService(
     private val reservationRepository: ReservationRepository,
     private val reservationSlotRepository: ReservationSlotRepository,
     private val imageEventPublisher: ImageEventPublisher,
+    private val adminAuditService: AdminAuditService,
 ) {
 
     fun findSlots(productId: Long): List<AdminReservationSlotResponse> =
@@ -47,6 +49,12 @@ class AdminCatalogService(
 
         var currentDate = request.startDate
         while (!currentDate.isAfter(request.endDate)) {
+            if (request.excludeWeekends &&
+                (currentDate.dayOfWeek == DayOfWeek.SATURDAY || currentDate.dayOfWeek == DayOfWeek.SUNDAY)
+            ) {
+                currentDate = currentDate.plusDays(1)
+                continue
+            }
             for (hour in request.startHour until request.endHour) {
                 val startTime = LocalTime.of(hour, 0)
                 val key = slotKey(currentDate, startTime)
@@ -78,6 +86,12 @@ class AdminCatalogService(
             "예약 이력이 있는 예약 슬롯은 삭제할 수 없습니다."
         }
         reservationSlotRepository.delete(slot)
+        adminAuditService.log(
+            actionCode = "SLOT_DELETE",
+            targetType = "RESERVATION_SLOT",
+            targetId = slotId,
+            detail = null,
+        )
     }
 
     fun deleteProduct(productId: Long) {
@@ -95,6 +109,12 @@ class AdminCatalogService(
             ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
         imageEventPublisher.publishDelete(ImageAggregateType.OPTION, optionId)
         optionRepository.delete(option)
+        adminAuditService.log(
+            actionCode = "OPTION_DELETE",
+            targetType = "OPTION",
+            targetId = optionId,
+            detail = null,
+        )
     }
 
     private fun slotKey(date: LocalDate, startTime: LocalTime): String =

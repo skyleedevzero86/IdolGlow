@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.admin.infrastructure
 
+import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationPaymentProjection
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
@@ -156,6 +157,41 @@ class AdminReservationQueryRepository(
         return rows.associate { row ->
             row[0] as PaymentStatus to (row[1] as Number).toLong()
         }
+    }
+
+    fun findPaymentsByVisitDateRange(fromDate: LocalDate, toDate: LocalDate, max: Int): List<Payment> {
+        return entityManager.createQuery(
+            """
+            select p from Payment p
+            join fetch p.reservation r
+            join fetch r.reservationSlot rs
+            join fetch rs.product prod
+            where r.visitDate >= :fromDate and r.visitDate <= :toDate
+            order by p.id desc
+            """.trimIndent(),
+            Payment::class.java
+        )
+            .setParameter("fromDate", fromDate)
+            .setParameter("toDate", toDate)
+            .setMaxResults(max)
+            .resultList
+    }
+
+    fun findReservationsByVisitDateRange(fromDate: LocalDate, toDate: LocalDate, max: Int): List<Reservation> {
+        return entityManager.createQuery(
+            """
+            select r from Reservation r
+            join fetch r.reservationSlot rs
+            join fetch rs.product p
+            where r.visitDate >= :fromDate and r.visitDate <= :toDate
+            order by r.id desc
+            """.trimIndent(),
+            Reservation::class.java
+        )
+            .setParameter("fromDate", fromDate)
+            .setParameter("toDate", toDate)
+            .setMaxResults(max)
+            .resultList
     }
 
     fun findPaymentsByReservationIds(reservationIds: List<Long>): Map<Long, AdminReservationPaymentProjection> {
