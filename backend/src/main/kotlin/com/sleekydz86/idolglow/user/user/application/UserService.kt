@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.net.URI
@@ -16,6 +17,7 @@ import java.net.URI
 class UserService(
     private val userRepository: UserRepository,
     private val userOAuthRepository: UserOAuthRepository,
+    private val passwordEncoder: PasswordEncoder,
 ) {
 
     fun getUser(userId: Long): GetUserLoginInfoResponse {
@@ -26,6 +28,32 @@ class UserService(
     private fun findUser(userId: Long): User =
         userRepository.findById(userId)
             ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
+
+    @Transactional
+    fun changePassword(userId: Long, currentPassword: String, newPassword: String) {
+        val user = findUser(userId)
+        val hash = user.passwordHash
+            ?: throw CustomException(UserExceptionType.PASSWORD_CHANGE_NOT_SUPPORTED)
+        val current = currentPassword.trim()
+        val next = newPassword.trim()
+        if (!passwordEncoder.matches(current, hash)) {
+            throw CustomException(UserExceptionType.CURRENT_PASSWORD_INCORRECT)
+        }
+        validatePasswordStrength(next)
+        user.passwordHash = passwordEncoder.encode(next)
+        userRepository.save(user)
+    }
+
+    private fun validatePasswordStrength(password: String) {
+        if (password.length < 8 || password.length > 72) {
+            throw CustomException(UserExceptionType.SIGNUP_PASSWORD_POLICY)
+        }
+        val hasLetter = password.any { it.isLetter() }
+        val hasDigit = password.any { it.isDigit() }
+        if (!hasLetter || !hasDigit) {
+            throw CustomException(UserExceptionType.SIGNUP_PASSWORD_POLICY)
+        }
+    }
 
     @Transactional
     fun updateProfile(userId: Long, nickname: String?, profileImageUrl: String?): GetUserLoginInfoResponse {

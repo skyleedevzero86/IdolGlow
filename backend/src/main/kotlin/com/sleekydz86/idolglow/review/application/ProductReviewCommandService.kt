@@ -4,6 +4,9 @@ import com.sleekydz86.idolglow.image.application.ImageEventPublisher
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import com.sleekydz86.idolglow.review.application.dto.CreateProductReviewCommand
 import com.sleekydz86.idolglow.review.application.dto.ReviewImageFile
 import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
@@ -13,12 +16,15 @@ import com.sleekydz86.idolglow.review.domain.ReviewRating
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @Transactional
 @Service
 class ProductReviewCommandService(
     private val productRepository: ProductRepository,
     private val productReviewRepository: ProductReviewRepository,
+    private val reservationRepository: ReservationRepository,
     private val imageEventPublisher: ImageEventPublisher,
 ) {
 
@@ -29,16 +35,37 @@ class ProductReviewCommandService(
         val product = loadProduct(command.productId)
         ensureNotReviewed(product.id, command.userId)
 
+        val reservation = loadReservationForReview(
+            reservationId = command.reservationId,
+            productId = command.productId,
+            userId = command.userId,
+        )
+        require(!productReviewRepository.existsByReservationId(reservation.id)) {
+            "이 예약으로 이미 리뷰가 등록되었습니다."
+        }
+
         val review = ProductReview(
             product = product,
             userId = command.userId,
             rating = ReviewRating.of(command.rating),
-            content = command.content
+            content = command.content,
+            reservationId = reservation.id,
         )
 
         val productReview = productReviewRepository.save(review)
         storeImages(productReview.id, images)
         return productReview
+    }
+
+    private fun loadReservationForReview(reservationId: Long, productId: Long, userId: Long): Reservation {
+        val r = reservationRepository.findByIdWithSlotAndProduct(reservationId)
+            ?: throw EntityNotFoundException("예약을 찾을 수 없습니다: $reservationId")
+        val today = LocalDate.now(ZoneOffset.UTC)
+        r.validateOwner(userId)
+        require(r.reservationSlot.product.id == productId) { "예약이 해당 상품과 일치하지 않습니다." }
+        require(r.status == ReservationStatus.BOOKED) { "확정된 예약만 리뷰를 작성할 수 있습니다." }
+        require(r.visitDate.isBefore(today)) { "방문일 이후에만 리뷰를 작성할 수 있습니다." }
+        return r
     }
 
     private fun loadProduct(productId: Long): Product {

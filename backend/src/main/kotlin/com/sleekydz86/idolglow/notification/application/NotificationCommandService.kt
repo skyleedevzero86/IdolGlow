@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.notification.application
 
 import com.sleekydz86.idolglow.notification.domain.Notification
+import com.sleekydz86.idolglow.notification.domain.NotificationPreferenceRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import org.springframework.stereotype.Service
@@ -11,6 +12,7 @@ import java.time.LocalDateTime
 @Service
 class NotificationCommandService(
     private val notificationRepository: NotificationRepository,
+    private val notificationPreferenceRepository: NotificationPreferenceRepository,
     private val notificationEventPublisher: NotificationEventPublisher,
 ) {
 
@@ -20,15 +22,10 @@ class NotificationCommandService(
         title: String,
         message: String,
         link: String? = null,
-    ): Notification {
+    ): Notification? {
+        if (notificationPreferenceRepository.isDisabled(userId, type)) return null
         val notification = notificationRepository.save(
-            Notification(
-                userId = userId,
-                type = type,
-                title = title,
-                message = message,
-                link = link
-            )
+            Notification(userId = userId, type = type, title = title, message = message, link = link)
         )
         notificationEventPublisher.publishCreated(notification.id, userId)
         return notification
@@ -40,5 +37,9 @@ class NotificationCommandService(
         require(notification.userId == userId) { "본인 알림만 처리할 수 있습니다." }
         notification.markRead(LocalDateTime.now())
         return notification
+    }
+
+    fun markAllRead(userId: Long) {
+        notificationRepository.markAllReadByUserId(userId, LocalDateTime.now())
     }
 }

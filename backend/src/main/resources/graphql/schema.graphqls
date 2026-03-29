@@ -1,24 +1,98 @@
+enum ProductSort {
+    NEWEST
+    POPULARITY
+    RATING
+    REVIEW_COUNT
+    DISTANCE
+}
+
 type Query {
     health: String!
-    products(lastId: ID, size: Int = 20, tag: String): ProductSlice!
+    products(
+        lastId: ID
+        offset: Int
+        size: Int = 20
+        tag: String
+        tags: [String!]
+        keyword: String
+        minPrice: String
+        maxPrice: String
+        visitDate: String
+        reservableOnly: Boolean
+        sort: ProductSort
+        nearLatitude: String
+        nearLongitude: String
+        radiusMeters: Int
+    ): ProductSlice!
     product(id: ID!): ProductDetail!
+    popularProducts(size: Int = 10): [ProductRanking!]!
+    recommendedProducts(size: Int = 10): [ProductRanking!]!
+    options: [OptionItem!]!
+    option(id: ID!): OptionItem!
     reservations: [ReservationSummary!]!
     upcomingReservations: [ReservationSummary!]!
     reservation(id: ID!): ReservationSummary!
+    mySlotWaitlist: [SlotWaitlistEntry!]!
+    wishes(lastWishId: ID, size: Int = 20): [WishProduct!]!
     productReviews(productId: ID!): [ProductReview!]!
     myReviews: [ProductReview!]!
+    notifications: [Notification!]!
+    me: UserProfile!
+    myPromo: MypagePromo!
+    mySurvey: UserSurvey!
+    schedules(cursorId: ID, size: Int = 20): ScheduleSlice!
+    schedule(id: ID!): Schedule!
+    scheduleCalendarExport(scheduleId: ID!): ScheduleCalendarExport!
+    checkSignupEmail(email: String): SignupCheck!
+    checkSignupNickname(nickname: String): SignupCheck!
+    adminSubscriptionOverview: AdminSubscriptionOverview!
+    adminReservationDashboard(fromDate: String, toDate: String, recentSize: Int = 10): AdminReservationDashboard!
+    adminReservations(status: ReservationStatus, visitDate: String, productId: ID, size: Int = 50): [AdminReservationSummary!]!
+    adminProductSlots(productId: ID!): [AdminReservationSlot!]!
 }
 
 type Mutation {
     createReservation(productId: ID!, input: CreateReservationInput!): ReservationCreatedPayload!
     cancelReservation(reservationId: ID!): ReservationSummary!
+    registerSlotWaitlist(productId: ID!, reservationSlotId: ID!): SlotWaitlistEntry!
+    unregisterSlotWaitlist(productId: ID!, reservationSlotId: ID!): Boolean!
     toggleWish(productId: ID!): WishToggle!
     createProductReview(productId: ID!, input: CreateProductReviewInput!): ProductReview!
+    updateProductReview(productId: ID!, reviewId: ID!, input: UpdateProductReviewInput!): ProductReview!
+    deleteProductReview(productId: ID!, reviewId: ID!): Boolean!
+    toggleProductReviewHelpful(productId: ID!, reviewId: ID!): Int!
+    reportProductReview(productId: ID!, reviewId: ID!, reason: String!): Boolean!
+    markNotificationRead(notificationId: ID!): Notification!
+    updateProfile(input: UpdateProfileInput!): UserProfile!
+    upsertUserSurvey(input: UpsertUserSurveyInput!): UserSurveyUpsertPayload!
+    createSchedule(input: CreateScheduleInput!): Schedule!
+    updateSchedule(scheduleId: ID!, input: UpdateScheduleInput!): Schedule!
+    deleteSchedule(scheduleId: ID!): Boolean!
+    signup(input: SignupInput!): AuthToken!
+    reissueToken(refreshToken: String!): AuthToken!
+    createOption(input: CreateOptionInput!): OptionItem!
+    createProduct(input: CreateProductInput!): ProductCreatedPayload!
+    createAdminReservationSlots(productId: ID!, input: CreateAdminReservationSlotsInput!): [AdminReservationSlot!]!
+    deleteAdminReservationSlot(slotId: ID!): Boolean!
+    deleteAdminProduct(productId: ID!): Boolean!
+    deleteAdminOption(optionId: ID!): Boolean!
+    cancelAdminReservation(reservationId: ID!): AdminReservationSummary!
+    mockPaymentWebhook(secret: String!, input: MockPaymentWebhookInput!): Payment!
 }
 
 type ProductSlice {
     items: [ProductSummary!]!
     nextCursor: ID
+    nextOffset: Int
+}
+
+type ProductLocationSummary {
+    name: String!
+    latitude: String!
+    longitude: String!
+    roadAddressName: String
+    addressName: String
+    displayAddress: String!
 }
 
 type ProductSummary {
@@ -28,6 +102,11 @@ type ProductSummary {
     minPrice: String!
     totalPrice: String!
     tagNames: [String!]!
+    location: ProductLocationSummary
+    distanceMeters: String
+    wishCount: Int!
+    averageRating: String!
+    reviewCount: Int!
 }
 
 type ProductDetail {
@@ -43,6 +122,22 @@ type ProductDetail {
     reservationSlotCount: Int!
     minPrice: String!
     totalPrice: String!
+    location: ProductLocationSummary
+    thumbnailUrl: String
+    imageUrls: [String!]!
+}
+
+type ProductRanking {
+    id: ID!
+    name: String!
+    description: String!
+    minPrice: String!
+    totalPrice: String!
+    tagNames: [String!]!
+    wishCount: Int!
+    averageRating: String!
+    reviewCount: Int!
+    matchedTags: [String!]!
 }
 
 type ProductOption {
@@ -51,6 +146,25 @@ type ProductOption {
     description: String!
     price: String!
     location: String!
+    imageUrls: [String!]!
+}
+
+type OptionItem {
+    id: ID!
+    name: String!
+    description: String!
+    price: String!
+    location: String!
+}
+
+type SlotWaitlistEntry {
+    id: ID!
+    productId: ID!
+    productName: String!
+    reservationSlotId: ID!
+    reservationDate: String!
+    startTime: String!
+    endTime: String!
 }
 
 type ReservationSummary {
@@ -82,17 +196,173 @@ type Payment {
     reservationId: ID!
     provider: String!
     paymentReference: String!
+    paymentNo: String!
+    orderId: String!
+    paymentKey: String
     amount: String!
     status: String!
+    externalStatus: String
     approvedAt: String
     failedAt: String
     expiredAt: String
     failureReason: String
+    failCode: String
+    cancelAmount: String!
 }
 
 type WishToggle {
     id: ID!
     wished: Boolean!
+}
+
+type WishProduct {
+    id: ID!
+    name: String!
+    minPrice: String!
+    tagNames: [String!]!
+    thumbnailUrl: String
+}
+
+type Notification {
+    id: ID!
+    type: String!
+    title: String!
+    message: String!
+    link: String
+    readAt: String
+    createdAt: String
+}
+
+type UserProfile {
+    id: ID!
+    email: String!
+    nickname: String!
+    name: String
+    picture: String
+    oauthLinked: Boolean!
+    hasPassword: Boolean!
+    role: String!
+    lastLoginAt: String
+}
+
+type UserSurvey {
+    id: ID!
+    concept: ConceptType!
+    idolName: String!
+    visitStartDate: String!
+    visitEndDate: String!
+    places: [String!]!
+}
+
+type UserSurveyUpsertPayload {
+    id: ID!
+}
+
+type MypagePromo {
+    primary: MypagePrimaryPromo!
+    secondary: MypageSecondaryPromo!
+}
+
+type MypagePrimaryPromo {
+    variant: String!
+    textBeforeHighlight: String!
+    highlight: String!
+    textAfterHighlight: String!
+    href: String!
+    ctaLabel: String!
+}
+
+type MypageSecondaryPromo {
+    variant: String!
+    textBeforeStrong: String!
+    strong: String!
+    textAfterStrong: String!
+    metricValue: Int!
+    metricUnit: String!
+    href: String!
+}
+
+type Schedule {
+    scheduleId: ID!
+    productId: ID!
+    title: String!
+    startAt: String!
+    endAt: String!
+}
+
+type ScheduleCalendarExport {
+    googleCalendarUrl: String!
+    icsRelativePath: String!
+}
+
+type ScheduleSlice {
+    schedules: [Schedule!]!
+    hasNext: Boolean!
+    nextCursorId: ID
+}
+
+type SignupCheck {
+    available: Boolean!
+    code: String
+}
+
+type AuthToken {
+    grantType: String!
+    accessToken: String!
+    accessTokenExpiresIn: String!
+    refreshToken: String!
+    refreshTokenExpiresIn: String!
+}
+
+type ProductCreatedPayload {
+    id: ID!
+}
+
+type AdminSubscriptionOverview {
+    totalActive: Int!
+}
+
+type AdminReservationDashboard {
+    pendingCount: Int!
+    bookedCount: Int!
+    completedCount: Int!
+    canceledCount: Int!
+    paymentPendingCount: Int!
+    paymentSucceededCount: Int!
+    paymentFailedCount: Int!
+    paymentCanceledCount: Int!
+    paymentExpiredCount: Int!
+    recentReservations: [AdminReservationSummary!]!
+}
+
+type AdminReservationSummary {
+    reservationId: ID!
+    userId: ID!
+    productId: ID!
+    productName: String!
+    status: ReservationStatus!
+    totalPrice: String!
+    visitDate: String!
+    visitStartTime: String!
+    visitEndTime: String!
+    expiresAt: String
+    confirmedAt: String
+    canceledAt: String
+    cancelReason: ReservationCancelReason
+    paymentReference: String
+    paymentStatus: String
+    paymentFailureReason: String
+}
+
+type AdminReservationSlot {
+    id: ID!
+    productId: ID!
+    reservationDate: String!
+    startTime: String!
+    endTime: String!
+    booked: Boolean!
+    holdReservationId: ID
+    holdExpiresAt: String
 }
 
 enum ReservationStatus {
@@ -110,6 +380,21 @@ enum ReservationCancelReason {
     ADMIN_CANCELED
 }
 
+enum ConceptType {
+    GIRL_CRUSH
+    LOVELY_FRESH
+    ELEGANT_GLAM
+    DREAMY
+    HIGHTEEN
+    ETC
+}
+
+enum MockPaymentWebhookStatus {
+    SUCCEEDED
+    FAILED
+    CANCELED
+}
+
 type ProductReview {
     reviewId: ID!
     productId: ID!
@@ -118,6 +403,10 @@ type ProductReview {
     content: String!
     createdAt: String!
     images: [ProductReviewImage!]!
+    verifiedPurchase: Boolean!
+    helpfulCount: Int!
+    hidden: Boolean!
+    previewImageUrl: String
 }
 
 type ProductReviewImage {
@@ -133,6 +422,86 @@ input CreateReservationInput {
 }
 
 input CreateProductReviewInput {
+    reservationId: ID!
     rating: Int!
     content: String!
+}
+
+input UpdateProductReviewInput {
+    rating: Int!
+    content: String!
+}
+
+input UpdateProfileInput {
+    nickname: String
+    profileImageUrl: String
+}
+
+input UpsertUserSurveyInput {
+    concept: ConceptType!
+    idolName: String!
+    visitStartDate: String!
+    visitEndDate: String!
+    places: [String!]!
+}
+
+input CreateScheduleInput {
+    productId: ID!
+    title: String!
+    startAt: String!
+    endAt: String!
+}
+
+input UpdateScheduleInput {
+    title: String!
+    startAt: String!
+    endAt: String!
+}
+
+input SignupInput {
+    email: String!
+    nickname: String!
+    password: String!
+}
+
+input CreateOptionInput {
+    name: String!
+    description: String!
+    price: String!
+    location: String!
+}
+
+input ProductLocationInput {
+    name: String!
+    latitude: String!
+    longitude: String!
+    roadAddressName: String
+    addressName: String
+    kakaoPlaceId: String!
+}
+
+input CreateProductInput {
+    name: String!
+    description: String!
+    slotStartDate: String
+    slotEndDate: String
+    slotStartHour: Int = 9
+    slotEndHour: Int = 16
+    optionIds: [ID!]! = []
+    tagNames: [String!]! = []
+    location: ProductLocationInput
+}
+
+input CreateAdminReservationSlotsInput {
+    startDate: String!
+    endDate: String!
+    startHour: Int = 9
+    endHour: Int = 16
+    excludeWeekends: Boolean = false
+}
+
+input MockPaymentWebhookInput {
+    paymentReference: String!
+    status: MockPaymentWebhookStatus!
+    failureReason: String
 }

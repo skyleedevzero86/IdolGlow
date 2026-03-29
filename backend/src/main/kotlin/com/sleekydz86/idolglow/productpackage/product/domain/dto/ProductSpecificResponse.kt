@@ -44,6 +44,15 @@ data class ProductSpecificResponse(
 
     @field:Schema(description = "총 가격", example = "300000.00")
     val totalPrice: BigDecimal,
+
+    @field:Schema(description = "대표 위치(지도)")
+    val location: ProductLocationSummaryResponse?,
+
+    @field:Schema(description = "대표 썸네일 URL(images 중 최소 sort_order)")
+    val thumbnailUrl: String? = null,
+
+    @field:Schema(description = "상품 상세 갤러리 이미지 URL 목록(sort_order 순)")
+    val imageUrls: List<String> = emptyList(),
 ) {
     companion object {
         fun from(product: Product): ProductSpecificResponse {
@@ -64,7 +73,8 @@ data class ProductSpecificResponse(
                 slotEndTime = slotEndTime,
                 reservationSlotCount = product.reservationSlots.size,
                 minPrice = product.minPrice,
-                totalPrice = product.totalPrice
+                totalPrice = product.totalPrice,
+                location = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },
             )
         }
     }
@@ -86,6 +96,9 @@ data class ProductOptionResponse(
 
     @field:Schema(description = "장소", example = "서울")
     val location: String,
+
+    @field:Schema(description = "옵션별 이미지 URL 목록(sort_order 순)")
+    val imageUrls: List<String> = emptyList(),
 ) {
     companion object {
         fun from(option: Option): ProductOptionResponse =
@@ -94,7 +107,8 @@ data class ProductOptionResponse(
                 name = option.name,
                 description = option.description,
                 price = option.price,
-                location = option.location
+                location = option.location,
+                imageUrls = emptyList(),
             )
     }
 }

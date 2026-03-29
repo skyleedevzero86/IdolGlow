@@ -29,6 +29,18 @@ data class PaymentResponse(
     val expiredAt: LocalDateTime?,
     @field:Schema(description = "실패 사유", example = "issuer declined")
     val failureReason: String?,
+    @field:Schema(description = "내부 결제 번호")
+    val paymentNo: String,
+    @field:Schema(description = "가맹점 주문번호(토스 orderId)")
+    val orderId: String,
+    @field:Schema(description = "토스 paymentKey")
+    val paymentKey: String?,
+    @field:Schema(description = "PG 원본 상태")
+    val externalStatus: String?,
+    @field:Schema(description = "PG 실패 코드")
+    val failCode: String?,
+    @field:Schema(description = "누적 취소(환불) 금액")
+    val cancelAmount: BigDecimal,
 ) {
     companion object {
         fun from(payment: Payment): PaymentResponse =
@@ -42,7 +54,13 @@ data class PaymentResponse(
                 approvedAt = payment.approvedAt,
                 failedAt = payment.failedAt,
                 expiredAt = payment.expiredAt,
-                failureReason = payment.failureReason
+                failureReason = payment.failureReason,
+                paymentNo = payment.paymentNo,
+                orderId = payment.orderId,
+                paymentKey = payment.paymentKey,
+                externalStatus = payment.externalStatus,
+                failCode = payment.failCode,
+                cancelAmount = payment.cancelAmount,
             )
     }
 }

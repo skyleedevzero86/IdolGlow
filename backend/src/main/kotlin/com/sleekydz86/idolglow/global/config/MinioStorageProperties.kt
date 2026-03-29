@@ -10,4 +10,5 @@ data class MinioStorageProperties(
     var secretKey: String = "",
     var bucket: String = "",
     var publicBaseUrl: String = "",
+    var publicReadProfileObjects: Boolean = false,
 )

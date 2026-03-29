@@ -12,4 +12,9 @@ class ReservationExpirationScheduler(
     fun expirePendingReservations() {
         reservationCommandService.expirePendingReservations()
     }
+
+    @Scheduled(fixedDelayString = "\${reservation.expiration-interval-ms:30000}")
+    fun notifyExpiringSoon() {
+        reservationCommandService.notifyExpiringSoonReservations()
+    }
 }

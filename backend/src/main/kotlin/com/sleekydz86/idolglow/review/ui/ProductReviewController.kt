@@ -3,11 +3,14 @@ package com.sleekydz86.idolglow.review.ui
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.review.application.ProductReviewCommandService
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
+import com.sleekydz86.idolglow.review.application.ProductReviewTrustCommandService
 import com.sleekydz86.idolglow.review.application.dto.CreateProductReviewCommand
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
+import com.sleekydz86.idolglow.review.application.dto.ReviewHelpfulCountResponse
 import com.sleekydz86.idolglow.review.application.dto.ReviewImageFile
 import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
 import com.sleekydz86.idolglow.review.ui.request.CreateProductReviewRequest
+import com.sleekydz86.idolglow.review.ui.request.ReportProductReviewRequest
 import com.sleekydz86.idolglow.review.ui.request.UpdateProductReviewRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -27,7 +31,8 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/products/{productId}/reviews")
 class ProductReviewController(
     private val productReviewCommandService: ProductReviewCommandService,
-    private val productReviewQueryService: ProductReviewQueryService
+    private val productReviewQueryService: ProductReviewQueryService,
+    private val productReviewTrustCommandService: ProductReviewTrustCommandService,
 ) : ProductReviewApi {
 
     @GetMapping
@@ -45,6 +50,7 @@ class ProductReviewController(
         val command = CreateProductReviewCommand(
             productId = productId,
             userId = userId,
+            reservationId = request.reservationId,
             rating = request.rating,
             content = request.content
         )
@@ -81,6 +87,32 @@ class ProductReviewController(
         @PathVariable reviewId: Long
     ) {
         productReviewCommandService.deleteReview(productId, reviewId, userId)
+    }
+
+    @PostMapping("/{reviewId}/helpful")
+    override fun toggleHelpful(
+        @LoginUser userId: Long,
+        @PathVariable productId: Long,
+        @PathVariable reviewId: Long,
+    ): ReviewHelpfulCountResponse {
+        val count = productReviewTrustCommandService.toggleHelpful(productId, reviewId, userId)
+        return ReviewHelpfulCountResponse(helpfulCount = count)
+    }
+
+    @PostMapping("/{reviewId}/reports")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    override fun reportReview(
+        @LoginUser userId: Long,
+        @PathVariable productId: Long,
+        @PathVariable reviewId: Long,
+        @Valid @RequestBody request: ReportProductReviewRequest,
+    ) {
+        productReviewTrustCommandService.reportReview(
+            productId = productId,
+            reviewId = reviewId,
+            reporterUserId = userId,
+            reason = request.reason,
+        )
     }
 
     private fun toReviewImageFiles(images: List<MultipartFile>?): List<ReviewImageFile> =

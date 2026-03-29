@@ -2,15 +2,21 @@ package com.sleekydz86.idolglow.schedule.ui
 
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.schedule.application.ScheduleCommandService
+import com.sleekydz86.idolglow.schedule.application.ScheduleExternalCalendarService
 import com.sleekydz86.idolglow.schedule.application.ScheduleQueryService
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
+import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
 import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
 import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
 import com.sleekydz86.idolglow.schedule.ui.request.UpdateScheduleRequest
 import com.sleekydz86.idolglow.schedule.ui.request.toCommand
 import jakarta.validation.Valid
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.core.io.Resource
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -27,7 +33,8 @@ import java.net.URI
 @RestController
 class ScheduleController(
     private val scheduleCommandService: ScheduleCommandService,
-    private val scheduleQueryService: ScheduleQueryService
+    private val scheduleQueryService: ScheduleQueryService,
+    private val scheduleExternalCalendarService: ScheduleExternalCalendarService,
 ) : ScheduleApi {
 
     @PostMapping
@@ -74,4 +81,30 @@ class ScheduleController(
         @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<ScheduleSliceResponse> =
         ResponseEntity.ok(scheduleQueryService.findSchedules(userId, cursorId, size))
+
+    @GetMapping("/{scheduleId}/calendar-export")
+    override fun scheduleCalendarExport(
+        @LoginUser userId: Long,
+        @PathVariable scheduleId: Long,
+    ): ResponseEntity<ScheduleCalendarExportResponse> {
+        val schedule = scheduleQueryService.findSchedule(scheduleId, userId)
+        return ResponseEntity.ok(scheduleExternalCalendarService.buildExportResponse(schedule))
+    }
+
+    @GetMapping("/{scheduleId}/calendar.ics", produces = ["text/calendar"])
+    override fun downloadScheduleIcs(
+        @LoginUser userId: Long,
+        @PathVariable scheduleId: Long,
+    ): ResponseEntity<Resource> {
+        val schedule = scheduleQueryService.findSchedule(scheduleId, userId)
+        val bytes = scheduleExternalCalendarService.buildIcsBytes(schedule)
+        val resource = ByteArrayResource(bytes)
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("text/calendar; charset=UTF-8"))
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"idolglow-schedule-$scheduleId.ics\"",
+            )
+            .body(resource)
+    }
 }

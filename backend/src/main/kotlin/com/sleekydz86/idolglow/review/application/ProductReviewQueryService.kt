@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.review.domain.ProductReview
 import com.sleekydz86.idolglow.review.domain.ProductReviewRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Transactional(readOnly = true)
 @Service
@@ -17,14 +18,18 @@ class ProductReviewQueryService(
 
     fun findReviewsByProduct(productId: Long): List<ProductReviewResponse> {
         val reviews = productReviewRepository.findByProductId(productId)
-            .sortedByDescending { it.createdAt }
+            .filter { !it.isHidden() }
         val reviewIds = reviews.map { it.id }
         val images = imageRepository.findByAggregates(ImageAggregateType.PRODUCT_REVIEW, reviewIds)
         val imageMap = images.groupBy { it.aggregateId }
 
         return reviews.map { review ->
             ProductReviewResponse.from(review, imageMap[review.id].orEmpty())
-        }
+        }.sortedWith(
+            compareByDescending<ProductReviewResponse> { it.images.isNotEmpty() }
+                .thenByDescending { it.helpfulCount }
+                .thenByDescending { it.createdAt }
+        )
     }
 
     fun toResponse(review: ProductReview): ProductReviewResponse {
@@ -34,7 +39,7 @@ class ProductReviewQueryService(
 
     fun findReviewsByUser(userId: Long): List<ProductReviewResponse> {
         val reviews = productReviewRepository.findByUserId(userId)
-            .sortedByDescending { it.createdAt }
+            .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
         val reviewIds = reviews.map { it.id }
         val images = imageRepository.findByAggregates(ImageAggregateType.PRODUCT_REVIEW, reviewIds)
         val imageMap = images.groupBy { it.aggregateId }
