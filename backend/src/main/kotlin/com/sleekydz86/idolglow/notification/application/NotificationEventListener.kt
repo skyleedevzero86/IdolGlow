@@ -16,9 +16,6 @@ class NotificationEventListener(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleNotificationCreated(event: NotificationCreatedEvent) {
         val notification = notificationRepository.findById(event.notificationId) ?: return
-        notificationStreamService.sendToUser(
-            event.userId,
-            NotificationResponse.Companion.from(notification)
-        )
+        notificationStreamService.sendToUser(event.userId, NotificationResponse.from(notification))
     }
 }

@@ -6,6 +6,7 @@ interface ReservationRepository {
     fun findByIdWithSlotAndProduct(id: Long): Reservation?
     fun findByIdForUpdate(id: Long): Reservation?
     fun findExpiredPendingIds(limit: Int, now: java.time.LocalDateTime): List<Long>
+    fun findExpiringSoonPendingIds(threshold: java.time.LocalDateTime, now: java.time.LocalDateTime): List<Long>
     fun existsByReservationSlotId(reservationSlotId: Long): Boolean
     fun existsByProductId(productId: Long): Boolean
 }
