@@ -57,5 +57,11 @@ enum class UserExceptionType(
         "PROFILE_IMAGE_TOO_LARGE",
         "프로필 이미지는 5MB 이하여야 합니다.",
         400
-    )
+    ),
+
+    PROFILE_IMAGE_STORAGE_UNAVAILABLE(
+        "PROFILE_IMAGE_STORAGE_UNAVAILABLE",
+        "이미지 저장소(MinIO)에 연결하거나 버킷을 준비하지 못했습니다. MinIO 실행·버킷 설정을 확인한 뒤 다시 시도해 주세요.",
+        503
+    ),
 }

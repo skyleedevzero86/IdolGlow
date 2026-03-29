@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.global.exceptions
 
 import com.fasterxml.jackson.databind.JsonMappingException
+import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
@@ -130,6 +131,30 @@ class GlobalExceptionAdvice {
                     name = "CONFLICT",
                     errorCode = "CONFLICT",
                     message = exception.message ?: "요청을 처리할 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(ErrorResponseException::class)
+    fun handleMinioErrorResponse(
+        request: HttpServletRequest,
+        exception: ErrorResponseException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn(
+            "MinIO 오류: {} {} | code={} message={}",
+            request.method,
+            request.requestURI,
+            exception.errorResponse().code(),
+            exception.errorResponse().message(),
+            exception
+        )
+        return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(
+                ExceptionResponse(
+                    name = "PROFILE_IMAGE_STORAGE_UNAVAILABLE",
+                    errorCode = "PROFILE_IMAGE_STORAGE_UNAVAILABLE",
+                    message = UserExceptionType.PROFILE_IMAGE_STORAGE_UNAVAILABLE.message
                 )
             )
     }
