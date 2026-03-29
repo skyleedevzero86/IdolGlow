@@ -1,0 +1,43 @@
+package com.sleekydz86.idolglow.wish.application
+
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
+import com.sleekydz86.idolglow.user.user.domain.User
+import com.sleekydz86.idolglow.user.user.domain.UserRepository
+import com.sleekydz86.idolglow.wish.application.dto.WishToggleResponse
+import com.sleekydz86.idolglow.wish.domain.Wish
+import com.sleekydz86.idolglow.wish.domain.WishRepository
+import jakarta.persistence.EntityNotFoundException
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Transactional
+@Service
+class WishCommandService(
+    private val userRepository: UserRepository,
+    private val productRepository: ProductRepository,
+    private val wishRepository: WishRepository
+) {
+
+    fun toggle(userId: Long, productId: Long): WishToggleResponse {
+        val user = loadUser(userId)
+        val product = loadProduct(productId)
+        val existing = wishRepository.findByUserIdAndProductId(userId, productId)
+
+        return if (existing != null) {
+            wishRepository.delete(existing)
+            WishToggleResponse(existing.id, false)
+        } else {
+            val saved = wishRepository.save(Wish(user = user, product = product))
+            WishToggleResponse(saved.id, true)
+        }
+    }
+
+    private fun loadUser(userId: Long): User =
+        userRepository.findById(userId)
+            ?: throw EntityNotFoundException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
+
+    private fun loadProduct(productId: Long): Product =
+        productRepository.findById(productId)
+            ?: throw EntityNotFoundException("ID가 $productId 인 상품을 찾을 수 없습니다.")
+}

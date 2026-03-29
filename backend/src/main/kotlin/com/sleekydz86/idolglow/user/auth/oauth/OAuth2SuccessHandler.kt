@@ -1,0 +1,58 @@
+package com.sleekydz86.idolglow.user.auth.oauth
+
+import com.sleekydz86.idolglow.user.auth.application.LoginFacade
+import com.sleekydz86.idolglow.user.auth.application.LoginRequest
+import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
+import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.core.Authentication
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
+import org.springframework.security.oauth2.core.oidc.user.OidcUser
+import org.springframework.security.oauth2.core.user.OAuth2User
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+import org.springframework.stereotype.Component
+
+@Component
+class OAuth2SuccessHandler(
+    private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
+    private val loginFacade: LoginFacade,
+    @Value("\${app.oauth2.redirect-uri}")
+    private val frontRedirectUri: String,
+) : AuthenticationSuccessHandler {
+
+    override fun onAuthenticationSuccess(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication
+    ) {
+        val oauthToken = authentication as? OAuth2AuthenticationToken
+            ?: throw IllegalStateException("OAuth2AuthenticationToken 이어야 합니다: ${authentication.javaClass.name}")
+        val principal = oauthToken.principal as? OAuth2User
+            ?: throw IllegalStateException(
+                "OAuth2User principal 이어야 합니다: ${(oauthToken.principal as Any?)?.javaClass?.name}"
+            )
+
+        val provider = AuthProvider.fromRegistrationId(oauthToken.authorizedClientRegistrationId)
+        val attributes = oauthAttributes(principal)
+
+        val tokenResponse = loginFacade.login(
+            provider = provider,
+            request = LoginRequest(attributes = attributes)
+        )
+
+        refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
+        response.sendRedirect(frontRedirectUri)
+    }
+
+    private fun oauthAttributes(principal: OAuth2User): Map<String, Any> {
+        val out = LinkedHashMap<String, Any>()
+        if (principal is OidcUser) {
+            principal.idToken.claims.forEach { (k, v) -> out[k] = v as Any }
+            principal.userInfo?.claims?.forEach { (k, v) -> out.putIfAbsent(k, v as Any) }
+        }
+        principal.attributes.forEach { (k, v) -> out.putIfAbsent(k, v as Any) }
+        return out
+    }
+}
