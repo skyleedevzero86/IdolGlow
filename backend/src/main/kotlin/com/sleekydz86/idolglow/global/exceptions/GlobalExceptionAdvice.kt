@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.global.exceptions
 
-import com.fasterxml.jackson.databind.JsonMappingException
+import tools.jackson.databind.JsonMappingException
 import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
