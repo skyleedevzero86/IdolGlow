@@ -10,9 +10,10 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.Lob
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(name = "payment_logs")
@@ -48,11 +49,11 @@ class PaymentLog(
     @Column(name = "http_status")
     val httpStatus: Int? = null,
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "request_body")
     val requestBody: String? = null,
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "response_body")
     val responseBody: String? = null,
 
@@ -62,7 +63,7 @@ class PaymentLog(
     @Column(name = "error_message", length = 1000)
     val errorMessage: String? = null,
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "stack_trace")
     val stackTrace: String? = null,
 
