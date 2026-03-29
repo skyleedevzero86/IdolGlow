@@ -22,4 +22,7 @@ data class CreateReservationSlotsRequest(
     @field:Min(10)
     @field:Max(16)
     val endHour: Int = 16,
+
+    @field:Schema(description = "토요일 일요일 제외 여부")
+    val excludeWeekends: Boolean = false,
 )

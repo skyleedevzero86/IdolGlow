@@ -84,6 +84,7 @@ class SecurityConfig(
                 }
 
                 auth.requestMatchers(*permitList.toTypedArray()).permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook").permitAll()
                     .anyRequest().authenticated()
             }
             .oauth2Login { oauth ->
@@ -139,6 +140,9 @@ class SecurityConfig(
             "/login/**",
             "/auth/callback",
             "/payments/mock/webhook",
+            "/graphql",
+            "/graphiql",
+            "/graphiql/**",
         )
     }
 }

@@ -12,7 +12,7 @@ data class Nickname(
 ) {
 
     companion object {
-        private val NICKNAME_RULE_PATTERN = Regex("^[a-zA-Z0-9]{2,10}$")
+        private val NICKNAME_RULE_PATTERN = Regex("^[a-zA-Z0-9가-힣]{2,10}$")
 
         fun of(raw: String): Nickname {
             val trimmed = raw.trim()

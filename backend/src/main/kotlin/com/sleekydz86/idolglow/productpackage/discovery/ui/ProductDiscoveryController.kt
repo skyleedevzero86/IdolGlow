@@ -41,7 +41,10 @@ class ProductDiscoveryController(
     ): ResponseEntity<List<ProductRankingResponse>> =
         ResponseEntity.ok(productDiscoveryService.findPopularProducts(size.coerceIn(1, 50)))
 
-    @Operation(summary = "개인화 추천 상품 조회", description = "사용자 설문과 선호 정보를 바탕으로 맞춤 추천 상품 목록을 조회합니다.")
+    @Operation(
+        summary = "개인화 추천 상품 조회",
+        description = "회원 설문(컨셉·방문 기간·장소·아이돌 무드)과 찜/리뷰 기반 태그, 예약 가능 일정 적합도를 합산해 추천합니다. 설문만 있는 신규 회원도 콜드스타트 완화에 활용됩니다."
+    )
     @ApiResponses(
         value = [
             ApiResponse(

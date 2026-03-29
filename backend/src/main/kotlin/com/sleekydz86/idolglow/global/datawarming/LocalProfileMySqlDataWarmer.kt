@@ -109,8 +109,8 @@ class LocalProfileMySqlDataWarmer(
             )
         )
 
-        val slotStartDate = LocalDate.now().plusDays(1)
-        val slotEndDate = slotStartDate.plusDays(1)
+        val slotStartDate = LocalDate.now().minusDays(7)
+        val slotEndDate = LocalDate.now().minusDays(5)
         val product = Product.createWithTimeSlots(
             name = "아이돌 체험",
             description = "사진 촬영과 스타일링이 포함된 원데이 아이돌 체험입니다.",
@@ -120,7 +120,7 @@ class LocalProfileMySqlDataWarmer(
             slotEndDate = slotEndDate
         )
         val locationPayload = ProductLocationPayload(
-            name = "도키 스튜디오",
+            name = "IdolGlow 스튜디오",
             latitude = BigDecimal("37.5665"),
             longitude = BigDecimal("126.9780"),
             roadAddressName = "서울로 1",
@@ -162,7 +162,8 @@ class LocalProfileMySqlDataWarmer(
                 product = savedProduct,
                 userId = user1.id,
                 ratingScore = 5,
-                content = "정말 만족스러운 체험이었어요."
+                content = "정말 만족스러운 체험이었어요.",
+                reservationId = savedReservation.id,
             )
         )
 
