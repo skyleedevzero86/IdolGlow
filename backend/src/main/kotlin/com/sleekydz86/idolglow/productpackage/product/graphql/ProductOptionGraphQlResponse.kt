@@ -10,6 +10,7 @@ data class ProductOptionGraphQlResponse(
     val description: String,
     val price: String,
     val location: String,
+    val imageUrls: List<String>,
 ) {
     companion object {
         fun from(response: ProductOptionResponse): ProductOptionGraphQlResponse =
@@ -18,7 +19,8 @@ data class ProductOptionGraphQlResponse(
                 name = response.name,
                 description = response.description,
                 price = response.price.asGraphQlNumber(),
-                location = response.location
+                location = response.location,
+                imageUrls = response.imageUrls,
             )
     }
 }

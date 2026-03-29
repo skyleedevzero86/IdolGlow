@@ -15,6 +15,7 @@ data class ProductRankingGraphQlResponse(
     val averageRating: String,
     val reviewCount: Int,
     val matchedTags: List<String>,
+    val thumbnailUrl: String?,
 ) {
     companion object {
         fun from(response: ProductRankingResponse): ProductRankingGraphQlResponse =
@@ -28,7 +29,8 @@ data class ProductRankingGraphQlResponse(
                 wishCount = response.wishCount.toInt(),
                 averageRating = response.averageRating.asGraphQlNumber(),
                 reviewCount = response.reviewCount.toInt(),
-                matchedTags = response.matchedTags
+                matchedTags = response.matchedTags,
+                thumbnailUrl = response.thumbnailUrl,
             )
     }
 }

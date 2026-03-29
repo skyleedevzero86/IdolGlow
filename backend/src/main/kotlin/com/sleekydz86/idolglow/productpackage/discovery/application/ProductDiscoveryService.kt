@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.discovery.application
 
+import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
 import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
 import com.sleekydz86.idolglow.productpackage.discovery.infrastructure.ProductDiscoveryQueryRepository
 import com.sleekydz86.idolglow.user.user.domain.UserSurveyRepository
@@ -15,6 +16,7 @@ import java.time.temporal.ChronoUnit
 class ProductDiscoveryService(
     private val productDiscoveryQueryRepository: ProductDiscoveryQueryRepository,
     private val userSurveyRepository: UserSurveyRepository,
+    private val aggregateImageQueryService: AggregateImageQueryService,
 ) {
 
     fun findPopularProducts(size: Int): List<ProductRankingResponse> =
@@ -106,23 +108,31 @@ class ProductDiscoveryService(
 
         val topIds = ranked.map { it.first }.take(size)
 
-        return topIds.mapNotNull { productId ->
-            val product = productById[productId] ?: return@mapNotNull null
-            val tagNames = tagNamesByProductId[productId].orEmpty()
-            val metric = reviewMetrics[productId]
-            ProductRankingResponse.from(
-                product = product,
-                tagNames = tagNames,
-                wishCount = wishCounts[productId] ?: 0L,
-                averageRating = metric?.averageRating ?: 0.0,
-                reviewCount = metric?.reviewCount ?: 0L,
-                matchedTags = PersonalizedRecommendationScorer.matchedPreferenceTags(
-                    productTags = tagNames,
-                    behaviorTags = behaviorTagSet,
-                    conceptTag = conceptTag,
-                ),
-            )
-        }
+        return withThumbnails(
+            topIds.mapNotNull { productId ->
+                val product = productById[productId] ?: return@mapNotNull null
+                val tagNames = tagNamesByProductId[productId].orEmpty()
+                val metric = reviewMetrics[productId]
+                ProductRankingResponse.from(
+                    product = product,
+                    tagNames = tagNames,
+                    wishCount = wishCounts[productId] ?: 0L,
+                    averageRating = metric?.averageRating ?: 0.0,
+                    reviewCount = metric?.reviewCount ?: 0L,
+                    matchedTags = PersonalizedRecommendationScorer.matchedPreferenceTags(
+                        productTags = tagNames,
+                        behaviorTags = behaviorTagSet,
+                        conceptTag = conceptTag,
+                    ),
+                )
+            }
+        )
+    }
+
+    private fun withThumbnails(responses: List<ProductRankingResponse>): List<ProductRankingResponse> {
+        if (responses.isEmpty()) return responses
+        val thumbs = aggregateImageQueryService.firstProductImageUrlByProductIds(responses.map { it.id })
+        return responses.map { it.copy(thumbnailUrl = thumbs[it.id]) }
     }
 
     private fun buildResponses(
@@ -140,19 +150,21 @@ class ProductDiscoveryService(
         val reviewMetrics = productDiscoveryQueryRepository.findReviewMetrics(productIds)
         val productById = products.associateBy { it.id }
 
-        return productIds.mapNotNull { productId ->
-            val product = productById[productId] ?: return@mapNotNull null
-            val tagNames = tagNamesByProductId[productId].orEmpty()
-            val metric = reviewMetrics[productId]
-            ProductRankingResponse.from(
-                product = product,
-                tagNames = tagNames,
-                wishCount = wishCounts[productId] ?: 0L,
-                averageRating = metric?.averageRating ?: 0.0,
-                reviewCount = metric?.reviewCount ?: 0L,
-                matchedTags = tagNames.filter { it in preferredTags }
-            )
-        }.take(size)
+        return withThumbnails(
+            productIds.mapNotNull { productId ->
+                val product = productById[productId] ?: return@mapNotNull null
+                val tagNames = tagNamesByProductId[productId].orEmpty()
+                val metric = reviewMetrics[productId]
+                ProductRankingResponse.from(
+                    product = product,
+                    tagNames = tagNames,
+                    wishCount = wishCounts[productId] ?: 0L,
+                    averageRating = metric?.averageRating ?: 0.0,
+                    reviewCount = metric?.reviewCount ?: 0L,
+                    matchedTags = tagNames.filter { it in preferredTags }
+                )
+            }.take(size)
+        )
     }
 
     companion object {
