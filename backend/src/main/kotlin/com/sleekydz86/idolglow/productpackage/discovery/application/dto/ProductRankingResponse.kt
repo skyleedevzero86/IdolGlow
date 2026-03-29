@@ -30,6 +30,9 @@ data class ProductRankingResponse(
         example = "[\"DREAMY\", \"메이크업\"]"
     )
     val matchedTags: List<String>,
+
+    @field:Schema(description = "상품 대표 이미지 URL(없으면 null)")
+    val thumbnailUrl: String? = null,
 ) {
     companion object {
         fun from(
@@ -39,6 +42,7 @@ data class ProductRankingResponse(
             averageRating: Double,
             reviewCount: Long,
             matchedTags: List<String> = emptyList(),
+            thumbnailUrl: String? = null,
         ): ProductRankingResponse =
             ProductRankingResponse(
                 id = product.id,
@@ -50,7 +54,8 @@ data class ProductRankingResponse(
                 wishCount = wishCount,
                 averageRating = BigDecimal.valueOf(averageRating).setScale(2, RoundingMode.HALF_UP),
                 reviewCount = reviewCount,
-                matchedTags = matchedTags
+                matchedTags = matchedTags,
+                thumbnailUrl = thumbnailUrl,
             )
     }
 }

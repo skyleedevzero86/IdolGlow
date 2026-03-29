@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSearchCriteria
+import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ import java.time.ZoneOffset
 @Service
 class ProductQueryService(
     private val productRepository: ProductRepository,
+    private val aggregateImageQueryService: AggregateImageQueryService,
 ) {
 
     fun findProductsByNoOffset(

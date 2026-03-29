@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.schedule.graphql
 import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.schedule.application.ScheduleCommandService
+import com.sleekydz86.idolglow.schedule.application.ScheduleExternalCalendarService
 import com.sleekydz86.idolglow.schedule.application.ScheduleQueryService
 import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
 import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Controller
 class ScheduleGraphQlController(
     private val scheduleCommandService: ScheduleCommandService,
     private val scheduleQueryService: ScheduleQueryService,
+    private val scheduleExternalCalendarService: ScheduleExternalCalendarService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
 
@@ -44,6 +46,18 @@ class ScheduleGraphQlController(
                 userId = authenticatedUserIdResolver.resolveRequired()
             )
         )
+
+    @QueryMapping
+    fun scheduleCalendarExport(@Argument scheduleId: String): ScheduleCalendarExportGraphQlResponse {
+        val userId = authenticatedUserIdResolver.resolveRequired()
+        val schedule = scheduleQueryService.findSchedule(
+            scheduleId = scheduleId.toGraphQlIdLong("scheduleId"),
+            userId = userId,
+        )
+        return ScheduleCalendarExportGraphQlResponse.from(
+            scheduleExternalCalendarService.buildExportResponse(schedule)
+        )
+    }
 
     @MutationMapping
     fun createSchedule(@Argument @Valid input: CreateScheduleRequest): ScheduleGraphQlResponse =
