@@ -38,6 +38,9 @@ data class ProductPagingQueryResponse(
 
     @field:Schema(description = "리뷰 수")
     val reviewCount: Long = 0L,
+
+    @field:Schema(description = "상품 대표 이미지 URL(images.sort_order 최소). 없으면 null")
+    val thumbnailUrl: String? = null,
 ) {
     companion object {
         fun from(
@@ -48,6 +51,7 @@ data class ProductPagingQueryResponse(
             wishCount: Long = 0L,
             averageRating: Double = 0.0,
             reviewCount: Long = 0L,
+            thumbnailUrl: String? = null,
         ): ProductPagingQueryResponse =
             ProductPagingQueryResponse(
                 id = product.id,
@@ -61,6 +65,7 @@ data class ProductPagingQueryResponse(
                 wishCount = wishCount,
                 averageRating = averageRating,
                 reviewCount = reviewCount,
+                thumbnailUrl = thumbnailUrl,
             )
     }
 }

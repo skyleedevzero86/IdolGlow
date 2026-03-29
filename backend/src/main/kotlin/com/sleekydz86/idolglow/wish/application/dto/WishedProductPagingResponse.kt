@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 
 @Schema(description = "위시 상품 목록 응답 DTO")
-class WishedProductPagingResponse(
+data class WishedProductPagingResponse(
     @field:Schema(description = "상품 ID", example = "1")
     val id: Long,
 
@@ -17,17 +17,22 @@ class WishedProductPagingResponse(
 
     @field:Schema(description = "태그 목록", example = "[\"뷰티\",\"헤어\"]")
     val tagNames: List<String>,
+
+    @field:Schema(description = "상품 대표 이미지 URL(없으면 null)")
+    val thumbnailUrl: String? = null,
 ) {
     companion object {
         fun from(
             product: Product,
             tagNames: List<String> = product.productTags.map { it.tagName }.distinct(),
+            thumbnailUrl: String? = null,
         ): WishedProductPagingResponse =
             WishedProductPagingResponse(
                 id = product.id,
                 name = product.name,
                 minPrice = product.minPrice,
-                tagNames = tagNames
+                tagNames = tagNames,
+                thumbnailUrl = thumbnailUrl,
             )
     }
 }
