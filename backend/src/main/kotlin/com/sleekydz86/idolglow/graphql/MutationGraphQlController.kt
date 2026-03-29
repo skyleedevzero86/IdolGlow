@@ -12,9 +12,11 @@ import com.sleekydz86.idolglow.review.graphql.ProductReviewGraphQlResponse
 import com.sleekydz86.idolglow.wish.application.WishCommandService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 
 @Controller
+@PreAuthorize("isAuthenticated()")
 class MutationGraphQlController(
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
     private val reservationCommandService: ReservationCommandService,

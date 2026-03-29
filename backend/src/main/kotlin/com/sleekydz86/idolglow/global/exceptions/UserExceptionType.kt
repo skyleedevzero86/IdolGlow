@@ -64,4 +64,16 @@ enum class UserExceptionType(
         "이미지 저장소(MinIO)에 연결하거나 버킷을 준비하지 못했습니다. MinIO 실행·버킷 설정을 확인한 뒤 다시 시도해 주세요.",
         503
     ),
+
+    PASSWORD_CHANGE_NOT_SUPPORTED(
+        "PASSWORD_CHANGE_NOT_SUPPORTED",
+        "이 계정은 비밀번호로 로그인하지 않습니다. 비밀번호를 변경할 수 없습니다.",
+        400
+    ),
+
+    CURRENT_PASSWORD_INCORRECT(
+        "CURRENT_PASSWORD_INCORRECT",
+        "현재 비밀번호가 올바르지 않습니다.",
+        400
+    ),
 }

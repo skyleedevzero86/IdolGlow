@@ -4,8 +4,10 @@ import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.user.user.application.UserProfileImageService
 import com.sleekydz86.idolglow.user.user.application.UserService
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
+import com.sleekydz86.idolglow.user.user.ui.request.ChangePasswordRequest
 import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping
@@ -37,5 +39,14 @@ class UserController(
     ): ResponseEntity<GetUserLoginInfoResponse> {
         val url = userProfileImageService.uploadAndGetPublicUrl(userId, file)
         return ResponseEntity.ok(userService.updateProfile(userId, null, url))
+    }
+
+    @PatchMapping("/password")
+    override fun changePassword(
+        @LoginUser userId: Long,
+        @Valid @RequestBody request: ChangePasswordRequest,
+    ): ResponseEntity<Unit> {
+        userService.changePassword(userId, request.currentPassword, request.newPassword)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 }

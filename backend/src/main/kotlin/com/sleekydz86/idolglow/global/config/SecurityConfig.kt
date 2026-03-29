@@ -139,6 +139,9 @@ class SecurityConfig(
             "/login/**",
             "/auth/callback",
             "/payments/mock/webhook",
+            "/graphql",
+            "/graphiql",
+            "/graphiql/**",
         )
     }
 }
