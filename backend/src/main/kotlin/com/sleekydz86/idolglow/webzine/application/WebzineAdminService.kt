@@ -6,16 +6,15 @@ import com.sleekydz86.idolglow.webzine.application.dto.AdminIssuePageResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueRelatedContentResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueSummaryResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueVolumeResponse
+import com.sleekydz86.idolglow.webzine.application.dto.CreateWebzineIssueCommand
+import com.sleekydz86.idolglow.webzine.application.dto.UpsertWebzineArticleCommand
 import com.sleekydz86.idolglow.webzine.domain.WebzineArticle
 import com.sleekydz86.idolglow.webzine.domain.WebzineArticleDraft
+import com.sleekydz86.idolglow.webzine.domain.WebzineArticleRepository
 import com.sleekydz86.idolglow.webzine.domain.WebzineArticleSectionDraft
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
-import com.sleekydz86.idolglow.webzine.infrastructure.WebzineArticleJpaRepository
-import com.sleekydz86.idolglow.webzine.infrastructure.WebzineIssueJpaRepository
-import com.sleekydz86.idolglow.webzine.ui.request.CreateWebzineIssueRequest
-import com.sleekydz86.idolglow.webzine.ui.request.UpsertWebzineArticleRequest
+import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import jakarta.persistence.EntityNotFoundException
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.text.Normalizer
@@ -27,12 +26,12 @@ import java.time.format.DateTimeFormatter
 @Transactional(readOnly = true)
 @Service
 class WebzineAdminService(
-    private val webzineIssueJpaRepository: WebzineIssueJpaRepository,
-    private val webzineArticleJpaRepository: WebzineArticleJpaRepository,
+    private val webzineIssueRepository: WebzineIssueRepository,
+    private val webzineArticleRepository: WebzineArticleRepository,
     private val adminAuditService: AdminAuditService,
-) {
+) : WebzineAdminUseCase {
 
-    fun findIssues(
+    override fun findIssues(
         page: Int,
         size: Int,
         year: Int?,
@@ -41,12 +40,8 @@ class WebzineAdminService(
     ): AdminIssuePageResponse {
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 20)
-        val filteredIssues = webzineIssueJpaRepository.findAll(
-            Sort.by(
-                Sort.Order.desc("volume"),
-                Sort.Order.desc("issueDate"),
-            )
-        ).filter { issue ->
+        val allIssues = webzineIssueRepository.findAllByLatest()
+        val filteredIssues = allIssues.filter { issue ->
             (year == null || issue.issueDate.year == year) &&
                 (month == null || issue.issueDate.monthValue == month) &&
                 (volume == null || issue.volume == volume)
@@ -64,37 +59,37 @@ class WebzineAdminService(
             totalElements = totalElements,
             totalPages = totalPages,
             hasNext = toIndex < filteredIssues.size,
-            latestVolume = webzineIssueJpaRepository.findTopByOrderByVolumeDesc()?.volume ?: 0,
+            latestVolume = webzineIssueRepository.findTopByLatestVolume()?.volume ?: 0,
             totalArticleCount = filteredIssues.sumOf { it.articles.size },
-            availableYears = filteredIssues.map { it.issueDate.year }.distinct().sortedDescending(),
-            availableMonths = filteredIssues.map { it.issueDate.monthValue }.distinct().sorted(),
-            availableVolumes = filteredIssues.map { it.volume }.distinct().sortedDescending(),
+            availableYears = allIssues.map { it.issueDate.year }.distinct().sortedDescending(),
+            availableMonths = allIssues.map { it.issueDate.monthValue }.distinct().sorted(),
+            availableVolumes = allIssues.map { it.volume }.distinct().sortedDescending(),
         )
     }
 
-    fun findIssue(issueSlug: String): AdminIssueVolumeResponse =
+    override fun findIssue(issueSlug: String): AdminIssueVolumeResponse =
         AdminIssueVolumeResponse.from(getIssueEntity(issueSlug))
 
-    fun findArticle(issueSlug: String, articleSlug: String): AdminIssueArticleResponse {
+    override fun findArticle(issueSlug: String, articleSlug: String): AdminIssueArticleResponse {
         val issue = getIssueEntity(issueSlug)
         val article = getArticleEntity(issue, articleSlug)
         return AdminIssueArticleResponse.from(article, buildRelatedContents(issue, article))
     }
 
     @Transactional
-    fun createIssue(request: CreateWebzineIssueRequest): AdminIssueVolumeResponse {
-        val issueSlug = "vol-${request.volume}"
-        require(!webzineIssueJpaRepository.existsByVolumeOrSlug(request.volume, issueSlug)) {
-            "Vol.${request.volume} 는 이미 등록되어 있습니다."
+    override fun createIssue(command: CreateWebzineIssueCommand): AdminIssueVolumeResponse {
+        val issueSlug = "vol-${command.volume}"
+        require(!webzineIssueRepository.existsByVolumeOrSlug(command.volume, issueSlug)) {
+            "Issue volume ${command.volume} is already registered."
         }
 
-        val savedIssue = webzineIssueJpaRepository.save(
+        val savedIssue = webzineIssueRepository.save(
             WebzineIssue.create(
                 slug = issueSlug,
-                volume = request.volume,
-                issueDate = parseIssueDate(request.issueDate),
-                coverImageUrl = request.coverImageUrl,
-                teaser = request.teaser,
+                volume = command.volume,
+                issueDate = parseIssueDate(command.issueDate),
+                coverImageUrl = command.coverImageUrl,
+                teaser = command.teaser,
             )
         )
 
@@ -109,23 +104,23 @@ class WebzineAdminService(
     }
 
     @Transactional
-    fun updateIssue(issueSlug: String, request: CreateWebzineIssueRequest): AdminIssueVolumeResponse {
+    override fun updateIssue(issueSlug: String, command: CreateWebzineIssueCommand): AdminIssueVolumeResponse {
         val issue = getIssueEntity(issueSlug)
-        val nextSlug = "vol-${request.volume}"
+        val nextSlug = "vol-${command.volume}"
 
-        require(!webzineIssueJpaRepository.existsByVolumeAndIdNot(request.volume, issue.id)) {
-            "Vol.${request.volume} ???대? ?깅줉?섏뼱 ?덉뒿?덈떎."
+        require(!webzineIssueRepository.existsByVolumeAndIdNot(command.volume, issue.id)) {
+            "Issue volume ${command.volume} is already used by another issue."
         }
-        require(!webzineIssueJpaRepository.existsBySlugAndIdNot(nextSlug, issue.id)) {
-            "Vol.${request.volume} ?ㅻ윭洹몃? ?대? ?ъ슜 以묒엯?덈떎."
+        require(!webzineIssueRepository.existsBySlugAndIdNot(nextSlug, issue.id)) {
+            "Issue slug $nextSlug is already used by another issue."
         }
 
         issue.slug = nextSlug
-        issue.volume = request.volume
+        issue.volume = command.volume
         issue.update(
-            issueDate = parseIssueDate(request.issueDate),
-            coverImageUrl = request.coverImageUrl,
-            teaser = request.teaser,
+            issueDate = parseIssueDate(command.issueDate),
+            coverImageUrl = command.coverImageUrl,
+            teaser = command.teaser,
         )
 
         adminAuditService.log(
@@ -139,11 +134,11 @@ class WebzineAdminService(
     }
 
     @Transactional
-    fun deleteIssue(issueSlug: String) {
+    override fun deleteIssue(issueSlug: String) {
         val issue = getIssueEntity(issueSlug)
         val issueId = issue.id
         val detail = "slug=${issue.slug}, volume=${issue.volume}"
-        webzineIssueJpaRepository.delete(issue)
+        webzineIssueRepository.delete(issue)
 
         adminAuditService.log(
             actionCode = "WEBZINE_ISSUE_DELETE",
@@ -154,16 +149,16 @@ class WebzineAdminService(
     }
 
     @Transactional
-    fun createArticle(issueSlug: String, request: UpsertWebzineArticleRequest): AdminIssueArticleResponse {
+    override fun createArticle(issueSlug: String, command: UpsertWebzineArticleCommand): AdminIssueArticleResponse {
         val issue = getIssueEntity(issueSlug)
         val article = WebzineArticle.create(
             issue = issue,
-            slug = generateArticleSlug(issue, request.title),
-            draft = request.toDraft(issue),
+            slug = generateArticleSlug(issue, command.title),
+            draft = command.toDraft(issue),
         )
 
         issue.addArticle(article)
-        val savedArticle = webzineArticleJpaRepository.save(article)
+        val savedArticle = webzineArticleRepository.save(article)
 
         adminAuditService.log(
             actionCode = "WEBZINE_ARTICLE_CREATE",
@@ -176,18 +171,18 @@ class WebzineAdminService(
     }
 
     @Transactional
-    fun updateArticle(
+    override fun updateArticle(
         issueSlug: String,
         articleSlug: String,
-        request: UpsertWebzineArticleRequest,
+        command: UpsertWebzineArticleCommand,
     ): AdminIssueArticleResponse {
         val issue = getIssueEntity(issueSlug)
         val article = getArticleEntity(issue, articleSlug)
-        val nextSlug = generateArticleSlug(issue, request.title, article.id)
+        val nextSlug = generateArticleSlug(issue, command.title, article.id)
 
         article.update(
             slug = nextSlug,
-            draft = request.toDraft(issue),
+            draft = command.toDraft(issue),
         )
 
         adminAuditService.log(
@@ -201,10 +196,10 @@ class WebzineAdminService(
     }
 
     @Transactional
-    fun deleteArticle(issueSlug: String, articleSlug: String) {
+    override fun deleteArticle(issueSlug: String, articleSlug: String) {
         val issue = getIssueEntity(issueSlug)
         val article = getArticleEntity(issue, articleSlug)
-        webzineArticleJpaRepository.delete(article)
+        webzineArticleRepository.delete(article)
 
         adminAuditService.log(
             actionCode = "WEBZINE_ARTICLE_DELETE",
@@ -215,13 +210,13 @@ class WebzineAdminService(
     }
 
     private fun getIssueEntity(issueSlug: String): WebzineIssue =
-        webzineIssueJpaRepository.findBySlug(issueSlug)
-            ?: throw EntityNotFoundException("웹진 호를 찾을 수 없습니다. issueSlug=$issueSlug")
+        webzineIssueRepository.findBySlug(issueSlug)
+            ?: throw EntityNotFoundException("Webzine issue not found. issueSlug=$issueSlug")
 
     private fun getArticleEntity(issue: WebzineIssue, articleSlug: String): WebzineArticle =
-        webzineArticleJpaRepository.findByIssue_IdAndSlug(issue.id, articleSlug)
+        webzineArticleRepository.findByIssueIdAndSlug(issue.id, articleSlug)
             ?: throw EntityNotFoundException(
-                "웹진 기사를 찾을 수 없습니다. issueSlug=${issue.slug}, articleSlug=$articleSlug"
+                "Webzine article not found. issueSlug=${issue.slug}, articleSlug=$articleSlug"
             )
 
     private fun buildRelatedContents(
@@ -253,7 +248,7 @@ class WebzineAdminService(
 
     private fun parseIssueDate(value: String): LocalDate {
         val trimmed = value.trim()
-        require(trimmed.isNotEmpty()) { "발행일은 비어 있을 수 없습니다." }
+        require(trimmed.isNotEmpty()) { "Issue date must not be blank." }
 
         val normalized = trimmed.removeSuffix(".")
 
@@ -267,7 +262,7 @@ class WebzineAdminService(
             normalized.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) ->
                 LocalDate.parse(normalized, dashedDateFormatter)
 
-            else -> throw IllegalArgumentException("발행일 형식은 2026.03. 또는 2026-03 이어야 합니다.")
+            else -> throw IllegalArgumentException("Issue date format must be yyyy.MM, yyyy-MM, or yyyy-MM-dd.")
         }
     }
 
@@ -283,7 +278,7 @@ class WebzineAdminService(
         return normalized.ifBlank { "article-${System.currentTimeMillis()}" }
     }
 
-    private fun UpsertWebzineArticleRequest.toDraft(issue: WebzineIssue): WebzineArticleDraft {
+    private fun UpsertWebzineArticleCommand.toDraft(issue: WebzineIssue): WebzineArticleDraft {
         val normalizedSections = sections
             .map {
                 WebzineArticleSectionDraft(
@@ -296,7 +291,7 @@ class WebzineAdminService(
                 listOf(
                     WebzineArticleSectionDraft(
                         heading = null,
-                        body = "본문 내용을 입력해 주세요.",
+                        body = "Please enter article content.",
                         note = null,
                     )
                 )

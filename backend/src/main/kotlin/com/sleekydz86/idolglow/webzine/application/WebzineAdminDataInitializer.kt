@@ -5,7 +5,7 @@ import com.sleekydz86.idolglow.webzine.domain.WebzineArticle
 import com.sleekydz86.idolglow.webzine.domain.WebzineArticleDraft
 import com.sleekydz86.idolglow.webzine.domain.WebzineArticleSectionDraft
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
-import com.sleekydz86.idolglow.webzine.infrastructure.WebzineIssueJpaRepository
+import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -17,14 +17,14 @@ import java.time.LocalDate
 @Profile("local", "dev")
 @Component
 class WebzineAdminDataInitializer(
-    private val webzineIssueJpaRepository: WebzineIssueJpaRepository,
+    private val webzineIssueRepository: WebzineIssueRepository,
 ) : ApplicationRunner {
 
     private val log = LoggerFactory.getLogger(WebzineAdminDataInitializer::class.java)
 
     @Transactional
     override fun run(args: ApplicationArguments) {
-        if (webzineIssueJpaRepository.count() > 0) {
+        if (webzineIssueRepository.count() > 0) {
             return
         }
 
@@ -133,7 +133,7 @@ class WebzineAdminDataInitializer(
                 ),
             ),
         )
-        webzineIssueJpaRepository.save(volume101)
+        webzineIssueRepository.save(volume101)
 
         val volume100 = createIssue(
             volume = 100,
@@ -163,13 +163,13 @@ class WebzineAdminDataInitializer(
                 ),
             ),
         )
-        webzineIssueJpaRepository.save(volume100)
+        webzineIssueRepository.save(volume100)
 
         listOf(
             createIssue(99, LocalDate.of(2025, 12, 1), "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80", "Vol.99 샘플 호입니다."),
             createIssue(98, LocalDate.of(2025, 11, 1), "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80", "Vol.98 샘플 호입니다."),
             createIssue(97, LocalDate.of(2025, 10, 1), "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80", "Vol.97 샘플 호입니다."),
-        ).forEach(webzineIssueJpaRepository::save)
+        ).forEach(webzineIssueRepository::save)
 
         log.info("웹진 ACC 관리자 샘플 데이터를 생성했습니다.")
     }

@@ -1,82 +1,51 @@
 package com.sleekydz86.idolglow.webzine.application
 
-import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
-import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
-import io.minio.MinioClient
-import io.minio.PutObjectArgs
-import org.springframework.beans.factory.ObjectProvider
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.io.ByteArrayInputStream
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.UUID
 
 @Service
 class WebzineImageUploadService(
-    private val minioProps: MinioStorageProperties,
-    private val publicUrlProps: AppPublicUrlProperties,
-    private val minioClientProvider: ObjectProvider<MinioClient>,
+    private val webzineImageStoragePort: WebzineImageStoragePort,
     private val adminAuditService: AdminAuditService,
-    @Value("\${app.storage.local.base-path:}") private val localBasePath: String,
-) {
+) : WebzineImageUploadUseCase {
 
-    fun upload(file: MultipartFile, folder: String?): AdminIssueImageUploadResponse {
-        require(!file.isEmpty) { "업로드할 이미지 파일을 선택해 주세요." }
+    override fun upload(file: MultipartFile, folder: String?): AdminIssueImageUploadResponse {
+        require(!file.isEmpty) { "Please select an image file to upload." }
 
         val bytes = file.bytes
-        require(bytes.isNotEmpty()) { "업로드할 이미지 파일을 선택해 주세요." }
-        require(bytes.size <= MAX_BYTES) { "이미지 파일은 15MB 이하만 업로드할 수 있습니다." }
+        require(bytes.isNotEmpty()) { "Please select an image file to upload." }
+        require(bytes.size <= MAX_BYTES) { "Image uploads are limited to 15MB." }
 
         val contentType = file.contentType?.lowercase()?.trim().orEmpty()
         val ext = extensionFor(contentType, file.originalFilename)
-            ?: throw IllegalArgumentException("JPG, PNG, WebP, GIF 이미지만 업로드할 수 있습니다.")
+            ?: throw IllegalArgumentException("Only JPG, PNG, WebP, and GIF files are allowed.")
 
         val safeFolder = sanitizeFolder(folder)
-        val filename = "${UUID.randomUUID()}$ext"
-        val objectKey = "webzine/$safeFolder/$filename"
         val resolvedContentType = resolvedContentType(contentType, ext)
-
-        val url = if (minioProps.enabled) {
-            val client = minioClientProvider.getIfAvailable()
-                ?: throw IllegalStateException("app.storage.minio.enabled=true 인데 MinioClient 빈이 없습니다.")
-
-            ByteArrayInputStream(bytes).use { stream ->
-                client.putObject(
-                    PutObjectArgs.builder()
-                        .bucket(minioProps.bucket)
-                        .`object`(objectKey)
-                        .stream(stream, bytes.size.toLong(), -1)
-                        .contentType(resolvedContentType)
-                        .build()
-                )
-            }
-
-            "${minioProps.publicBaseUrl.trimEnd('/')}/$objectKey"
-        } else {
-            val root = localBasePath.trim().takeIf { it.isNotEmpty() }
-                ?: Paths.get(System.getProperty("user.home"), "Desktop", "image").toString()
-            val dir = Paths.get(root, "webzine", safeFolder)
-            Files.createDirectories(dir)
-            Files.write(dir.resolve(filename), bytes)
-            "${publicUrlProps.publicBaseUrl.trimEnd('/')}/uploads/webzine/$safeFolder/$filename"
-        }
+        val storedImage = webzineImageStoragePort.store(
+            StoreWebzineImageCommand(
+                bytes = bytes,
+                originalFilename = file.originalFilename,
+                contentType = resolvedContentType,
+                extension = ext,
+                folder = safeFolder,
+            )
+        )
 
         adminAuditService.log(
             actionCode = "WEBZINE_IMAGE_UPLOAD",
             targetType = "WEBZINE_ASSET",
             targetId = null,
-            detail = "folder=$safeFolder, objectKey=$objectKey",
+            detail = "folder=$safeFolder, objectKey=${storedImage.objectKey}",
         )
 
         return AdminIssueImageUploadResponse(
-            url = url,
-            objectKey = objectKey,
-            contentType = resolvedContentType,
-            size = bytes.size.toLong(),
+            url = storedImage.url,
+            objectKey = storedImage.objectKey,
+            contentType = storedImage.contentType,
+            size = storedImage.size,
         )
     }
 
