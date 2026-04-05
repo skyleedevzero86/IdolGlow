@@ -77,6 +77,7 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/health/check").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
                 val permitList = PERMIT_LIST.toMutableList()
                 if (testLoginEnabled) {
