@@ -73,8 +73,7 @@ class MinioBucketInitializer(
             }
         }.joinToString(",\n        ") { "\"$it\"" }
 
-        return
-        """
+        return """
         {
           "Version": "2012-10-17",
           "Statement": [
