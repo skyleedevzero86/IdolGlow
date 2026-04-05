@@ -1,0 +1,28 @@
+name: Conventional PR Title
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-title:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate pull request title
+        shell: bash
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: ${PR_TITLE}"
+          if [[ ! "${PR_TITLE}" =~ ^(feat|fix|refactor|docs|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?:\ .+ ]]; then
+            echo "::error title=Invalid PR title::PR 제목은 Conventional Commits 형식을 따라야 합니다. 예: feat(frontend): add admin issue pagination"
+            exit 1
+          fi
