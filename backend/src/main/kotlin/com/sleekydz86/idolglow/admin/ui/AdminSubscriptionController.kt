@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.admin.ui
 
 import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
-import com.sleekydz86.idolglow.subscription.application.SubscriptionAdminUseCase
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement

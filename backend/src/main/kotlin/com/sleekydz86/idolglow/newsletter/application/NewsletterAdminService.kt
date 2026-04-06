@@ -8,7 +8,7 @@ import com.sleekydz86.idolglow.newsletter.domain.Newsletter
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterDraft
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
-import com.sleekydz86.idolglow.subscription.application.SubscriptionDispatchRecorder
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

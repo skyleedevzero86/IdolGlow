@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.subscription.ui
 
-import com.sleekydz86.idolglow.subscription.application.SubscriptionPublicUseCase
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistrationResponse
 import com.sleekydz86.idolglow.subscription.ui.request.RegisterSubscriptionRequest
