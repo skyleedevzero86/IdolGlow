@@ -85,6 +85,7 @@ class SecurityConfig(
                 }
 
                 auth.requestMatchers(*permitList.toTypedArray()).permitAll()
+                    .requestMatchers(HttpMethod.POST, "/subscriptions").permitAll()
                     .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook").permitAll()
                     .anyRequest().authenticated()
             }

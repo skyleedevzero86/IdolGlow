@@ -70,17 +70,17 @@ class WebzineAdminDataInitializer(
         addArticle(
             issue = volume101,
             slug = "wednesday-theater-cultural-prescription",
-            title = "한 주의 중심에서 만난 문화 처방전, ACC 수요극장",
+            title = "한 주의 중심에서 만난 문화 처방전, Idol Glow 수요극장",
             kicker = "공연 프로그램 큐레이션",
             summary = "수요극장이 한 주의 리듬을 어떻게 바꾸는지 공연 해설과 관람 포인트를 함께 담았습니다.",
             category = IssueCategory.PERFORMANCE,
             formatLabel = "아티클",
             heroImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&w=1400&q=80",
             cardImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&w=900&q=80",
-            tags = listOf("ACC수요극장", "라파치니의정원", "문화처방"),
-            authorName = "ACC 편집부",
-            authorEmail = "webzine@acc.or.kr",
-            creditLine = "Photo ACC Archive",
+            tags = listOf("Idol Glow수요극장", "라파치니의정원", "문화처방"),
+            authorName = "Idol Glow 편집부",
+            authorEmail = "webzine@idolglow.local",
+            creditLine = "Photo Idol Glow Archive",
             sections = listOf(
                 WebzineArticleSectionDraft(
                     heading = "공연 리듬",
@@ -92,7 +92,7 @@ class WebzineAdminDataInitializer(
         addArticle(
             issue = volume101,
             slug = "asia-garden-culture-program",
-            title = "ACC 아시아 예술체험 <아시아의 정원문화>",
+            title = "Idol Glow 아시아 예술체험 <아시아의 정원문화>",
             kicker = "교육·포럼 프로그램",
             summary = "교육 체험 프로그램의 사진, 설명, 태그를 카드형 기사 구조로 정리한 샘플입니다.",
             category = IssueCategory.FORUM,
@@ -101,7 +101,7 @@ class WebzineAdminDataInitializer(
             cardImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=80",
             tags = listOf("아시아예술체험", "정원문화", "교육"),
             authorName = "이수미",
-            authorEmail = "academy@acc.or.kr",
+            authorEmail = "academy@idolglow.local",
             creditLine = "Photo Program Team",
             sections = listOf(
                 WebzineArticleSectionDraft(
@@ -114,7 +114,7 @@ class WebzineAdminDataInitializer(
         addArticle(
             issue = volume101,
             slug = "bridge-market-linking-people-and-culture",
-            title = "사람과 문화를 잇는 다리, ACC 별별브릿지마켓",
+            title = "사람과 문화를 잇는 다리, Idol Glow 별별브릿지마켓",
             kicker = "행사·교류 현장 스케치",
             summary = "현장감이 강한 행사성 콘텐츠를 카드와 상세 본문으로 자연스럽게 이어주는 예시입니다.",
             category = IssueCategory.EVENT,
@@ -123,7 +123,7 @@ class WebzineAdminDataInitializer(
             cardImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=900&q=80",
             tags = listOf("별별브릿지마켓", "문화교류", "현장스케치"),
             authorName = "김보라",
-            authorEmail = "event@acc.or.kr",
+            authorEmail = "event@idolglow.local",
             creditLine = "Photo Event Team",
             sections = listOf(
                 WebzineArticleSectionDraft(
@@ -152,9 +152,9 @@ class WebzineAdminDataInitializer(
             heroImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80",
             cardImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
             tags = listOf("ArtificialYou", "AI전시", "특집"),
-            authorName = "ACC 편집부",
-            authorEmail = "webzine@acc.or.kr",
-            creditLine = "Design ACC",
+            authorName = "Idol Glow 편집부",
+            authorEmail = "webzine@idolglow.local",
+            creditLine = "Design Idol Glow",
             sections = listOf(
                 WebzineArticleSectionDraft(
                     heading = "특집 개요",
@@ -171,7 +171,7 @@ class WebzineAdminDataInitializer(
             createIssue(97, LocalDate.of(2025, 10, 1), "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80", "Vol.97 샘플 호입니다."),
         ).forEach(webzineIssueRepository::save)
 
-        log.info("웹진 ACC 관리자 샘플 데이터를 생성했습니다.")
+        log.info("웹진 Idol Glow 관리자 샘플 데이터를 생성했습니다.")
     }
 
     private fun createIssue(
