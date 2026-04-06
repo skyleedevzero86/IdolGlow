@@ -46,7 +46,7 @@ ALTER TABLE payments ADD COLUMN virtual_account_due_date TIMESTAMP NULL;
 
 ALTER TABLE payments ADD COLUMN easy_pay_provider VARCHAR(100) NULL;
 
-ALTER TABLE payments ADD COLUMN raw_response_json LONGVARCHAR NULL;
+ALTER TABLE payments ADD COLUMN raw_response_json TEXT NULL;
 ALTER TABLE payments ADD COLUMN idempotency_key VARCHAR(100) NULL;
 
 -- 기존 결제 행: 내부 번호·주문번호 백필(마이그레이션 일회)
@@ -112,11 +112,11 @@ CREATE TABLE payment_logs (
     request_url VARCHAR(500) NULL,
     http_method VARCHAR(20) NULL,
     http_status INT NULL,
-    request_body LONGVARCHAR NULL,
-    response_body LONGVARCHAR NULL,
+    request_body TEXT NULL,
+    response_body TEXT NULL,
     error_code VARCHAR(100) NULL,
     error_message VARCHAR(1000) NULL,
-    stack_trace LONGVARCHAR NULL,
+    stack_trace TEXT NULL,
     client_ip VARCHAR(100) NULL,
     user_agent VARCHAR(500) NULL,
     trace_id VARCHAR(100) NULL,
@@ -173,7 +173,7 @@ CREATE TABLE payment_refunds (
     fail_code VARCHAR(100) NULL,
     fail_message VARCHAR(500) NULL,
     idempotency_key VARCHAR(100) NULL,
-    raw_response_json LONGVARCHAR NULL,
+    raw_response_json TEXT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT fk_payment_refunds_payment FOREIGN KEY (payment_id) REFERENCES payments (id),
