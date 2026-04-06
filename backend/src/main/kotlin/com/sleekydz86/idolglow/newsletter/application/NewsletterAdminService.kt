@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.newsletter.domain.Newsletter
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterDraft
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
+import com.sleekydz86.idolglow.subscription.application.SubscriptionDispatchRecorder
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,6 +21,7 @@ import java.time.format.DateTimeFormatter
 class NewsletterAdminService(
     private val newsletterRepository: NewsletterRepository,
     private val adminAuditService: AdminAuditService,
+    private val subscriptionDispatchRecorder: SubscriptionDispatchRecorder,
 ) : NewsletterAdminUseCase {
 
     override fun findNewsletters(page: Int, size: Int): AdminNewsletterPageResponse {
@@ -65,6 +67,7 @@ class NewsletterAdminService(
             targetId = savedNewsletter.id,
             detail = "slug=${savedNewsletter.slug}",
         )
+        subscriptionDispatchRecorder.recordNewsletterDispatch(savedNewsletter)
 
         return AdminNewsletterDetailResponse.from(savedNewsletter)
     }

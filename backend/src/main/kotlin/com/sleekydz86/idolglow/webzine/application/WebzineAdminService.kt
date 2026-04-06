@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.webzine.application
 
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
+import com.sleekydz86.idolglow.subscription.application.SubscriptionDispatchRecorder
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueArticleResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssuePageResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueRelatedContentResponse
@@ -29,6 +30,7 @@ class WebzineAdminService(
     private val webzineIssueRepository: WebzineIssueRepository,
     private val webzineArticleRepository: WebzineArticleRepository,
     private val adminAuditService: AdminAuditService,
+    private val subscriptionDispatchRecorder: SubscriptionDispatchRecorder,
 ) : WebzineAdminUseCase {
 
     override fun findIssues(
@@ -99,6 +101,7 @@ class WebzineAdminService(
             targetId = savedIssue.id,
             detail = "slug=${savedIssue.slug}",
         )
+        subscriptionDispatchRecorder.recordWebzineIssueDispatch(savedIssue)
 
         return AdminIssueVolumeResponse.from(savedIssue)
     }

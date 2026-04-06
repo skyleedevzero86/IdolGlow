@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin Webzine", description = "Admin API for ACC webzine issue management")
+@Tag(name = "Admin Webzine", description = "Admin API for Idol Glow webzine issue management")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/issues")
