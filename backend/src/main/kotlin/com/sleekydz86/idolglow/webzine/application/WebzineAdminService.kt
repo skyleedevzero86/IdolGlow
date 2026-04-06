@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.webzine.application
 
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
-import com.sleekydz86.idolglow.subscription.application.SubscriptionDispatchRecorder
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueArticleResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssuePageResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueRelatedContentResponse

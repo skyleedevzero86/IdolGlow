@@ -1,16 +1,16 @@
 package com.sleekydz86.idolglow.subscription.infrastructure
 
+import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchHistoryPort
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchChannel
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistoryRepository
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Repository
 
 @Repository
 class SubscriptionDispatchHistoryRepositoryImpl(
     private val subscriptionDispatchHistoryJpaRepository: SubscriptionDispatchHistoryJpaRepository,
-) : SubscriptionDispatchHistoryRepository {
+) : SubscriptionDispatchHistoryPort {
 
     override fun findAllByLatest(): List<SubscriptionDispatchHistory> =
         subscriptionDispatchHistoryJpaRepository.findAll(

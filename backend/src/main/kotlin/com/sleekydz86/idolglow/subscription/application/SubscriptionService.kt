@@ -6,12 +6,15 @@ import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscription
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistrationResponse
 import com.sleekydz86.idolglow.subscription.application.dto.create
 import com.sleekydz86.idolglow.subscription.application.dto.toRegistrationResponse
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
+import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
+import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchHistoryPort
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
-import com.sleekydz86.idolglow.subscription.domain.EmailSubscriptionRepository
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistoryRepository
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,8 +23,8 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 @Service
 class SubscriptionService(
-    private val emailSubscriptionRepository: EmailSubscriptionRepository,
-    private val subscriptionDispatchHistoryRepository: SubscriptionDispatchHistoryRepository,
+    private val emailSubscriptionPort: EmailSubscriptionPort,
+    private val subscriptionDispatchHistoryPort: SubscriptionDispatchHistoryPort,
 ) : SubscriptionPublicUseCase, SubscriptionAdminUseCase, SubscriptionDispatchRecorder {
 
     @Transactional
@@ -33,9 +36,9 @@ class SubscriptionService(
         }
 
         val now = LocalDateTime.now()
-        val existing = emailSubscriptionRepository.findByEmail(normalizedEmail)
+        val existing = emailSubscriptionPort.findByEmail(normalizedEmail)
         val saved = if (existing == null) {
-            emailSubscriptionRepository.save(
+            emailSubscriptionPort.save(
                 EmailSubscription.create(
                     email = normalizedEmail,
                     subscribedNewsletters = command.subscribeNewsletters,
@@ -53,7 +56,7 @@ class SubscriptionService(
                 subscribedAt = now,
                 subscriptionSource = command.source,
             )
-            emailSubscriptionRepository.save(existing)
+            emailSubscriptionPort.save(existing)
         }
 
         return saved.toRegistrationResponse()
@@ -70,17 +73,17 @@ class SubscriptionService(
         val resolvedDispatchPage = dispatchPage.coerceAtLeast(1)
         val resolvedDispatchSize = dispatchSize.coerceIn(1, 20)
 
-        val allSubscribers = emailSubscriptionRepository.findAllByLatest()
-        val allDispatches = subscriptionDispatchHistoryRepository.findAllByLatest()
+        val allSubscribers = emailSubscriptionPort.findAllByLatest()
+        val allDispatches = subscriptionDispatchHistoryPort.findAllByLatest()
 
         val subscriberSlice = allSubscribers.slicePage(resolvedSubscriberPage, resolvedSubscriberSize)
         val dispatchSlice = allDispatches.slicePage(resolvedDispatchPage, resolvedDispatchSize)
 
         return AdminSubscriptionOverviewResponse.create(
-            totalActive = emailSubscriptionRepository.countActive(),
-            newsletterSubscriberCount = emailSubscriptionRepository.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
-            issueSubscriberCount = emailSubscriptionRepository.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
-            totalDispatches = subscriptionDispatchHistoryRepository.count(),
+            totalActive = emailSubscriptionPort.countActive(),
+            newsletterSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
+            issueSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
+            totalDispatches = subscriptionDispatchHistoryPort.count(),
             subscribers = subscriberSlice.items,
             subscriberPage = resolvedSubscriberPage,
             subscriberSize = resolvedSubscriberSize,
@@ -98,7 +101,7 @@ class SubscriptionService(
 
     @Transactional
     override fun recordNewsletterDispatch(newsletter: Newsletter) {
-        if (subscriptionDispatchHistoryRepository.existsByContentTypeAndContentSlug(
+        if (subscriptionDispatchHistoryPort.existsByContentTypeAndContentSlug(
                 contentType = SubscriptionContentType.NEWSLETTER,
                 contentSlug = newsletter.slug,
             )
@@ -106,13 +109,13 @@ class SubscriptionService(
             return
         }
 
-        subscriptionDispatchHistoryRepository.save(
+        subscriptionDispatchHistoryPort.save(
             SubscriptionDispatchHistory.record(
                 contentType = SubscriptionContentType.NEWSLETTER,
                 contentSlug = newsletter.slug,
                 contentTitle = newsletter.title,
                 contentSummary = newsletter.summary,
-                recipientCount = emailSubscriptionRepository.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
+                recipientCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
                 contentCreatedAt = newsletter.createdAt,
                 dispatchedAt = LocalDateTime.now(),
             )
@@ -121,7 +124,7 @@ class SubscriptionService(
 
     @Transactional
     override fun recordWebzineIssueDispatch(issue: WebzineIssue) {
-        if (subscriptionDispatchHistoryRepository.existsByContentTypeAndContentSlug(
+        if (subscriptionDispatchHistoryPort.existsByContentTypeAndContentSlug(
                 contentType = SubscriptionContentType.WEBZINE_ISSUE,
                 contentSlug = issue.slug,
             )
@@ -129,13 +132,13 @@ class SubscriptionService(
             return
         }
 
-        subscriptionDispatchHistoryRepository.save(
+        subscriptionDispatchHistoryPort.save(
             SubscriptionDispatchHistory.record(
                 contentType = SubscriptionContentType.WEBZINE_ISSUE,
                 contentSlug = issue.slug,
                 contentTitle = "Vol.${issue.volume} 호별보기",
                 contentSummary = issue.teaser,
-                recipientCount = emailSubscriptionRepository.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
+                recipientCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
                 contentCreatedAt = issue.createdAt,
                 dispatchedAt = LocalDateTime.now(),
             )
