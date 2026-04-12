@@ -62,6 +62,9 @@ dependencies {
 
 	// Spring Data jpa
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
+	implementation("org.springframework.boot:spring-boot-starter-websocket")
+	implementation("org.springframework.boot:spring-boot-starter-cache")
 
 	//webclient
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
