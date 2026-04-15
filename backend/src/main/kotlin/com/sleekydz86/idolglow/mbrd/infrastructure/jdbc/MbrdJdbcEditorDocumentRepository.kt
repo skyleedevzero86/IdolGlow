@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.mbrd.infrastructure.jdbc
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.sleekydz86.idolglow.mbrd.domain.MbrdDocumentId
 import com.sleekydz86.idolglow.mbrd.domain.MbrdDocumentPublicationStatus
 import com.sleekydz86.idolglow.mbrd.domain.MbrdEditorDocument
@@ -21,9 +21,9 @@ import javax.sql.DataSource
 class MbrdJdbcEditorDocumentRepository(
     private val dataSource: DataSource,
     private val jdbcTemplate: NamedParameterJdbcTemplate,
-    private val objectMapper: ObjectMapper,
     private val embeddingEncoder: MbrdEditorEmbeddingEncoder,
 ) : MbrdEditorDocumentRepository {
+    private val objectMapper = jacksonObjectMapper()
 
     private val dbProduct: String = dataSource.connection.use { it.metaData.databaseProductName }
 
