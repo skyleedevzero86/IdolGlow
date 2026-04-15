@@ -76,6 +76,7 @@ class SecurityConfig(
             }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/health/check").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()

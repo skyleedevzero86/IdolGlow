@@ -80,8 +80,8 @@ class MimAdminService(
         val merged = existing.copy(
             domainId = request.domainId?.ifBlank { null } ?: existing.domainId,
             imageName = request.imageName,
-            imagePath = existing.imagePath,
-            imageFileName = existing.imageFileName,
+            imagePath = request.imagePath,
+            imageFileName = request.imageFileName,
             description = request.description,
             activeYn = request.activeYn ?: existing.activeYn,
             createdBy = request.createdBy ?: existing.createdBy,
