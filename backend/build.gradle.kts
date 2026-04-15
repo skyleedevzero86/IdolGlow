@@ -105,6 +105,11 @@ sourceSets {
 	}
 }
 
+kapt {
+	correctErrorTypes = true
+	useBuildCache = false
+}
+
 tasks.withType<Test>().configureEach {
 	useJUnitPlatform()
 }

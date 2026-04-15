@@ -16,6 +16,8 @@ import kotlin.math.ceil
 class PupAdminService(
     private val pupRepository: PupRepository,
 ) {
+    private val maxPopupCountPerDomain = 5
+
     fun findPage(
         page: Int,
         size: Int,
@@ -56,10 +58,13 @@ class PupAdminService(
 
     @Transactional
     fun create(request: UpsertPupRequest): PupAdminItemResponse {
+        val resolvedDomainId = request.domainId?.ifBlank { null } ?: "kr"
+        ensurePopupLimitNotExceeded(resolvedDomainId)
+
         val id = "POP_${System.currentTimeMillis()}"
         val toSave = PupItem(
             popupId = id,
-            domainId = request.domainId?.ifBlank { null } ?: "kr",
+            domainId = resolvedDomainId,
             title = request.title,
             fileUrl = request.fileUrl,
             linkTarget = request.linkTarget ?: "_blank",
@@ -88,8 +93,8 @@ class PupAdminService(
             title = request.title,
             fileUrl = request.fileUrl,
             linkTarget = request.linkTarget ?: existing.linkTarget,
-            imagePath = existing.imagePath,
-            imageFileName = existing.imageFileName,
+            imagePath = request.imagePath,
+            imageFileName = request.imageFileName,
             noticeStartDate = request.noticeStartDate ?: existing.noticeStartDate,
             noticeEndDate = request.noticeEndDate ?: existing.noticeEndDate,
             stopViewYn = request.stopViewYn ?: existing.stopViewYn,
@@ -106,5 +111,21 @@ class PupAdminService(
             throw EntityNotFoundException("Popup not found. popupId=$popupId")
         }
         pupRepository.delete(popupId)
+    }
+
+    private fun ensurePopupLimitNotExceeded(domainId: String) {
+        val totalCount = pupRepository.count(
+            PupListCriteria(
+                pageIndex = 1,
+                pageSize = 1,
+                domainId = domainId,
+                searchType = "",
+                keyword = "",
+            ),
+        )
+
+        if (totalCount >= maxPopupCountPerDomain) {
+            throw IllegalStateException("팝업은 도메인당 최대 5개까지 등록할 수 있습니다.")
+        }
     }
 }
