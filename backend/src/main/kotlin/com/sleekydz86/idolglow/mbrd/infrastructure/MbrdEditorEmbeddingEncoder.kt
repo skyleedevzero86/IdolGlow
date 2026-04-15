@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.mbrd.infrastructure
 
 import org.springframework.stereotype.Component
 import java.util.Locale
-import kotlin.math.floorMod
+import java.lang.Math.floorMod
 import kotlin.math.sqrt
 
 @Component
