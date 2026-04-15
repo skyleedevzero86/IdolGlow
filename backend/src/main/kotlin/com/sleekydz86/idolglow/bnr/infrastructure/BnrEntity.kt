@@ -8,7 +8,9 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
 import java.time.LocalDateTime
+import java.sql.Types
 
 @Entity
 @Table(name = "tb_banner")
@@ -33,6 +35,7 @@ class BnrEntity(
     var bannerDc: String? = null,
     @Column(name = "sort_ordr")
     var sortOrdr: Int? = null,
+    @JdbcTypeCode(Types.CHAR)
     @Column(name = "reflct_at", length = 1)
     var reflctAt: String? = null,
     @Column(name = "frst_register_id", length = 50)

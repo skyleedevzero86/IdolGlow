@@ -8,7 +8,9 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
 import java.time.LocalDateTime
+import java.sql.Types
 
 @Entity
 @Table(name = "tb_popup_manage")
@@ -43,8 +45,10 @@ class PupEntity(
     var ntceBgnde: String? = null,
     @Column(name = "ntce_endde", length = 20)
     var ntceEndde: String? = null,
+    @JdbcTypeCode(Types.CHAR)
     @Column(name = "stopvew_setup_at", length = 1)
     var stopvewSetupAt: String? = null,
+    @JdbcTypeCode(Types.CHAR)
     @Column(name = "ntce_at", length = 1)
     var ntceAt: String? = null,
     @Column(name = "frst_register_id", length = 50)
