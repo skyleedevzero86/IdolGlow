@@ -5,18 +5,26 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "Site content", description = "홈 화면 공개 콘텐츠 API")
+@Tag(name = "Site content", description = "Public site content API")
 interface SiteContentApi {
 
     @Operation(
-        summary = "홈 화면 콘텐츠 조회",
-        description = "메인 슬라이드, 배너, 팝업 목록을 홈 화면 용도로 조회합니다.",
+        summary = "Read home content",
+        description = "Returns home hero slides, banners, and popup content.",
     )
-    @ApiResponse(responseCode = "200", description = "조회 성공")
-    fun readHomeContent(
-        @Parameter(description = "도메인 ID", example = "kr")
-        domainId: String?,
-    ): ResponseEntity<SiteHomeContentResponse>
+    @ApiResponse(responseCode = "200", description = "Read success")
+    fun readHomeContent(): ResponseEntity<SiteHomeContentResponse>
+
+    @Operation(
+        summary = "Read site content asset",
+        description = "Reads a banner, popup, or main slide image through the backend.",
+    )
+    @ApiResponse(responseCode = "200", description = "Read success")
+    fun readAsset(
+        @Parameter(description = "Object key", example = "webzine/site-content/popups/sample.png")
+        objectKey: String,
+    ): ResponseEntity<ByteArrayResource>
 }

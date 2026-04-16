@@ -19,18 +19,19 @@ class MimAdminService(
     fun findPage(
         page: Int,
         size: Int,
-        domainId: String?,
         searchType: String?,
         keyword: String?,
     ): MimAdminPageResponse {
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 100)
+        val resolvedSearchType = searchType?.trim()?.lowercase().orEmpty()
+        val resolvedKeyword = keyword?.trim().orEmpty()
         val criteria = MimListCriteria(
             pageIndex = resolvedPage,
             pageSize = resolvedSize,
-            domainId = domainId?.ifBlank { null } ?: "kr",
-            searchType = searchType ?: "",
-            keyword = keyword ?: "",
+            domainId = "kr",
+            searchType = resolvedSearchType,
+            keyword = resolvedKeyword,
         )
         val totalCount = mimRepository.count(criteria)
         val items = mimRepository.findList(criteria)
@@ -59,7 +60,7 @@ class MimAdminService(
         val id = "IMG_${System.currentTimeMillis()}"
         val toSave = MimItem(
             imageId = id,
-            domainId = request.domainId?.ifBlank { null } ?: "kr",
+            domainId = "kr",
             imageName = request.imageName,
             imagePath = request.imagePath,
             imageFileName = request.imageFileName,
@@ -78,7 +79,7 @@ class MimAdminService(
         val existing = mimRepository.findById(imageId)
             ?: throw EntityNotFoundException("Main image not found. imageId=$imageId")
         val merged = existing.copy(
-            domainId = request.domainId?.ifBlank { null } ?: existing.domainId,
+            domainId = existing.domainId ?: "kr",
             imageName = request.imageName,
             imagePath = request.imagePath,
             imageFileName = request.imageFileName,

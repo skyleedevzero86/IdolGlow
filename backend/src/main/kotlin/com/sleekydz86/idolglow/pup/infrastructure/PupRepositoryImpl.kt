@@ -106,16 +106,24 @@ class PupRepositoryImpl(
 
     private fun adminListPredicate(c: PupListCriteria, root: Root<PupEntity>, cb: CriteriaBuilder): Predicate {
         val domainId = c.domainId.ifBlank { "kr" }
-        val keyword = c.keyword
-        val searchType = c.searchType
-        var p = cb.equal(root.get<String>("domainId"), domainId)
-        if (searchType == "title" && !keyword.isNullOrBlank()) {
-            p = cb.and(p, cb.like(root.get("popupSjNm"), "%$keyword%"))
+        val domainPred = cb.equal(root.get<String>("domainId"), domainId)
+        val keyword = c.keyword.trim().lowercase()
+        if (keyword.isBlank()) {
+            return domainPred
         }
-        if (searchType == "fileUrl" && !keyword.isNullOrBlank()) {
-            p = cb.and(p, cb.like(root.get("fileUrl"), "%$keyword%"))
+
+        val pattern = "%$keyword%"
+        val conditions = when (c.searchType) {
+            "title" -> listOf(cb.like(cb.lower(root.get("popupSjNm")), pattern))
+            "fileurl" -> listOf(cb.like(cb.lower(root.get("fileUrl")), pattern))
+            else -> listOf(
+                cb.like(cb.lower(root.get("popupSjNm")), pattern),
+                cb.like(cb.lower(root.get("fileUrl")), pattern),
+                cb.like(cb.lower(root.get("popupImgPath")), pattern),
+                cb.like(cb.lower(root.get("popupFileNm")), pattern),
+            )
         }
-        return p
+        return cb.and(domainPred, cb.or(*conditions.toTypedArray()))
     }
 
     private fun countSpec(c: PupListCriteria): Specification<PupEntity> =

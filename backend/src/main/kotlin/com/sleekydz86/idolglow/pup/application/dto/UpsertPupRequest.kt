@@ -3,7 +3,6 @@ package com.sleekydz86.idolglow.pup.application.dto
 import jakarta.validation.constraints.NotBlank
 
 data class UpsertPupRequest(
-    val domainId: String?,
     @field:NotBlank
     val title: String,
     val fileUrl: String?,

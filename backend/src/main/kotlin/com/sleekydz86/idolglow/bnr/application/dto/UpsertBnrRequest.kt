@@ -3,7 +3,6 @@ package com.sleekydz86.idolglow.bnr.application.dto
 import jakarta.validation.constraints.NotBlank
 
 data class UpsertBnrRequest(
-    val domainId: String?,
     @field:NotBlank
     val bannerName: String,
     val linkUrl: String?,

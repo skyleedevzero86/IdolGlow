@@ -11,6 +11,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionAdvice {
@@ -173,6 +174,24 @@ class GlobalExceptionAdvice {
                     name = "NOT_FOUND",
                     errorCode = "NOT_FOUND",
                     message = exception.message ?: "대상을 찾을 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFoundException(
+        request: HttpServletRequest,
+        exception: NoResourceFoundException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("리소스를 찾지 못함: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                ExceptionResponse(
+                    name = "NOT_FOUND",
+                    errorCode = "NOT_FOUND",
+                    message = "요청한 API 경로를 찾지 못했습니다. 백엔드를 재시작했는지 확인해 주세요."
                 )
             )
     }

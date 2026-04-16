@@ -19,18 +19,19 @@ class BnrAdminService(
     fun findPage(
         page: Int,
         size: Int,
-        domainId: String?,
         searchType: String?,
         keyword: String?,
     ): BnrAdminPageResponse {
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 100)
+        val resolvedSearchType = searchType?.trim()?.lowercase().orEmpty()
+        val resolvedKeyword = keyword?.trim().orEmpty()
         val criteria = BnrListCriteria(
             pageIndex = resolvedPage,
             pageSize = resolvedSize,
-            domainId = domainId?.ifBlank { null } ?: "kr",
-            searchType = searchType ?: "",
-            keyword = keyword ?: "",
+            domainId = "kr",
+            searchType = resolvedSearchType,
+            keyword = resolvedKeyword,
         )
         val totalCount = bnrRepository.count(criteria)
         val items = bnrRepository.findList(criteria)
@@ -59,7 +60,7 @@ class BnrAdminService(
         val id = "BNR_${System.currentTimeMillis()}"
         val toSave = BnrItem(
             bannerId = id,
-            domainId = request.domainId?.ifBlank { null } ?: "kr",
+            domainId = "kr",
             bannerName = request.bannerName,
             linkUrl = request.linkUrl,
             imagePath = request.imagePath,
@@ -80,7 +81,7 @@ class BnrAdminService(
         val existing = bnrRepository.findById(bannerId)
             ?: throw EntityNotFoundException("Banner not found. bannerId=$bannerId")
         val merged = existing.copy(
-            domainId = request.domainId?.ifBlank { null } ?: existing.domainId,
+            domainId = existing.domainId ?: "kr",
             bannerName = request.bannerName,
             linkUrl = request.linkUrl,
             imagePath = request.imagePath,

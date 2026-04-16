@@ -101,14 +101,26 @@ class BnrRepositoryImpl(
 
     private fun adminListPredicate(c: BnrListCriteria, root: Root<BnrEntity>, cb: CriteriaBuilder): Predicate {
         val domainId = c.domainId.ifBlank { "kr" }
-        val keyword = c.keyword
-        val searchType = c.searchType
         val domainPred = cb.equal(root.get<String>("domainId"), domainId)
-        return if (searchType == "name" && !keyword.isNullOrBlank()) {
-            cb.and(domainPred, cb.like(root.get("bannerNm"), "%$keyword%"))
-        } else {
-            domainPred
+        val keyword = c.keyword.trim().lowercase()
+        if (keyword.isBlank()) {
+            return domainPred
         }
+
+        val pattern = "%$keyword%"
+        val conditions = when (c.searchType) {
+            "name" -> listOf(cb.like(cb.lower(root.get("bannerNm")), pattern))
+            "link" -> listOf(cb.like(cb.lower(root.get("linkUrl")), pattern))
+            "description" -> listOf(cb.like(cb.lower(root.get("bannerDc")), pattern))
+            else -> listOf(
+                cb.like(cb.lower(root.get("bannerNm")), pattern),
+                cb.like(cb.lower(root.get("linkUrl")), pattern),
+                cb.like(cb.lower(root.get("bannerDc")), pattern),
+                cb.like(cb.lower(root.get("bannerImageFile")), pattern),
+                cb.like(cb.lower(root.get("bannerImage")), pattern),
+            )
+        }
+        return cb.and(domainPred, cb.or(*conditions.toTypedArray()))
     }
 
     private fun countSpec(c: BnrListCriteria): Specification<BnrEntity> =
