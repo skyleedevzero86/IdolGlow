@@ -94,14 +94,24 @@ class MimRepositoryImpl(
 
     private fun adminListPredicate(c: MimListCriteria, root: Root<MimEntity>, cb: CriteriaBuilder): Predicate {
         val domainId = c.domainId.ifBlank { "kr" }
-        val keyword = c.keyword
-        val searchType = c.searchType
         val domainPred = cb.equal(root.get<String>("domainId"), domainId)
-        return if (searchType == "name" && !keyword.isNullOrBlank()) {
-            cb.and(domainPred, cb.like(root.get("imageNm"), "%$keyword%"))
-        } else {
-            domainPred
+        val keyword = c.keyword.trim().lowercase()
+        if (keyword.isBlank()) {
+            return domainPred
         }
+
+        val pattern = "%$keyword%"
+        val conditions = when (c.searchType) {
+            "name" -> listOf(cb.like(cb.lower(root.get("imageNm")), pattern))
+            "description" -> listOf(cb.like(cb.lower(root.get("imageDc")), pattern))
+            else -> listOf(
+                cb.like(cb.lower(root.get("imageNm")), pattern),
+                cb.like(cb.lower(root.get("imageDc")), pattern),
+                cb.like(cb.lower(root.get("imageFile")), pattern),
+                cb.like(cb.lower(root.get("image")), pattern),
+            )
+        }
+        return cb.and(domainPred, cb.or(*conditions.toTypedArray()))
     }
 
     private fun countSpec(c: MimListCriteria): Specification<MimEntity> =

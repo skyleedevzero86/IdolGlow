@@ -3,10 +3,13 @@ package com.sleekydz86.idolglow.bnr.ui
 import com.sleekydz86.idolglow.bnr.application.BnrAdminService
 import com.sleekydz86.idolglow.bnr.application.dto.BnrAdminPageResponse
 import com.sleekydz86.idolglow.bnr.application.dto.UpsertBnrRequest
+import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
+import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -17,33 +20,35 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin bnr", description = "관리자 배너(tb_banner) API")
+@Tag(name = "Admin Banner", description = "Admin API for banner management")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/bnr")
 class AdminBnrController(
     private val bnrAdminService: BnrAdminService,
+    private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
-    @Operation(summary = "배너 목록")
+    @Operation(summary = "Find banners")
     @GetMapping
     fun list(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
-        @RequestParam(required = false) domainId: String?,
         @RequestParam(required = false) searchType: String?,
         @RequestParam(required = false) keyword: String?,
     ): ResponseEntity<BnrAdminPageResponse> =
-        ResponseEntity.ok(bnrAdminService.findPage(page, size, domainId, searchType, keyword))
+        ResponseEntity.ok(bnrAdminService.findPage(page, size, searchType, keyword))
 
-    @Operation(summary = "배너 단건")
+    @Operation(summary = "Find banner")
     @GetMapping("/{bannerId}")
     fun one(@PathVariable bannerId: String) =
         ResponseEntity.ok(bnrAdminService.findOne(bannerId))
 
-    @Operation(summary = "배너 등록")
+    @Operation(summary = "Create banner")
     @PostMapping
     fun create(@Valid @RequestBody request: UpsertBnrRequest): ResponseEntity<*> {
         val created = bnrAdminService.create(request)
@@ -52,14 +57,21 @@ class AdminBnrController(
             .body(created)
     }
 
-    @Operation(summary = "배너 수정")
+    @Operation(summary = "Upload banner image")
+    @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadImage(
+        @RequestPart("file") file: MultipartFile,
+    ): ResponseEntity<AdminIssueImageUploadResponse> =
+        ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/banners"))
+
+    @Operation(summary = "Update banner")
     @PutMapping("/{bannerId}")
     fun update(
         @PathVariable bannerId: String,
         @Valid @RequestBody request: UpsertBnrRequest,
     ) = ResponseEntity.ok(bnrAdminService.update(bannerId, request))
 
-    @Operation(summary = "배너 삭제")
+    @Operation(summary = "Delete banner")
     @DeleteMapping("/{bannerId}")
     fun delete(@PathVariable bannerId: String): ResponseEntity<Void> {
         bnrAdminService.delete(bannerId)

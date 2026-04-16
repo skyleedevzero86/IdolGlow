@@ -3,7 +3,6 @@ package com.sleekydz86.idolglow.mim.application.dto
 import jakarta.validation.constraints.NotBlank
 
 data class UpsertMimRequest(
-    val domainId: String?,
     @field:NotBlank
     val imageName: String,
     val imagePath: String?,

@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.sitecontent.application
 
 import com.sleekydz86.idolglow.bnr.domain.BnrRepository
+import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.mim.domain.MimRepository
 import com.sleekydz86.idolglow.pup.domain.PupRepository
 import com.sleekydz86.idolglow.sitecontent.application.dto.SiteBannerResponse
@@ -10,6 +11,8 @@ import com.sleekydz86.idolglow.sitecontent.application.dto.SitePopupResponse
 import com.sleekydz86.idolglow.sitecontent.application.port.`in`.SiteContentQueryUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -19,9 +22,10 @@ class SiteContentQueryService(
     private val bnrRepository: BnrRepository,
     private val pupRepository: PupRepository,
     private val mimRepository: MimRepository,
+    private val appPublicUrlProperties: AppPublicUrlProperties,
 ) : SiteContentQueryUseCase {
-    override fun readHomeContent(domainId: String?): SiteHomeContentResponse {
-        val resolvedDomainId = domainId?.ifBlank { null } ?: "kr"
+    override fun readHomeContent(): SiteHomeContentResponse {
+        val resolvedDomainId = "kr"
 
         val heroSlides = mimRepository.findActiveByDomain(resolvedDomainId)
             .asSequence()
@@ -29,9 +33,9 @@ class SiteContentQueryService(
             .map {
                 SiteHeroSlideResponse(
                     imageId = it.imageId,
-                    title = it.imageName?.takeIf(String::isNotBlank) ?: "메인 슬라이드",
+                    title = it.imageName?.takeIf(String::isNotBlank) ?: "Main slide",
                     subtitle = it.description?.takeIf(String::isNotBlank),
-                    imageUrl = it.imagePath!!,
+                    imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
                     linkUrl = "/articles",
                     categoryLabel = "main",
                 )
@@ -44,9 +48,9 @@ class SiteContentQueryService(
             .map {
                 SiteBannerResponse(
                     bannerId = it.bannerId,
-                    title = it.bannerName?.takeIf(String::isNotBlank) ?: "배너",
+                    title = it.bannerName?.takeIf(String::isNotBlank) ?: "Banner",
                     description = it.description?.takeIf(String::isNotBlank),
-                    imageUrl = it.imagePath!!,
+                    imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
                     linkUrl = it.linkUrl?.takeIf(String::isNotBlank) ?: "/articles",
                 )
             }
@@ -59,8 +63,8 @@ class SiteContentQueryService(
             .map {
                 SitePopupResponse(
                     popupId = it.popupId,
-                    title = it.title?.takeIf(String::isNotBlank) ?: "팝업",
-                    imageUrl = it.imagePath?.takeIf(String::isNotBlank),
+                    title = it.title?.takeIf(String::isNotBlank) ?: "Popup",
+                    imageUrl = toAssetUrl(it.imagePath?.takeIf(String::isNotBlank)),
                     linkUrl = it.fileUrl?.takeIf(String::isNotBlank),
                     linkTarget = it.linkTarget?.takeIf(String::isNotBlank) ?: "_blank",
                     noticeStartDate = it.noticeStartDate,
@@ -76,6 +80,23 @@ class SiteContentQueryService(
             banners = banners,
             popups = popups,
         )
+    }
+
+    private fun toAssetUrl(imagePath: String?): String? {
+        val raw = imagePath?.trim().orEmpty()
+        if (raw.isBlank()) {
+            return null
+        }
+
+        val objectKey = when {
+            raw.contains("/webzine/") -> "webzine/${raw.substringAfter("/webzine/").trimStart('/')}"
+            raw.contains("/uploads/webzine/") -> "webzine/${raw.substringAfter("/uploads/webzine/").trimStart('/')}"
+            else -> return raw
+        }
+
+        val encodedObjectKey = URLEncoder.encode(objectKey, StandardCharsets.UTF_8)
+        val baseUrl = appPublicUrlProperties.publicBaseUrl.trimEnd('/')
+        return "$baseUrl/site-content/assets?objectKey=$encodedObjectKey"
     }
 
     private fun isVisiblePopup(
