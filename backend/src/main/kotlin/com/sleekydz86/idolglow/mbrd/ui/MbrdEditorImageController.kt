@@ -23,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-@Tag(name = "mbrd editor images", description = "마크다운 에디터 이미지 업로드 및 조회")
+@Tag(name = "마크다운 에디터 이미지", description = "마크다운 에디터 이미지 업로드 및 조회")
 @Validated
 @RestController
 @RequestMapping("/api/mbrd/editor/images")

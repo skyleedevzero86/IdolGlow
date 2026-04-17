@@ -30,7 +30,7 @@ class SiteContentAssetQueryService(
 
     private fun readFromMinio(objectKey: String): SiteContentAssetPayload {
         val client = minioClientProvider.getIfAvailable()
-            ?: throw IllegalStateException("MinIO is enabled but MinioClient is not available.")
+            ?: throw IllegalStateException("MinIO가 활성화되어 있으나 MinioClient 빈을 사용할 수 없습니다.")
 
         val bytes = client.getObject(
             GetObjectArgs.builder()
@@ -48,7 +48,7 @@ class SiteContentAssetQueryService(
     private fun readFromLocal(objectKey: String): SiteContentAssetPayload {
         val path = resolveLocalPath(objectKey)
         if (!Files.exists(path)) {
-            throw EntityNotFoundException("Asset not found. objectKey=$objectKey")
+            throw EntityNotFoundException("에셋을 찾을 수 없습니다. objectKey=$objectKey")
         }
 
         return SiteContentAssetPayload(
@@ -69,7 +69,7 @@ class SiteContentAssetQueryService(
 
     private fun normalizeObjectKey(objectKey: String): String {
         val normalized = objectKey.trim().replace("\\", "/").removePrefix("/")
-        require(normalized.startsWith("webzine/")) { "Only webzine asset keys are supported." }
+        require(normalized.startsWith("webzine/")) { "webzine/ 접두사가 있는 에셋 키만 허용됩니다." }
         return normalized
     }
 

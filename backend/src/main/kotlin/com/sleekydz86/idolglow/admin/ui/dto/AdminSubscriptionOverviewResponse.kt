@@ -6,7 +6,7 @@ import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class AdminSubscriptionOverviewResponse(
-    @Schema(description = "Number of active subscriptions")
+    @Schema(description = "활성 구독(이메일 수신 동의) 건수")
     val totalActive: Long = 0,
     val totalSubscribers: Long = 0,
     val newsletterSubscriberCount: Long = 0,

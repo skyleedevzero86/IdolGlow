@@ -51,7 +51,7 @@ class BnrAdminService(
 
     fun findOne(bannerId: String): BnrAdminItemResponse {
         val item = bnrRepository.findById(bannerId)
-            ?: throw EntityNotFoundException("Banner not found. bannerId=$bannerId")
+            ?: throw EntityNotFoundException("배너를 찾을 수 없습니다. bannerId=$bannerId")
         return BnrAdminItemResponse.from(item)
     }
 
@@ -79,7 +79,7 @@ class BnrAdminService(
     @Transactional
     fun update(bannerId: String, request: UpsertBnrRequest): BnrAdminItemResponse {
         val existing = bnrRepository.findById(bannerId)
-            ?: throw EntityNotFoundException("Banner not found. bannerId=$bannerId")
+            ?: throw EntityNotFoundException("배너를 찾을 수 없습니다. bannerId=$bannerId")
         val merged = existing.copy(
             domainId = existing.domainId ?: "kr",
             bannerName = request.bannerName,
@@ -98,7 +98,7 @@ class BnrAdminService(
     @Transactional
     fun delete(bannerId: String) {
         if (bnrRepository.findById(bannerId) == null) {
-            throw EntityNotFoundException("Banner not found. bannerId=$bannerId")
+            throw EntityNotFoundException("배너를 찾을 수 없습니다. bannerId=$bannerId")
         }
         bnrRepository.delete(bannerId)
     }

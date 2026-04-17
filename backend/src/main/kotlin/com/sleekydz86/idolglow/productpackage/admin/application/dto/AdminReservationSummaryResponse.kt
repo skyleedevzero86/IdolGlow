@@ -11,37 +11,37 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 data class AdminReservationSummaryResponse(
-    @field:Schema(description = "Reservation id", example = "1")
+    @field:Schema(description = "예약 ID", example = "1")
     val reservationId: Long,
-    @field:Schema(description = "User id", example = "7")
+    @field:Schema(description = "회원 ID", example = "7")
     val userId: Long,
-    @field:Schema(description = "Product id", example = "12")
+    @field:Schema(description = "상품 ID", example = "12")
     val productId: Long,
-    @field:Schema(description = "Product name", example = "Hair and makeup package")
+    @field:Schema(description = "상품명", example = "헤어·메이크업 패키지")
     val productName: String,
-    @field:Schema(description = "Reservation status", example = "BOOKED")
+    @field:Schema(description = "예약 상태", example = "BOOKED")
     val status: ReservationStatus,
-    @field:Schema(description = "Total price", example = "300000.00")
+    @field:Schema(description = "총 결제 금액", example = "300000.00")
     val totalPrice: BigDecimal,
-    @field:Schema(description = "Visit date", example = "2026-03-21")
+    @field:Schema(description = "방문일", example = "2026-03-21")
     val visitDate: LocalDate,
-    @field:Schema(description = "Visit start time", example = "09:00:00")
+    @field:Schema(description = "방문 시작 시각", example = "09:00:00")
     val visitStartTime: LocalTime,
-    @field:Schema(description = "Visit end time", example = "10:00:00")
+    @field:Schema(description = "방문 종료 시각", example = "10:00:00")
     val visitEndTime: LocalTime,
-    @field:Schema(description = "Expiration time", example = "2026-03-21T12:15:00")
+    @field:Schema(description = "결제·홀드 만료 시각", example = "2026-03-21T12:15:00")
     val expiresAt: LocalDateTime?,
-    @field:Schema(description = "Confirmation time", example = "2026-03-21T12:05:00")
+    @field:Schema(description = "확정 시각", example = "2026-03-21T12:05:00")
     val confirmedAt: LocalDateTime?,
-    @field:Schema(description = "Cancellation time", example = "2026-03-21T12:06:00")
+    @field:Schema(description = "취소 시각", example = "2026-03-21T12:06:00")
     val canceledAt: LocalDateTime?,
-    @field:Schema(description = "Cancellation reason", example = "PAYMENT_FAILED")
+    @field:Schema(description = "취소 사유", example = "PAYMENT_FAILED")
     val cancelReason: ReservationCancelReason?,
-    @field:Schema(description = "Payment reference", example = "pay_mock_20260321120000_1")
+    @field:Schema(description = "결제 참조 번호", example = "pay_mock_20260321120000_1")
     val paymentReference: String?,
-    @field:Schema(description = "Payment status", example = "SUCCEEDED")
+    @field:Schema(description = "결제 상태", example = "SUCCEEDED")
     val paymentStatus: PaymentStatus?,
-    @field:Schema(description = "Payment failure reason", example = "issuer declined")
+    @field:Schema(description = "결제 실패 사유", example = "카드사 거절")
     val paymentFailureReason: String?,
 ) {
     companion object {

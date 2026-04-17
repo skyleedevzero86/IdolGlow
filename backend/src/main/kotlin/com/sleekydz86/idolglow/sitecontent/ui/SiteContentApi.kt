@@ -8,23 +8,23 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "Site content", description = "Public site content API")
+@Tag(name = "사이트 콘텐츠", description = "공개 사이트 홈·에셋 조회 API")
 interface SiteContentApi {
 
     @Operation(
-        summary = "Read home content",
-        description = "Returns home hero slides, banners, and popup content.",
+        summary = "홈 콘텐츠 조회",
+        description = "홈 히어로 슬라이드, 배너, 팝업 등 구성 데이터를 반환합니다.",
     )
-    @ApiResponse(responseCode = "200", description = "Read success")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
     fun readHomeContent(): ResponseEntity<SiteHomeContentResponse>
 
     @Operation(
-        summary = "Read site content asset",
-        description = "Reads a banner, popup, or main slide image through the backend.",
+        summary = "사이트 에셋(이미지) 조회",
+        description = "배너·팝업·메인 슬라이드 이미지 등 객체 스토리지 경로의 바이너리를 반환합니다.",
     )
-    @ApiResponse(responseCode = "200", description = "Read success")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
     fun readAsset(
-        @Parameter(description = "Object key", example = "webzine/site-content/popups/sample.png")
+        @Parameter(description = "객체 키(스토리지 경로)", example = "webzine/site-content/popups/sample.png")
         objectKey: String,
     ): ResponseEntity<ByteArrayResource>
 }

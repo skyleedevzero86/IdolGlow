@@ -52,7 +52,7 @@ class EmailSubscription(
         subscriptionSource: String,
     ) {
         require(subscribedNewsletters || subscribedIssues) {
-            "At least one subscription target must be selected."
+            "소식지 또는 웹진 호 중 하나 이상을 선택해야 합니다."
         }
 
         this.subscribedNewsletters = subscribedNewsletters
@@ -77,9 +77,9 @@ class EmailSubscription(
             subscribedAt: LocalDateTime,
             subscriptionSource: String,
         ): EmailSubscription {
-            require(email.isNotBlank()) { "Subscription email must not be blank." }
+            require(email.isNotBlank()) { "구독 이메일은 비울 수 없습니다." }
             require(subscribedNewsletters || subscribedIssues) {
-                "At least one subscription target must be selected."
+                "소식지 또는 웹진 호 중 하나 이상을 선택해야 합니다."
             }
 
             return EmailSubscription(

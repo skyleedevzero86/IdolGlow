@@ -214,7 +214,7 @@ class WebzineAdminService(
 
     private fun getIssueEntity(issueSlug: String): WebzineIssue =
         webzineIssueRepository.findBySlug(issueSlug)
-            ?: throw EntityNotFoundException("Webzine issue not found. issueSlug=$issueSlug")
+            ?: throw EntityNotFoundException("웹진 호를 찾을 수 없습니다. issueSlug=$issueSlug")
 
     private fun getArticleEntity(issue: WebzineIssue, articleSlug: String): WebzineArticle =
         webzineArticleRepository.findByIssueIdAndSlug(issue.id, articleSlug)
@@ -251,7 +251,7 @@ class WebzineAdminService(
 
     private fun parseIssueDate(value: String): LocalDate {
         val trimmed = value.trim()
-        require(trimmed.isNotEmpty()) { "Issue date must not be blank." }
+        require(trimmed.isNotEmpty()) { "호 발행일은 비울 수 없습니다." }
 
         val normalized = trimmed.removeSuffix(".")
 
@@ -265,7 +265,7 @@ class WebzineAdminService(
             normalized.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) ->
                 LocalDate.parse(normalized, dashedDateFormatter)
 
-            else -> throw IllegalArgumentException("Issue date format must be yyyy.MM, yyyy-MM, or yyyy-MM-dd.")
+            else -> throw IllegalArgumentException("호 발행일 형식은 yyyy.MM, yyyy-MM, yyyy-MM-dd 중 하나여야 합니다.")
         }
     }
 

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin Main Image", description = "Admin API for main slide management")
+@Tag(name = "관리자 메인 이미지", description = "메인 슬라이드(tb_*) 등록·조회·수정·삭제 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/mim")
@@ -33,7 +33,7 @@ class AdminMimController(
     private val mimAdminService: MimAdminService,
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
-    @Operation(summary = "Find main images")
+    @Operation(summary = "메인 이미지 목록 조회")
     @GetMapping
     fun list(
         @RequestParam(defaultValue = "1") page: Int,
@@ -43,12 +43,12 @@ class AdminMimController(
     ): ResponseEntity<MimAdminPageResponse> =
         ResponseEntity.ok(mimAdminService.findPage(page, size, searchType, keyword))
 
-    @Operation(summary = "Find main image")
+    @Operation(summary = "메인 이미지 단건 조회")
     @GetMapping("/{imageId}")
     fun one(@PathVariable imageId: String) =
         ResponseEntity.ok(mimAdminService.findOne(imageId))
 
-    @Operation(summary = "Create main image")
+    @Operation(summary = "메인 이미지 등록")
     @PostMapping
     fun create(@Valid @RequestBody request: UpsertMimRequest): ResponseEntity<*> {
         val created = mimAdminService.create(request)
@@ -57,21 +57,21 @@ class AdminMimController(
             .body(created)
     }
 
-    @Operation(summary = "Upload main image")
+    @Operation(summary = "메인 이미지 업로드")
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
     ): ResponseEntity<AdminIssueImageUploadResponse> =
         ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/main-slides"))
 
-    @Operation(summary = "Update main image")
+    @Operation(summary = "메인 이미지 수정")
     @PutMapping("/{imageId}")
     fun update(
         @PathVariable imageId: String,
         @Valid @RequestBody request: UpsertMimRequest,
     ) = ResponseEntity.ok(mimAdminService.update(imageId, request))
 
-    @Operation(summary = "Delete main image")
+    @Operation(summary = "메인 이미지 삭제")
     @DeleteMapping("/{imageId}")
     fun delete(@PathVariable imageId: String): ResponseEntity<Void> {
         mimAdminService.delete(imageId)

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(
-    name = "Root",
+    name = "서비스 루트",
     description = "서비스 메타·브라우저 기본 요청용 엔드포인트(인증 없음).",
 )
 @RestController

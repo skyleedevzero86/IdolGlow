@@ -68,9 +68,9 @@ class SubscriptionDispatchHistory(
             contentCreatedAt: LocalDateTime?,
             dispatchedAt: LocalDateTime,
         ): SubscriptionDispatchHistory {
-            require(contentSlug.isNotBlank()) { "Dispatch content slug must not be blank." }
-            require(contentTitle.isNotBlank()) { "Dispatch content title must not be blank." }
-            require(recipientCount >= 0) { "Dispatch recipient count must be zero or positive." }
+            require(contentSlug.isNotBlank()) { "발송 콘텐츠 슬러그는 비울 수 없습니다." }
+            require(contentTitle.isNotBlank()) { "발송 콘텐츠 제목은 비울 수 없습니다." }
+            require(recipientCount >= 0) { "수신자 수는 0 이상이어야 합니다." }
 
             return SubscriptionDispatchHistory(
                 contentType = contentType,

@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin Webzine", description = "Admin API for Idol Glow webzine issue management")
+@Tag(name = "관리자 웹진", description = "Idol Glow 웹진 호·기사 관리 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/issues")
@@ -40,7 +40,7 @@ class AdminWebzineIssueController(
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
 
-    @Operation(summary = "Find webzine issues")
+    @Operation(summary = "웹진 호 목록 조회")
     @GetMapping
     fun findIssues(
         @RequestParam(defaultValue = "1") page: Int,
@@ -51,7 +51,7 @@ class AdminWebzineIssueController(
     ): ResponseEntity<AdminIssuePageResponse> =
         ResponseEntity.ok(webzineAdminUseCase.findIssues(page, size, year, month, volume))
 
-    @Operation(summary = "Create webzine issue")
+    @Operation(summary = "웹진 호 등록")
     @PostMapping
     fun createIssue(
         @Valid @RequestBody request: CreateWebzineIssueRequest,
@@ -70,7 +70,7 @@ class AdminWebzineIssueController(
     ): ResponseEntity<AdminIssueVolumeResponse> =
         ResponseEntity.ok(webzineAdminUseCase.updateIssue(issueSlug, request.toCommand()))
 
-    @Operation(summary = "Find webzine issue")
+    @Operation(summary = "웹진 호 단건 조회")
     @GetMapping("/{issueSlug}")
     fun findIssue(@PathVariable issueSlug: String): ResponseEntity<AdminIssueVolumeResponse> =
         ResponseEntity.ok(webzineAdminUseCase.findIssue(issueSlug))
@@ -82,7 +82,7 @@ class AdminWebzineIssueController(
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
-    @Operation(summary = "Find webzine article")
+    @Operation(summary = "웹진 기사 단건 조회")
     @GetMapping("/{issueSlug}/articles/{articleSlug}")
     fun findArticle(
         @PathVariable issueSlug: String,
@@ -90,7 +90,7 @@ class AdminWebzineIssueController(
     ): ResponseEntity<AdminIssueArticleResponse> =
         ResponseEntity.ok(webzineAdminUseCase.findArticle(issueSlug, articleSlug))
 
-    @Operation(summary = "Create webzine article")
+    @Operation(summary = "웹진 기사 등록")
     @PostMapping("/{issueSlug}/articles")
     fun createArticle(
         @PathVariable issueSlug: String,
@@ -102,7 +102,7 @@ class AdminWebzineIssueController(
             .body(created)
     }
 
-    @Operation(summary = "Update webzine article")
+    @Operation(summary = "웹진 기사 수정")
     @PutMapping("/{issueSlug}/articles/{articleSlug}")
     fun updateArticle(
         @PathVariable issueSlug: String,
@@ -111,7 +111,7 @@ class AdminWebzineIssueController(
     ): ResponseEntity<AdminIssueArticleResponse> =
         ResponseEntity.ok(webzineAdminUseCase.updateArticle(issueSlug, articleSlug, request.toCommand()))
 
-    @Operation(summary = "Delete webzine article")
+    @Operation(summary = "웹진 기사 삭제")
     @DeleteMapping("/{issueSlug}/articles/{articleSlug}")
     fun deleteArticle(
         @PathVariable issueSlug: String,
@@ -121,7 +121,7 @@ class AdminWebzineIssueController(
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
-    @Operation(summary = "Upload webzine image")
+    @Operation(summary = "웹진 이미지 업로드")
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,

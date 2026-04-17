@@ -55,7 +55,7 @@ class PupAdminService(
 
     fun findOne(popupId: String): PupAdminItemResponse {
         val item = pupRepository.findById(popupId)
-            ?: throw EntityNotFoundException("Popup not found. popupId=$popupId")
+            ?: throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
         return PupAdminItemResponse.from(item)
     }
 
@@ -91,7 +91,7 @@ class PupAdminService(
     @Transactional
     fun update(popupId: String, request: UpsertPupRequest): PupAdminItemResponse {
         val existing = pupRepository.findById(popupId)
-            ?: throw EntityNotFoundException("Popup not found. popupId=$popupId")
+            ?: throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
 
         val nextNoticeStartDate = request.noticeStartDate ?: existing.noticeStartDate
         val nextNoticeEndDate = request.noticeEndDate ?: existing.noticeEndDate
@@ -117,7 +117,7 @@ class PupAdminService(
     @Transactional
     fun delete(popupId: String) {
         if (pupRepository.findById(popupId) == null) {
-            throw EntityNotFoundException("Popup not found. popupId=$popupId")
+            throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
         }
         pupRepository.delete(popupId)
     }

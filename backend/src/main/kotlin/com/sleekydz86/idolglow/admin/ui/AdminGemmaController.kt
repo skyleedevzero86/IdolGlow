@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Admin Gemma", description = "Admin API for Gemma E4B testing")
+@Tag(name = "관리자 Gemma", description = "Gemma E4B 채팅 테스트 API")
 @RestController
 @RequestMapping("/admin/ai/gemma")
 @PreAuthorize("hasRole('ADMIN')")
@@ -24,8 +24,8 @@ class AdminGemmaController(
 ) {
 
     @Operation(
-        summary = "Gemma chat test",
-        description = "Calls a Gemma model through an OpenAI-compatible /chat/completions endpoint. You can send text only or text plus imageUrl for a multimodal request.",
+        summary = "Gemma 채팅 테스트",
+        description = "OpenAI 호환 /chat/completions 엔드포인트로 Gemma 모델을 호출합니다. 텍스트만 보내거나 imageUrl을 함께 보내 멀티모달 요청을 할 수 있습니다.",
     )
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/chat")

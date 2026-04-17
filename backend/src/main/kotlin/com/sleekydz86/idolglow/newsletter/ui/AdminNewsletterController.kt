@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin Newsletter", description = "Admin API for Idol Glow newsletter management")
+@Tag(name = "관리자 소식지", description = "Idol Glow 소식지 등록·조회·수정·삭제 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/newsletters")
@@ -36,7 +36,7 @@ class AdminNewsletterController(
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
 
-    @Operation(summary = "Find newsletters")
+    @Operation(summary = "소식지 목록 조회")
     @GetMapping
     fun findNewsletters(
         @RequestParam(defaultValue = "1") page: Int,
@@ -44,14 +44,14 @@ class AdminNewsletterController(
     ): ResponseEntity<AdminNewsletterPageResponse> =
         ResponseEntity.ok(newsletterAdminUseCase.findNewsletters(page, size))
 
-    @Operation(summary = "Find newsletter")
+    @Operation(summary = "소식지 단건 조회")
     @GetMapping("/{newsletterSlug}")
     fun findNewsletter(
         @PathVariable newsletterSlug: String,
     ): ResponseEntity<AdminNewsletterDetailResponse> =
         ResponseEntity.ok(newsletterAdminUseCase.findNewsletter(newsletterSlug))
 
-    @Operation(summary = "Create newsletter")
+    @Operation(summary = "소식지 등록")
     @PostMapping
     fun createNewsletter(
         @Valid @RequestBody request: UpsertNewsletterRequest,
@@ -62,7 +62,7 @@ class AdminNewsletterController(
             .body(created)
     }
 
-    @Operation(summary = "Update newsletter")
+    @Operation(summary = "소식지 수정")
     @PutMapping("/{newsletterSlug}")
     fun updateNewsletter(
         @PathVariable newsletterSlug: String,
@@ -70,7 +70,7 @@ class AdminNewsletterController(
     ): ResponseEntity<AdminNewsletterDetailResponse> =
         ResponseEntity.ok(newsletterAdminUseCase.updateNewsletter(newsletterSlug, request.toCommand()))
 
-    @Operation(summary = "Delete newsletter")
+    @Operation(summary = "소식지 삭제")
     @DeleteMapping("/{newsletterSlug}")
     fun deleteNewsletter(
         @PathVariable newsletterSlug: String,
@@ -79,7 +79,7 @@ class AdminNewsletterController(
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
-    @Operation(summary = "Upload newsletter image")
+    @Operation(summary = "소식지 이미지 업로드")
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadNewsletterImage(
         @RequestPart("file") file: MultipartFile,

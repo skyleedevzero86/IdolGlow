@@ -115,7 +115,7 @@ class NewsletterAdminService(
 
     private fun getNewsletterEntity(newsletterSlug: String): Newsletter =
         newsletterRepository.findBySlug(newsletterSlug)
-            ?: throw EntityNotFoundException("Newsletter not found. newsletterSlug=$newsletterSlug")
+            ?: throw EntityNotFoundException("소식지를 찾을 수 없습니다. newsletterSlug=$newsletterSlug")
 
     private fun generateNewsletterSlug(title: String): String {
         val normalized = Normalizer.normalize(title, Normalizer.Form.NFKD)

@@ -12,15 +12,15 @@ class WebzineImageUploadService(
 ) : WebzineImageUploadUseCase {
 
     override fun upload(file: MultipartFile, folder: String?): AdminIssueImageUploadResponse {
-        require(!file.isEmpty) { "Please select an image file to upload." }
+        require(!file.isEmpty) { "업로드할 이미지 파일을 선택해 주세요." }
 
         val bytes = file.bytes
-        require(bytes.isNotEmpty()) { "Please select an image file to upload." }
-        require(bytes.size <= MAX_BYTES) { "Image uploads are limited to 15MB." }
+        require(bytes.isNotEmpty()) { "업로드할 이미지 파일을 선택해 주세요." }
+        require(bytes.size <= MAX_BYTES) { "이미지 업로드는 최대 15MB까지 가능합니다." }
 
         val contentType = file.contentType?.lowercase()?.trim().orEmpty()
         val ext = extensionFor(contentType, file.originalFilename)
-            ?: throw IllegalArgumentException("Only JPG, PNG, WebP, and GIF files are allowed.")
+            ?: throw IllegalArgumentException("JPG, PNG, WebP, GIF 형식만 업로드할 수 있습니다.")
 
         val safeFolder = sanitizeFolder(folder)
         val resolvedContentType = resolvedContentType(contentType, ext)

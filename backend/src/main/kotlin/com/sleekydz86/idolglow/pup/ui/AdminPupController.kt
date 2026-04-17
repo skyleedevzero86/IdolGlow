@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin Popup", description = "Admin API for popup management")
+@Tag(name = "관리자 팝업", description = "사이트 팝업(tb_*) 등록·조회·수정·삭제 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/pup")
@@ -33,7 +33,7 @@ class AdminPupController(
     private val pupAdminService: PupAdminService,
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
-    @Operation(summary = "Find popups")
+    @Operation(summary = "팝업 목록 조회")
     @GetMapping
     fun list(
         @RequestParam(defaultValue = "1") page: Int,
@@ -43,7 +43,7 @@ class AdminPupController(
     ): ResponseEntity<PupAdminPageResponse> =
         ResponseEntity.ok(pupAdminService.findPage(page, size, searchType, keyword))
 
-    @Operation(summary = "Find popup")
+    @Operation(summary = "팝업 단건 조회")
     @GetMapping("/{popupId}")
     fun one(@PathVariable popupId: String) =
         ResponseEntity.ok(pupAdminService.findOne(popupId))
@@ -57,21 +57,21 @@ class AdminPupController(
             .body(created)
     }
 
-    @Operation(summary = "Upload popup image")
+    @Operation(summary = "팝업 이미지 업로드")
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
     ): ResponseEntity<AdminIssueImageUploadResponse> =
         ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/popups"))
 
-    @Operation(summary = "Update popup")
+    @Operation(summary = "팝업 수정")
     @PutMapping("/{popupId}")
     fun update(
         @PathVariable popupId: String,
         @Valid @RequestBody request: UpsertPupRequest,
     ) = ResponseEntity.ok(pupAdminService.update(popupId, request))
 
-    @Operation(summary = "Delete popup")
+    @Operation(summary = "팝업 삭제")
     @DeleteMapping("/{popupId}")
     fun delete(@PathVariable popupId: String): ResponseEntity<Void> {
         pupAdminService.delete(popupId)
