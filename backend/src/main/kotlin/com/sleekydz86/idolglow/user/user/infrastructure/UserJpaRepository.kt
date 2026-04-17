@@ -10,4 +10,12 @@ interface UserJpaRepository : JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.nickname.value = :nickname")
     fun findByNicknameValue(@Param("nickname") nickname: String): User?
+
+    fun findByEmailAndPlatformUsername(email: String, platformUsername: String): User?
+
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.nickname.value = :username")
+    fun findByEmailAndNicknameValue(
+        @Param("email") email: String,
+        @Param("username") username: String,
+    ): User?
 }

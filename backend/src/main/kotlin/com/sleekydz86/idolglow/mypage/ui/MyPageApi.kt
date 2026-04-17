@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "MyPage", description = "마이페이지 관련 API")
+@Tag(name = "마이페이지", description = "마이페이지 관련 API")
 interface MyPageApi {
 
     @Operation(

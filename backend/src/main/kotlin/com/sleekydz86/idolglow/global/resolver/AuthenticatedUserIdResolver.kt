@@ -2,11 +2,14 @@ package com.sleekydz86.idolglow.global.resolver
 
 import com.sleekydz86.idolglow.global.exceptions.CustomException
 import com.sleekydz86.idolglow.global.exceptions.auth.AuthExceptionType
+import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 
 @Component
-class AuthenticatedUserIdResolver {
+class AuthenticatedUserIdResolver(
+    private val userRepository: UserRepository,
+) {
 
     fun resolveRequired(): Long {
         val authentication = SecurityContextHolder.getContext().authentication
@@ -16,7 +19,15 @@ class AuthenticatedUserIdResolver {
             throw CustomException(AuthExceptionType.UNAUTHENTICATED)
         }
 
-        return authentication.name.toLongOrNull()
-            ?: throw CustomException(AuthExceptionType.INVALID_AUTH_PRINCIPAL)
+        val name = authentication.name
+        name.toLongOrNull()?.let { return it }
+
+        if (name.contains('@')) {
+            val user = userRepository.findByEmail(name)
+                ?: throw CustomException(AuthExceptionType.INVALID_AUTH_PRINCIPAL)
+            return user.id
+        }
+
+        throw CustomException(AuthExceptionType.INVALID_AUTH_PRINCIPAL)
     }
 }

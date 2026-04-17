@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.web.multipart.MultipartFile
 
-@Tag(name = "Product Review", description = "상품 리뷰 관리 API")
+@Tag(name = "상품 리뷰", description = "상품 리뷰 관리 API")
 interface ProductReviewApi {
 
     @Operation(

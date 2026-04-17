@@ -14,7 +14,7 @@ import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.web.multipart.MultipartFile
 
-@Tag(name = "Option", description = "옵션 조회 및 생성 관련 API")
+@Tag(name = "상품 옵션", description = "옵션 조회 및 생성 관련 API")
 interface OptionApi {
 
     @Operation(

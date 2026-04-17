@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.global.exceptions
 
-import com.fasterxml.jackson.databind.JsonMappingException
+import tools.jackson.databind.DatabindException
 import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
@@ -11,6 +11,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionAdvice {
@@ -43,18 +44,18 @@ class GlobalExceptionAdvice {
         exception: HttpMessageNotReadableException
     ): ResponseEntity<ExceptionResponse> {
         val message = when (val cause = exception.cause) {
-            is JsonMappingException -> {
+            is DatabindException -> {
                 when {
                     cause.message?.contains("Required request body is missing") == true ->
                         "요청 본문이 필요합니다."
 
                     cause.message?.contains("null") == true -> {
-                        val fieldPath = cause.path.joinToString(".") { it.fieldName }
+                        val fieldPath = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
                         "필수 필드 '$fieldPath'는 null일 수 없습니다."
                     }
 
                     else -> {
-                        val fieldPath = cause.path.joinToString(".") { it.fieldName }
+                        val fieldPath = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
                         "JSON 형식이 올바르지 않습니다. (필드: $fieldPath)"
                     }
                 }
@@ -173,6 +174,24 @@ class GlobalExceptionAdvice {
                     name = "NOT_FOUND",
                     errorCode = "NOT_FOUND",
                     message = exception.message ?: "대상을 찾을 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFoundException(
+        request: HttpServletRequest,
+        exception: NoResourceFoundException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("리소스를 찾지 못함: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                ExceptionResponse(
+                    name = "NOT_FOUND",
+                    errorCode = "NOT_FOUND",
+                    message = "요청한 API 경로를 찾지 못했습니다. 백엔드를 재시작했는지 확인해 주세요."
                 )
             )
     }
