@@ -6,6 +6,8 @@ import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscription
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistrationResponse
 import com.sleekydz86.idolglow.subscription.application.dto.create
 import com.sleekydz86.idolglow.subscription.application.dto.toRegistrationResponse
+import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
+import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
@@ -13,9 +15,8 @@ import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscripti
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchHistoryPort
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -25,6 +26,7 @@ import java.time.LocalDateTime
 class SubscriptionService(
     private val emailSubscriptionPort: EmailSubscriptionPort,
     private val subscriptionDispatchHistoryPort: SubscriptionDispatchHistoryPort,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) : SubscriptionPublicUseCase, SubscriptionAdminUseCase, SubscriptionDispatchRecorder {
 
     @Transactional
@@ -32,7 +34,7 @@ class SubscriptionService(
         val normalizedEmail = command.email.trim().lowercase()
         require(normalizedEmail.isNotBlank()) { "구독 이메일은 비울 수 없습니다." }
         require(command.subscribeNewsletters || command.subscribeIssues) {
-            "소식지 또는 웹진 호 중 하나 이상을 선택해야 합니다."
+            "뉴스레터 또는 웹진 중 하나 이상은 선택해야 합니다."
         }
 
         val now = LocalDateTime.now()
@@ -101,46 +103,33 @@ class SubscriptionService(
 
     @Transactional
     override fun recordNewsletterDispatch(newsletter: Newsletter) {
-        if (subscriptionDispatchHistoryPort.existsByContentTypeAndContentSlug(
-                contentType = SubscriptionContentType.NEWSLETTER,
-                contentSlug = newsletter.slug,
-            )
-        ) {
-            return
-        }
-
-        subscriptionDispatchHistoryPort.save(
-            SubscriptionDispatchHistory.record(
-                contentType = SubscriptionContentType.NEWSLETTER,
-                contentSlug = newsletter.slug,
-                contentTitle = newsletter.title,
-                contentSummary = newsletter.summary,
-                recipientCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
+        applicationEventPublisher.publishEvent(
+            NewsletterDispatchRequestedEvent(
+                slug = newsletter.slug,
+                title = newsletter.title,
+                summary = newsletter.summary,
+                imageUrl = newsletter.imageUrl,
+                publishedAt = newsletter.publishedAt,
+                tags = newsletter.tags.map { it.tagName },
+                paragraphs = newsletter.paragraphs.map { it.body },
                 contentCreatedAt = newsletter.createdAt,
-                dispatchedAt = LocalDateTime.now(),
             )
         )
     }
 
     @Transactional
     override fun recordWebzineIssueDispatch(issue: WebzineIssue) {
-        if (subscriptionDispatchHistoryPort.existsByContentTypeAndContentSlug(
-                contentType = SubscriptionContentType.WEBZINE_ISSUE,
-                contentSlug = issue.slug,
-            )
-        ) {
-            return
-        }
-
-        subscriptionDispatchHistoryPort.save(
-            SubscriptionDispatchHistory.record(
-                contentType = SubscriptionContentType.WEBZINE_ISSUE,
-                contentSlug = issue.slug,
-                contentTitle = "Vol.${issue.volume} 호별보기",
-                contentSummary = issue.teaser,
-                recipientCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
+        applicationEventPublisher.publishEvent(
+            WebzineIssueDispatchRequestedEvent(
+                slug = issue.slug,
+                volume = issue.volume,
+                issueDate = issue.issueDate,
+                teaser = issue.teaser,
+                coverImageUrl = issue.coverImageUrl,
+                articleTitles = issue.articles
+                    .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
+                    .map { it.title },
                 contentCreatedAt = issue.createdAt,
-                dispatchedAt = LocalDateTime.now(),
             )
         )
     }

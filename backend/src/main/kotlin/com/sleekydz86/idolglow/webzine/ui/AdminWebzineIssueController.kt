@@ -62,7 +62,7 @@ class AdminWebzineIssueController(
             .body(created)
     }
 
-    @Operation(summary = "Update webzine issue")
+    @Operation(summary = "웹진 호 수정")
     @PutMapping("/{issueSlug}")
     fun updateIssue(
         @PathVariable issueSlug: String,
@@ -75,7 +75,7 @@ class AdminWebzineIssueController(
     fun findIssue(@PathVariable issueSlug: String): ResponseEntity<AdminIssueVolumeResponse> =
         ResponseEntity.ok(webzineAdminUseCase.findIssue(issueSlug))
 
-    @Operation(summary = "Delete webzine issue")
+    @Operation(summary = "웹진 호 삭제")
     @DeleteMapping("/{issueSlug}")
     fun deleteIssue(@PathVariable issueSlug: String): ResponseEntity<Void> {
         webzineAdminUseCase.deleteIssue(issueSlug)

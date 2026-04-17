@@ -20,4 +20,15 @@ class AsyncConfig {
         executor.initialize()
         return executor
     }
+
+    @Bean(name = ["subscriptionDispatchExecutor"])
+    fun subscriptionDispatchExecutor(): Executor {
+        val executor = ThreadPoolTaskExecutor()
+        executor.corePoolSize = 2
+        executor.maxPoolSize = 4
+        executor.queueCapacity = 100
+        executor.setThreadNamePrefix("subscription-dispatch-")
+        executor.initialize()
+        return executor
+    }
 }

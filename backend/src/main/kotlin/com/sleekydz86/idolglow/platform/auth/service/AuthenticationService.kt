@@ -61,7 +61,7 @@ class AuthenticationService(
 
             updateLastLoginTime(request.email)
 
-            log.info("Login successful: {}", request.email)
+            log.info("로그인 성공: {}", request.email)
 
             return JwtToken.builder()
                 .accessToken(accessToken)
