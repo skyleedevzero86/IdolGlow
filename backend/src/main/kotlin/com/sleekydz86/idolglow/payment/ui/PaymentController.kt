@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Payment", description = "결제 상태 동기화 및 모의 웹훅 API")
+@Tag(name = "결제", description = "결제 상태 동기화 및 모의 웹훅 API")
 @RestController
 @RequestMapping("/payments/mock")
 class PaymentController(

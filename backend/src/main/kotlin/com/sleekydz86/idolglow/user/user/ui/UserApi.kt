@@ -14,7 +14,7 @@ import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.multipart.MultipartFile
 
-@Tag(name = "User", description = "유저 관련 API")
+@Tag(name = "회원", description = "회원 관련 API")
 interface UserApi {
 
     @Operation(

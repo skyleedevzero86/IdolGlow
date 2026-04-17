@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 
-@Tag(name = "Admin Banner", description = "Admin API for banner management")
+@Tag(name = "관리자 배너", description = "사이트 배너(tb_*) 등록·조회·수정·삭제 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/bnr")
@@ -33,7 +33,7 @@ class AdminBnrController(
     private val bnrAdminService: BnrAdminService,
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
-    @Operation(summary = "Find banners")
+    @Operation(summary = "배너 목록 조회")
     @GetMapping
     fun list(
         @RequestParam(defaultValue = "1") page: Int,
@@ -43,12 +43,12 @@ class AdminBnrController(
     ): ResponseEntity<BnrAdminPageResponse> =
         ResponseEntity.ok(bnrAdminService.findPage(page, size, searchType, keyword))
 
-    @Operation(summary = "Find banner")
+    @Operation(summary = "배너 단건 조회")
     @GetMapping("/{bannerId}")
     fun one(@PathVariable bannerId: String) =
         ResponseEntity.ok(bnrAdminService.findOne(bannerId))
 
-    @Operation(summary = "Create banner")
+    @Operation(summary = "배너 등록")
     @PostMapping
     fun create(@Valid @RequestBody request: UpsertBnrRequest): ResponseEntity<*> {
         val created = bnrAdminService.create(request)
@@ -57,21 +57,21 @@ class AdminBnrController(
             .body(created)
     }
 
-    @Operation(summary = "Upload banner image")
+    @Operation(summary = "배너 이미지 업로드")
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
     ): ResponseEntity<AdminIssueImageUploadResponse> =
         ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/banners"))
 
-    @Operation(summary = "Update banner")
+    @Operation(summary = "배너 수정")
     @PutMapping("/{bannerId}")
     fun update(
         @PathVariable bannerId: String,
         @Valid @RequestBody request: UpsertBnrRequest,
     ) = ResponseEntity.ok(bnrAdminService.update(bannerId, request))
 
-    @Operation(summary = "Delete banner")
+    @Operation(summary = "배너 삭제")
     @DeleteMapping("/{bannerId}")
     fun delete(@PathVariable bannerId: String): ResponseEntity<Void> {
         bnrAdminService.delete(bannerId)

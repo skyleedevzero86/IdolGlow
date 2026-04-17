@@ -30,9 +30,9 @@ class SubscriptionService(
     @Transactional
     override fun subscribe(command: RegisterSubscriptionCommand): SubscriptionRegistrationResponse {
         val normalizedEmail = command.email.trim().lowercase()
-        require(normalizedEmail.isNotBlank()) { "Subscription email must not be blank." }
+        require(normalizedEmail.isNotBlank()) { "구독 이메일은 비울 수 없습니다." }
         require(command.subscribeNewsletters || command.subscribeIssues) {
-            "At least one subscription target must be selected."
+            "소식지 또는 웹진 호 중 하나 이상을 선택해야 합니다."
         }
 
         val now = LocalDateTime.now()

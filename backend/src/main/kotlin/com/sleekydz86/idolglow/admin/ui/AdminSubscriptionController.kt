@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(
-    name = "Admin subscription",
-    description = "Admin API for subscription members and dispatch history",
+    name = "관리자 구독·발송",
+    description = "이메일 구독자 및 소식지·웹진 발송 이력 조회 API",
 )
 @RestController
 @RequestMapping("/admin/subscriptions")
@@ -24,10 +24,10 @@ class AdminSubscriptionController(
 ) {
 
     @Operation(
-        summary = "Get subscription overview",
-        description = "Returns subscriber statistics and recent dispatch history for the admin subscriptions page",
+        summary = "구독·발송 개요 조회",
+        description = "구독자 통계와 최근 발송 이력을 관리자 구독 화면용으로 반환합니다.",
     )
-    @ApiResponse(responseCode = "200", description = "Subscription overview fetched successfully")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")

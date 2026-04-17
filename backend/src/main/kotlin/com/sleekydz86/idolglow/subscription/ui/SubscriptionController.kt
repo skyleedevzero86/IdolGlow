@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 
-@Tag(name = "Subscription", description = "Public API for Idol Glow email subscription registration")
+@Tag(name = "이메일 구독", description = "Idol Glow 공개 이메일 구독(소식지·웹진) 신청 API")
 @RestController
 @RequestMapping("/subscriptions")
 class SubscriptionController(
     private val subscriptionPublicUseCase: SubscriptionPublicUseCase,
 ) {
 
-    @Operation(summary = "Register subscription")
+    @Operation(summary = "이메일 구독 신청")
     @PostMapping
     fun subscribe(
         @Valid @RequestBody request: RegisterSubscriptionRequest,

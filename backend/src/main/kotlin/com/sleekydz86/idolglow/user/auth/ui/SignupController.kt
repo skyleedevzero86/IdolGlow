@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Signup", description = "이메일·닉네임 중복 확인 및 회원가입(액세스 토큰 발급, 리프레시 토큰은 HttpOnly 쿠키).")
+@Tag(name = "회원가입", description = "이메일·닉네임 중복 확인 및 회원가입(액세스 토큰 발급, 리프레시 토큰은 HttpOnly 쿠키).")
 @RestController
 @RequestMapping("/auth/signup")
 class SignupController(

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Admin sdom", description = "관리자 사이트 도메인(tb_domain_list) 선택 옵션 API")
+@Tag(name = "관리자 사이트 도메인", description = "관리자 사이트 도메인(tb_domain_list) 선택 옵션 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/sdom")

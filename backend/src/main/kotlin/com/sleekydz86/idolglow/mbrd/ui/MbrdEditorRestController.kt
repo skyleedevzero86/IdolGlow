@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "mbrd editor", description = "마크다운 에디터 게시판 REST API")
+@Tag(name = "마크다운 에디터", description = "마크다운 에디터 게시판 REST API")
 @Validated
 @RestController
 @RequestMapping("/api/mbrd/editor")

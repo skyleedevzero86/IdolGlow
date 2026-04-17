@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "Auth", description = "인증/인가 관련 API")
+@Tag(name = "인증", description = "인증·인가 관련 API")
 interface AuthApi {
 
     @Operation(
@@ -22,7 +22,7 @@ interface AuthApi {
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "302", description = "OAuth2 Authorization endpoint로 리다이렉트"),
+            ApiResponse(responseCode = "302", description = "OAuth2 인가 엔드포인트로 리다이렉트"),
             ApiResponse(
                 responseCode = "400",
                 description = "지원하지 않는 provider",
@@ -32,7 +32,7 @@ interface AuthApi {
     )
     fun login(
         response: HttpServletResponse,
-        @Parameter(description = "OAuth2 provider", example = "google")
+        @Parameter(description = "OAuth2 제공자", example = "google")
         provider: String
     )
 

@@ -51,7 +51,7 @@ class MimAdminService(
 
     fun findOne(imageId: String): MimAdminItemResponse {
         val item = mimRepository.findById(imageId)
-            ?: throw EntityNotFoundException("Main image not found. imageId=$imageId")
+            ?: throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
         return MimAdminItemResponse.from(item)
     }
 
@@ -77,7 +77,7 @@ class MimAdminService(
     @Transactional
     fun update(imageId: String, request: UpsertMimRequest): MimAdminItemResponse {
         val existing = mimRepository.findById(imageId)
-            ?: throw EntityNotFoundException("Main image not found. imageId=$imageId")
+            ?: throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
         val merged = existing.copy(
             domainId = existing.domainId ?: "kr",
             imageName = request.imageName,
@@ -94,7 +94,7 @@ class MimAdminService(
     @Transactional
     fun delete(imageId: String) {
         if (mimRepository.findById(imageId) == null) {
-            throw EntityNotFoundException("Main image not found. imageId=$imageId")
+            throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
         }
         mimRepository.delete(imageId)
     }
