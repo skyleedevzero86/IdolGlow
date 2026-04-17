@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Product Discovery", description = "상품 추천 및 랭킹 조회 API")
+@Tag(name = "상품 추천", description = "상품 추천 및 랭킹 조회 API")
 @RestController
 @RequestMapping("/products")
 class ProductDiscoveryController(

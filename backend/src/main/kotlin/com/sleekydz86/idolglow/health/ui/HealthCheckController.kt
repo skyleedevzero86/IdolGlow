@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Health", description = "헬스 체크 API")
+@Tag(name = "헬스", description = "헬스 체크 API")
 @RestController
 class HealthCheckController {
     @Operation(summary = "서버 상태 확인", description = "애플리케이션 기본 동작 여부를 확인합니다.")

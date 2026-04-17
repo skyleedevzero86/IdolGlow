@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Toss payment", description = "토스페이먼츠 결제 승인")
+@Tag(name = "토스 결제", description = "토스페이먼츠 결제 승인")
 @RestController
 @RequestMapping("/payments/toss")
 class TossPaymentController(

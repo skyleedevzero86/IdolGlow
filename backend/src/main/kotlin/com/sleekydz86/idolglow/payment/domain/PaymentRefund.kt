@@ -11,8 +11,9 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.Lob
 import jakarta.persistence.ManyToOne
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import jakarta.persistence.Table
 import java.math.BigDecimal
 
@@ -57,7 +58,7 @@ class PaymentRefund(
     @Column(name = "idempotency_key", length = 100)
     val idempotencyKey: String? = null,
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "raw_response_json")
     var rawResponseJson: String? = null,
 ) : BaseEntity()

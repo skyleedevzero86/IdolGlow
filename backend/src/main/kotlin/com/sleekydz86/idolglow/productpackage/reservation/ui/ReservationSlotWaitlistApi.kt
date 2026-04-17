@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 
-@Tag(name = "Reservation slot waitlist", description = "매진 슬롯 빈자리 알림(웨이팅)")
+@Tag(name = "예약 슬롯 웨이팅", description = "매진 슬롯 빈자리 알림(웨이팅)")
 interface ReservationSlotWaitlistApi {
 
     @Operation(

@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalTime
 
-@Tag(name = "Admin Operations", description = "관리자 운영 분석 감사 로그 CSV")
+@Tag(name = "관리자 운영 분석", description = "관리자 운영 분석 감사 로그 CSV")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/operations")

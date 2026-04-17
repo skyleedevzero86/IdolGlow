@@ -21,8 +21,6 @@ repositories {
 	mavenCentral()
 }
 
-val querydslDir = "src/main/generated"
-
 extra["snippetsDir"] = file("build/generated-snippets")
 
 dependencies {
@@ -64,6 +62,9 @@ dependencies {
 
 	// Spring Data jpa
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
+	implementation("org.springframework.boot:spring-boot-starter-websocket")
+	implementation("org.springframework.boot:spring-boot-starter-cache")
 
 	//webclient
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -98,22 +99,15 @@ tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
 	options.release.set(24)
 }
 
-kapt {
-	arguments {
-		arg("querydsl.sourcesDir", querydslDir)
-	}
-}
-
 sourceSets {
 	main {
 		kotlin.srcDir("build/generated/source/kapt/main")
 	}
 }
 
-tasks.named("clean") {
-	doLast {
-		file(querydslDir).deleteRecursively()
-	}
+kapt {
+	correctErrorTypes = true
+	useBuildCache = false
 }
 
 tasks.withType<Test>().configureEach {

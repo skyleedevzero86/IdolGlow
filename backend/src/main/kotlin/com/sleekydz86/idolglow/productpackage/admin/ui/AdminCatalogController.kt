@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Admin Catalog", description = "관리자 상품, 옵션, 예약 슬롯 관리 API")
+@Tag(name = "관리자 카탈로그", description = "관리자 상품, 옵션, 예약 슬롯 관리 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin")
