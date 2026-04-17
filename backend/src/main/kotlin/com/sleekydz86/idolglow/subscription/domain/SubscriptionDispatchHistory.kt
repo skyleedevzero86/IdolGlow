@@ -67,6 +67,7 @@ class SubscriptionDispatchHistory(
             recipientCount: Long,
             contentCreatedAt: LocalDateTime?,
             dispatchedAt: LocalDateTime,
+            dispatchStatus: SubscriptionDispatchStatus = SubscriptionDispatchStatus.RECORDED,
         ): SubscriptionDispatchHistory {
             require(contentSlug.isNotBlank()) { "발송 콘텐츠 슬러그는 비울 수 없습니다." }
             require(contentTitle.isNotBlank()) { "발송 콘텐츠 제목은 비울 수 없습니다." }
@@ -78,7 +79,7 @@ class SubscriptionDispatchHistory(
                 contentTitle = contentTitle.trim(),
                 contentSummary = contentSummary?.trim()?.takeIf { it.isNotEmpty() },
                 dispatchChannel = SubscriptionDispatchChannel.EMAIL,
-                dispatchStatus = SubscriptionDispatchStatus.RECORDED,
+                dispatchStatus = dispatchStatus,
                 recipientCount = recipientCount,
                 contentCreatedAt = contentCreatedAt,
                 dispatchedAt = dispatchedAt,
@@ -88,8 +89,8 @@ class SubscriptionDispatchHistory(
 }
 
 enum class SubscriptionContentType(val label: String, val audience: SubscriptionAudience) {
-    NEWSLETTER("소식지", SubscriptionAudience.NEWSLETTER),
-    WEBZINE_ISSUE("호별보기", SubscriptionAudience.WEBZINE_ISSUE),
+    NEWSLETTER("뉴스레터", SubscriptionAudience.NEWSLETTER),
+    WEBZINE_ISSUE("웹진", SubscriptionAudience.WEBZINE_ISSUE),
 }
 
 enum class SubscriptionDispatchChannel(val label: String) {
@@ -98,4 +99,6 @@ enum class SubscriptionDispatchChannel(val label: String) {
 
 enum class SubscriptionDispatchStatus(val label: String) {
     RECORDED("기록됨"),
+    SENT("발송완료"),
+    FAILED("발송실패"),
 }

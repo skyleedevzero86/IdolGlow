@@ -48,7 +48,7 @@ class AdminPupController(
     fun one(@PathVariable popupId: String) =
         ResponseEntity.ok(pupAdminService.findOne(popupId))
 
-    @Operation(summary = "Create popup")
+    @Operation(summary = "팝업 등록")
     @PostMapping
     fun create(@Valid @RequestBody request: UpsertPupRequest): ResponseEntity<*> {
         val created = pupAdminService.create(request)

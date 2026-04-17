@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow
 
 import com.sleekydz86.idolglow.global.config.AppCalendarProperties
+import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.global.config.GemmaProperties
 import com.sleekydz86.idolglow.global.config.MinioStorageProperties
@@ -17,6 +18,7 @@ import org.springframework.cache.annotation.EnableCaching
     MinioStorageProperties::class,
     AppPublicUrlProperties::class,
     AppCalendarProperties::class,
+    AppMailProperties::class,
     TossPaymentProperties::class,
     GemmaProperties::class,
     PlatformAuthProperties::class,

@@ -82,7 +82,7 @@ class WebzineAdminService(
     override fun createIssue(command: CreateWebzineIssueCommand): AdminIssueVolumeResponse {
         val issueSlug = "vol-${command.volume}"
         require(!webzineIssueRepository.existsByVolumeOrSlug(command.volume, issueSlug)) {
-            "Issue volume ${command.volume} is already registered."
+            "호 번호 ${command.volume}은(는) 이미 등록되어 있습니다."
         }
 
         val savedIssue = webzineIssueRepository.save(
@@ -219,7 +219,7 @@ class WebzineAdminService(
     private fun getArticleEntity(issue: WebzineIssue, articleSlug: String): WebzineArticle =
         webzineArticleRepository.findByIssueIdAndSlug(issue.id, articleSlug)
             ?: throw EntityNotFoundException(
-                "Webzine article not found. issueSlug=${issue.slug}, articleSlug=$articleSlug"
+                "웹진 기사를 찾을 수 없습니다. issueSlug=${issue.slug}, articleSlug=$articleSlug"
             )
 
     private fun buildRelatedContents(
@@ -294,7 +294,7 @@ class WebzineAdminService(
                 listOf(
                     WebzineArticleSectionDraft(
                         heading = null,
-                        body = "Please enter article content.",
+                        body = "기사 본문을 입력해 주세요.",
                         note = null,
                     )
                 )
