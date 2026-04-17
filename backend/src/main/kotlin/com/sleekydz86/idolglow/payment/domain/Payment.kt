@@ -14,6 +14,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
@@ -135,7 +137,7 @@ class Payment(
     @Column(name = "easy_pay_provider", length = 100)
     var easyPayProvider: String? = null,
 
-    @jakarta.persistence.Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "raw_response_json")
     var rawResponseJson: String? = null,
 

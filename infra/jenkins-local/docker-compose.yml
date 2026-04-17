@@ -1,0 +1,35 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: idolglow-jenkins
+    restart: unless-stopped
+    ports:
+      - "7077:8080"
+      - "57077:50000"
+    environment:
+      TZ: Asia/Seoul
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false -Duser.timezone=Asia/Seoul"
+      JENKINS_ADMIN_ID: "${JENKINS_ADMIN_ID:-admin}"
+      JENKINS_ADMIN_PASSWORD: "${JENKINS_ADMIN_PASSWORD:-IdolGlow!7077}"
+      GITHUB_CREDENTIALS_ID: "${GITHUB_CREDENTIALS_ID:-github-http-token}"
+      GITHUB_USERNAME: "${GITHUB_USERNAME:-}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - type: bind
+        source: ${IDOLGLOW_WORKSPACE}
+        target: /workspace/IdolGlow
+      - type: bind
+        source: ${JENKINS_DEPLOY_HOST_PATH}
+        target: /deployments
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/login >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+volumes:
+  jenkins_home:

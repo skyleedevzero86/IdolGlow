@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "NotificationPreference", description = "알림 수신 설정 API")
+@Tag(name = "알림 설정", description = "알림 수신 설정 API")
 @RestController
 @RequestMapping("/notification-preferences")
 class NotificationPreferenceController(

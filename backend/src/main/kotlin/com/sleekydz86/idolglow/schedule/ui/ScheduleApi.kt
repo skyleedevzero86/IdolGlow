@@ -17,7 +17,7 @@ import jakarta.validation.Valid
 import org.springframework.core.io.Resource
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "Schedule", description = "마이페이지 일정 관리 API")
+@Tag(name = "일정", description = "마이페이지 일정 관리 API")
 interface ScheduleApi {
 
     @Operation(summary = "일정 생성", description = "개인 일정을 추가합니다.")

@@ -10,6 +10,7 @@ import com.sleekydz86.idolglow.user.auth.oauth.OAuth2SuccessHandler
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -76,7 +77,12 @@ class SecurityConfig(
             }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/health/check").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
+                auth.requestMatchers("/api/mbrd/**").permitAll()
+                auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
                 val permitList = PERMIT_LIST.toMutableList()
                 if (testLoginEnabled) {
@@ -84,6 +90,7 @@ class SecurityConfig(
                 }
 
                 auth.requestMatchers(*permitList.toTypedArray()).permitAll()
+                    .requestMatchers(HttpMethod.POST, "/subscriptions").permitAll()
                     .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook").permitAll()
                     .anyRequest().authenticated()
             }
@@ -128,6 +135,7 @@ class SecurityConfig(
         )
 
         private val PERMIT_LIST = arrayOf(
+            "/platform/auth/**",
             "/auth/login/**",
             "/auth/signup",
             "/auth/signup/check-email",

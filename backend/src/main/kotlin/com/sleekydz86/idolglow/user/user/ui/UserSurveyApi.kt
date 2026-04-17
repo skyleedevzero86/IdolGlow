@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "UserSurvey", description = "회원 설문 관련 API")
+@Tag(name = "회원 설문", description = "회원 설문 관련 API")
 interface UserSurveyApi {
 
     @Operation(

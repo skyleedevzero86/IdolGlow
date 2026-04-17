@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
-@Tag(name = "Admin Reservation", description = "관리자 예약 현황 및 제어 API")
+@Tag(name = "관리자 예약", description = "관리자 예약 현황 및 제어 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/reservations")
