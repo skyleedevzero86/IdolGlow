@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
-@Tag(name = "Notification", description = "알림 조회 및 읽음 처리 API")
+@Tag(name = "알림", description = "알림 조회 및 읽음 처리 API")
 @RestController
 @RequestMapping("/notifications")
 class NotificationController(

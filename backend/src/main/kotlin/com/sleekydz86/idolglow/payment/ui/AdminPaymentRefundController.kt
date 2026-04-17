@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Admin payment refunds", description = "환불 이력 조회·재시도")
+@Tag(name = "관리자 결제 환불", description = "환불 이력 조회·재시도")
 @RestController
 @RequestMapping("/admin/payments")
 @PreAuthorize("hasRole('ADMIN')")

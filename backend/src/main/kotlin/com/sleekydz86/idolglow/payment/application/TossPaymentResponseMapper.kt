@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.sleekydz86.idolglow.payment.domain.Payment
 import java.math.BigDecimal
 import java.time.LocalDateTime

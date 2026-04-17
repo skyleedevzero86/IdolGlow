@@ -22,11 +22,21 @@ class WebMvcConfig(
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         val root = localStorageBasePath.trim().takeIf { it.isNotEmpty() }
             ?: Paths.get(System.getProperty("user.home"), "Desktop", "image").toString()
-        val dir = Paths.get(root, "profile-avatars").toAbsolutePath().normalize()
+        registerUploadPath(registry, root, "profile-avatars", "/uploads/profile-avatars/**")
+        registerUploadPath(registry, root, "webzine", "/uploads/webzine/**")
+    }
+
+    private fun registerUploadPath(
+        registry: ResourceHandlerRegistry,
+        root: String,
+        childDirectory: String,
+        resourcePattern: String,
+    ) {
+        val dir = Paths.get(root, childDirectory).toAbsolutePath().normalize()
         runCatching { Files.createDirectories(dir) }
         val location = dir.toUri().toString()
         val withSlash = if (location.endsWith("/")) location else "$location/"
-        registry.addResourceHandler("/uploads/profile-avatars/**")
+        registry.addResourceHandler(resourcePattern)
             .addResourceLocations(withSlash)
     }
 }

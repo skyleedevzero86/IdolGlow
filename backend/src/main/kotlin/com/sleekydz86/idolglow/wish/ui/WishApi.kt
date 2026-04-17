@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 
-@Tag(name = "Wish", description = "위시 관련 API")
+@Tag(name = "위시", description = "위시(찜) 관련 API")
 interface WishApi {
 
     @Operation(
@@ -32,7 +32,7 @@ interface WishApi {
 
     @Operation(
         summary = "위시 상품 목록 조회",
-        description = "no-offset 기반으로 위시 상품 목록을 조회합니다."
+        description = "오프셋 없이 커서(lastWishId) 기반으로 위시 상품 목록을 조회합니다."
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     fun findWishes(
