@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.platform.auth.util
 
+import com.sleekydz86.idolglow.global.security.JwtSigningKeyFactory
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.platform.auth.dto.AuthenticatedUser
 import com.sleekydz86.idolglow.platform.user.domain.PlatformUserRole
@@ -7,11 +8,9 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
-import io.jsonwebtoken.security.Keys
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
-import java.nio.charset.StandardCharsets
 import java.security.Key
 import java.time.Duration
 import java.util.Date
@@ -24,18 +23,7 @@ class JwtTokenUtil(
 
     private val log = LoggerFactory.getLogger(JwtTokenUtil::class.java)
 
-    private fun getSigningKey(): Key {
-        val secret = properties.jwt.secret
-        val keyBytes = secret.toByteArray(StandardCharsets.UTF_8)
-        val finalBytes = if (keyBytes.size < 32) {
-            ByteArray(32).also { padded ->
-                System.arraycopy(keyBytes, 0, padded, 0, keyBytes.size)
-            }
-        } else {
-            keyBytes
-        }
-        return Keys.hmacShaKeyFor(finalBytes)
-    }
+    private val signingKey: Key by lazy { JwtSigningKeyFactory.create(properties.jwt.secret) }
 
     private fun accessTokenExpirationMillis(): Long = properties.jwt.accessTokenTtl.toMillis()
     private fun refreshTokenExpirationMillis(): Long = properties.jwt.refreshTokenTtl.toMillis()
@@ -64,7 +52,7 @@ class JwtTokenUtil(
             .setIssuer(properties.jwt.issuer)
             .setIssuedAt(now)
             .setExpiration(Date(now.time + expirationMillis))
-            .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+            .signWith(signingKey, SignatureAlgorithm.HS512)
             .compact()
     }
 
@@ -115,7 +103,7 @@ class JwtTokenUtil(
 
     private fun parseSignedClaims(token: String): Claims =
         Jwts.parserBuilder()
-            .setSigningKey(getSigningKey())
+            .setSigningKey(signingKey)
             .build()
             .parseClaimsJws(token)
             .body
@@ -175,7 +163,7 @@ class JwtTokenUtil(
             .setIssuer(properties.jwt.issuer)
             .setIssuedAt(now)
             .setExpiration(expirationDate)
-            .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+            .signWith(signingKey, SignatureAlgorithm.HS512)
             .compact()
     }
 
@@ -223,7 +211,7 @@ class JwtTokenUtil(
             .setSubject(email)
             .setIssuer(properties.jwt.issuer)
             .setIssuedAt(now)
-            .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+            .signWith(signingKey, SignatureAlgorithm.HS512)
             .compact()
     }
 

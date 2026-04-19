@@ -112,10 +112,10 @@ class WebzineAdminService(
         val nextSlug = "vol-${command.volume}"
 
         require(!webzineIssueRepository.existsByVolumeAndIdNot(command.volume, issue.id)) {
-            "Issue volume ${command.volume} is already used by another issue."
+            "호 번호 ${command.volume}은(는) 다른 호에서 이미 사용 중입니다."
         }
         require(!webzineIssueRepository.existsBySlugAndIdNot(nextSlug, issue.id)) {
-            "Issue slug $nextSlug is already used by another issue."
+            "슬러그 $nextSlug 은(는) 다른 호에서 이미 사용 중입니다."
         }
 
         issue.slug = nextSlug

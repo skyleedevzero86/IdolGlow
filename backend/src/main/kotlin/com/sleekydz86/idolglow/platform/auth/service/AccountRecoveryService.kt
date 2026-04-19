@@ -82,7 +82,7 @@ class AccountRecoveryService(
         user.changePassword(encoded)
         userAccountPort.save(user)
 
-        log.info("복구 토큰으로 비밀번호 재설정: userId={}", user.id ?: "unknown")
+        log.info("복구 토큰으로 비밀번호 재설정: userId={}", user.id ?: "알 수 없음")
 
         return AccountRecoveryResponse.builder()
             .success(true)
