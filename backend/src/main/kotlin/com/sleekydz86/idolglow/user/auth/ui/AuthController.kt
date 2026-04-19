@@ -39,7 +39,7 @@ class AuthController(
         refreshTokenCookieSupporter.validateCsrf(refreshCsrfHeader, refreshCsrfToken)
 
         val tokenResponse = authService.reissue(refreshToken.orEmpty())
-        refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
+        refreshTokenCookieSupporter.addAuthenticationCookies(response, tokenResponse)
 
         return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
     }
@@ -51,7 +51,7 @@ class AuthController(
         response: HttpServletResponse
     ): ResponseEntity<Void> {
         refreshTokenCookieSupporter.validateCsrf(refreshCsrfHeader, refreshCsrfToken)
-        refreshTokenCookieSupporter.expireRefreshTokenCookie(response)
+        refreshTokenCookieSupporter.expireAuthenticationCookies(response)
         return ResponseEntity.ok().build()
     }
 }

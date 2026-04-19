@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.global.security
 
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
+import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 import io.jsonwebtoken.Claims
@@ -72,6 +73,9 @@ class JwtProvider(
         request.getHeader(HttpHeaders.AUTHORIZATION)
             ?.takeIf { it.startsWith("$BEARER_TYPE ") }
             ?.substring(BEARER_TYPE.length + 1)
+            ?: request.cookies
+                ?.firstOrNull { it.name == RefreshTokenCookieSupporter.ACCESS_TOKEN_COOKIE }
+                ?.value
 
     fun validateToken(token: String): Boolean =
         try {

@@ -6,7 +6,6 @@ import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Component
 class OAuth2SuccessHandler(
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
     private val loginFacade: LoginFacade,
-    @Value("\${app.oauth2.redirect-uri}")
-    private val frontRedirectUri: String,
 ) : AuthenticationSuccessHandler {
 
     override fun onAuthenticationSuccess(
@@ -43,7 +40,7 @@ class OAuth2SuccessHandler(
         )
 
         refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
-        response.sendRedirect(frontRedirectUri)
+        response.sendRedirect(AUTH_CALLBACK_PATH)
     }
 
     private fun oauthAttributes(principal: OAuth2User): Map<String, Any> {
@@ -54,5 +51,9 @@ class OAuth2SuccessHandler(
         }
         principal.attributes.forEach { (k, v) -> out.putIfAbsent(k, v as Any) }
         return out
+    }
+
+    companion object {
+        private const val AUTH_CALLBACK_PATH = "/auth/callback"
     }
 }
