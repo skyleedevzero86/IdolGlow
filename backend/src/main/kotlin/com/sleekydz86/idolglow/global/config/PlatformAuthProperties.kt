@@ -12,6 +12,7 @@ class PlatformAuthProperties {
 
     class Jwt {
         var secret: String = "defaultSecretKeyForDevelopmentOnly12345678901234567890"
+        var logToken: Boolean = true
         var accessTokenTtl: Duration = Duration.ofHours(1)
         var refreshTokenTtl: Duration = Duration.ofDays(30)
         var recoveryTokenTtl: Duration = Duration.ofMinutes(5)
