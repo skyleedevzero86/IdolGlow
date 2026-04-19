@@ -30,7 +30,7 @@ class SignupController(
 
     @SecurityRequirements
     @Operation(
-        summary = "이메일 가입 가능 여부 확인",
+        summary = "이메일 사용 가능 여부 확인",
         description = "회원가입 폼에서 이메일 중복·형식을 검사합니다. `available=true`이면 사용 가능, 불가 시 `code`에 사유(BLANK, INVALID_FORMAT, TAKEN 등)가 올 수 있습니다.",
     )
     @ApiResponse(responseCode = "200", description = "검사 결과")
@@ -61,7 +61,7 @@ class SignupController(
     @SecurityRequirements
     @Operation(
         summary = "회원가입",
-        description = "계정을 생성하고 액세스 토큰을 반환합니다. 리프레시 토큰은 응답 본문이 아니라 **HttpOnly 쿠키**로 설정될 수 있습니다.",
+        description = "계정을 생성하고 액세스 토큰을 반환합니다. 리프레시 토큰은 응답 본문이 아닌 HttpOnly 쿠키로 설정됩니다.",
     )
     @ApiResponse(responseCode = "200", description = "가입 성공, 액세스 토큰")
     @PostMapping
@@ -73,6 +73,7 @@ class SignupController(
             email = request.email,
             rawNickname = request.nickname,
             password = request.password,
+            subscribeToUpdates = request.subscribeToUpdates,
         )
         refreshTokenCookieSupporter.addAuthenticationCookies(response, tokenResponse)
         return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
