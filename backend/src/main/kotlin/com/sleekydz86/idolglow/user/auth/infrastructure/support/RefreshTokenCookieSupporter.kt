@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.user.auth.infrastructure.support
 
 import com.sleekydz86.idolglow.global.exceptions.CustomException
 import com.sleekydz86.idolglow.global.exceptions.auth.AuthExceptionType
+import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
@@ -19,6 +20,26 @@ class RefreshTokenCookieSupporter(
     private val domain: String,
 ) {
 
+    fun addAuthenticationCookies(
+        response: HttpServletResponse,
+        tokenResponse: TokenResponse,
+    ) {
+        addAccessTokenCookie(response, tokenResponse.accessToken, tokenResponse.accessTokenExpiresIn)
+        addRefreshTokenCookie(response, tokenResponse.refreshToken)
+    }
+
+    fun addAccessTokenCookie(
+        response: HttpServletResponse,
+        accessToken: String,
+        expiresAtMillis: Long,
+    ) {
+        val maxAge = ((expiresAtMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+        response.addHeader(
+            HttpHeaders.SET_COOKIE,
+            buildCookie(ACCESS_TOKEN_COOKIE, accessToken, true, maxAge).toString()
+        )
+    }
+
     fun addRefreshTokenCookie(
         response: HttpServletResponse,
         refreshToken: String
@@ -33,7 +54,11 @@ class RefreshTokenCookieSupporter(
         )
     }
 
-    fun expireRefreshTokenCookie(response: HttpServletResponse) {
+    fun expireAuthenticationCookies(response: HttpServletResponse) {
+        response.addHeader(
+            HttpHeaders.SET_COOKIE,
+            buildCookie(ACCESS_TOKEN_COOKIE, "", true, 0).toString()
+        )
         response.addHeader(
             HttpHeaders.SET_COOKIE,
             buildCookie(REFRESH_TOKEN_COOKIE, "", true, 0).toString()
@@ -71,6 +96,7 @@ class RefreshTokenCookieSupporter(
     }
 
     companion object {
+        const val ACCESS_TOKEN_COOKIE = "accessToken"
         const val REFRESH_TOKEN_COOKIE = "refreshToken"
         const val REFRESH_CSRF_COOKIE = "refreshCsrfToken"
         const val REFRESH_CSRF_HEADER = "X-Refresh-CSRF"

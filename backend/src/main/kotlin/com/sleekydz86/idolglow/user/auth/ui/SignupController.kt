@@ -74,7 +74,7 @@ class SignupController(
             rawNickname = request.nickname,
             password = request.password,
         )
-        refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
+        refreshTokenCookieSupporter.addAuthenticationCookies(response, tokenResponse)
         return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
     }
 }
