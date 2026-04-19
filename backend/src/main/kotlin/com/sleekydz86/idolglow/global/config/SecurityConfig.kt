@@ -62,7 +62,9 @@ class SecurityConfig(
         return http.build()
     }
 
+   
     @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
