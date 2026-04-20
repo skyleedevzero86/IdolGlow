@@ -55,16 +55,16 @@ class User(
     var passwordChangedAt: LocalDateTime? = null,
 
     @Column(name = "last_password_change_date")
-    var lastPasswordChangeDate: java.time.LocalDate? = null,
+    var lastPasswordChangeDate: LocalDate? = null,
 
     @Column(name = "password_change_daily_count", nullable = false)
     var passwordChangeDailyCount: Int = 0,
 
     @Column
-    var lastLoginAt: LocalDateTime? = null
+    var lastLoginAt: LocalDateTime? = null,
 ) {
-    fun updateLastLoginTime(now : LocalDateTime = LocalDateTime.now()) {
-        this.lastLoginAt = now
+    fun updateLastLoginTime(now: LocalDateTime = LocalDateTime.now()) {
+        lastLoginAt = now
     }
 
     fun updateNickname(nickname: String) {
@@ -92,7 +92,7 @@ class User(
             passwordChangeDailyCount = 1
             lastPasswordChangeDate = today
         } else {
-            passwordChangeDailyCount = passwordChangeDailyCount + 1
+            passwordChangeDailyCount += 1
         }
     }
 
@@ -101,7 +101,7 @@ class User(
         if (loginFailCount >= 5) {
             accountStatus = UserAccountStatus.SUSPENDED
             accountLockedAt = LocalDateTime.now()
-            log.warn("계정이 잠겼습니다: userId={}, loginFailCount={}", id, loginFailCount)
+            log.warn("Account locked due to login failures. userId={}, loginFailCount={}", id, loginFailCount)
         }
     }
 
@@ -114,24 +114,42 @@ class User(
         accountStatus = UserAccountStatus.APPROVED
         accountLockedAt = null
         loginFailCount = 0
-        log.info("사용자가 승인되었습니다: id={}, approverId={}", id, approverId)
+        log.info("User approved. id={}, approverId={}", id, approverId)
+    }
+
+    fun changeAccountStatus(status: UserAccountStatus) {
+        accountStatus = status
+        if (status != UserAccountStatus.SUSPENDED) {
+            accountLockedAt = null
+        }
+        if (status == UserAccountStatus.APPROVED) {
+            loginFailCount = 0
+        }
+    }
+
+    fun unlockAccount() {
+        loginFailCount = 0
+        accountLockedAt = null
+        if (accountStatus == UserAccountStatus.SUSPENDED) {
+            accountStatus = UserAccountStatus.APPROVED
+        }
     }
 
     companion object {
         private val log = LoggerFactory.getLogger(User::class.java)
+
         fun of(
             email: String,
             nickname: String = "",
-            role: UserRole = UserRole.USER
+            role: UserRole = UserRole.USER,
         ): User {
-            nickname.trim()
             val resolvedNickname = if (nickname.isBlank()) Nickname.defaultFromEmail(email) else Nickname.of(nickname)
             return User(
                 email = email,
                 nickname = resolvedNickname,
                 profileImageUrl = null,
                 passwordHash = null,
-                role = role
+                role = role,
             )
         }
     }

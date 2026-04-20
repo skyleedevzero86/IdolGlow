@@ -173,7 +173,7 @@ class GlobalExceptionAdvice {
                 ExceptionResponse(
                     name = "NOT_FOUND",
                     errorCode = "NOT_FOUND",
-                    message = exception.message ?: "대상을 찾을 수 없습니다."
+                    message = "대상을 찾을 수 없습니다."
                 )
             )
     }
@@ -212,7 +212,7 @@ class GlobalExceptionAdvice {
                 ExceptionResponse(
                     name = "INTERNAL_SERVER_ERROR",
                     errorCode = "INTERNAL_SERVER_ERROR",
-                    message = exception.message ?: "서버 내부 오류가 발생했습니다."
+                    message = "서버 내부 오류가 발생했습니다."
                 )
             )
     }
