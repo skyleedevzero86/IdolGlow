@@ -19,12 +19,12 @@ class HealthCheckController {
             ApiResponse(
                 responseCode = "200",
                 description = "서버 정상 응답",
-                content = [Content(schema = Schema(implementation = String::class, example = "up"))]
+                content = [Content(schema = Schema(implementation = String::class, example = "정상"))]
             )
         ]
     )
     @GetMapping("/health/check")
     fun healthCheck(): ResponseEntity<String> {
-        return ResponseEntity.ok("up")
+        return ResponseEntity.ok("정상")
     }
 }

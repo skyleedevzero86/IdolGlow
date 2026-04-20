@@ -16,7 +16,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -41,12 +40,6 @@ class SecurityConfig(
     @Value("#{'\${app.security.allowed-origins:http://localhost:3000}'.split(',')}")
     private val allowedOrigins: List<String>,
 ) {
-
-    @Bean
-    fun webSecurityCustomizer(): WebSecurityCustomizer =
-        WebSecurityCustomizer { web ->
-            web.ignoring().requestMatchers("/", "/favicon.ico")
-        }
 
     @Bean
     @Order(0)
@@ -78,6 +71,7 @@ class SecurityConfig(
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .authorizeHttpRequests { auth ->
+                auth.requestMatchers("/", "/favicon.ico").permitAll()
                 auth.requestMatchers("/health/check").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()

@@ -25,10 +25,12 @@ class OAuth2SuccessHandler(
         authentication: Authentication
     ) {
         val oauthToken = authentication as? OAuth2AuthenticationToken
-            ?: throw IllegalStateException("OAuth2AuthenticationToken 이어야 합니다: ${authentication.javaClass.name}")
+            ?: throw IllegalStateException(
+                "OAuth2 인증 토큰 형식이 올바르지 않습니다. (실제 타입: ${authentication.javaClass.name})"
+            )
         val principal = oauthToken.principal as? OAuth2User
             ?: throw IllegalStateException(
-                "OAuth2User principal 이어야 합니다: ${(oauthToken.principal as Any?)?.javaClass?.name}"
+                "OAuth2 사용자 정보(principal) 형식이 올바르지 않습니다. (실제 타입: ${(oauthToken.principal as Any?)?.javaClass?.name})"
             )
 
         val provider = AuthProvider.fromRegistrationId(oauthToken.authorizedClientRegistrationId)

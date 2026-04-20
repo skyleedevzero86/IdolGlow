@@ -13,7 +13,7 @@ class ProductGraphQlController(
 ) {
 
     @QueryMapping
-    fun health(): String = "up"
+    fun health(): String = "정상"
 
     @QueryMapping
     fun products(

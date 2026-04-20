@@ -81,15 +81,15 @@ class AuthenticationService(
         try {
             if (!jwtTokenUtil.validateRefreshToken(request.refreshToken)) {
                 log.warn("유효하지 않은 리프레시 토큰")
-                throw InvalidTokenException("REFRESH")
+                throw InvalidTokenException("리프레시")
             }
 
             val email = jwtTokenUtil.getEmailFromRefreshToken(request.refreshToken)
-                ?: throw InvalidTokenException("REFRESH")
+                ?: throw InvalidTokenException("리프레시")
 
             if (!userAccountPort.existsByEmail(email)) {
                 log.warn("리프레시 토큰에 해당하는 사용자 없음: {}", email)
-                throw InvalidTokenException("REFRESH")
+                throw InvalidTokenException("리프레시")
             }
 
             val user = userAccountPort.findByEmail(email)
@@ -108,7 +108,7 @@ class AuthenticationService(
                 .build()
         } catch (e: Exception) {
             log.error("토큰 갱신 실패: {}", e.message)
-            throw InvalidTokenException("REFRESH")
+            throw InvalidTokenException("리프레시")
         }
     }
 
