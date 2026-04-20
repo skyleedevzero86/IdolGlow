@@ -48,6 +48,7 @@ class AdminUserService(
             totalUsers = userRepository.count(),
             adminCount = userRepository.countByRole(UserRole.ADMIN),
             suspendedCount = userRepository.countByAccountStatus(UserAccountStatus.SUSPENDED),
+            withdrawnCount = userRepository.countByAccountStatus(UserAccountStatus.WITHDRAWN),
         )
     }
 
