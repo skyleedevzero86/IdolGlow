@@ -16,6 +16,7 @@ data class AdminUserPageResponse(
     val totalUsers: Long,
     val adminCount: Long,
     val suspendedCount: Long,
+    val withdrawnCount: Long,
 )
 
 data class AdminUserSummaryResponse(
@@ -47,11 +48,22 @@ data class AdminUserSummaryResponse(
                 loginFailCount = user.loginFailCount,
                 locked = user.isPlatformLocked(),
                 platformUsername = user.platformUsername,
-                profileImageUrl = user.profileImageUrl,
+                profileImageUrl = resolveProfileImageUrl(user, oauths),
                 lastLoginAt = user.lastLoginAt?.format(adminUserDateTimeFormatter),
                 oauthLinked = oauths.isNotEmpty(),
                 oauthProviders = oauths.map { it.provider.name }.distinct(),
             )
+
+        private fun resolveProfileImageUrl(user: User, oauths: List<UserOAuth>): String? {
+            val primary = user.profileImageUrl?.trim()?.takeIf { it.isNotEmpty() }
+            if (primary != null) {
+                return primary
+            }
+
+            return oauths
+                .sortedByDescending { it.provider.name == "GOOGLE" }
+                .firstNotNullOfOrNull { oauth -> oauth.profileImageUrl?.trim()?.takeIf { it.isNotEmpty() } }
+        }
     }
 }
 
