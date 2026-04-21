@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.user.auth.ui
 
+import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
 import com.sleekydz86.idolglow.user.auth.application.SignupService
 import com.sleekydz86.idolglow.user.auth.application.dto.SignupCheckResponse
 import com.sleekydz86.idolglow.user.auth.domain.dto.AccessTokenResponse
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController
 class SignupController(
     private val signupService: SignupService,
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
+    private val authVerificationAuditService: AuthVerificationAuditService,
 ) {
 
     @SecurityRequirements
@@ -38,8 +41,17 @@ class SignupController(
     fun checkEmail(
         @Parameter(description = "확인할 이메일 주소", example = "user@example.com")
         @RequestParam(required = false) email: String?,
+        request: HttpServletRequest,
     ): ResponseEntity<SignupCheckResponse> {
         val result = signupService.checkEmailField(email.orEmpty())
+        authVerificationAuditService.log(
+            verificationType = AuthVerificationAuditService.TYPE_SIGNUP_EMAIL_CHECK,
+            email = email,
+            username = null,
+            ipAddress = resolveClientIp(request),
+            success = result.available,
+            detail = result.code,
+        )
         return ResponseEntity.ok(SignupCheckResponse(result.available, result.code))
     }
 
@@ -77,5 +89,14 @@ class SignupController(
         )
         refreshTokenCookieSupporter.addAuthenticationCookies(response, tokenResponse)
         return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
+    }
+
+    private fun resolveClientIp(request: HttpServletRequest): String {
+        val forwarded = request.getHeader("X-Forwarded-For")
+            ?.split(",")
+            ?.firstOrNull()
+            ?.trim()
+        if (!forwarded.isNullOrBlank()) return forwarded
+        return request.remoteAddr ?: "unknown"
     }
 }
