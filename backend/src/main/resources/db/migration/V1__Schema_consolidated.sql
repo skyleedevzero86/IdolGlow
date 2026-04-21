@@ -1567,3 +1567,6 @@ alter table users
     add column if not exists temporary_password_required boolean not null default false;
 
 comment on column users.temporary_password_required is '임시 비밀번호 발급 등으로 인해 비밀번호 변경이 필요하면 true';
+
+-- 공지 첨부 메타데이터([notice-files] …) 등으로 introduction 길이가 필요할 때 적용한다.
+ALTER TABLE editor_documents ALTER COLUMN introduction CLOB;
