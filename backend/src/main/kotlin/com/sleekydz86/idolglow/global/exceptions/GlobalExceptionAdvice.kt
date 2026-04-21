@@ -11,6 +11,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
@@ -133,6 +134,26 @@ class GlobalExceptionAdvice {
                     errorCode = "CONFLICT",
                     message = exception.message ?: "요청을 처리할 수 없습니다."
                 )
+            )
+    }
+
+    @ExceptionHandler(ResponseStatusException::class)
+    fun handleResponseStatusException(
+        request: HttpServletRequest,
+        exception: ResponseStatusException,
+    ): ResponseEntity<ExceptionResponse> {
+        val code = exception.statusCode.value()
+        val status = HttpStatus.values().find { it.value() == code } ?: HttpStatus.INTERNAL_SERVER_ERROR
+        val message = exception.reason ?: status.reasonPhrase
+        log.warn("HTTP 상태 예외: {} {} {} | {}", status.value(), request.method, request.requestURI, message)
+        return ResponseEntity
+            .status(status)
+            .body(
+                ExceptionResponse(
+                    name = status.name,
+                    errorCode = status.name,
+                    message = message,
+                ),
             )
     }
 
