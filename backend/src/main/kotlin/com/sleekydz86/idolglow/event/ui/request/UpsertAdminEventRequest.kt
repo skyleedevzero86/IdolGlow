@@ -17,7 +17,7 @@ data class UpsertAdminEventRequest(
     val tags: List<String>?,
     @field:Size(max = 180)
     val urlSlug: String?,
-    @field:Size(max = 150)
+    @field:Size(max = 8000)
     val introduction: String?,
     @field:Size(max = 500)
     val thumbnailImageUrl: String?,

@@ -1073,3 +1073,7 @@ ALTER TABLE users
 ALTER TABLE users
     ADD COLUMN temporary_password_required BOOLEAN NOT NULL DEFAULT FALSE
         COMMENT '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 1';
+
+-- 공지 등에서 introduction 필드에 첨부 메타데이터([notice-files] …)를 담을 수 있도록 확장한다.
+ALTER TABLE editor_documents
+    MODIFY COLUMN introduction text null;

@@ -1855,3 +1855,10 @@ alter table users
     add column if not exists temporary_password_required boolean not null default false;
 
 COMMENT ON COLUMN users.temporary_password_required IS '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 true';
+
+
+-- 공지 등에서 introduction 필드에 첨부 메타데이터([notice-files] …)를 담을 수 있도록 확장한다.
+ALTER TABLE editor_documents
+ALTER COLUMN introduction TYPE text;
+
+COMMENT ON COLUMN editor_documents.introduction IS '목록 카드용 요약 또는 공지 첨부 메타데이터(길이 제한 완화)';
