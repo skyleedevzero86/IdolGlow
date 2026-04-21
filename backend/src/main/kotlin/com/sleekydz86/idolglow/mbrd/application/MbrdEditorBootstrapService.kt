@@ -177,6 +177,7 @@ class MbrdEditorBootstrapService(
             thumbnailImageUrl = document.thumbnailImageUrl,
             status = document.publicationStatus.toApiValue(),
             updatedAt = document.updatedAt,
+            viewCount = document.viewCount,
             previousDocument = previous,
             nextDocument = next,
         )
@@ -192,7 +193,23 @@ class MbrdEditorBootstrapService(
             tags = document.tags,
             status = document.publicationStatus.toApiValue(),
             updatedAt = document.updatedAt,
+            viewCount = document.viewCount,
         )
+
+    @Transactional
+    @CacheEvict(
+        cacheNames = ["mbrd-editor-document-by-id", "mbrd-editor-document-by-slug", "mbrd-editor-document-pages"],
+        allEntries = true,
+    )
+    fun recordDocumentView(documentId: String): MbrdEditorDocumentViewCountPayload {
+        val id = MbrdDocumentId.from(documentId)
+        val existing = repository.findById(id) ?: throw IllegalArgumentException("존재하지 않는 문서입니다.")
+        if (existing.publicationStatus != MbrdDocumentPublicationStatus.PUBLISHED) {
+            throw IllegalArgumentException("게시된 문서만 조회수를 올릴 수 있습니다.")
+        }
+        val count = repository.incrementViewCount(id)
+        return MbrdEditorDocumentViewCountPayload(viewCount = count)
+    }
 
     private fun resolveUrlSlug(
         requestedUrlSlug: String?,

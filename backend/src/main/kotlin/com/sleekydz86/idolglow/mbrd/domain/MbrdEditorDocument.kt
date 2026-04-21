@@ -20,11 +20,13 @@ data class MbrdEditorDocument(
     val thumbnailImageUrl: String?,
     val publicationStatus: MbrdDocumentPublicationStatus,
     val updatedAt: Instant,
+    val viewCount: Long = 0L,
 ) {
     init {
         require(title.isNotBlank())
         require(author.isNotBlank())
         require(markdown.isNotBlank())
+        require(viewCount >= 0)
     }
 
     companion object {
@@ -51,6 +53,7 @@ data class MbrdEditorDocument(
                 thumbnailImageUrl = mbrdNormalizeOptional(thumbnailImageUrl),
                 publicationStatus = publicationStatus,
                 updatedAt = clock.instant(),
+                viewCount = 0L,
             )
     }
 
@@ -76,5 +79,6 @@ data class MbrdEditorDocument(
             thumbnailImageUrl = mbrdNormalizeOptional(thumbnailImageUrl),
             publicationStatus = publicationStatus,
             updatedAt = clock.instant(),
+            viewCount = this.viewCount,
         )
 }
