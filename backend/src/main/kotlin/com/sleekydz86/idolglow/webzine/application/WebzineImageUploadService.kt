@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.webzine.application
 
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 
@@ -10,6 +11,8 @@ class WebzineImageUploadService(
     private val webzineImageStoragePort: WebzineImageStoragePort,
     private val adminAuditService: AdminAuditService,
 ) : WebzineImageUploadUseCase {
+
+    private val log = LoggerFactory.getLogger(javaClass)
 
     override fun upload(file: MultipartFile, folder: String?): AdminIssueImageUploadResponse {
         require(!file.isEmpty) { "업로드할 이미지 파일을 선택해 주세요." }
@@ -34,12 +37,21 @@ class WebzineImageUploadService(
             )
         )
 
-        adminAuditService.log(
-            actionCode = "WEBZINE_IMAGE_UPLOAD",
-            targetType = "WEBZINE_ASSET",
-            targetId = null,
-            detail = "folder=$safeFolder, objectKey=${storedImage.objectKey}",
-        )
+        runCatching {
+            adminAuditService.log(
+                actionCode = "WEBZINE_IMAGE_UPLOAD",
+                targetType = "WEBZINE_ASSET",
+                targetId = null,
+                detail = "folder=$safeFolder, objectKey=${storedImage.objectKey}",
+            )
+        }.onFailure { auditError ->
+            log.warn(
+                "이미지 업로드 감사 로그 기록 실패(업로드는 성공): folder={} objectKey={}",
+                safeFolder,
+                storedImage.objectKey,
+                auditError,
+            )
+        }
 
         return AdminIssueImageUploadResponse(
             url = storedImage.url,

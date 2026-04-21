@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageUploadPayload
 import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.ContentDisposition
@@ -33,6 +34,8 @@ class MbrdEditorImageController(
     private val minioStorageService: ObjectProvider<MbrdMinioEditorImageStorageService>,
     private val webzineImageUploadUseCase: ObjectProvider<WebzineImageUploadUseCase>,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Operation(summary = "이미지 업로드")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -46,7 +49,8 @@ class MbrdEditorImageController(
                     HttpStatus.BAD_REQUEST,
                     ex.message ?: "이미지 업로드 요청이 올바르지 않습니다.",
                 )
-            } catch (_: Exception) {
+            } catch (ex: Exception) {
+                log.warn("mbrd MinIO 업로드 실패, Webzine 스토리지로 재시도합니다.", ex)
                 return uploadViaWebzine(file)
             }
         }
