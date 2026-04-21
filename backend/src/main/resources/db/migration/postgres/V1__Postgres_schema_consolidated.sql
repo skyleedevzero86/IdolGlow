@@ -1610,7 +1610,8 @@ on conflict (image_id) do nothing;
 -- tags_json 은 문자열 배열을 JSON 배열로 저장한다
 -- publication_status 는 DRAFT 또는 PUBLISHED
 -- url_slug 는 공개 글의 경로 식별자로 사용할 수 있다
--- introduction 과 thumbnail_image_url 은 목록 카드용 요약 필드다
+-- introduction 은 목록 카드 요약·공지 첨부 메타데이터([notice-files] …) 등 긴 문자열을 담을 수 있게 text
+-- thumbnail_image_url 은 목록 카드용 썸네일
 -- embedding 은 검색 보조용 수치 벡터를 대괄호 리터럴 문자열로 저장한다
 ---
 create table if not exists editor_documents (
@@ -1623,7 +1624,7 @@ create table if not exists editor_documents (
     embedding text not null,
     publication_status varchar(20) not null default 'PUBLISHED',
     url_slug varchar(180),
-    introduction varchar(150),
+    introduction text,
     thumbnail_image_url text
 );
 
@@ -1637,7 +1638,7 @@ comment on column editor_documents.updated_at is '최종 수정 시각';
 comment on column editor_documents.embedding is '8차원 근사 벡터 문자열';
 comment on column editor_documents.publication_status is 'DRAFT 또는 PUBLISHED';
 comment on column editor_documents.url_slug is '공개용 슬러그';
-comment on column editor_documents.introduction is '짧은 소개';
+comment on column editor_documents.introduction is '목록 카드용 요약 또는 공지 첨부 메타데이터';
 comment on column editor_documents.thumbnail_image_url is '썸네일 이미지 URL';
 
 create index if not exists editor_documents_updated_at_idx
@@ -1855,10 +1856,3 @@ alter table users
     add column if not exists temporary_password_required boolean not null default false;
 
 COMMENT ON COLUMN users.temporary_password_required IS '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 true';
-
-
--- 공지 등에서 introduction 필드에 첨부 메타데이터([notice-files] …)를 담을 수 있도록 확장한다.
-ALTER TABLE editor_documents
-ALTER COLUMN introduction TYPE text;
-
-COMMENT ON COLUMN editor_documents.introduction IS '목록 카드용 요약 또는 공지 첨부 메타데이터(길이 제한 완화)';
