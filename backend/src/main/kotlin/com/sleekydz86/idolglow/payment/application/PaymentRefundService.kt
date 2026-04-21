@@ -132,7 +132,7 @@ class PaymentRefundService(
 
         require(payment.provider == PaymentProvider.TOSS) { "토스 결제만 PG 재시도할 수 있습니다." }
         require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
-        val key = payment.paymentKey ?: throw IllegalStateException("paymentKey 없음")
+        val key = payment.paymentKey ?: throw IllegalStateException("토스 paymentKey가 없습니다.")
 
         val idempotencyKey = "refund-retry-${payment.id}-${UUID.randomUUID()}"
         val retry = paymentRefundJpaRepository.save(
