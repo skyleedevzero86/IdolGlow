@@ -21,7 +21,8 @@ interface UserSurveyApi {
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "조회 성공"),
-            ApiResponse(responseCode = "404", description = "설문을 찾을 수 없음")
+            ApiResponse(responseCode = "204", description = "등록된 설문이 없음"),
+            ApiResponse(responseCode = "400", description = "잘못된 요청"),
         ]
     )
     fun findUserSurvey(
