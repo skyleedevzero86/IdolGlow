@@ -28,7 +28,7 @@ import java.net.URI
 @Tag(name = "관리자 이벤트", description = "Idol Glow 이벤트 문서 등록·수정·삭제 및 목록 API")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
-@RequestMapping("/admin/events")
+@RequestMapping("/admin/events", "/api/admin/events")
 class AdminEventController(
     private val adminEventService: AdminEventService,
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
