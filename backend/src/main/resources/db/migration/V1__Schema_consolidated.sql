@@ -1372,7 +1372,8 @@ create table if not exists editor_documents (
     publication_status varchar(20) not null default 'PUBLISHED',
     url_slug varchar(180),
     introduction clob,
-    thumbnail_image_url clob
+    thumbnail_image_url clob,
+    view_count bigint not null default 0
 );
 
 create index if not exists editor_documents_updated_at_idx

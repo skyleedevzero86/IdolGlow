@@ -1613,6 +1613,7 @@ on conflict (image_id) do nothing;
 -- introduction 은 목록 카드 요약·공지 첨부 메타데이터([notice-files] …) 등 긴 문자열을 담을 수 있게 text
 -- thumbnail_image_url 은 목록 카드용 썸네일
 -- embedding 은 검색 보조용 수치 벡터를 대괄호 리터럴 문자열로 저장한다
+-- view_count 는 게시(공개) 문서 조회수 누적
 ---
 create table if not exists editor_documents (
     id uuid primary key,
@@ -1625,7 +1626,8 @@ create table if not exists editor_documents (
     publication_status varchar(20) not null default 'PUBLISHED',
     url_slug varchar(180),
     introduction text,
-    thumbnail_image_url text
+    thumbnail_image_url text,
+    view_count bigint not null default 0
 );
 
 comment on table editor_documents is '마크다운 게시글 마스터';
@@ -1640,6 +1642,7 @@ comment on column editor_documents.publication_status is 'DRAFT 또는 PUBLISHED
 comment on column editor_documents.url_slug is '공개용 슬러그';
 comment on column editor_documents.introduction is '목록 카드용 요약 또는 공지 첨부 메타데이터';
 comment on column editor_documents.thumbnail_image_url is '썸네일 이미지 URL';
+comment on column editor_documents.view_count is '게시(공개) 문서 조회수 누적';
 
 create index if not exists editor_documents_updated_at_idx
     on editor_documents (updated_at desc);
