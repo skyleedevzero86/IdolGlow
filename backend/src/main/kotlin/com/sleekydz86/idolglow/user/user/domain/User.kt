@@ -62,6 +62,12 @@ class User(
 
     @Column
     var lastLoginAt: LocalDateTime? = null,
+
+    @Column(name = "temporary_password_required", nullable = false)
+    var temporaryPasswordRequired: Boolean = false,
+
+    @Column(name = "temporary_password_issued_at")
+    var temporaryPasswordIssuedAt: LocalDateTime? = null,
 ) {
     fun updateLastLoginTime(now: LocalDateTime = LocalDateTime.now()) {
         lastLoginAt = now
@@ -125,6 +131,19 @@ class User(
         if (status == UserAccountStatus.APPROVED) {
             loginFailCount = 0
         }
+    }
+
+    fun issueTemporaryPassword(encodedPassword: String, now: LocalDateTime = LocalDateTime.now()) {
+        passwordHash = encodedPassword
+        temporaryPasswordRequired = true
+        temporaryPasswordIssuedAt = now
+    }
+
+    fun completePasswordChange(encodedPassword: String, now: LocalDateTime = LocalDateTime.now()) {
+        passwordHash = encodedPassword
+        passwordChangedAt = now
+        temporaryPasswordRequired = false
+        temporaryPasswordIssuedAt = null
     }
 
     fun unlockAccount() {
