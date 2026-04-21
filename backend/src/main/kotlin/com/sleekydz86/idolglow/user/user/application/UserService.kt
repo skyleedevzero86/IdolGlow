@@ -30,7 +30,7 @@ class UserService(
             ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
 
     @Transactional
-    fun changePassword(userId: Long, currentPassword: String, newPassword: String) {
+    fun changePassword(userId: Long, currentPassword: String, newPassword: String): Boolean {
         val user = findUser(userId)
         val hash = user.passwordHash
             ?: throw CustomException(UserExceptionType.PASSWORD_CHANGE_NOT_SUPPORTED)
@@ -40,8 +40,11 @@ class UserService(
             throw CustomException(UserExceptionType.CURRENT_PASSWORD_INCORRECT)
         }
         validatePasswordStrength(next)
-        user.passwordHash = passwordEncoder.encode(next)
+        val wasTemporary = user.temporaryPasswordRequired
+        val encoded = requireNotNull(passwordEncoder.encode(next)) { "비밀번호 인코딩에 실패했습니다." }
+        user.completePasswordChange(encoded)
         userRepository.save(user)
+        return wasTemporary
     }
 
     private fun validatePasswordStrength(password: String) {

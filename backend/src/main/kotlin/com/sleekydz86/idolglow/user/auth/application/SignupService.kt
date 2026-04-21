@@ -25,6 +25,7 @@ class SignupService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtProvider: JwtProvider,
     private val subscriptionPublicUseCase: SubscriptionPublicUseCase,
+    private val signupVerificationService: SignupVerificationService,
 ) {
 
     fun checkEmailField(raw: String): SignupFieldCheckResult {
@@ -60,6 +61,7 @@ class SignupService(
     ): TokenResponse {
         val normalizedEmail = normalizeEmail(email)
             ?: throw CustomException(UserExceptionType.INVALID_EMAIL)
+        signupVerificationService.consumeVerifiedSignupToken(normalizedEmail)
 
         val trimmedPassword = password.trim()
         if (trimmedPassword.isEmpty()) {
@@ -104,6 +106,8 @@ class SignupService(
         saved.updateLastLoginTime()
         return jwtProvider.generateToken(saved.id, saved.role)
     }
+
+    fun loadByEmail(email: String): User? = userRepository.findByEmail(email)
 
     private fun normalizeEmail(raw: String): String? {
         val t = raw.trim().lowercase()
