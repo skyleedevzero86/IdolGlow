@@ -1359,7 +1359,7 @@ where not exists (select 1 from tb_main_image where image_id = 'IMG_002');
 -- 마크다운 에디터 게시판 테이블 editor_documents 와 editor_assets
 -- PostgreSQL용 설계와 같게 두되, 개발용 내장 DB에서는 전문 검색 인덱스 생성 구문은 생략한다
 -- embedding 은 TEXT 로 저장한다
--- introduction 은 공지 첨부 메타 등 긴 문자열 → CLOB (V2 마이그레이션 내용을 CREATE 에 통합)
+-- introduction 은 공지 첨부 메타 등 긴 문자열 → CLOB 
 
 create table if not exists editor_documents (
     id uuid primary key,
