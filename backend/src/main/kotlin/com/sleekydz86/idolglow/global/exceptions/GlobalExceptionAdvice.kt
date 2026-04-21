@@ -5,6 +5,7 @@ import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -214,6 +215,34 @@ class GlobalExceptionAdvice {
                     errorCode = "NOT_FOUND",
                     message = "요청한 API 경로를 찾지 못했습니다. 백엔드를 재시작했는지 확인해 주세요."
                 )
+            )
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(
+        request: HttpServletRequest,
+        exception: DataIntegrityViolationException,
+    ): ResponseEntity<ExceptionResponse> {
+        val detail = exception.mostSpecificCause.message ?: exception.message.orEmpty()
+        val tooLong =
+            detail.contains("too long", ignoreCase = true) ||
+                detail.contains("character varying", ignoreCase = true) ||
+                detail.contains("Data too long", ignoreCase = true)
+        val message =
+            if (tooLong) {
+                "저장할 텍스트가 DB 컬럼 길이를 초과했습니다. 백엔드 재기동으로 Flyway V2(editor_documents.introduction 확장)가 적용됐는지 확인하세요."
+            } else {
+                "데이터 제약 조건으로 저장할 수 없습니다."
+            }
+        log.warn("데이터 무결성 위반: {} {} | {}", request.method, request.requestURI, detail)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "DATA_INTEGRITY_VIOLATION",
+                    errorCode = "BAD_REQUEST",
+                    message = message,
+                ),
             )
     }
 
