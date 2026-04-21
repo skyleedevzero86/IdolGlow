@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.mbrd.ui
 
 import com.sleekydz86.idolglow.mbrd.infrastructure.storage.MbrdMinioEditorImageStorageService
+import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageUploadPayload
+import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.beans.factory.ObjectProvider
@@ -29,12 +31,43 @@ import java.util.UUID
 @RequestMapping("/api/mbrd/editor/images")
 class MbrdEditorImageController(
     private val minioStorageService: ObjectProvider<MbrdMinioEditorImageStorageService>,
+    private val webzineImageUploadUseCase: ObjectProvider<WebzineImageUploadUseCase>,
 ) {
     @Operation(summary = "이미지 업로드")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun uploadImage(@RequestPart("file") file: MultipartFile) =
-        storage().upload(file)
+    fun uploadImage(@RequestPart("file") file: MultipartFile): MbrdEditorImageUploadPayload {
+        val minio = minioStorageService.getIfAvailable()
+        if (minio != null) {
+            try {
+                return minio.upload(file)
+            } catch (ex: IllegalArgumentException) {
+                throw ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    ex.message ?: "이미지 업로드 요청이 올바르지 않습니다.",
+                )
+            } catch (_: Exception) {
+                return uploadViaWebzine(file)
+            }
+        }
+
+        return uploadViaWebzine(file)
+    }
+
+    private fun uploadViaWebzine(file: MultipartFile): MbrdEditorImageUploadPayload {
+        val uploader = webzineImageUploadUseCase.getIfAvailable()
+            ?: throw ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "이미지 업로드 스토리지를 사용할 수 없습니다.",
+            )
+        val uploaded = uploader.upload(file, "site-content/mbrd")
+        return MbrdEditorImageUploadPayload(
+            imageUrl = uploaded.url,
+            originalFileName = file.originalFilename ?: uploaded.objectKey.substringAfterLast('/'),
+            storedFileName = uploaded.objectKey,
+            size = uploaded.size,
+        )
+    }
 
     @Operation(summary = "이미지 조회")
     @GetMapping("/{assetId}")
