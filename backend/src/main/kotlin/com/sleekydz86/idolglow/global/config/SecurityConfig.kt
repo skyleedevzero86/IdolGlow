@@ -37,7 +37,7 @@ class SecurityConfig(
     private val accessDeniedHandler: JsonAccessDeniedHandler,
     @Value("\${app.auth.test-login.enabled:false}")
     private val testLoginEnabled: Boolean,
-    @Value("#{'\${app.security.allowed-origins:http://localhost:5173,http://localhost:3000}'.split(',')}")
+    @Value("#{'\${app.security.allowed-origins:http://localhost:3000}'.split(',')}")
     private val allowedOrigins: List<String>,
 ) {
 
