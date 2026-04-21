@@ -101,7 +101,7 @@ class User(
         if (loginFailCount >= 5) {
             accountStatus = UserAccountStatus.SUSPENDED
             accountLockedAt = LocalDateTime.now()
-            log.warn("Account locked due to login failures. userId={}, loginFailCount={}", id, loginFailCount)
+            log.warn("로그인 실패로 계정이 잠겼습니다. userId={}, loginFailCount={}", id, loginFailCount)
         }
     }
 
@@ -114,7 +114,7 @@ class User(
         accountStatus = UserAccountStatus.APPROVED
         accountLockedAt = null
         loginFailCount = 0
-        log.info("User approved. id={}, approverId={}", id, approverId)
+        log.info("플랫폼 계정이 승인되었습니다. id={}, approverId={}", id, approverId)
     }
 
     fun changeAccountStatus(status: UserAccountStatus) {
