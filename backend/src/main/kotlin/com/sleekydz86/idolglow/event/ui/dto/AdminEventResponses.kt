@@ -23,6 +23,7 @@ data class AdminEventSummaryResponse(
     val tags: List<String>,
     val status: String,
     val updatedAt: Instant,
+    val viewCount: Long,
 ) {
     companion object {
         fun from(payload: MbrdEditorDocumentSummaryPayload): AdminEventSummaryResponse =
@@ -35,6 +36,7 @@ data class AdminEventSummaryResponse(
                 tags = payload.tags,
                 status = payload.status,
                 updatedAt = payload.updatedAt,
+                viewCount = payload.viewCount,
             )
     }
 }
@@ -50,6 +52,7 @@ data class AdminEventDetailResponse(
     val thumbnailImageUrl: String?,
     val status: String,
     val updatedAt: Instant,
+    val viewCount: Long,
 ) {
     companion object {
         fun from(payload: MbrdEditorDraftPayload): AdminEventDetailResponse =
@@ -64,6 +67,7 @@ data class AdminEventDetailResponse(
                 thumbnailImageUrl = payload.thumbnailImageUrl,
                 status = payload.status,
                 updatedAt = payload.updatedAt,
+                viewCount = payload.viewCount,
             )
     }
 }

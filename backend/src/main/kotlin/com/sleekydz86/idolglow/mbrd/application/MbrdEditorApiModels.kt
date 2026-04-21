@@ -23,6 +23,7 @@ data class MbrdEditorDocumentSummaryPayload(
     val tags: List<String>,
     val status: String,
     val updatedAt: Instant,
+    val viewCount: Long,
 )
 
 data class MbrdEditorDraftPayload(
@@ -36,8 +37,13 @@ data class MbrdEditorDraftPayload(
     val thumbnailImageUrl: String?,
     val status: String,
     val updatedAt: Instant,
+    val viewCount: Long,
     val previousDocument: MbrdEditorDocumentSummaryPayload?,
     val nextDocument: MbrdEditorDocumentSummaryPayload?,
+)
+
+data class MbrdEditorDocumentViewCountPayload(
+    val viewCount: Long,
 )
 
 data class MbrdEditorBootstrapPayload(
