@@ -933,7 +933,8 @@ create table if not exists editor_documents (
     publication_status varchar(20) not null default 'PUBLISHED',
     url_slug varchar(180),
     introduction text null,
-    thumbnail_image_url text
+    thumbnail_image_url text,
+    view_count bigint not null default 0
 ) engine=InnoDB default charset=utf8mb4;
 
 create index if not exists editor_documents_updated_at_idx
