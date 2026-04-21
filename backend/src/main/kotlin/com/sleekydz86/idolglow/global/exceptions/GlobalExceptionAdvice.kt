@@ -230,7 +230,7 @@ class GlobalExceptionAdvice {
                 detail.contains("Data too long", ignoreCase = true)
         val message =
             if (tooLong) {
-                "저장할 텍스트가 DB 컬럼 길이를 초과했습니다. 백엔드 재기동으로 Flyway V2(editor_documents.introduction 확장)가 적용됐는지 확인하세요."
+                "저장할 텍스트가 DB 컬럼 길이를 초과했습니다. 백엔드 재기동으로 Flyway editor_documents.introduction 확장 적용됐는지 확인하세요."
             } else {
                 "데이터 제약 조건으로 저장할 수 없습니다."
             }
