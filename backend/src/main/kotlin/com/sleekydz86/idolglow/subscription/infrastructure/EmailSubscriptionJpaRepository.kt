@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface EmailSubscriptionJpaRepository : JpaRepository<EmailSubscription, Long> {
     fun findByEmail(email: String): EmailSubscription?
+    fun findAllByActiveTrueAndSubscribedNewslettersTrueOrderBySubscribedAtDesc(): List<EmailSubscription>
+    fun findAllByActiveTrueAndSubscribedIssuesTrueOrderBySubscribedAtDesc(): List<EmailSubscription>
     fun countByActiveTrue(): Long
     fun countByActiveTrueAndSubscribedNewslettersTrue(): Long
     fun countByActiveTrueAndSubscribedIssuesTrue(): Long

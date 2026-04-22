@@ -30,4 +30,5 @@ interface MbrdEditorDocumentRepository {
     fun count(query: String, status: MbrdDocumentPublicationStatus): Long
     fun deleteById(id: MbrdDocumentId): Boolean
     fun save(document: MbrdEditorDocument): MbrdEditorDocument
+    fun incrementViewCount(id: MbrdDocumentId): Long
 }

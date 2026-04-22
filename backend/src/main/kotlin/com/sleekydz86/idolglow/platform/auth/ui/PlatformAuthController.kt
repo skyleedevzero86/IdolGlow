@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.platform.auth.ui
 
+import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
 import com.sleekydz86.idolglow.platform.auth.http.ApiResponse
 import com.sleekydz86.idolglow.platform.auth.dto.AccountRecoveryRequest
 import com.sleekydz86.idolglow.platform.auth.dto.AccountRecoveryResponse
@@ -13,6 +14,7 @@ import com.sleekydz86.idolglow.platform.auth.service.AuthenticationService
 import com.sleekydz86.idolglow.platform.user.domain.PlatformUser
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController
 class PlatformAuthController(
     private val authenticationService: AuthenticationService,
     private val accountRecoveryService: AccountRecoveryService,
+    private val authVerificationAuditService: AuthVerificationAuditService,
 ) {
 
     @Operation(summary = "로그인", description = "비밀번호 정책 검증 후 액세스·리프레시 JWT 발급")
@@ -49,8 +52,30 @@ class PlatformAuthController(
     @PostMapping("/recovery/initiate")
     fun initiateRecovery(
         @Valid @RequestBody request: AccountRecoveryRequest,
+        httpRequest: HttpServletRequest,
     ): ResponseEntity<ApiResponse<AccountRecoveryResponse>> =
-        ResponseEntity.ok(ApiResponse.success(accountRecoveryService.initiate(request)))
+        try {
+            val response = accountRecoveryService.initiate(request)
+            authVerificationAuditService.log(
+                verificationType = AuthVerificationAuditService.TYPE_ACCOUNT_RECOVERY_INITIATE,
+                email = request.email,
+                username = request.username,
+                ipAddress = resolveClientIp(httpRequest),
+                success = true,
+                detail = "recovery initiated",
+            )
+            ResponseEntity.ok(ApiResponse.success(response))
+        } catch (ex: Exception) {
+            authVerificationAuditService.log(
+                verificationType = AuthVerificationAuditService.TYPE_ACCOUNT_RECOVERY_INITIATE,
+                email = request.email,
+                username = request.username,
+                ipAddress = resolveClientIp(httpRequest),
+                success = false,
+                detail = ex.message ?: ex.javaClass.simpleName,
+            )
+            throw ex
+        }
 
     @Operation(summary = "비밀번호 재설정", description = "복구 토큰·JTI 소비 후 비밀번호 변경")
     @PostMapping("/recovery/reset")
@@ -58,4 +83,13 @@ class PlatformAuthController(
         @Valid @RequestBody request: PasswordResetRequest,
     ): ResponseEntity<ApiResponse<AccountRecoveryResponse>> =
         ResponseEntity.ok(ApiResponse.success(accountRecoveryService.resetPassword(request)))
+
+    private fun resolveClientIp(request: HttpServletRequest): String {
+        val forwarded = request.getHeader("X-Forwarded-For")
+            ?.split(",")
+            ?.firstOrNull()
+            ?.trim()
+        if (!forwarded.isNullOrBlank()) return forwarded
+        return request.remoteAddr ?: "unknown"
+    }
 }

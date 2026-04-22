@@ -38,9 +38,9 @@ class JwtToken private constructor(
         fun tokenType(tokenType: String) = apply { this.tokenType = tokenType }
 
         fun build(): JwtToken = JwtToken(
-            accessToken = accessToken ?: error("accessToken required"),
-            refreshToken = refreshToken ?: error("refreshToken required"),
-            expiresAt = expiresAt ?: error("expiresAt required"),
+            accessToken = accessToken ?: error("액세스 토큰이 필요합니다."),
+            refreshToken = refreshToken ?: error("리프레시 토큰이 필요합니다."),
+            expiresAt = expiresAt ?: error("만료 시각이 필요합니다."),
             tokenType = tokenType,
         )
     }

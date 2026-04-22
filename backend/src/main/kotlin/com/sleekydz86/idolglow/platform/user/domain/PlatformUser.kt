@@ -134,10 +134,10 @@ class PlatformUser(
 
             fun build(): PlatformUser = PlatformUser(
                 id = id,
-                username = username ?: error("username required"),
-                password = password ?: error("password required"),
-                nickname = nickname ?: error("nickname required"),
-                email = email ?: error("email required"),
+                username = username ?: error("사용자명(로그인 ID)이 필요합니다."),
+                password = password ?: error("비밀번호가 필요합니다."),
+                nickname = nickname ?: error("닉네임이 필요합니다."),
+                email = email ?: error("이메일이 필요합니다."),
                 status = status,
                 role = role,
                 lastLoginAt = lastLoginAt,

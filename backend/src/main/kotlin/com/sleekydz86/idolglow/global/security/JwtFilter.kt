@@ -16,15 +16,9 @@ class JwtFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val existing = SecurityContextHolder.getContext().authentication
-        if (existing != null && existing.isAuthenticated && existing.name != "anonymousUser") {
-            filterChain.doFilter(request, response)
-            return
-        }
-
         val jwt = jwtProvider.resolveToken(request)
 
-        if (!jwt.isNullOrBlank() && jwtProvider.validateToken(jwt)) {
+        if (!jwt.isNullOrBlank() && jwtProvider.validateAccessToken(jwt)) {
             val authentication = jwtProvider.findAuthentication(jwt)
             SecurityContextHolder.getContext().authentication = authentication
         }

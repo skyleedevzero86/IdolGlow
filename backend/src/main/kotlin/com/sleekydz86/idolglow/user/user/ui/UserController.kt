@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.user.user.ui
 
+import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
 import com.sleekydz86.idolglow.global.resolver.LoginUser
 import com.sleekydz86.idolglow.user.user.application.UserProfileImageService
 import com.sleekydz86.idolglow.user.user.application.UserService
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile
 class UserController(
     private val userService: UserService,
     private val userProfileImageService: UserProfileImageService,
+    private val authVerificationAuditService: AuthVerificationAuditService,
 ) : UserApi {
 
     @PatchMapping
@@ -46,7 +48,18 @@ class UserController(
         @LoginUser userId: Long,
         @Valid @RequestBody request: ChangePasswordRequest,
     ): ResponseEntity<Unit> {
-        userService.changePassword(userId, request.currentPassword, request.newPassword)
+        val changedFromTemporary = userService.changePassword(userId, request.currentPassword, request.newPassword)
+        if (changedFromTemporary) {
+            val user = userService.getUser(userId)
+            authVerificationAuditService.log(
+                verificationType = AuthVerificationAuditService.TYPE_PASSWORD_CHANGED,
+                email = user.email,
+                username = user.nickname,
+                ipAddress = "unknown",
+                success = true,
+                detail = "password changed after temporary login",
+            )
+        }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 }

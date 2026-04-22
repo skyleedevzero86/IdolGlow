@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.mbrd.ui
 
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorBootstrapService
+import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDocumentViewCountPayload
 import com.sleekydz86.idolglow.mbrd.ui.dto.MbrdSaveDraftRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -59,4 +60,9 @@ class MbrdEditorRestController(
     fun deleteDocument(@PathVariable documentId: String) {
         editorBootstrapService.deleteDocument(documentId)
     }
+
+    @Operation(summary = "게시 문서 조회수 1 증가 (공개 상세 등에서 호출)")
+    @PostMapping("/documents/{documentId}/view")
+    fun recordDocumentView(@PathVariable documentId: String): MbrdEditorDocumentViewCountPayload =
+        editorBootstrapService.recordDocumentView(documentId)
 }

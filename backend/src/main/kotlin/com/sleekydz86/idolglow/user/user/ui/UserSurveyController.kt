@@ -21,10 +21,11 @@ class UserSurveyController(
 ) : UserSurveyApi {
 
     @GetMapping
-    override fun findUserSurvey(@LoginUser userId: Long): ResponseEntity<UserSurveyResponse> =
-        ResponseEntity.ok(
-            userSurveyQueryService.findUserSurvey(userId)
-        )
+    override fun findUserSurvey(@LoginUser userId: Long): ResponseEntity<UserSurveyResponse> {
+        val body = userSurveyQueryService.findUserSurveyIfPresent(userId)
+            ?: return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(body)
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

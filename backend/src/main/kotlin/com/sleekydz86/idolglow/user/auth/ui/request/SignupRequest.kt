@@ -16,4 +16,6 @@ data class SignupRequest(
     @field:NotBlank
     @field:Size(min = 8, max = 72)
     val password: String,
+    @field:Schema(description = "회원가입과 함께 뉴스레터/호별보기 구독 여부", example = "true")
+    val subscribeToUpdates: Boolean = false,
 )

@@ -27,10 +27,10 @@ class Product(
     val id: Long = 0L,
 
     @Column(nullable = false, length = 120)
-    val name: String,
+    var name: String,
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    val description: String,
+    var description: String,
 
     @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val productOptions: MutableList<ProductOption> = mutableListOf(),
@@ -72,6 +72,11 @@ class Product(
             }
     }
 
+    fun replaceOptions(options: Collection<Option>) {
+        productOptions.clear()
+        addOptions(options)
+    }
+
     fun addTags(tagNames: Collection<String>) {
         tagNames.map { it.trim() }
             .filter { it.isNotEmpty() }
@@ -79,6 +84,21 @@ class Product(
             .forEach { name ->
                 productTags.add(ProductTag(product = this, tagName = name))
             }
+    }
+
+    fun replaceTags(tagNames: Collection<String>) {
+        productTags.clear()
+        addTags(tagNames)
+    }
+
+    fun updateBasics(
+        name: String,
+        description: String,
+    ) {
+        require(name.isNotBlank()) { "상품명은 비어 있을 수 없습니다." }
+        require(description.isNotBlank()) { "상품 설명은 비어 있을 수 없습니다." }
+        this.name = name.trim()
+        this.description = description.trim()
     }
 
     fun addReservationSlots(

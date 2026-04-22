@@ -154,6 +154,28 @@ class MbrdJdbcEditorDocumentRepository(
         return document
     }
 
+    override fun incrementViewCount(id: MbrdDocumentId): Long {
+        val n = jdbcTemplate.update(
+            """
+            UPDATE editor_documents
+            SET view_count = view_count + 1
+            WHERE id = :id AND publication_status = :published
+            """.trimIndent(),
+            mapOf(
+                "id" to id.value,
+                "published" to MbrdDocumentPublicationStatus.PUBLISHED.name,
+            ),
+        )
+        if (n == 0) {
+            return 0L
+        }
+        return jdbcTemplate.queryForObject(
+            "SELECT view_count FROM editor_documents WHERE id = :id",
+            mapOf("id" to id.value),
+            Long::class.java,
+        ) ?: 0L
+    }
+
     private fun updateSql(): String {
         val tagsExpr = tagsJsonUpdateExpression()
         return """
@@ -167,7 +189,8 @@ class MbrdJdbcEditorDocumentRepository(
                 thumbnail_image_url = :thumbnailImageUrl,
                 publication_status = :publicationStatus,
                 updated_at = :updatedAt,
-                embedding = :embedding
+                embedding = :embedding,
+                view_count = :viewCount
             WHERE id = :id
         """.trimIndent()
     }
@@ -177,10 +200,10 @@ class MbrdJdbcEditorDocumentRepository(
         return """
             INSERT INTO editor_documents (
                 id, title, author, markdown, tags_json, url_slug, introduction, thumbnail_image_url,
-                publication_status, updated_at, embedding
+                publication_status, updated_at, embedding, view_count
             ) VALUES (
                 :id, :title, :author, :markdown, $tagsExpr, :urlSlug, :introduction, :thumbnailImageUrl,
-                :publicationStatus, :updatedAt, :embedding
+                :publicationStatus, :updatedAt, :embedding, :viewCount
             )
         """.trimIndent()
     }
@@ -212,6 +235,7 @@ class MbrdJdbcEditorDocumentRepository(
             .addValue("publicationStatus", document.publicationStatus.name)
             .addValue("updatedAt", Timestamp.from(document.updatedAt))
             .addValue("embedding", embedding)
+            .addValue("viewCount", document.viewCount)
     }
 
     private fun selectPageSql(searching: Boolean, usePgSearch: Boolean): String {
@@ -249,7 +273,7 @@ class MbrdJdbcEditorDocumentRepository(
 
     private fun baseSelect(): String =
         """
-        SELECT id, title, author, markdown, tags_json, url_slug, introduction, thumbnail_image_url, publication_status, updated_at
+        SELECT id, title, author, markdown, tags_json, url_slug, introduction, thumbnail_image_url, publication_status, updated_at, view_count
         FROM editor_documents
         """.trimIndent()
 
@@ -267,6 +291,8 @@ class MbrdJdbcEditorDocumentRepository(
             is String -> UUID.fromString(idObj)
             else -> UUID.fromString(idObj.toString())
         }
+        val viewCountRaw = rs.getLong("view_count")
+        val viewCount = if (rs.wasNull()) 0L else viewCountRaw
         return MbrdEditorDocument(
             id = MbrdDocumentId(uuid),
             title = rs.getString("title"),
@@ -278,6 +304,7 @@ class MbrdJdbcEditorDocumentRepository(
             thumbnailImageUrl = rs.getString("thumbnail_image_url"),
             publicationStatus = publicationStatus,
             updatedAt = updatedAt,
+            viewCount = viewCount,
         )
     }
 

@@ -44,7 +44,7 @@ class PlatformJwtAuthenticationFilter(
                             SecurityContextHolder.getContext().authentication = authentication
                             log.debug("인증 설정 완료: {}", authentication.name)
                         } else {
-                            log.warn("Failed to build authentication from token")
+                            log.warn("토큰으로 인증 객체를 만들지 못했습니다.")
                         }
                     }
                 } else {

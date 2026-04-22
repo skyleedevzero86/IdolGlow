@@ -1,7 +1,6 @@
 package com.sleekydz86.idolglow.webzine.application
 
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
-import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueArticleResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssuePageResponse
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueRelatedContentResponse
@@ -30,7 +29,6 @@ class WebzineAdminService(
     private val webzineIssueRepository: WebzineIssueRepository,
     private val webzineArticleRepository: WebzineArticleRepository,
     private val adminAuditService: AdminAuditService,
-    private val subscriptionDispatchRecorder: SubscriptionDispatchRecorder,
 ) : WebzineAdminUseCase {
 
     override fun findIssues(
@@ -82,7 +80,7 @@ class WebzineAdminService(
     override fun createIssue(command: CreateWebzineIssueCommand): AdminIssueVolumeResponse {
         val issueSlug = "vol-${command.volume}"
         require(!webzineIssueRepository.existsByVolumeOrSlug(command.volume, issueSlug)) {
-            "Issue volume ${command.volume} is already registered."
+            "호 번호 ${command.volume}은(는) 이미 등록되어 있습니다."
         }
 
         val savedIssue = webzineIssueRepository.save(
@@ -101,7 +99,6 @@ class WebzineAdminService(
             targetId = savedIssue.id,
             detail = "slug=${savedIssue.slug}",
         )
-        subscriptionDispatchRecorder.recordWebzineIssueDispatch(savedIssue)
 
         return AdminIssueVolumeResponse.from(savedIssue)
     }
@@ -112,10 +109,10 @@ class WebzineAdminService(
         val nextSlug = "vol-${command.volume}"
 
         require(!webzineIssueRepository.existsByVolumeAndIdNot(command.volume, issue.id)) {
-            "Issue volume ${command.volume} is already used by another issue."
+            "호 번호 ${command.volume}은(는) 다른 호에서 이미 사용 중입니다."
         }
         require(!webzineIssueRepository.existsBySlugAndIdNot(nextSlug, issue.id)) {
-            "Issue slug $nextSlug is already used by another issue."
+            "슬러그 $nextSlug 은(는) 다른 호에서 이미 사용 중입니다."
         }
 
         issue.slug = nextSlug
@@ -219,7 +216,7 @@ class WebzineAdminService(
     private fun getArticleEntity(issue: WebzineIssue, articleSlug: String): WebzineArticle =
         webzineArticleRepository.findByIssueIdAndSlug(issue.id, articleSlug)
             ?: throw EntityNotFoundException(
-                "Webzine article not found. issueSlug=${issue.slug}, articleSlug=$articleSlug"
+                "웹진 기사를 찾을 수 없습니다. issueSlug=${issue.slug}, articleSlug=$articleSlug"
             )
 
     private fun buildRelatedContents(
@@ -294,7 +291,7 @@ class WebzineAdminService(
                 listOf(
                     WebzineArticleSectionDraft(
                         heading = null,
-                        body = "Please enter article content.",
+                        body = "기사 본문을 입력해 주세요.",
                         note = null,
                     )
                 )
