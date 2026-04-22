@@ -206,6 +206,7 @@ CREATE TABLE reservations (
     visit_end_time TIME NOT NULL,
     total_price NUMERIC(15, 2) NOT NULL,
     status VARCHAR(20) NOT NULL,
+    admin_memo TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT fk_reservations_reservation_slot FOREIGN KEY (reservation_slot_id) REFERENCES reservation_slots (id),
@@ -224,6 +225,7 @@ COMMENT ON COLUMN reservations.visit_start_time IS '방문 시작 시각';
 COMMENT ON COLUMN reservations.visit_end_time IS '방문 종료 시각';
 COMMENT ON COLUMN reservations.total_price IS '예약 총액';
 COMMENT ON COLUMN reservations.status IS '예약 상태(PREBOOK/PENDING/BOOKED/COMPLETED/CANCELED)';
+COMMENT ON COLUMN reservations.admin_memo IS '관리자 메모';
 COMMENT ON COLUMN reservations.created_at IS '생성 시각';
 COMMENT ON COLUMN reservations.updated_at IS '수정 시각';
 
@@ -1861,3 +1863,13 @@ alter table users
     add column if not exists temporary_password_required boolean not null default false;
 
 COMMENT ON COLUMN users.temporary_password_required IS '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 true';
+
+
+ALTER TABLE reservation_slots
+    ADD COLUMN IF NOT EXISTS admin_note TEXT;
+
+ALTER TABLE reservations
+    ADD COLUMN IF NOT EXISTS admin_memo TEXT;
+
+COMMENT ON COLUMN reservation_slots.admin_note IS '운영자 메모';
+COMMENT ON COLUMN reservations.admin_memo IS '관리자 메모';
