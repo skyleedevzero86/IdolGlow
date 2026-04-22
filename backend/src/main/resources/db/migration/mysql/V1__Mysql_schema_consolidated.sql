@@ -140,6 +140,7 @@ CREATE TABLE reservations (
     visit_end_time TIME NOT NULL COMMENT '방문 종료 시각',
     total_price DECIMAL(15, 2) NOT NULL COMMENT '예약 총액',
     status VARCHAR(20) NOT NULL COMMENT 'PREBOOK/PENDING/BOOKED/COMPLETED/CANCELED',
+    admin_memo TEXT NULL COMMENT '관리자 메모',
     created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
     updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
     CONSTRAINT fk_reservations_reservation_slot FOREIGN KEY (reservation_slot_id) REFERENCES reservation_slots (id),
@@ -1076,3 +1077,8 @@ ALTER TABLE users
     ADD COLUMN temporary_password_required BOOLEAN NOT NULL DEFAULT FALSE
         COMMENT '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 1';
 
+ALTER TABLE reservation_slots
+    ADD COLUMN IF NOT EXISTS admin_note TEXT NULL COMMENT '운영자 메모';
+
+ALTER TABLE reservations
+    ADD COLUMN IF NOT EXISTS admin_memo TEXT NULL COMMENT '관리자 메모';
