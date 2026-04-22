@@ -67,6 +67,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-websocket")
 	implementation("org.springframework.boot:spring-boot-starter-cache")
+	implementation("org.apache.poi:poi-ooxml:5.4.1")
+	implementation("com.github.librepdf:openpdf:2.0.3")
 
 	//webclient
 	implementation("org.springframework.boot:spring-boot-starter-webflux")

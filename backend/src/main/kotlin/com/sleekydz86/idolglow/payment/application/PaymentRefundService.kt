@@ -28,6 +28,7 @@ class PaymentRefundService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val tossPaymentProperties: TossPaymentProperties,
     private val objectMapper: ObjectMapper,
+    private val paymentNotificationMailService: PaymentNotificationMailService,
 ) {
 
     fun refundBeforeReservationCancel(
@@ -66,6 +67,7 @@ class PaymentRefundService(
                     httpStatus = 200,
                     responseBody = refund.rawResponseJson,
                 )
+                paymentNotificationMailService.sendCanceled(payment)
             }
 
             PaymentProvider.TOSS -> {
@@ -113,6 +115,7 @@ class PaymentRefundService(
                 refund.rawResponseJson = response.rawBody
                 refund.externalTransactionKey = response.json.path("transactionKey").asText(null)
                 payment.markFullRefund()
+                paymentNotificationMailService.sendCanceled(payment)
             }
         }
     }
@@ -174,6 +177,7 @@ class PaymentRefundService(
         retry.status = PaymentRefundStatus.SUCCEEDED
         retry.rawResponseJson = response.rawBody
         payment.markFullRefund()
+        paymentNotificationMailService.sendCanceled(payment)
         return retry
     }
 }

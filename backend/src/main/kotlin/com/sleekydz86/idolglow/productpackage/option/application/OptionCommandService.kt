@@ -43,4 +43,19 @@ class OptionCommandService(
 
         return OptionResponse.from(saved)
     }
+
+    fun updateOption(
+        optionId: Long,
+        command: CreateOptionCommand,
+    ): OptionResponse {
+        val option = optionRepository.findById(optionId)
+            ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
+        option.update(
+            name = command.name,
+            description = command.description,
+            price = command.price,
+            location = command.location,
+        )
+        return OptionResponse.from(optionRepository.save(option))
+    }
 }

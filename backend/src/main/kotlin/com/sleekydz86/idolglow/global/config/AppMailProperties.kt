@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "app.mail")
 data class AppMailProperties(
-    var enabled: Boolean = false,
+    var enabled: Boolean = true,
     var fromAddress: String = "no-reply@idolglow.app",
     var fromName: String = "IdolGlow",
     var replyTo: String = "",

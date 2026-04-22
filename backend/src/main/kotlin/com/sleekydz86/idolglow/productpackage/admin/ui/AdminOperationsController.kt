@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminAuditLo
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.CancelReasonStatRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.CancellationComparisonResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.OperationsAnalyticsSummaryResponse
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.OperationsMenuStatsResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.PaymentFailureHourRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.ProductConversionRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.SlotHourOccupancyRow
@@ -49,6 +50,11 @@ class AdminOperationsController(
         require(!visitDateTo.isBefore(visitDateFrom)) { "visitDateTo는 visitDateFrom 이상이어야 합니다." }
         return ResponseEntity.ok(adminOperationsAnalyticsService.summary(visitDateFrom, visitDateTo))
     }
+
+    @Operation(summary = "메뉴 통계 요약", description = "관리 메뉴 카드용 누적 통계")
+    @GetMapping("/analytics/menu-stats")
+    fun menuStats(): ResponseEntity<OperationsMenuStatsResponse> =
+        ResponseEntity.ok(adminOperationsAnalyticsService.menuStats())
 
     @Operation(summary = "취소율 기간 비교", description = "선택한 방문일 구간과 이전 동일 길이 구간의 취소율 비교")
     @GetMapping("/analytics/cancellation-comparison")
@@ -123,6 +129,20 @@ class AdminOperationsController(
             .body(ByteArrayResource(bytes))
     }
 
+    @Operation(summary = "예약 XLSX", description = "방문일 구간 예약 엑셀 내보내기 최대 5000행")
+    @GetMapping("/export/reservations.xlsx")
+    fun exportReservationsXlsx(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) visitDateFrom: LocalDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) visitDateTo: LocalDate,
+    ): ResponseEntity<Resource> {
+        require(!visitDateTo.isBefore(visitDateFrom)) { "visitDateTo는 visitDateFrom 이상이어야 합니다." }
+        val bytes = adminExportService.exportReservationsXlsx(visitDateFrom, visitDateTo)
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reservations-$visitDateFrom-$visitDateTo.xlsx")
+            .body(ByteArrayResource(bytes))
+    }
+
     @Operation(summary = "결제 CSV", description = "방문일 구간 결제 내보내기 최대 5000행")
     @GetMapping("/export/payments.csv", produces = ["text/csv"])
     fun exportPaymentsCsv(
@@ -134,6 +154,57 @@ class AdminOperationsController(
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payments-$visitDateFrom-$visitDateTo.csv")
+            .body(ByteArrayResource(bytes))
+    }
+
+    @Operation(summary = "결제 XLSX", description = "방문일 구간 결제 엑셀 내보내기 최대 5000행")
+    @GetMapping("/export/payments.xlsx")
+    fun exportPaymentsXlsx(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) visitDateFrom: LocalDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) visitDateTo: LocalDate,
+    ): ResponseEntity<Resource> {
+        require(!visitDateTo.isBefore(visitDateFrom)) { "visitDateTo는 visitDateFrom 이상이어야 합니다." }
+        val bytes = adminExportService.exportPaymentsXlsx(visitDateFrom, visitDateTo)
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payments-$visitDateFrom-$visitDateTo.xlsx")
+            .body(ByteArrayResource(bytes))
+    }
+
+    @Operation(summary = "상품 XLSX", description = "상품 목록 엑셀 내보내기")
+    @GetMapping("/export/products.xlsx")
+    fun exportProductsXlsx(): ResponseEntity<Resource> {
+        val bytes = adminExportService.exportProductsXlsx()
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=products.xlsx")
+            .body(ByteArrayResource(bytes))
+    }
+
+    @Operation(summary = "옵션 XLSX", description = "옵션 목록 엑셀 내보내기")
+    @GetMapping("/export/options.xlsx")
+    fun exportOptionsXlsx(): ResponseEntity<Resource> {
+        val bytes = adminExportService.exportOptionsXlsx()
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=options.xlsx")
+            .body(ByteArrayResource(bytes))
+    }
+
+    @Operation(summary = "룸/일정 XLSX", description = "상품별 룸/일정 목록 엑셀 내보내기")
+    @GetMapping("/export/slots.xlsx")
+    fun exportSlotsXlsx(
+        @RequestParam productId: Long,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dateFrom: LocalDate?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dateTo: LocalDate?,
+    ): ResponseEntity<Resource> {
+        if (dateFrom != null && dateTo != null) {
+            require(!dateTo.isBefore(dateFrom)) { "dateTo는 dateFrom 이상이어야 합니다." }
+        }
+        val bytes = adminExportService.exportSlotsXlsx(productId, dateFrom, dateTo)
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=slots-$productId.xlsx")
             .body(ByteArrayResource(bytes))
     }
 }

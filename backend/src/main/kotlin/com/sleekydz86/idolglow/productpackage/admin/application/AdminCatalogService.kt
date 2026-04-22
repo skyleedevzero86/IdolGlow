@@ -5,9 +5,14 @@ import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.ProductOptionAdminRepository
 import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
+import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
 import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
+import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
+import com.sleekydz86.idolglow.productpackage.option.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
+import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotRepository
@@ -24,6 +29,7 @@ import kotlin.collections.map
 class AdminCatalogService(
     private val productCommandRepository: ProductCommandRepository,
     private val productCommandService: ProductCommandService,
+    private val optionCommandService: OptionCommandService,
     private val optionRepository: OptionRepository,
     private val productOptionAdminRepository: ProductOptionAdminRepository,
     private val reservationRepository: ReservationRepository,
@@ -48,6 +54,7 @@ class AdminCatalogService(
             .toMutableSet()
 
         var currentDate = request.startDate
+        val adminNote = request.adminNote?.trim()?.takeIf { it.isNotEmpty() }
         while (!currentDate.isAfter(request.endDate)) {
             if (request.excludeWeekends &&
                 (currentDate.dayOfWeek == DayOfWeek.SATURDAY || currentDate.dayOfWeek == DayOfWeek.SUNDAY)
@@ -64,7 +71,8 @@ class AdminCatalogService(
                             product = product,
                             reservationDate = currentDate,
                             startTime = startTime,
-                            endTime = startTime.plusHours(1)
+                            endTime = startTime.plusHours(1),
+                            adminNote = adminNote,
                         )
                     )
                     existingKeys += key
@@ -75,6 +83,48 @@ class AdminCatalogService(
 
         productCommandRepository.save(product)
         return findSlots(productId)
+    }
+
+    fun updateProduct(
+        productId: Long,
+        request: CreateProductRequest,
+    ) {
+        productCommandService.updateProduct(productId, request.toCommand())
+        adminAuditService.log(
+            actionCode = "PRODUCT_UPDATE",
+            targetType = "PRODUCT",
+            targetId = productId,
+            detail = null,
+        )
+    }
+
+    fun updateOption(
+        optionId: Long,
+        request: CreateOptionRequest,
+    ) {
+        optionCommandService.updateOption(optionId, request.toCommand())
+        adminAuditService.log(
+            actionCode = "OPTION_UPDATE",
+            targetType = "OPTION",
+            targetId = optionId,
+            detail = null,
+        )
+    }
+
+    fun updateSlotNote(
+        slotId: Long,
+        markdown: String?,
+    ): AdminReservationSlotResponse {
+        val slot = reservationSlotRepository.findByIdForUpdate(slotId)
+            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
+        slot.updateAdminNote(markdown)
+        adminAuditService.log(
+            actionCode = "SLOT_NOTE_UPDATE",
+            targetType = "RESERVATION_SLOT",
+            targetId = slotId,
+            detail = null,
+        )
+        return AdminReservationSlotResponse.from(slot)
     }
 
     fun deleteSlot(slotId: Long) {

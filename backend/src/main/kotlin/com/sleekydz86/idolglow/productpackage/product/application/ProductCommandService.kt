@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.productpackage.option.domain.Option
 import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
 import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
 import com.sleekydz86.idolglow.productpackage.product.application.event.ProductCreateEvent
+import com.sleekydz86.idolglow.productpackage.product.application.event.ProductLocationCommandService
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.wish.application.WishEventPublisher
@@ -21,6 +22,7 @@ class ProductCommandService(
     private val productCommandRepository: ProductCommandRepository,
     private val optionRepository: OptionRepository,
     private val eventPublisher: ApplicationEventPublisher,
+    private val productLocationCommandService: ProductLocationCommandService,
     private val wishEventPublisher: WishEventPublisher,
     private val imageEventPublisher: ImageEventPublisher,
 ) {
@@ -50,6 +52,25 @@ class ProductCommandService(
         )
 
         return saved
+    }
+
+    fun updateProduct(
+        productId: Long,
+        command: CreateProductCommand,
+    ): Product {
+        val product = productCommandRepository.findById(productId)
+            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
+        val options = findOptions(command.optionIds)
+        product.updateBasics(
+            name = command.name,
+            description = command.description,
+        )
+        product.replaceOptions(options)
+        product.replaceTags(command.tagNames)
+        command.location?.let { payload ->
+            productLocationCommandService.upsertProductLocation(productId, payload)
+        }
+        return productCommandRepository.save(product)
     }
 
     fun deleteProduct(productId: Long) {

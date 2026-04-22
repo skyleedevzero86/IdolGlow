@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.graphql.toGraphQlLocalDate
 import com.sleekydz86.idolglow.graphql.ProductCreatedGraphQlResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminCatalogService
+import com.sleekydz86.idolglow.productpackage.admin.application.AdminOperationsAnalyticsService
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminReservationService
 import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
 import com.sleekydz86.idolglow.productpackage.option.graphql.OptionGraphQlResponse
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Controller
 class AdminGraphQlController(
     private val adminCatalogService: AdminCatalogService,
     private val adminReservationService: AdminReservationService,
+    private val adminOperationsAnalyticsService: AdminOperationsAnalyticsService,
     private val productCommandService: ProductCommandService,
     private val optionCommandService: OptionCommandService,
 ) {
@@ -67,6 +69,10 @@ class AdminGraphQlController(
     fun adminProductSlots(@Argument productId: String): List<AdminReservationSlotGraphQlResponse> =
         adminCatalogService.findSlots(productId.toGraphQlIdLong("productId"))
             .map(AdminReservationSlotGraphQlResponse::from)
+
+    @QueryMapping
+    fun adminMenuStats(): OperationsMenuStatsGraphQlResponse =
+        OperationsMenuStatsGraphQlResponse.from(adminOperationsAnalyticsService.menuStats())
 
     @MutationMapping
     fun createOption(@Argument @Valid input: CreateOptionRequest): OptionGraphQlResponse =

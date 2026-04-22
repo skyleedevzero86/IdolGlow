@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReserva
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.ReservationDashboardResponse
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.AdminReservationQueryRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,6 +16,7 @@ import java.time.LocalDate
 class AdminReservationService(
     private val adminReservationQueryRepository: AdminReservationQueryRepository,
     private val reservationCommandService: ReservationCommandService,
+    private val reservationRepository: ReservationRepository,
     private val adminAuditService: AdminAuditService,
 ) {
 
@@ -66,6 +68,24 @@ class AdminReservationService(
         val payments = adminReservationQueryRepository.findPaymentsByReservationIds(listOf(reservation.id))
         adminAuditService.log(
             actionCode = "RESERVATION_CANCEL",
+            targetType = "RESERVATION",
+            targetId = reservationId,
+            detail = null,
+        )
+        return AdminReservationSummaryResponse.from(reservation, payments[reservation.id])
+    }
+
+    @Transactional
+    fun updateAdminMemo(
+        reservationId: Long,
+        markdown: String?,
+    ): AdminReservationSummaryResponse {
+        val reservation = reservationRepository.findByIdForUpdate(reservationId)
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다. reservationId=$reservationId")
+        reservation.updateAdminMemo(markdown)
+        val payments = adminReservationQueryRepository.findPaymentsByReservationIds(listOf(reservation.id))
+        adminAuditService.log(
+            actionCode = "RESERVATION_MEMO_UPDATE",
             targetType = "RESERVATION",
             targetId = reservationId,
             detail = null,
