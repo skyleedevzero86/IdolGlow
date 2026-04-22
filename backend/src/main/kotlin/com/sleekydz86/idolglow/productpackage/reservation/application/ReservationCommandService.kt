@@ -6,8 +6,8 @@ import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
 import com.sleekydz86.idolglow.payment.domain.Payment
-import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
@@ -77,20 +77,25 @@ class ReservationCommandService(
         return ReservationCreatedResponse.from(savedReservation, payment)
     }
 
-    fun cancelReservationByUser(reservationId: Long, userId: Long): Reservation {
+    fun cancelReservationByUser(
+        reservationId: Long,
+        userId: Long,
+        cancelReasonText: String? = null,
+    ): Reservation {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         reservation.validateOwner(userId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "사용자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
             paymentRefundService.refundBeforeReservationCancel(
                 payment = payment,
                 reservation = reservation,
-                cancelReason = "사용자가 예약을 취소했습니다.",
+                cancelReason = cancelReason,
                 requestedBy = RefundRequestedBy.USER,
             )
         }
         if (payment?.status == PaymentStatus.PENDING) {
-            payment.markCanceled("사용자가 예약을 취소했습니다.")
+            payment.markCanceled(cancelReason)
         }
         cancelReservationInternal(
             reservation = reservation,
@@ -102,19 +107,23 @@ class ReservationCommandService(
         return reservation
     }
 
-    fun cancelReservationByAdmin(reservationId: Long): Reservation {
+    fun cancelReservationByAdmin(
+        reservationId: Long,
+        cancelReasonText: String? = null,
+    ): Reservation {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "운영자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
             paymentRefundService.refundBeforeReservationCancel(
                 payment = payment,
                 reservation = reservation,
-                cancelReason = "운영자가 예약을 취소했습니다.",
+                cancelReason = cancelReason,
                 requestedBy = RefundRequestedBy.ADMIN,
             )
         }
         if (payment?.status == PaymentStatus.PENDING) {
-            payment.markCanceled("운영자가 예약을 취소했습니다.")
+            payment.markCanceled(cancelReason)
         }
         cancelReservationInternal(
             reservation = reservation,
@@ -168,7 +177,12 @@ class ReservationCommandService(
             val reservation = reservationRepository.findByIdForUpdate(reservationId) ?: return@forEach
             if (reservation.status != ReservationStatus.PENDING) return@forEach
             val link = "/reservations/${reservation.id}"
-            if (notificationRepository.existsByUserIdAndTypeAndLink(reservation.userId, NotificationType.RESERVATION_EXPIRING_SOON, link)) return@forEach
+            if (notificationRepository.existsByUserIdAndTypeAndLink(
+                    reservation.userId,
+                    NotificationType.RESERVATION_EXPIRING_SOON,
+                    link
+                )
+            ) return@forEach
             notificationCommandService.create(
                 userId = reservation.userId,
                 type = NotificationType.RESERVATION_EXPIRING_SOON,

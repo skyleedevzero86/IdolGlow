@@ -59,6 +59,9 @@ class Reservation(
     @Enumerated(EnumType.STRING)
     @Column(name = "cancel_reason", length = 40)
     var cancelReason: ReservationCancelReason? = null,
+
+    @Column(name = "admin_memo", columnDefinition = "TEXT")
+    var adminMemo: String? = null,
 ) : BaseEntity() {
 
     init {
@@ -136,6 +139,10 @@ class Reservation(
         } else {
             status
         }
+    }
+
+    fun updateAdminMemo(memo: String?) {
+        adminMemo = memo?.trim()?.takeIf { it.isNotEmpty() }
     }
 
     private fun changeStatus(targetStatus: ReservationStatus, beforeChange: (() -> Unit)? = null) {

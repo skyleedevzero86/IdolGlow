@@ -22,6 +22,7 @@ class ReservationPaymentService(
     private val reservationCommandService: ReservationCommandService,
     private val notificationCommandService: NotificationCommandService,
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
+    private val paymentNotificationMailService: PaymentNotificationMailService,
 ) {
 
     fun handlePaymentSucceeded(paymentReference: String): Payment {
@@ -61,6 +62,8 @@ class ReservationPaymentService(
             reservationCommandService.confirmReservation(reservation.id)
         }
 
+        paymentNotificationMailService.sendSucceeded(payment)
+
         return payment
     }
 
@@ -94,6 +97,8 @@ class ReservationPaymentService(
             reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
         }
 
+        paymentNotificationMailService.sendFailed(payment)
+
         return payment
     }
 
@@ -126,6 +131,8 @@ class ReservationPaymentService(
             )
             reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
         }
+
+        paymentNotificationMailService.sendCanceled(payment)
 
         return payment
     }

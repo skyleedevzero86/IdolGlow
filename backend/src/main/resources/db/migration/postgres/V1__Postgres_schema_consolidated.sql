@@ -1,4 +1,4 @@
-﻿-- PostgreSQL 전체 스키마
+-- PostgreSQL 전체 스키마
 -- 새 데이터베이스를 처음 만들 때만 사용한다. 이미 같은 스키마가 반영된 환경에는 실행하지 않는다.
 
 -- 초기 스키마
@@ -172,6 +172,7 @@ CREATE TABLE reservation_slots (
     reservation_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    admin_note TEXT,
     is_booked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
@@ -188,6 +189,7 @@ COMMENT ON COLUMN reservation_slots.product_id IS 'products.id FK';
 COMMENT ON COLUMN reservation_slots.reservation_date IS '슬롯 날짜';
 COMMENT ON COLUMN reservation_slots.start_time IS '시작 시각';
 COMMENT ON COLUMN reservation_slots.end_time IS '종료 시각(시작보다 커야 함)';
+COMMENT ON COLUMN reservation_slots.admin_note IS '운영자 메모';
 COMMENT ON COLUMN reservation_slots.is_booked IS '예약 확정 등으로 점유 여부';
 COMMENT ON COLUMN reservation_slots.created_at IS '생성 시각';
 COMMENT ON COLUMN reservation_slots.updated_at IS '수정 시각';

@@ -1,4 +1,4 @@
-﻿-- MySQL 전체 스키마
+-- MySQL 전체 스키마
 -- 새 데이터베이스를 처음 만들 때만 사용한다. 이미 같은 스키마가 반영된 환경에는 실행하지 않는다.
 
 -- 초기 스키마
@@ -117,6 +117,7 @@ CREATE TABLE reservation_slots (
     reservation_date DATE NOT NULL COMMENT '슬롯 날짜',
     start_time TIME NOT NULL COMMENT '시작 시각',
     end_time TIME NOT NULL COMMENT '종료 시각(시작보다 커야 함)',
+    admin_note TEXT NULL COMMENT '운영자 메모',
     is_booked BOOLEAN NOT NULL DEFAULT FALSE COMMENT '예약 확정 등으로 점유 여부',
     created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
     updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',

@@ -11,6 +11,7 @@ data class AdminReservationSlotResponse(
     val id: Long,
     @field:Schema(description = "상품 ID", example = "1")
     val productId: Long,
+    val productName: String,
     @field:Schema(description = "예약일", example = "2026-03-21")
     val reservationDate: LocalDate,
     @field:Schema(description = "시작 시각", example = "09:00:00")
@@ -23,18 +24,21 @@ data class AdminReservationSlotResponse(
     val holdReservationId: Long?,
     @field:Schema(description = "홀드 만료 시각", example = "2026-03-21T12:15:00")
     val holdExpiresAt: LocalDateTime?,
+    val adminNote: String?,
 ) {
     companion object {
         fun from(slot: ReservationSlot): AdminReservationSlotResponse =
             AdminReservationSlotResponse(
                 id = slot.id,
                 productId = slot.product.id,
+                productName = slot.product.name,
                 reservationDate = slot.reservationDate,
                 startTime = slot.startTime,
                 endTime = slot.endTime,
                 booked = slot.isStatusBooked,
                 holdReservationId = slot.holdReservationId,
-                holdExpiresAt = slot.holdExpiresAt
+                holdExpiresAt = slot.holdExpiresAt,
+                adminNote = slot.adminNote,
             )
     }
 }

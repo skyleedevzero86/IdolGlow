@@ -43,7 +43,10 @@ class ReservationSlot(
     val startTime: LocalTime,
 
     @Column(name = "end_time", nullable = false)
-    val endTime: LocalTime
+    val endTime: LocalTime,
+
+    @Column(name = "admin_note", columnDefinition = "TEXT")
+    var adminNote: String? = null,
 ) : BaseEntity() {
 
     @Column(name = "is_booked", nullable = false)
@@ -105,6 +108,10 @@ class ReservationSlot(
     fun cancelBooking() {
         isStatusBooked = false
         clearHold()
+    }
+
+    fun updateAdminNote(note: String?) {
+        adminNote = note?.trim()?.takeIf { it.isNotEmpty() }
     }
 
     fun hasExpiredHold(now: LocalDateTime = LocalDateTime.now()): Boolean =
