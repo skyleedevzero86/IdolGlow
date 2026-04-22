@@ -28,6 +28,7 @@ class PaymentRefundService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val tossPaymentProperties: TossPaymentProperties,
     private val objectMapper: ObjectMapper,
+    private val paymentNotificationMailService: PaymentNotificationMailService,
 ) {
 
     fun refundBeforeReservationCancel(
@@ -66,6 +67,7 @@ class PaymentRefundService(
                     httpStatus = 200,
                     responseBody = refund.rawResponseJson,
                 )
+                paymentNotificationMailService.sendCanceled(payment)
             }
 
             PaymentProvider.TOSS -> {
@@ -113,6 +115,7 @@ class PaymentRefundService(
                 refund.rawResponseJson = response.rawBody
                 refund.externalTransactionKey = response.json.path("transactionKey").asText(null)
                 payment.markFullRefund()
+                paymentNotificationMailService.sendCanceled(payment)
             }
         }
     }
@@ -132,7 +135,7 @@ class PaymentRefundService(
 
         require(payment.provider == PaymentProvider.TOSS) { "토스 결제만 PG 재시도할 수 있습니다." }
         require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
-        val key = payment.paymentKey ?: throw IllegalStateException("paymentKey 없음")
+        val key = payment.paymentKey ?: throw IllegalStateException("토스 paymentKey가 없습니다.")
 
         val idempotencyKey = "refund-retry-${payment.id}-${UUID.randomUUID()}"
         val retry = paymentRefundJpaRepository.save(
@@ -174,6 +177,7 @@ class PaymentRefundService(
         retry.status = PaymentRefundStatus.SUCCEEDED
         retry.rawResponseJson = response.rawBody
         payment.markFullRefund()
+        paymentNotificationMailService.sendCanceled(payment)
         return retry
     }
 }

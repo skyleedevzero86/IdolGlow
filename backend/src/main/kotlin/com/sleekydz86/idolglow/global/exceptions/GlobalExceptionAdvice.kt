@@ -5,12 +5,14 @@ import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
@@ -136,6 +138,26 @@ class GlobalExceptionAdvice {
             )
     }
 
+    @ExceptionHandler(ResponseStatusException::class)
+    fun handleResponseStatusException(
+        request: HttpServletRequest,
+        exception: ResponseStatusException,
+    ): ResponseEntity<ExceptionResponse> {
+        val code = exception.statusCode.value()
+        val status = HttpStatus.values().find { it.value() == code } ?: HttpStatus.INTERNAL_SERVER_ERROR
+        val message = exception.reason ?: status.reasonPhrase
+        log.warn("HTTP 상태 예외: {} {} {} | {}", status.value(), request.method, request.requestURI, message)
+        return ResponseEntity
+            .status(status)
+            .body(
+                ExceptionResponse(
+                    name = status.name,
+                    errorCode = status.name,
+                    message = message,
+                ),
+            )
+    }
+
     @ExceptionHandler(ErrorResponseException::class)
     fun handleMinioErrorResponse(
         request: HttpServletRequest,
@@ -173,7 +195,7 @@ class GlobalExceptionAdvice {
                 ExceptionResponse(
                     name = "NOT_FOUND",
                     errorCode = "NOT_FOUND",
-                    message = exception.message ?: "대상을 찾을 수 없습니다."
+                    message = "대상을 찾을 수 없습니다."
                 )
             )
     }
@@ -196,6 +218,34 @@ class GlobalExceptionAdvice {
             )
     }
 
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(
+        request: HttpServletRequest,
+        exception: DataIntegrityViolationException,
+    ): ResponseEntity<ExceptionResponse> {
+        val detail = exception.mostSpecificCause.message ?: exception.message.orEmpty()
+        val tooLong =
+            detail.contains("too long", ignoreCase = true) ||
+                detail.contains("character varying", ignoreCase = true) ||
+                detail.contains("Data too long", ignoreCase = true)
+        val message =
+            if (tooLong) {
+                "저장할 텍스트가 DB 컬럼 길이를 초과했습니다. 백엔드 재기동으로 Flyway editor_documents.introduction 확장 적용됐는지 확인하세요."
+            } else {
+                "데이터 제약 조건으로 저장할 수 없습니다."
+            }
+        log.warn("데이터 무결성 위반: {} {} | {}", request.method, request.requestURI, detail)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "DATA_INTEGRITY_VIOLATION",
+                    errorCode = "BAD_REQUEST",
+                    message = message,
+                ),
+            )
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(
         request: HttpServletRequest,
@@ -212,7 +262,7 @@ class GlobalExceptionAdvice {
                 ExceptionResponse(
                     name = "INTERNAL_SERVER_ERROR",
                     errorCode = "INTERNAL_SERVER_ERROR",
-                    message = exception.message ?: "서버 내부 오류가 발생했습니다."
+                    message = "서버 내부 오류가 발생했습니다."
                 )
             )
     }

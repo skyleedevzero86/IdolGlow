@@ -33,7 +33,7 @@ class SiteContentQueryService(
             .map {
                 SiteHeroSlideResponse(
                     imageId = it.imageId,
-                    title = it.imageName?.takeIf(String::isNotBlank) ?: "Main slide",
+                    title = it.imageName?.takeIf(String::isNotBlank) ?: "메인 슬라이드",
                     subtitle = it.description?.takeIf(String::isNotBlank),
                     imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
                     linkUrl = "/articles",
@@ -48,7 +48,7 @@ class SiteContentQueryService(
             .map {
                 SiteBannerResponse(
                     bannerId = it.bannerId,
-                    title = it.bannerName?.takeIf(String::isNotBlank) ?: "Banner",
+                    title = it.bannerName?.takeIf(String::isNotBlank) ?: "배너",
                     description = it.description?.takeIf(String::isNotBlank),
                     imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
                     linkUrl = it.linkUrl?.takeIf(String::isNotBlank) ?: "/articles",
@@ -63,7 +63,7 @@ class SiteContentQueryService(
             .map {
                 SitePopupResponse(
                     popupId = it.popupId,
-                    title = it.title?.takeIf(String::isNotBlank) ?: "Popup",
+                    title = it.title?.takeIf(String::isNotBlank) ?: "팝업",
                     imageUrl = toAssetUrl(it.imagePath?.takeIf(String::isNotBlank)),
                     linkUrl = it.fileUrl?.takeIf(String::isNotBlank),
                     linkTarget = it.linkTarget?.takeIf(String::isNotBlank) ?: "_blank",

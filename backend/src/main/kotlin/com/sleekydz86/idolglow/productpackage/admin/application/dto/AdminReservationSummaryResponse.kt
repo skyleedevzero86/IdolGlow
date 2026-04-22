@@ -43,6 +43,7 @@ data class AdminReservationSummaryResponse(
     val paymentStatus: PaymentStatus?,
     @field:Schema(description = "결제 실패 사유", example = "카드사 거절")
     val paymentFailureReason: String?,
+    val adminMemo: String?,
 ) {
     companion object {
         fun from(
@@ -65,7 +66,8 @@ data class AdminReservationSummaryResponse(
                 cancelReason = reservation.cancelReason,
                 paymentReference = payment?.paymentReference,
                 paymentStatus = payment?.status,
-                paymentFailureReason = payment?.failureReason
+                paymentFailureReason = payment?.failureReason,
+                adminMemo = reservation.adminMemo,
             )
     }
 }

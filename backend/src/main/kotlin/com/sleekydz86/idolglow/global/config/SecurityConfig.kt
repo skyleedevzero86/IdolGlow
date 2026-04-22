@@ -16,7 +16,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -43,12 +42,6 @@ class SecurityConfig(
 ) {
 
     @Bean
-    fun webSecurityCustomizer(): WebSecurityCustomizer =
-        WebSecurityCustomizer { web ->
-            web.ignoring().requestMatchers("/", "/favicon.ico")
-        }
-
-    @Bean
     @Order(0)
     fun h2ConsoleSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -62,7 +55,9 @@ class SecurityConfig(
         return http.build()
     }
 
+   
     @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
@@ -76,6 +71,7 @@ class SecurityConfig(
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .authorizeHttpRequests { auth ->
+                auth.requestMatchers("/", "/favicon.ico").permitAll()
                 auth.requestMatchers("/health/check").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()

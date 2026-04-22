@@ -1,14 +1,21 @@
 package com.sleekydz86.idolglow.admin.ui
 
 import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
+import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionScheduleResponse
+import com.sleekydz86.idolglow.admin.ui.request.UpsertSubscriptionDispatchScheduleRequest
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -45,4 +52,13 @@ class AdminSubscriptionController(
                 dispatchSize = dispatchSize,
             )
         )
+
+    @Operation(summary = "예약 발송 스케줄 저장")
+    @PutMapping("/schedules/{contentType}")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun upsertSchedule(
+        @PathVariable contentType: SubscriptionContentType,
+        @Valid @RequestBody request: UpsertSubscriptionDispatchScheduleRequest,
+    ): ResponseEntity<AdminSubscriptionScheduleResponse> =
+        ResponseEntity.ok(subscriptionAdminUseCase.upsertDispatchSchedule(request.toCommand(contentType)))
 }

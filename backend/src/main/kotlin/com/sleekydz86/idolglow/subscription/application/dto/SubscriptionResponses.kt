@@ -1,10 +1,13 @@
 package com.sleekydz86.idolglow.subscription.application.dto
 
 import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionDispatchResponse
+import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionLatestContentResponse
 import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
+import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionScheduleResponse
 import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionSubscriberResponse
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -42,6 +45,8 @@ internal fun AdminSubscriptionOverviewResponse.Companion.create(
     dispatchTotalElements: Long,
     dispatchTotalPages: Int,
     dispatchHasNext: Boolean,
+    schedules: List<SubscriptionDispatchSchedule>,
+    latestContents: List<AdminSubscriptionLatestContentResponse>,
 ): AdminSubscriptionOverviewResponse =
     AdminSubscriptionOverviewResponse(
         totalActive = totalActive,
@@ -61,6 +66,8 @@ internal fun AdminSubscriptionOverviewResponse.Companion.create(
         dispatchTotalElements = dispatchTotalElements,
         dispatchTotalPages = dispatchTotalPages,
         dispatchHasNext = dispatchHasNext,
+        schedules = schedules.map(AdminSubscriptionScheduleResponse::from),
+        latestContents = latestContents,
     )
 
 private val subscriptionDateTimeFormatter: DateTimeFormatter =

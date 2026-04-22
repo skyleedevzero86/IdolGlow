@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.productpackage.admin.application
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.CancelReasonStatRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.CancellationComparisonResponse
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.OperationsMenuStatsResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.OperationsAnalyticsSummaryResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.PaymentFailureHourRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.PeriodCancellationMetrics
@@ -10,6 +11,9 @@ import com.sleekydz86.idolglow.productpackage.admin.application.dto.ProductConve
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.SlotHourOccupancyRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.computeRate
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.AdminReservationQueryRepository
+import com.sleekydz86.idolglow.productpackage.option.infrastructure.OptionJpaRepository
+import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductJpaRepository
+import com.sleekydz86.idolglow.productpackage.reservation.infrastructure.ReservationSlotJpaRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import jakarta.persistence.EntityManager
@@ -24,6 +28,9 @@ import java.time.temporal.ChronoUnit
 class AdminOperationsAnalyticsService(
     private val entityManager: EntityManager,
     private val adminReservationQueryRepository: AdminReservationQueryRepository,
+    private val productJpaRepository: ProductJpaRepository,
+    private val optionJpaRepository: OptionJpaRepository,
+    private val reservationSlotJpaRepository: ReservationSlotJpaRepository,
 ) {
 
     fun summary(visitDateFrom: LocalDate, visitDateTo: LocalDate): OperationsAnalyticsSummaryResponse {
@@ -158,6 +165,33 @@ class AdminOperationsAnalyticsService(
         return byHour.keys.sorted().map { hour ->
             PaymentFailureHourRow(hourOfDay = hour, failureCount = byHour[hour]!!.size.toLong())
         }
+    }
+
+    fun menuStats(): OperationsMenuStatsResponse {
+        val reservationCounts = adminReservationQueryRepository.countReservationsByStatus(
+            fromDate = null,
+            toDate = null
+        )
+        val paymentCounts = adminReservationQueryRepository.countPaymentsByStatus(
+            fromDate = null,
+            toDate = null
+        )
+        return OperationsMenuStatsResponse(
+            productsCount = productJpaRepository.count(),
+            optionsCount = optionJpaRepository.count(),
+            slotsCount = reservationSlotJpaRepository.count(),
+            reservationsPendingCount = reservationCounts[ReservationStatus.PENDING] ?: 0L,
+            reservationsBookedCount = reservationCounts[ReservationStatus.BOOKED] ?: 0L,
+            reservationsCompletedCount = reservationCounts[ReservationStatus.COMPLETED] ?: 0L,
+            reservationsCanceledCount = reservationCounts[ReservationStatus.CANCELED] ?: 0L,
+            paymentsPendingCount = paymentCounts[PaymentStatus.PENDING] ?: 0L,
+            paymentsSucceededCount = paymentCounts[PaymentStatus.SUCCEEDED] ?: 0L,
+            paymentsFailedCount = paymentCounts[PaymentStatus.FAILED] ?: 0L,
+            paymentsCanceledCount = paymentCounts[PaymentStatus.CANCELED] ?: 0L,
+            paymentsExpiredCount = paymentCounts[PaymentStatus.EXPIRED] ?: 0L,
+            paymentsRefundedCount = paymentCounts[PaymentStatus.REFUNDED] ?: 0L,
+            paymentsPartialCanceledCount = paymentCounts[PaymentStatus.PARTIAL_CANCELED] ?: 0L,
+        )
     }
 
     private fun periodCancellationMetrics(from: LocalDate, to: LocalDate): PeriodCancellationMetrics {

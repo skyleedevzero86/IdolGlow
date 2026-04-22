@@ -17,16 +17,31 @@ class Option(
     val id: Long = 0L,
 
     @Column(nullable = false, length = 120)
-    val name: String,
+    var name: String,
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    val description: String,
+    var description: String,
 
     @Column(nullable = false)
-    val price: BigDecimal,
+    var price: BigDecimal,
 
     @Column(nullable = false, length = 200)
-    val location: String,
+    var location: String,
 ) : BaseEntity() {
 
+    fun update(
+        name: String,
+        description: String,
+        price: BigDecimal,
+        location: String,
+    ) {
+        require(name.isNotBlank()) { "옵션명은 비어 있을 수 없습니다." }
+        require(description.isNotBlank()) { "옵션 설명은 비어 있을 수 없습니다." }
+        require(price > BigDecimal.ZERO) { "옵션 가격은 0보다 커야 합니다." }
+        require(location.isNotBlank()) { "옵션 장소는 비어 있을 수 없습니다." }
+        this.name = name.trim()
+        this.description = description.trim()
+        this.price = price
+        this.location = location.trim()
+    }
 }

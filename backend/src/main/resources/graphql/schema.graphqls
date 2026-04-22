@@ -46,9 +46,16 @@ type Query {
     checkSignupEmail(email: String): SignupCheck!
     checkSignupNickname(nickname: String): SignupCheck!
     adminSubscriptionOverview: AdminSubscriptionOverview!
+    adminMenuStats: AdminMenuStats!
     adminReservationDashboard(fromDate: String, toDate: String, recentSize: Int = 10): AdminReservationDashboard!
     adminReservations(status: ReservationStatus, visitDate: String, productId: ID, size: Int = 50): [AdminReservationSummary!]!
     adminProductSlots(productId: ID!): [AdminReservationSlot!]!
+    adminPayments(status: PaymentStatus, visitDate: String, productId: ID, size: Int = 50): [AdminPaymentSummary!]!
+    adminPaymentOverview(status: PaymentStatus, visitDate: String, productId: ID): AdminPaymentOverview!
+    adminPaymentCharts(status: PaymentStatus, visitDate: String, productId: ID): AdminPaymentCharts!
+    adminPaymentDetail(paymentId: ID!): AdminPaymentDetail!
+    myPayments(size: Int = 100): [MyPaymentSummary!]!
+    myPaymentDetail(paymentId: ID!): MyPaymentSummary!
 }
 
 type Mutation {
@@ -77,6 +84,7 @@ type Mutation {
     deleteAdminProduct(productId: ID!): Boolean!
     deleteAdminOption(optionId: ID!): Boolean!
     cancelAdminReservation(reservationId: ID!): AdminReservationSummary!
+    cancelMyPayment(paymentId: ID!, reason: String): MyPaymentSummary!
     mockPaymentWebhook(secret: String!, input: MockPaymentWebhookInput!): Payment!
 }
 
@@ -322,6 +330,23 @@ type AdminSubscriptionOverview {
     totalActive: Int!
 }
 
+type AdminMenuStats {
+    productsCount: Int!
+    optionsCount: Int!
+    slotsCount: Int!
+    reservationsPendingCount: Int!
+    reservationsBookedCount: Int!
+    reservationsCompletedCount: Int!
+    reservationsCanceledCount: Int!
+    paymentsPendingCount: Int!
+    paymentsSucceededCount: Int!
+    paymentsFailedCount: Int!
+    paymentsCanceledCount: Int!
+    paymentsExpiredCount: Int!
+    paymentsRefundedCount: Int!
+    paymentsPartialCanceledCount: Int!
+}
+
 type AdminReservationDashboard {
     pendingCount: Int!
     bookedCount: Int!
@@ -365,6 +390,104 @@ type AdminReservationSlot {
     holdExpiresAt: String
 }
 
+type AdminPaymentSummary {
+    paymentId: ID!
+    reservationId: ID!
+    userId: ID!
+    productId: ID!
+    productName: String!
+    provider: String!
+    paymentReference: String!
+    amount: String!
+    cancelAmount: String!
+    status: String!
+    failureReason: String
+    approvedAt: String
+    failedAt: String
+    expiredAt: String
+    visitDate: String!
+    visitStartTime: String!
+    visitEndTime: String!
+}
+
+type AdminPaymentOverview {
+    totalCount: Int!
+    pendingCount: Int!
+    succeededCount: Int!
+    failedCount: Int!
+    canceledCount: Int!
+    expiredCount: Int!
+    refundedCount: Int!
+    partialCanceledCount: Int!
+    cancelableCount: Int!
+    grossAmount: String!
+    refundedAmount: String!
+    netAmount: String!
+}
+
+type AdminPaymentStatusChartPoint {
+    status: String!
+    count: Int!
+}
+
+type AdminPaymentMonthlyChartPoint {
+    month: String!
+    totalCount: Int!
+    succeededCount: Int!
+    failedCount: Int!
+    canceledCount: Int!
+}
+
+type AdminPaymentCharts {
+    byStatus: [AdminPaymentStatusChartPoint!]!
+    byMonth: [AdminPaymentMonthlyChartPoint!]!
+}
+
+type AdminPaymentDetail {
+    paymentId: ID!
+    reservationId: ID!
+    userId: ID!
+    productId: ID!
+    productName: String!
+    provider: String!
+    paymentReference: String!
+    amount: String!
+    cancelAmount: String!
+    status: String!
+    failureReason: String
+    approvedAt: String
+    failedAt: String
+    expiredAt: String
+    canceledAt: String
+    visitDate: String!
+    visitStartTime: String!
+    visitEndTime: String!
+    canCancel: Boolean!
+    receiptAvailable: Boolean!
+}
+
+type MyPaymentSummary {
+    paymentId: ID!
+    reservationId: ID!
+    productId: ID!
+    productName: String!
+    provider: String!
+    paymentReference: String!
+    amount: String!
+    cancelAmount: String!
+    status: String!
+    failureReason: String
+    approvedAt: String
+    failedAt: String
+    canceledAt: String
+    visitDate: String!
+    visitStartTime: String!
+    visitEndTime: String!
+    canCancel: Boolean!
+    cancelDeadlineAt: String
+    receiptAvailable: Boolean!
+}
+
 enum ReservationStatus {
     PREBOOK
     PENDING
@@ -378,6 +501,16 @@ enum ReservationCancelReason {
     PAYMENT_FAILED
     PAYMENT_EXPIRED
     ADMIN_CANCELED
+}
+
+enum PaymentStatus {
+    PENDING
+    SUCCEEDED
+    FAILED
+    CANCELED
+    EXPIRED
+    REFUNDED
+    PARTIAL_CANCELED
 }
 
 enum ConceptType {

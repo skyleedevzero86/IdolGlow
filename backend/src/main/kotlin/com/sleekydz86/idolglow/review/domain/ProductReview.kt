@@ -78,6 +78,11 @@ class ProductReview(
         hiddenReason = reason.take(80)
     }
 
+    fun unhide() {
+        hiddenAt = null
+        hiddenReason = null
+    }
+
     companion object {
         fun of(
             product: Product,

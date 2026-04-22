@@ -44,7 +44,7 @@ class GemmaChatService(
 
         if (!response.isSuccess2xx || response.json == null) {
             log.warn(
-                "Gemma call failed: status={} body={} error={}",
+                "Gemma 호출 실패: status={} body={} error={}",
                 response.httpStatus,
                 response.rawBody,
                 response.error?.message,
@@ -54,7 +54,7 @@ class GemmaChatService(
 
         val answer = extractAssistantText(response.json)
         if (answer.isBlank()) {
-            log.warn("Gemma returned empty content: {}", response.rawBody)
+            log.warn("Gemma 응답 본문이 비어 있습니다: {}", response.rawBody)
             throw CustomException(GemmaExceptionType.GEMMA_EMPTY_RESPONSE)
         }
 
@@ -102,6 +102,6 @@ class GemmaChatService(
     companion object {
         private const val THINKING_TOKEN = "<|think|>"
         private const val DEFAULT_SYSTEM_PROMPT =
-            "You are a helpful assistant for the IdolGlow backend. Answer clearly in Korean."
+            "당신은 IdolGlow 백엔드를 돕는 어시스턴트입니다. 답변은 한국어로 명확하게 작성하세요."
     }
 }

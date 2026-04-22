@@ -25,4 +25,5 @@ data class CreateReservationSlotsRequest(
 
     @field:Schema(description = "토요일 일요일 제외 여부")
     val excludeWeekends: Boolean = false,
+    val adminNote: String? = null,
 )

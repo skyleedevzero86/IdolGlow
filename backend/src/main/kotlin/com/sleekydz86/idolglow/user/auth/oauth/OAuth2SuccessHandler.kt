@@ -6,7 +6,6 @@ import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Component
 class OAuth2SuccessHandler(
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
     private val loginFacade: LoginFacade,
-    @Value("\${app.oauth2.redirect-uri}")
-    private val frontRedirectUri: String,
 ) : AuthenticationSuccessHandler {
 
     override fun onAuthenticationSuccess(
@@ -28,10 +25,12 @@ class OAuth2SuccessHandler(
         authentication: Authentication
     ) {
         val oauthToken = authentication as? OAuth2AuthenticationToken
-            ?: throw IllegalStateException("OAuth2AuthenticationToken 이어야 합니다: ${authentication.javaClass.name}")
+            ?: throw IllegalStateException(
+                "OAuth2 인증 토큰 형식이 올바르지 않습니다. (실제 타입: ${authentication.javaClass.name})"
+            )
         val principal = oauthToken.principal as? OAuth2User
             ?: throw IllegalStateException(
-                "OAuth2User principal 이어야 합니다: ${(oauthToken.principal as Any?)?.javaClass?.name}"
+                "OAuth2 사용자 정보(principal) 형식이 올바르지 않습니다. (실제 타입: ${(oauthToken.principal as Any?)?.javaClass?.name})"
             )
 
         val provider = AuthProvider.fromRegistrationId(oauthToken.authorizedClientRegistrationId)
@@ -43,7 +42,7 @@ class OAuth2SuccessHandler(
         )
 
         refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
-        response.sendRedirect(frontRedirectUri)
+        response.sendRedirect(AUTH_CALLBACK_PATH)
     }
 
     private fun oauthAttributes(principal: OAuth2User): Map<String, Any> {
@@ -54,5 +53,9 @@ class OAuth2SuccessHandler(
         }
         principal.attributes.forEach { (k, v) -> out.putIfAbsent(k, v as Any) }
         return out
+    }
+
+    companion object {
+        private const val AUTH_CALLBACK_PATH = "/auth/callback"
     }
 }

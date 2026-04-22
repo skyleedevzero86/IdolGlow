@@ -16,8 +16,8 @@ data class AuthenticatedUser(
 
             fun build(): AuthenticatedUser =
                 AuthenticatedUser(
-                    email = email ?: error("email required"),
-                    role = role ?: error("role required"),
+                    email = email ?: error("이메일이 필요합니다."),
+                    role = role ?: error("역할이 필요합니다."),
                 )
         }
     }

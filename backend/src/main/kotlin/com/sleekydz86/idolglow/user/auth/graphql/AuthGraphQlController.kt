@@ -29,7 +29,8 @@ class AuthGraphQlController(
             signupService.signup(
                 email = input.email,
                 rawNickname = input.nickname,
-                password = input.password
+                password = input.password,
+                subscribeToUpdates = input.subscribeToUpdates,
             )
         )
 

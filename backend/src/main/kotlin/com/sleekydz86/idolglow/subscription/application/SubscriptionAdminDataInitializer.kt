@@ -43,7 +43,7 @@ class SubscriptionAdminDataInitializer(
                 .forEach(subscriptionDispatchRecorder::recordWebzineIssueDispatch)
         }
 
-        log.info("Subscription sample data and dispatch histories are ready.")
+        log.info("구독 샘플 데이터와 발송 이력 준비가 완료되었습니다.")
     }
 
     private fun seedSubscribers() {

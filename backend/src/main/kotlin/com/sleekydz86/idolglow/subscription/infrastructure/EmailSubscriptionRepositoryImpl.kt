@@ -22,6 +22,14 @@ class EmailSubscriptionRepositoryImpl(
     override fun findByEmail(email: String): EmailSubscription? =
         emailSubscriptionJpaRepository.findByEmail(email.trim().lowercase())
 
+    override fun findActiveEmailsByAudience(audience: SubscriptionAudience): List<String> =
+        when (audience) {
+            SubscriptionAudience.NEWSLETTER ->
+                emailSubscriptionJpaRepository.findAllByActiveTrueAndSubscribedNewslettersTrueOrderBySubscribedAtDesc()
+            SubscriptionAudience.WEBZINE_ISSUE ->
+                emailSubscriptionJpaRepository.findAllByActiveTrueAndSubscribedIssuesTrueOrderBySubscribedAtDesc()
+        }.map { it.email }
+
     override fun save(subscription: EmailSubscription): EmailSubscription =
         emailSubscriptionJpaRepository.save(subscription)
 
