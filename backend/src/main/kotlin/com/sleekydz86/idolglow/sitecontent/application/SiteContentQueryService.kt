@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.sitecontent.application
 
 import com.sleekydz86.idolglow.bnr.domain.BnrRepository
-import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.mim.domain.MimRepository
 import com.sleekydz86.idolglow.pup.domain.PupRepository
 import com.sleekydz86.idolglow.sitecontent.application.dto.SiteBannerResponse

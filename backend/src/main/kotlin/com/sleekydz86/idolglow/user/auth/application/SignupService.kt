@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.user.auth.application
 
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.UserExceptionType
-import com.sleekydz86.idolglow.global.security.JwtProvider
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.UserExceptionType
+import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
