@@ -14,6 +14,8 @@ class ProductTourAttractionGraphQlController(
         @Argument productId: String,
         @Argument size: Int?,
         @Argument baseYm: String?,
+        @Argument areaCode: Int?,
+        @Argument signguCode: Int?,
         @Argument category: String?,
     ): ProductTourAttractionGraphQlResponse {
         val resolvedProductId = productId.toLongOrNull()
@@ -25,6 +27,8 @@ class ProductTourAttractionGraphQlController(
                 size = size ?: 10,
                 baseYm = baseYm,
                 category = category,
+                areaCode = areaCode,
+                signguCode = signguCode,
             )
         )
     }

@@ -16,11 +16,14 @@ class PlatformSecurityHeadersFilter : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        setSecurityHeaders(response)
+        setSecurityHeaders(request, response)
         filterChain.doFilter(request, response)
     }
 
-    private fun setSecurityHeaders(response: HttpServletResponse) {
+    private fun setSecurityHeaders(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
         response.setHeader("X-XSS-Protection", "1; mode=block")
         response.setHeader("X-Frame-Options", "DENY")
         response.setHeader("X-Content-Type-Options", "nosniff")
@@ -29,16 +32,26 @@ class PlatformSecurityHeadersFilter : OncePerRequestFilter() {
             "Permissions-Policy",
             "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()",
         )
-        response.setHeader(
-            "Content-Security-Policy",
+        val path = request.requestURI.lowercase()
+        val contentSecurityPolicy = if (path.startsWith("/graphiql")) {
+            "default-src 'self'; " +
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh; " +
+                "style-src 'self' 'unsafe-inline' https://esm.sh; " +
+                "img-src 'self' data: https:; " +
+                "font-src 'self' data: https://esm.sh; " +
+                "connect-src 'self' https: ws: wss:; " +
+                "worker-src 'self' blob: https://esm.sh; " +
+                "frame-ancestors 'none';"
+        } else {
             "default-src 'self'; " +
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
                 "style-src 'self' 'unsafe-inline'; " +
                 "img-src 'self' data: https:; " +
                 "font-src 'self' data:; " +
                 "connect-src 'self' https:; " +
-                "frame-ancestors 'none';",
-        )
+                "frame-ancestors 'none';"
+        }
+        response.setHeader("Content-Security-Policy", contentSecurityPolicy)
         response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
         response.setHeader("Pragma", "no-cache")

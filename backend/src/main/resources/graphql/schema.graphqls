@@ -31,6 +31,8 @@ type Query {
         productId: ID!
         size: Int = 10
         baseYm: String
+        areaCode: Int
+        signguCode: Int
         category: String
     ): ProductTourAttractionResult!
     options: [OptionItem!]!
