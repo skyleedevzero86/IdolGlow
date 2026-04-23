@@ -7,7 +7,6 @@ import com.sleekydz86.idolglow.productpackage.attraction.domain.SeoulDistrictTou
 import com.sleekydz86.idolglow.productpackage.attraction.domain.TourAttraction
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionItemResponse
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
-import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.YearMonth
@@ -17,7 +16,6 @@ import java.time.format.DateTimeFormatter
 @Transactional(readOnly = true)
 @Service
 class ProductTourAttractionQueryService(
-    private val productRepository: ProductRepository,
     private val tourAttractionQueryPort: TourAttractionQueryPort,
 ) {
     fun findAttractionsByProduct(
@@ -25,45 +23,40 @@ class ProductTourAttractionQueryService(
         size: Int,
         baseYm: String?,
         category: String?,
+        areaCode: Int?,
+        signguCode: Int?,
     ): ProductTourAttractionResponse {
-        val product = productRepository.findById(productId)
-            ?: throw CustomException(TourAttractionExceptionType.PRODUCT_NOT_FOUND)
-
-        val location = product.productLocation
-            ?: throw CustomException(TourAttractionExceptionType.PRODUCT_LOCATION_NOT_FOUND)
-
-        val district = resolveDistrict(location.roadAddressName, location.addressName, location.name)
-        val signguCode = SeoulDistrictTourCodeMapper.signguCodeOf(district)
-            ?: throw CustomException(TourAttractionExceptionType.DISTRICT_NOT_SUPPORTED)
-        val areaCode = SeoulDistrictTourCodeMapper.SEOUL_AREA_CODE
+        val resolvedAreaCode = areaCode ?: SeoulDistrictTourCodeMapper.SEOUL_AREA_CODE
+        val resolvedSignguCode = signguCode ?: DEFAULT_SIGNGU_CODE
+        val district = SeoulDistrictTourCodeMapper.districtOf(resolvedSignguCode)
+            ?: "signgu-$resolvedSignguCode"
         val resolvedBaseYm = resolveBaseYm(baseYm)
-        val resolvedSize = size.coerceIn(1, 30)
+        val resolvedSize = size.coerceIn(1, MAX_RESULT_SIZE)
 
         val normalizedCategory = category?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
-        val tagNames = product.productTags.map { it.tagName.lowercase() }.toSet()
 
         val scored = tourAttractionQueryPort.fetchAreaBasedAttractions(
             baseYm = resolvedBaseYm,
-            areaCode = areaCode,
-            signguCode = signguCode,
-            size = 50,
+            areaCode = resolvedAreaCode,
+            signguCode = resolvedSignguCode,
+            size = TOUR_API_NUM_OF_ROWS,
         ).asSequence()
             .filter { attraction ->
                 normalizedCategory == null ||
                     attraction.categoryLarge.orEmpty().lowercase().contains(normalizedCategory) ||
                     attraction.categoryMiddle.orEmpty().lowercase().contains(normalizedCategory)
             }
-            .map { attraction -> ScoredAttraction(attraction, computeScore(attraction, tagNames)) }
+            .map { attraction -> ScoredAttraction(attraction, computeScore(attraction)) }
             .sortedWith(compareByDescending<ScoredAttraction> { it.score }.thenBy { it.attraction.rank }.thenBy { it.attraction.name })
             .take(resolvedSize)
             .toList()
 
         return ProductTourAttractionResponse(
-            productId = product.id,
-            productName = product.name,
+            productId = productId,
+            productName = "외부 TourAPI 기반 관광지 추천",
             district = district,
-            areaCode = areaCode,
-            signguCode = signguCode,
+            areaCode = resolvedAreaCode,
+            signguCode = resolvedSignguCode,
             baseYm = resolvedBaseYm,
             attractions = scored.map { scoredAttraction ->
                 val attraction = scoredAttraction.attraction
@@ -78,20 +71,10 @@ class ProductTourAttractionQueryService(
                     mapX = attraction.mapX,
                     mapY = attraction.mapY,
                     score = scoredAttraction.score,
-                    reason = defaultReason(attraction, district),
+                    reason = defaultReason(attraction, district, resolvedBaseYm),
                 )
             }
         )
-    }
-
-    private fun resolveDistrict(vararg sources: String?): String {
-        for (source in sources) {
-            val candidate = source?.trim().orEmpty()
-            if (candidate.isEmpty()) continue
-            val matched = SeoulDistrictTourCodeMapper.resolveDistrictLabel(candidate)
-            if (!matched.isNullOrBlank()) return matched
-        }
-        throw CustomException(TourAttractionExceptionType.DISTRICT_NOT_SUPPORTED)
     }
 
     private fun resolveBaseYm(baseYm: String?): String {
@@ -103,27 +86,22 @@ class ProductTourAttractionQueryService(
         return resolved
     }
 
-    private fun computeScore(attraction: TourAttraction, tagNames: Set<String>): Int {
+    private fun computeScore(attraction: TourAttraction): Int {
         val rankScore = 1000 - attraction.rank.coerceAtLeast(1)
-        val categoryText = "${attraction.categoryLarge.orEmpty()} ${attraction.categoryMiddle.orEmpty()}".lowercase()
-        val affinityScore = when {
-            tagNames.any { it.contains("beauty") || it.contains("fashion") } && categoryText.contains("쇼핑") -> 120
-            tagNames.any { it.contains("culture") || it.contains("art") } && categoryText.contains("문화") -> 110
-            tagNames.any { it.contains("nature") || it.contains("healing") } && (categoryText.contains("자연") || categoryText.contains("공원")) -> 110
-            tagNames.any { categoryText.contains(it) } -> 70
-            else -> 0
-        }
-        return rankScore + affinityScore
+        return rankScore
     }
 
-    private fun defaultReason(attraction: TourAttraction, district: String): String {
+    private fun defaultReason(attraction: TourAttraction, district: String, baseYm: String): String {
         val middle = attraction.categoryMiddle?.trim().takeUnless { it.isNullOrBlank() } ?: "관광"
-        return "$district 내 $middle 카테고리 상위권 관광지로 상품 이용 전후 동선에 적합합니다."
+        return "$district 내 $middle 카테고리 상위권 관광지입니다. 데이터 기준월: $baseYm"
     }
 
     private data class ScoredAttraction(val attraction: TourAttraction, val score: Int)
 
     companion object {
         private val BASE_YM_PATTERN = Regex("^\\d{6}$")
+        private const val MAX_RESULT_SIZE = 1000
+        private const val TOUR_API_NUM_OF_ROWS = 1000
+        private const val DEFAULT_SIGNGU_CODE = 11530
     }
 }

@@ -34,6 +34,9 @@ object SeoulDistrictTourCodeMapper {
     fun signguCodeOf(districtLabel: String): Int? =
         signguCodeByDistrict[districtLabel.trim()]
 
+    fun districtOf(signguCode: Int): String? =
+        signguCodeByDistrict.entries.firstOrNull { it.value == signguCode }?.key
+
     fun resolveDistrictLabel(rawAddress: String): String? {
         val normalized = rawAddress.replace(" ", "")
         return signguCodeByDistrict.keys.firstOrNull { normalized.contains(it) }

@@ -39,8 +39,8 @@ class ProductCommandService(
             tagNames = command.tagNames,
             slotStartDate = slotStartDate,
             slotEndDate = slotEndDate,
-            slotStartHour = command.slotStartHour,
-            slotEndHour = command.slotEndHour
+            slotStartTime = command.slotStartTime,
+            slotEndTime = command.slotEndTime
         )
         val saved = productCommandRepository.save(product)
 

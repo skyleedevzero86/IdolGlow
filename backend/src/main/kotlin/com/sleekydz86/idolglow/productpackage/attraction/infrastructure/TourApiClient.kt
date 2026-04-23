@@ -45,37 +45,14 @@ class TourApiClient(
             throw CustomException(TourAttractionExceptionType.TOUR_API_KEY_MISSING)
         }
 
-        val rawResponse = try {
-            webClient.get()
-                .uri(endpointUrl()) { uriBuilder ->
-                    uriBuilder
-                        .queryParam("serviceKey", normalizedServiceKey)
-                        .queryParam("pageNo", 1)
-                        .queryParam("numOfRows", size)
-                        .queryParam("MobileOS", props.mobileOs)
-                        .queryParam("MobileApp", props.mobileApp)
-                        .queryParam("baseYm", baseYm)
-                        .queryParam("areaCd", areaCode)
-                        .queryParam("signguCd", signguCode)
-                        .queryParam("_type", "json")
-                        .build()
-                }
-                .exchangeToMono { clientResponse ->
-                    clientResponse.bodyToMono(String::class.java)
-                        .defaultIfEmpty("")
-                        .map { body -> RawTourApiResponse(clientResponse.statusCode(), body) }
-                }
-                .block()
-        } catch (exception: Exception) {
-            log.warn(
-                "Tour API 호출 실패(파싱 전). baseYm={}, areaCode={}, signguCode={}, message={}",
-                baseYm,
-                areaCode,
-                signguCode,
-                exception.message
-            )
-            return staleOrThrow(key, TourAttractionExceptionType.TOUR_API_CALL_FAILED)
-        } ?: throw CustomException(TourAttractionExceptionType.TOUR_API_CALL_FAILED)
+        val rawResponse = requestWithFallback(
+            normalizedServiceKey = normalizedServiceKey,
+            baseYm = baseYm,
+            areaCode = areaCode,
+            signguCode = signguCode,
+            requestedSize = size,
+            key = key,
+        )
 
         if (!rawResponse.statusCode.is2xxSuccessful) {
             return staleOrThrow(key, TourAttractionExceptionType.TOUR_API_CALL_FAILED)
@@ -119,6 +96,104 @@ class TourApiClient(
     }
 
     private fun endpointUrl(): String = "${props.baseUrl.trimEnd('/')}/areaBasedList1"
+
+    private fun requestWithFallback(
+        normalizedServiceKey: String,
+        baseYm: String,
+        areaCode: Int,
+        signguCode: Int,
+        requestedSize: Int,
+        key: TourApiCacheKey,
+    ): RawTourApiResponse {
+        val primarySize = requestedSize.coerceIn(1, 1000)
+        val primary = requestRawResponse(
+            normalizedServiceKey = normalizedServiceKey,
+            baseYm = baseYm,
+            areaCode = areaCode,
+            signguCode = signguCode,
+            numOfRows = primarySize,
+        )
+
+        if (primary.statusCode.is2xxSuccessful) {
+            return primary
+        }
+
+        log.warn(
+            "Tour API 비정상 응답. status={}, numOfRows={}, body={}",
+            primary.statusCode.value(),
+            primarySize,
+            primary.body.take(300),
+        )
+
+        val fallbackSize = 100
+        if (primarySize <= fallbackSize) {
+            staleOrThrow(key, TourAttractionExceptionType.TOUR_API_CALL_FAILED)
+            throw CustomException(TourAttractionExceptionType.TOUR_API_CALL_FAILED)
+        }
+
+        val fallback = requestRawResponse(
+            normalizedServiceKey = normalizedServiceKey,
+            baseYm = baseYm,
+            areaCode = areaCode,
+            signguCode = signguCode,
+            numOfRows = fallbackSize,
+        )
+        if (fallback.statusCode.is2xxSuccessful) {
+            log.info("Tour API 재시도 성공. numOfRows={} -> {}", primarySize, fallbackSize)
+            return fallback
+        }
+
+        log.warn(
+            "Tour API 재시도도 실패. status={}, numOfRows={}, body={}",
+            fallback.statusCode.value(),
+            fallbackSize,
+            fallback.body.take(300),
+        )
+        staleOrThrow(key, TourAttractionExceptionType.TOUR_API_CALL_FAILED)
+        throw CustomException(TourAttractionExceptionType.TOUR_API_CALL_FAILED)
+    }
+
+    private fun requestRawResponse(
+        normalizedServiceKey: String,
+        baseYm: String,
+        areaCode: Int,
+        signguCode: Int,
+        numOfRows: Int,
+    ): RawTourApiResponse {
+        return try {
+            webClient.get()
+                .uri(endpointUrl()) { uriBuilder ->
+                    uriBuilder
+                        .queryParam("serviceKey", normalizedServiceKey)
+                        .queryParam("pageNo", 1)
+                        .queryParam("numOfRows", numOfRows)
+                        .queryParam("MobileOS", props.mobileOs)
+                        .queryParam("MobileApp", props.mobileApp)
+                        .queryParam("baseYm", baseYm)
+                        .queryParam("areaCd", areaCode)
+                        .queryParam("signguCd", signguCode)
+                        .queryParam("_type", "json")
+                        .build()
+                }
+                .exchangeToMono { clientResponse ->
+                    clientResponse.bodyToMono(String::class.java)
+                        .defaultIfEmpty("")
+                        .map { body -> RawTourApiResponse(clientResponse.statusCode(), body) }
+                }
+                .block()
+                ?: RawTourApiResponse(HttpStatusCode.valueOf(502), "")
+        } catch (exception: Exception) {
+            log.warn(
+                "Tour API 호출 예외. baseYm={}, areaCode={}, signguCode={}, numOfRows={}, message={}",
+                baseYm,
+                areaCode,
+                signguCode,
+                numOfRows,
+                exception.message
+            )
+            RawTourApiResponse(HttpStatusCode.valueOf(502), exception.message ?: "")
+        }
+    }
 
     private fun normalizeServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim()

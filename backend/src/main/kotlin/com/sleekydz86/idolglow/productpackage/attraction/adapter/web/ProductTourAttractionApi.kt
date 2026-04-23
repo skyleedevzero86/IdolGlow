@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity
 interface ProductTourAttractionApi {
     @Operation(
         summary = "상품 주변 관광지 추천 조회",
-        description = "상품 위치(서울 자치구)를 기준으로 TourAPI를 조회해 추천 관광지를 반환합니다.",
+        description = "TourAPI를 직접 조회해 추천 관광지를 반환합니다. areaCode/signguCode 미지정 시 기본값(서울/구로구)을 사용합니다.",
     )
     @ApiResponses(
         value = [
@@ -102,10 +102,14 @@ interface ProductTourAttractionApi {
     fun findTourAttractions(
         @Parameter(description = "상품 ID", example = "7")
         productId: Long,
-        @Parameter(description = "조회 개수(1~30). 기본값 10", example = "10")
+        @Parameter(description = "조회 개수(1~1000). 기본값 10", example = "10")
         size: Int?,
         @Parameter(description = "기준연월(YYYYMM). 미지정 시 전월", example = "202503")
         baseYm: String?,
+        @Parameter(description = "지역 코드(areaCd). 미지정 시 11(서울)", example = "11")
+        areaCode: Int?,
+        @Parameter(description = "시군구 코드(signguCd). 미지정 시 11530(구로구)", example = "11530")
+        signguCode: Int?,
         @Parameter(description = "카테고리 필터(대/중분류 부분일치)", example = "쇼핑")
         category: String?,
     ): ResponseEntity<ProductTourAttractionResponse>

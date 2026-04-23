@@ -19,6 +19,8 @@ class ProductTourAttractionController(
         @PathVariable productId: Long,
         @RequestParam(required = false, defaultValue = "10") size: Int?,
         @RequestParam(required = false, name = "base_ym") baseYm: String?,
+        @RequestParam(required = false) areaCode: Int?,
+        @RequestParam(required = false) signguCode: Int?,
         @RequestParam(required = false) category: String?,
     ): ResponseEntity<ProductTourAttractionResponse> {
         return ResponseEntity.ok(
@@ -27,6 +29,8 @@ class ProductTourAttractionController(
                 size = size ?: 10,
                 baseYm = baseYm,
                 category = category,
+                areaCode = areaCode,
+                signguCode = signguCode,
             )
         )
     }

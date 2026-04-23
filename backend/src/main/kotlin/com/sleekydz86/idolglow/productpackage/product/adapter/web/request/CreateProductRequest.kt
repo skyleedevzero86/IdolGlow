@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLoc
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Schema(description = "상품 생성 요청 DTO")
 data class CreateProductRequest(
@@ -22,6 +23,10 @@ data class CreateProductRequest(
     val slotStartHour: Int = 9,
     @field:Schema(description = "슬롯 종료 시각(시)", example = "16")
     val slotEndHour: Int = 16,
+    @field:Schema(description = "슬롯 시작 시각(HH:mm)", example = "09:00")
+    val slotStartTime: String? = null,
+    @field:Schema(description = "슬롯 종료 시각(HH:mm)", example = "16:00")
+    val slotEndTime: String? = null,
     @field:Schema(description = "연결할 옵션 ID 목록", example = "[1, 2]")
     val optionIds: List<Long> = emptyList(),
     @field:Schema(description = "태그명 목록", example = "[\"글로우\", \"메이크업\"]")
@@ -36,9 +41,17 @@ fun CreateProductRequest.toCommand(): CreateProductCommand =
         description = description,
         slotStartDate = slotStartDate,
         slotEndDate = slotEndDate,
-        slotStartHour = slotStartHour,
-        slotEndHour = slotEndHour,
+        slotStartTime = parseTimeOrNull(slotStartTime) ?: LocalTime.of(slotStartHour, 0),
+        slotEndTime = parseTimeOrNull(slotEndTime) ?: LocalTime.of(slotEndHour, 0),
         optionIds = optionIds,
         tagNames = tagNames,
         location = location,
     )
+
+private fun parseTimeOrNull(value: String?): LocalTime? {
+    val trimmed = value?.trim().orEmpty()
+    if (trimmed.isEmpty()) {
+        return null
+    }
+    return LocalTime.parse(trimmed)
+}
