@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.newsletter.domain
 
-import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

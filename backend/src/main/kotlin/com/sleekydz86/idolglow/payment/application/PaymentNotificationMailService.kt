@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.sleekydz86.idolglow.global.config.AppMailProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort

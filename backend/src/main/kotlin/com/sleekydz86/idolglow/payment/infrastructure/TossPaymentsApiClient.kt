@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.payment.infrastructure
 
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
-import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType

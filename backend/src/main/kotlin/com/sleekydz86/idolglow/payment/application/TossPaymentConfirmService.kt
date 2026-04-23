@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType

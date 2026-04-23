@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.user.user.domain
 
-import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.user.user.application.dto.UpsertUserSurveyCommand
 import com.sleekydz86.idolglow.user.user.domain.vo.ConceptType
 import com.sleekydz86.idolglow.user.user.domain.vo.Places

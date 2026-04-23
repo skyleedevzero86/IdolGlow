@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.user.user.application
 
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.UserExceptionType
-import com.sleekydz86.idolglow.global.exceptions.auth.AuthExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.UserExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuthRepository
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse

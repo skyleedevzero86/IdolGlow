@@ -1,11 +1,11 @@
 package com.sleekydz86.idolglow
 
-import com.sleekydz86.idolglow.global.config.AppCalendarProperties
-import com.sleekydz86.idolglow.global.config.AppMailProperties
-import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
-import com.sleekydz86.idolglow.global.config.GemmaProperties
-import com.sleekydz86.idolglow.global.config.MinioStorageProperties
-import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppCalendarProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties

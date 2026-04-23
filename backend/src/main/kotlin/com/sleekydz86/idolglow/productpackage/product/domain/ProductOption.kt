@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.product.domain
 
-import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.productpackage.option.domain.Option
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType

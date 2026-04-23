@@ -1,9 +1,7 @@
 package com.sleekydz86.idolglow.platform.user.infrastructure
 
-import com.sleekydz86.idolglow.platform.user.applyToEntity
 import com.sleekydz86.idolglow.platform.user.port.PlatformUserAccountPort
 import com.sleekydz86.idolglow.platform.user.domain.PlatformUser
-import com.sleekydz86.idolglow.platform.user.toPlatformUser
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import com.sleekydz86.idolglow.user.user.domain.vo.Nickname

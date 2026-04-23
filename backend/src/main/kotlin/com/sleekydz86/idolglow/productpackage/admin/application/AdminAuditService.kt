@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.admin.application
 
-import com.sleekydz86.idolglow.global.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminAuditLogResponse
 import com.sleekydz86.idolglow.productpackage.admin.domain.AdminAuditLog
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.AdminAuditLogRepository
