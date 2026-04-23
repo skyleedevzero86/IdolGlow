@@ -27,6 +27,12 @@ type Query {
     product(id: ID!): ProductDetail!
     popularProducts(size: Int = 10): [ProductRanking!]!
     recommendedProducts(size: Int = 10): [ProductRanking!]!
+    productTourAttractions(
+        productId: ID!
+        size: Int = 10
+        baseYm: String
+        category: String
+    ): ProductTourAttractionResult!
     options: [OptionItem!]!
     option(id: ID!): OptionItem!
     reservations: [ReservationSummary!]!
@@ -146,6 +152,30 @@ type ProductRanking {
     averageRating: String!
     reviewCount: Int!
     matchedTags: [String!]!
+}
+
+type ProductTourAttractionResult {
+    productId: ID!
+    productName: String!
+    district: String!
+    areaCode: Int!
+    signguCode: Int!
+    baseYm: String!
+    attractions: [ProductTourAttraction!]!
+}
+
+type ProductTourAttraction {
+    attractionCode: String!
+    name: String!
+    areaName: String
+    signguName: String
+    categoryLarge: String
+    categoryMiddle: String
+    rank: Int!
+    mapX: Float
+    mapY: Float
+    score: Int!
+    reason: String!
 }
 
 type ProductOption {

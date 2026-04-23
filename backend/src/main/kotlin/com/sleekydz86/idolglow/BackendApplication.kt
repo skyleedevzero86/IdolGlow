@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -22,6 +23,7 @@ import org.springframework.cache.annotation.EnableCaching
     TossPaymentProperties::class,
     GemmaProperties::class,
     PlatformAuthProperties::class,
+    TourApiProperties::class,
 )
 class BackendApplication
 
