@@ -6,6 +6,8 @@ import tools.jackson.databind.ObjectMapper
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.tour.TourAttractionExceptionType
+import com.sleekydz86.idolglow.productpackage.attraction.application.port.out.TourAttractionQueryPort
+import com.sleekydz86.idolglow.productpackage.attraction.domain.TourAttraction
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
@@ -21,16 +23,16 @@ class TourApiClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,
     private val props: TourApiProperties,
-) {
+) : TourAttractionQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
     private val cache = ConcurrentHashMap<TourApiCacheKey, TourApiCacheEntry>()
 
-    fun fetchAreaBasedAttractions(
+    override fun fetchAreaBasedAttractions(
         baseYm: String,
         areaCode: Int,
         signguCode: Int,
         size: Int,
-    ): List<TourApiAttraction> {
+    ): List<TourAttraction> {
         val key = TourApiCacheKey(baseYm, areaCode, signguCode, size)
         val now = Instant.now()
         val cached = cache[key]
@@ -88,7 +90,7 @@ class TourApiClient(
             val name = item.hubTatsNm?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             val attractionCode = item.hubTatsCd?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             val rank = item.hubRank?.toIntOrNull() ?: Int.MAX_VALUE
-            TourApiAttraction(
+            TourAttraction(
                 attractionCode = attractionCode,
                 name = name,
                 areaCode = item.areaCd?.toIntOrNull() ?: areaCode,
@@ -124,7 +126,7 @@ class TourApiClient(
         return if (trimmed.contains('%')) URLDecoder.decode(trimmed, StandardCharsets.UTF_8) else trimmed
     }
 
-    private fun staleOrThrow(key: TourApiCacheKey, causeType: TourAttractionExceptionType): List<TourApiAttraction> {
+    private fun staleOrThrow(key: TourApiCacheKey, causeType: TourAttractionExceptionType): List<TourAttraction> {
         val stale = cache[key]
         if (stale != null) {
             log.warn("Tour API 호출 실패로 오래된 캐시를 사용합니다. key={}, cachedAt={}", key, stale.cachedAt)
@@ -133,7 +135,7 @@ class TourApiClient(
         throw CustomException(causeType)
     }
 
-    private fun putCache(key: TourApiCacheKey, attractions: List<TourApiAttraction>, now: Instant) {
+    private fun putCache(key: TourApiCacheKey, attractions: List<TourAttraction>, now: Instant) {
         val ttlMinutes = props.cacheTtlMinutes.coerceAtLeast(1)
         cache[key] = TourApiCacheEntry(
             attractions = attractions,
@@ -156,23 +158,8 @@ class TourApiClient(
 
     private data class RawTourApiResponse(val statusCode: HttpStatusCode, val body: String)
     private data class TourApiCacheKey(val baseYm: String, val areaCode: Int, val signguCode: Int, val size: Int)
-    private data class TourApiCacheEntry(val attractions: List<TourApiAttraction>, val cachedAt: Instant, val expireAt: Instant)
+    private data class TourApiCacheEntry(val attractions: List<TourAttraction>, val cachedAt: Instant, val expireAt: Instant)
 }
-
-data class TourApiAttraction(
-    val attractionCode: String,
-    val name: String,
-    val areaCode: Int,
-    val areaName: String?,
-    val signguCode: Int,
-    val signguName: String?,
-    val categoryLarge: String?,
-    val categoryMiddle: String?,
-    val rank: Int,
-    val mapX: Double?,
-    val mapY: Double?,
-    val baseYm: String,
-)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class TourApiResponseEnvelope(val response: TourApiResponse? = null)
