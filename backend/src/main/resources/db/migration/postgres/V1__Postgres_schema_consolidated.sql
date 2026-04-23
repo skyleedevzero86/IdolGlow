@@ -76,7 +76,8 @@ CREATE TABLE products (
     name VARCHAR(120) NOT NULL,
     description TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    tour_attraction_picks_json TEXT
 );
 
 COMMENT ON TABLE products IS '상품 기본 정보';
@@ -85,6 +86,7 @@ COMMENT ON COLUMN products.name IS '상품명';
 COMMENT ON COLUMN products.description IS '상품 설명';
 COMMENT ON COLUMN products.created_at IS '생성 시각';
 COMMENT ON COLUMN products.updated_at IS '수정 시각';
+COMMENT ON COLUMN products.tour_attraction_picks_json IS 'Tour API 관광지 다중 선택(JSON 배열 문자열)';
 
 ---
 -- product_option: 상품-옵션 N:M

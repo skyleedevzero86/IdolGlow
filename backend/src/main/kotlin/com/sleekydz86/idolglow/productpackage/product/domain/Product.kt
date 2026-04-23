@@ -44,6 +44,9 @@ class Product(
     @OneToOne(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var productLocation: ProductLocation? = null,
 
+    @Column(name = "tour_attraction_picks_json", columnDefinition = "TEXT")
+    var tourAttractionPicksJson: String? = null,
+
     ) : BaseEntity() {
 
     @get:Transient

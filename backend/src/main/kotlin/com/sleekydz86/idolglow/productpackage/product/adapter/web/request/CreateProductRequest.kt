@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.productpackage.product.ui.request
 
 import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLocationPayload
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.TourAttractionPickPayload
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDate
@@ -33,6 +34,8 @@ data class CreateProductRequest(
     val tagNames: List<String> = emptyList(),
     @field:Schema(description = "상품 위치 정보")
     val location: ProductLocationPayload? = null,
+    @field:Schema(description = "저장할 Tour 관광지 다중 선택")
+    val tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
 )
 
 fun CreateProductRequest.toCommand(): CreateProductCommand =
@@ -46,6 +49,7 @@ fun CreateProductRequest.toCommand(): CreateProductCommand =
         optionIds = optionIds,
         tagNames = tagNames,
         location = location,
+        tourAttractionPicks = tourAttractionPicks,
     )
 
 private fun parseTimeOrNull(value: String?): LocalTime? {

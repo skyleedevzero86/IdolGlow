@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.product.application.dto
 
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.TourAttractionPickPayload
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -13,4 +14,5 @@ data class CreateProductCommand(
     val optionIds: List<Long> = emptyList(),
     val tagNames: List<String> = emptyList(),
     val location: ProductLocationPayload? = null,
+    val tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
 )
