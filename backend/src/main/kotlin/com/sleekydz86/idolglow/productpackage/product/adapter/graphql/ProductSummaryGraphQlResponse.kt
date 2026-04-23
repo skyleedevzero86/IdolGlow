@@ -18,6 +18,7 @@ data class ProductSummaryGraphQlResponse(
     val averageRating: String,
     val reviewCount: Int,
     val thumbnailUrl: String?,
+    val tourAttractionPickCount: Int,
 ) {
     companion object {
         fun from(response: ProductPagingQueryResponse): ProductSummaryGraphQlResponse =
@@ -36,6 +37,7 @@ data class ProductSummaryGraphQlResponse(
                 averageRating = BigDecimal.valueOf(response.averageRating).asGraphQlNumber(),
                 reviewCount = response.reviewCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                 thumbnailUrl = response.thumbnailUrl,
+                tourAttractionPickCount = response.tourAttractionPickCount,
             )
     }
 }

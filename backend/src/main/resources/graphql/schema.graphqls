@@ -123,6 +123,7 @@ type ProductSummary {
     wishCount: Int!
     averageRating: String!
     reviewCount: Int!
+    tourAttractionPickCount: Int!
 }
 
 type ProductDetail {
