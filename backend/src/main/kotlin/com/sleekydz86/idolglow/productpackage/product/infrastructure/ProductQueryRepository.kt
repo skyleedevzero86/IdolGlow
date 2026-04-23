@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.product.infrastructure
 
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductLocation
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductTag
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductLocationSummaryResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
@@ -31,11 +32,22 @@ class ProductQueryRepository(
             select distinct p from Product p
             left join fetch p.productOptions po
             left join fetch po.option o
-            left join fetch p.productLocation
             where p.id in :ids
             """.trimIndent(),
             Product::class.java
         ).setParameter("ids", orderedIds).resultList as List<Product>
+
+        @Suppress("UNCHECKED_CAST")
+        val locationRows =
+            entityManager.createQuery(
+                """
+                select pl from ProductLocation pl
+                join pl.product p
+                where p.id in :ids
+                """.trimIndent(),
+                ProductLocation::class.java,
+            ).setParameter("ids", orderedIds).resultList as List<ProductLocation>
+        val locationByProductId = locationRows.associateBy { it.product.id }
 
         val tags = entityManager.createQuery(
             "select pt from ProductTag pt where pt.product.id in :ids",
@@ -49,7 +61,7 @@ class ProductQueryRepository(
         val productById = products.associateBy { it.id }
         return orderedIds.mapNotNull { id ->
             val product = productById[id] ?: return@mapNotNull null
-            val loc = product.productLocation
+            val loc = locationByProductId[product.id]
             val distanceMeters =
                 if (nearLatitude != null && nearLongitude != null && loc != null) {
                     GeoDistanceMeters.between(
@@ -63,6 +75,8 @@ class ProductQueryRepository(
                 }
             val locDto = loc?.let { ProductLocationSummaryResponse.from(it) }
             val metric = reviewMetrics[id]
+            val tourPickCount =
+                TourAttractionPicksJsonCodec.decode(product.tourAttractionPicksJson, objectMapper).size
             ProductPagingQueryResponse.from(
                 product = product,
                 tagNames = tagNamesByProductId[product.id].orEmpty(),
@@ -71,6 +85,7 @@ class ProductQueryRepository(
                 wishCount = wishCounts[id] ?: 0L,
                 averageRating = metric?.averageRating ?: 0.0,
                 reviewCount = metric?.reviewCount ?: 0L,
+                tourAttractionPickCount = tourPickCount,
             )
         }
     }

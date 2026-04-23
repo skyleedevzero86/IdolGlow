@@ -116,6 +116,7 @@ kapt {
 
 tasks.withType<Test>().configureEach {
 	useJUnitPlatform()
+	jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
