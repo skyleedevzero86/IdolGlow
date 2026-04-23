@@ -2,11 +2,11 @@ package com.sleekydz86.idolglow.productpackage.attraction.application
 
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.tour.TourAttractionExceptionType
+import com.sleekydz86.idolglow.productpackage.attraction.application.port.out.TourAttractionQueryPort
 import com.sleekydz86.idolglow.productpackage.attraction.domain.SeoulDistrictTourCodeMapper
+import com.sleekydz86.idolglow.productpackage.attraction.domain.TourAttraction
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionItemResponse
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
-import com.sleekydz86.idolglow.productpackage.attraction.infrastructure.TourApiAttraction
-import com.sleekydz86.idolglow.productpackage.attraction.infrastructure.TourApiClient
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 @Service
 class ProductTourAttractionQueryService(
     private val productRepository: ProductRepository,
-    private val tourApiClient: TourApiClient,
+    private val tourAttractionQueryPort: TourAttractionQueryPort,
 ) {
     fun findAttractionsByProduct(
         productId: Long,
@@ -42,7 +42,7 @@ class ProductTourAttractionQueryService(
         val normalizedCategory = category?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
         val tagNames = product.productTags.map { it.tagName.lowercase() }.toSet()
 
-        val scored = tourApiClient.fetchAreaBasedAttractions(
+        val scored = tourAttractionQueryPort.fetchAreaBasedAttractions(
             baseYm = resolvedBaseYm,
             areaCode = areaCode,
             signguCode = signguCode,
@@ -103,7 +103,7 @@ class ProductTourAttractionQueryService(
         return resolved
     }
 
-    private fun computeScore(attraction: TourApiAttraction, tagNames: Set<String>): Int {
+    private fun computeScore(attraction: TourAttraction, tagNames: Set<String>): Int {
         val rankScore = 1000 - attraction.rank.coerceAtLeast(1)
         val categoryText = "${attraction.categoryLarge.orEmpty()} ${attraction.categoryMiddle.orEmpty()}".lowercase()
         val affinityScore = when {
@@ -116,12 +116,12 @@ class ProductTourAttractionQueryService(
         return rankScore + affinityScore
     }
 
-    private fun defaultReason(attraction: TourApiAttraction, district: String): String {
+    private fun defaultReason(attraction: TourAttraction, district: String): String {
         val middle = attraction.categoryMiddle?.trim().takeUnless { it.isNullOrBlank() } ?: "관광"
         return "$district 내 $middle 카테고리 상위권 관광지로 상품 이용 전후 동선에 적합합니다."
     }
 
-    private data class ScoredAttraction(val attraction: TourApiAttraction, val score: Int)
+    private data class ScoredAttraction(val attraction: TourAttraction, val score: Int)
 
     companion object {
         private val BASE_YM_PATTERN = Regex("^\\d{6}$")
