@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.productpackage.attraction.domain.SeoulDistrictTou
 import com.sleekydz86.idolglow.productpackage.attraction.domain.TourAttraction
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionItemResponse
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.YearMonth
@@ -18,6 +19,8 @@ import java.time.format.DateTimeFormatter
 class ProductTourAttractionQueryService(
     private val tourAttractionQueryPort: TourAttractionQueryPort,
 ) {
+    private val log = LoggerFactory.getLogger(this::class.java)
+
     fun findAttractionsByProduct(
         productId: Long,
         size: Int,
@@ -35,12 +38,13 @@ class ProductTourAttractionQueryService(
 
         val normalizedCategory = category?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
 
-        val scored = tourAttractionQueryPort.fetchAreaBasedAttractions(
+        val attractions = fetchAttractionsSafely(
             baseYm = resolvedBaseYm,
             areaCode = resolvedAreaCode,
             signguCode = resolvedSignguCode,
-            size = TOUR_API_NUM_OF_ROWS,
-        ).asSequence()
+        )
+
+        val scored = attractions.asSequence()
             .filter { attraction ->
                 normalizedCategory == null ||
                     attraction.categoryLarge.orEmpty().lowercase().contains(normalizedCategory) ||
@@ -77,6 +81,35 @@ class ProductTourAttractionQueryService(
         )
     }
 
+    private fun fetchAttractionsSafely(
+        baseYm: String,
+        areaCode: Int,
+        signguCode: Int,
+    ): List<TourAttraction> {
+        return try {
+            tourAttractionQueryPort.fetchAreaBasedAttractions(
+                baseYm = baseYm,
+                areaCode = areaCode,
+                signguCode = signguCode,
+                size = TOUR_API_NUM_OF_ROWS,
+            )
+        } catch (exception: CustomException) {
+            val exceptionType = exception.getExceptionType()
+            if (exceptionType is TourAttractionExceptionType && exceptionType in EXTERNAL_TOUR_API_FAILURES) {
+                log.warn(
+                    "외부 Tour API 연동 실패로 빈 관광지 추천 목록을 반환합니다. baseYm={}, areaCode={}, signguCode={}, errorCode={}",
+                    baseYm,
+                    areaCode,
+                    signguCode,
+                    exceptionType.errorCode,
+                )
+                emptyList()
+            } else {
+                throw exception
+            }
+        }
+    }
+
     private fun resolveBaseYm(baseYm: String?): String {
         val resolved = baseYm?.trim()?.takeIf { it.isNotEmpty() }
             ?: YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMM"))
@@ -100,6 +133,12 @@ class ProductTourAttractionQueryService(
 
     companion object {
         private val BASE_YM_PATTERN = Regex("^\\d{6}$")
+        private val EXTERNAL_TOUR_API_FAILURES = setOf(
+            TourAttractionExceptionType.TOUR_API_KEY_MISSING,
+            TourAttractionExceptionType.TOUR_API_CALL_FAILED,
+            TourAttractionExceptionType.TOUR_API_BAD_RESPONSE,
+            TourAttractionExceptionType.TOUR_API_ERROR,
+        )
         private const val MAX_RESULT_SIZE = 1000
         private const val TOUR_API_NUM_OF_ROWS = 1000
         private const val DEFAULT_SIGNGU_CODE = 11530

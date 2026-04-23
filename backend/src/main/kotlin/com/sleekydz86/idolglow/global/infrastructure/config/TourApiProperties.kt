@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class TourApiProperties(
     var baseUrl: String = "https://apis.data.go.kr/B551011/LocgoHubTarService1",
     var serviceKey: String = "",
-    var mobileOs: String = "ETC",
-    var mobileApp: String = "IdolGlow",
+    var mobileOs: String = "WEB",
+    var mobileApp: String = "idolglow",
     var cacheTtlMinutes: Long = 360,
     var cacheMaxEntries: Int = 300,
 )

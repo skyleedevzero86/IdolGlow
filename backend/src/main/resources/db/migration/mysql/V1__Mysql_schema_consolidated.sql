@@ -54,7 +54,8 @@ CREATE TABLE products (
     name VARCHAR(120) NOT NULL COMMENT '상품명',
     description TEXT NOT NULL COMMENT '상품 설명',
     created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
-    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각'
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    tour_attraction_picks_json TEXT NULL COMMENT 'Tour API 관광지 다중 선택(JSON)'
 ) COMMENT='상품 기본 정보';
 
 ---

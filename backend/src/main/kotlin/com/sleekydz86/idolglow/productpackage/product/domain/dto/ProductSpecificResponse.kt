@@ -53,9 +53,15 @@ data class ProductSpecificResponse(
 
     @field:Schema(description = "상품 상세 갤러리 이미지 URL 목록(sort_order 순)")
     val imageUrls: List<String> = emptyList(),
+
+    @field:Schema(description = "저장된 Tour 관광지 다중 선택")
+    val tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
 ) {
     companion object {
-        fun from(product: Product): ProductSpecificResponse {
+        fun from(
+            product: Product,
+            tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
+        ): ProductSpecificResponse {
             val slotStartDate: LocalDate? = product.reservationSlots.minOfOrNull { it.reservationDate }
             val slotEndDate: LocalDate? = product.reservationSlots.maxOfOrNull { it.reservationDate }
             val slotStartTime: LocalTime? = product.reservationSlots.minByOrNull { it.startTime }?.startTime
@@ -75,6 +81,7 @@ data class ProductSpecificResponse(
                 minPrice = product.minPrice,
                 totalPrice = product.totalPrice,
                 location = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },
+                tourAttractionPicks = tourAttractionPicks,
             )
         }
     }

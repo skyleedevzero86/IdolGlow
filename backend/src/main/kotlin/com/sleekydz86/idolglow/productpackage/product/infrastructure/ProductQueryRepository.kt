@@ -7,11 +7,13 @@ import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQu
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
+import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 
 @Repository
 class ProductQueryRepository(
     private val entityManager: EntityManager,
+    private val objectMapper: ObjectMapper,
 ) {
 
     fun hydrateForBrowse(
@@ -75,7 +77,8 @@ class ProductQueryRepository(
 
     fun findProductSpecificById(productId: Long): ProductSpecificResponse? {
         val product = entityManager.find(Product::class.java, productId) ?: return null
-        return ProductSpecificResponse.from(product)
+        val picks = TourAttractionPicksJsonCodec.decode(product.tourAttractionPicksJson, objectMapper)
+        return ProductSpecificResponse.from(product, picks)
     }
 
     data class ReviewMetricRow(
