@@ -115,6 +115,8 @@ type ProductSummary {
     id: ID!
     name: String!
     description: String!
+    basePrice: String!
+    optionsTotalPrice: String!
     minPrice: String!
     totalPrice: String!
     tagNames: [String!]!
@@ -137,6 +139,8 @@ type ProductDetail {
     slotStartTime: String
     slotEndTime: String
     reservationSlotCount: Int!
+    basePrice: String!
+    optionsTotalPrice: String!
     minPrice: String!
     totalPrice: String!
     location: ProductLocationSummary
@@ -148,6 +152,8 @@ type ProductRanking {
     id: ID!
     name: String!
     description: String!
+    basePrice: String!
+    optionsTotalPrice: String!
     minPrice: String!
     totalPrice: String!
     tagNames: [String!]!

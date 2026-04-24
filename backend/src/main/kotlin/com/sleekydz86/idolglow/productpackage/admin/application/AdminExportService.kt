@@ -213,6 +213,8 @@ class AdminExportService(
         val headers = listOf(
             "productId",
             "name",
+            "basePrice",
+            "optionsTotalPrice",
             "minPrice",
             "totalPrice",
             "tagNames",
@@ -231,12 +233,14 @@ class AdminExportService(
             val row = sheet.createRow(rowIndex + 1)
             row.createCell(0).setCellValue(product.id.toDouble())
             row.createCell(1).setCellValue(product.name)
-            row.createCell(2).setCellValue(product.minPrice.toPlainString())
-            row.createCell(3).setCellValue(product.totalPrice.toPlainString())
-            row.createCell(4).setCellValue(product.productTags.joinToString(",") { it.tagName })
-            row.createCell(5).setCellValue(product.productLocation?.displayAddress() ?: "")
-            row.createCell(6).setCellValue(product.reservationSlots.size.toDouble())
-            row.createCell(7).setCellValue(product.description)
+            row.createCell(2).setCellValue(product.basePrice.toPlainString())
+            row.createCell(3).setCellValue(product.optionsTotalPrice.toPlainString())
+            row.createCell(4).setCellValue(product.minPrice.toPlainString())
+            row.createCell(5).setCellValue(product.totalPrice.toPlainString())
+            row.createCell(6).setCellValue(product.productTags.joinToString(",") { it.tagName })
+            row.createCell(7).setCellValue(product.productLocation?.displayAddress() ?: "")
+            row.createCell(8).setCellValue(product.reservationSlots.size.toDouble())
+            row.createCell(9).setCellValue(product.description)
         }
         headers.indices.forEach(sheet::autoSizeColumn)
         return ByteArrayOutputStream().use { out ->
