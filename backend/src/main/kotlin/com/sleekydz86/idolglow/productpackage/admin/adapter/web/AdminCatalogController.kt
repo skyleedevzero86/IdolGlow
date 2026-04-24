@@ -4,6 +4,8 @@ import com.sleekydz86.idolglow.productpackage.admin.application.AdminCatalogServ
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
 import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
 import com.sleekydz86.idolglow.productpackage.admin.ui.request.UpdateAdminMarkdownRequest
+import com.sleekydz86.idolglow.productpackage.option.application.OptionQueryService
+import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionPageResponse
 import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
 import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
 import jakarta.validation.Valid
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @PreAuthorize("hasRole('ADMIN')")
@@ -24,7 +27,24 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/admin")
 class AdminCatalogController(
     private val adminCatalogService: AdminCatalogService,
+    private val optionQueryService: OptionQueryService,
 ) {
+
+    @GetMapping("/options")
+    fun searchOptions(
+        @RequestParam(required = false) q: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
+    ): ResponseEntity<OptionPageResponse> {
+        val trimmed = q?.trim().orEmpty()
+        return ResponseEntity.ok(
+            optionQueryService.searchOptions(
+                q = trimmed.ifEmpty { null },
+                page = page,
+                size = size,
+            ),
+        )
+    }
 
     @GetMapping("/products/{productId}/slots")
     fun findSlots(@PathVariable productId: Long): ResponseEntity<List<AdminReservationSlotResponse>> =

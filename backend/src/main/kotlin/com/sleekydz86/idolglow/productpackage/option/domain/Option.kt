@@ -37,7 +37,7 @@ class Option(
     ) {
         require(name.isNotBlank()) { "옵션명은 비어 있을 수 없습니다." }
         require(description.isNotBlank()) { "옵션 설명은 비어 있을 수 없습니다." }
-        require(price > BigDecimal.ZERO) { "옵션 가격은 0보다 커야 합니다." }
+        require(price >= BigDecimal.ZERO) { "옵션 가격은 0 이상이어야 합니다. (0은 상품/패키지 기본가만 적용, 추가 요금 없음)" }
         require(location.isNotBlank()) { "옵션 장소는 비어 있을 수 없습니다." }
         this.name = name.trim()
         this.description = description.trim()
