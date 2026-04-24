@@ -39,6 +39,12 @@ data class ProductSpecificResponse(
     @field:Schema(description = "예약 슬롯 개수", example = "56")
     val reservationSlotCount: Int,
 
+    @field:Schema(description = "상품 기본가(옵션 합과 별도)", example = "10000.00")
+    val basePrice: BigDecimal,
+
+    @field:Schema(description = "이 상품에 붙은 옵션 가격 합(기본가 제외)", example = "90000.00")
+    val optionsTotalPrice: BigDecimal,
+
     @field:Schema(description = "최소 가격", example = "100000.00")
     val minPrice: BigDecimal,
 
@@ -78,6 +84,8 @@ data class ProductSpecificResponse(
                 slotStartTime = slotStartTime,
                 slotEndTime = slotEndTime,
                 reservationSlotCount = product.reservationSlots.size,
+                basePrice = product.basePrice,
+                optionsTotalPrice = product.optionsTotalPrice,
                 minPrice = product.minPrice,
                 totalPrice = product.totalPrice,
                 location = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },

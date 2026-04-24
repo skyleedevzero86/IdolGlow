@@ -1,4 +1,4 @@
--- MySQL 전체 스키마
+-- MySQL 전체 스키마 (V1~V2 Flyway 단계를 단일 본에 반영, 예: products.base_price)
 -- 새 데이터베이스를 처음 만들 때만 사용한다. 이미 같은 스키마가 반영된 환경에는 실행하지 않는다.
 
 -- 초기 스키마
@@ -55,7 +55,8 @@ CREATE TABLE products (
     description TEXT NOT NULL COMMENT '상품 설명',
     created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
     updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
-    tour_attraction_picks_json TEXT NULL COMMENT 'Tour API 관광지 다중 선택(JSON)'
+    tour_attraction_picks_json TEXT NULL COMMENT 'Tour API 관광지 다중 선택(JSON)',
+    base_price DECIMAL(19, 2) NOT NULL DEFAULT 0.00 COMMENT '상품 기본가(옵션 합산과 별도)'
 ) COMMENT='상품 기본 정보';
 
 ---

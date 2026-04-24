@@ -32,6 +32,9 @@ class Product(
     @Column(nullable = false, columnDefinition = "TEXT")
     var description: String,
 
+    @Column(name = "base_price", nullable = false, precision = 19, scale = 2)
+    var basePrice: BigDecimal = BigDecimal.ZERO,
+
     @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val productOptions: MutableList<ProductOption> = mutableListOf(),
 
@@ -50,17 +53,26 @@ class Product(
     ) : BaseEntity() {
 
     @get:Transient
-    val minPrice: BigDecimal
-        get() = productOptions.asSequence()
+    val optionsMinPrice: BigDecimal
+        get() = productOptions
+            .asSequence()
             .map { it.option.price }
             .minOrNull()
             ?: BigDecimal.ZERO
 
     @get:Transient
+    val optionsTotalPrice: BigDecimal
+        get() = productOptions.fold(BigDecimal.ZERO) { sum, productOption -> sum + productOption.option.price }
+
+    /** 상품 기본가 + 가장 싼 옵션 추가(옵션이 없으면 옵션 쪽은 0). */
+    @get:Transient
+    val minPrice: BigDecimal
+        get() = basePrice + optionsMinPrice
+
+    /** 상품 기본가 + 이 상품에 붙은 모든 옵션 가격 합. */
+    @get:Transient
     val totalPrice: BigDecimal
-        get() = productOptions.fold(BigDecimal.ZERO) { totalPrice, productOption ->
-            totalPrice + productOption.option.price
-        }
+        get() = basePrice + optionsTotalPrice
 
     fun validateTotalPrice(requestedTotalPrice: BigDecimal) {
         if (totalPrice.compareTo(requestedTotalPrice) != 0) {
@@ -132,11 +144,14 @@ class Product(
     fun updateBasics(
         name: String,
         description: String,
+        basePrice: BigDecimal = BigDecimal.ZERO,
     ) {
         require(name.isNotBlank()) { "상품명은 비어 있을 수 없습니다." }
         require(description.isNotBlank()) { "상품 설명은 비어 있을 수 없습니다." }
+        require(basePrice >= BigDecimal.ZERO) { "상품 가격(기본)은 0 이상이어야 합니다." }
         this.name = name.trim()
         this.description = description.trim()
+        this.basePrice = basePrice
     }
 
     fun addReservationSlots(
@@ -183,6 +198,7 @@ class Product(
         fun createWithTimeSlots(
             name: String,
             description: String,
+            basePrice: BigDecimal = BigDecimal.ZERO,
             options: Collection<Option>,
             tagNames: Collection<String>,
             slotStartDate: LocalDate,
@@ -190,9 +206,11 @@ class Product(
             slotStartTime: LocalTime = DEFAULT_RESERVATION_START_TIME,
             slotEndTime: LocalTime = DEFAULT_RESERVATION_END_TIME
         ): Product {
+            require(basePrice >= BigDecimal.ZERO) { "상품 가격(기본)은 0 이상이어야 합니다." }
             val product = Product(
                 name = name,
-                description = description
+                description = description,
+                basePrice = basePrice,
             )
             product.addOptions(options)
             product.addTags(tagNames)

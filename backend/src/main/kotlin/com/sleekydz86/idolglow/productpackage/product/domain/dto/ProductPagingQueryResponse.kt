@@ -15,6 +15,12 @@ data class ProductPagingQueryResponse(
     @field:Schema(description = "상품 설명", example = "메이크업과 헤어 스타일링이 포함된 패키지")
     val description: String,
 
+    @field:Schema(description = "상품 기본가(옵션과 별도)", example = "10000.00")
+    val basePrice: BigDecimal,
+
+    @field:Schema(description = "이 상품에 붙은 옵션 가격 합(기본가 제외)", example = "90000.00")
+    val optionsTotalPrice: BigDecimal,
+
     @field:Schema(description = "최소 가격", example = "100000.00")
     val minPrice: BigDecimal,
 
@@ -61,6 +67,8 @@ data class ProductPagingQueryResponse(
                 id = product.id,
                 name = product.name,
                 description = product.description,
+                basePrice = product.basePrice,
+                optionsTotalPrice = product.optionsTotalPrice,
                 minPrice = product.minPrice,
                 totalPrice = product.totalPrice,
                 tagNames = tagNames,

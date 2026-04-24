@@ -38,6 +38,7 @@ class ProductCommandService(
         val product = Product.createWithTimeSlots(
             name = command.name,
             description = command.description,
+            basePrice = command.basePrice,
             options = options,
             tagNames = command.tagNames,
             slotStartDate = slotStartDate,
@@ -69,6 +70,7 @@ class ProductCommandService(
         product.updateBasics(
             name = command.name,
             description = command.description,
+            basePrice = command.basePrice,
         )
         product.replaceOptions(options)
         product.replaceTags(command.tagNames)

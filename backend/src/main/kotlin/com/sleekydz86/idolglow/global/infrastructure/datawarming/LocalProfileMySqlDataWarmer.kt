@@ -114,6 +114,7 @@ class LocalProfileMySqlDataWarmer(
         val product = Product.createWithTimeSlots(
             name = "아이돌 체험",
             description = "사진 촬영과 스타일링이 포함된 원데이 아이돌 체험입니다.",
+            basePrice = BigDecimal.ZERO,
             options = listOf(option1, option2),
             tagNames = listOf("아이돌", "촬영", "메이크업"),
             slotStartDate = slotStartDate,

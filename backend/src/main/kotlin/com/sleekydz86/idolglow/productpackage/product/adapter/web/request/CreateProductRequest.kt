@@ -5,6 +5,8 @@ import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLoc
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.TourAttractionPickPayload
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.PositiveOrZero
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -16,6 +18,9 @@ data class CreateProductRequest(
     @field:NotBlank
     @field:Schema(description = "상품 설명", example = "헤어 스타일링과 메이크업이 포함된 상품입니다.")
     val description: String,
+    @field:Schema(description = "상품 기본가(원, 옵션 합과 별도). 0 가능.", example = "10000.00")
+    @field:PositiveOrZero
+    val basePrice: BigDecimal = BigDecimal.ZERO,
     @field:Schema(description = "예약 시작 날짜", example = "2026-04-01")
     val slotStartDate: LocalDate? = null,
     @field:Schema(description = "예약 종료 날짜", example = "2026-04-30")
@@ -42,6 +47,7 @@ fun CreateProductRequest.toCommand(): CreateProductCommand =
     CreateProductCommand(
         name = name,
         description = description,
+        basePrice = basePrice,
         slotStartDate = slotStartDate,
         slotEndDate = slotEndDate,
         slotStartTime = parseTimeOrNull(slotStartTime) ?: LocalTime.of(slotStartHour, 0),
