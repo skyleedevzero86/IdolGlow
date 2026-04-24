@@ -62,14 +62,12 @@ class Product(
 
     @get:Transient
     val optionsTotalPrice: BigDecimal
-        get() = productOptions.fold(BigDecimal.ZERO) { sum, productOption -> sum + productOption.option.price }
+        get() = productOptions            .fold(BigDecimal.ZERO) { sum, productOption -> sum + productOption.option.price }
 
-    /** 상품 기본가 + 가장 싼 옵션 추가(옵션이 없으면 옵션 쪽은 0). */
     @get:Transient
     val minPrice: BigDecimal
         get() = basePrice + optionsMinPrice
 
-    /** 상품 기본가 + 이 상품에 붙은 모든 옵션 가격 합. */
     @get:Transient
     val totalPrice: BigDecimal
         get() = basePrice + optionsTotalPrice
