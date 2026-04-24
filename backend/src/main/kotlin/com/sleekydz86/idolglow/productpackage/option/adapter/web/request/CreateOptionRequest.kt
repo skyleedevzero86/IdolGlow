@@ -3,7 +3,7 @@ package com.sleekydz86.idolglow.productpackage.option.ui.request
 import com.sleekydz86.idolglow.productpackage.option.application.dto.CreateOptionCommand
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.PositiveOrZero
 import java.math.BigDecimal
 
 @Schema(description = "옵션 생성 요청 DTO")
@@ -16,8 +16,11 @@ data class CreateOptionRequest(
     @field:NotBlank
     val description: String,
 
-    @field:Schema(description = "가격", example = "100000.00")
-    @field:Positive
+    @field:Schema(
+        description = "추가 가격(원). 0이면 이 옵션에 대한 추가 요금은 없고, 상품·패키지 가격(연결된 옵션 합)만 반영됩니다.",
+        example = "100000.00",
+    )
+    @field:PositiveOrZero
     val price: BigDecimal,
 
     @field:Schema(description = "장소", example = "서울")
