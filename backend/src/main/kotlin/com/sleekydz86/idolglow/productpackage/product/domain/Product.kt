@@ -50,6 +50,12 @@ class Product(
     @Column(name = "tour_attraction_picks_json", columnDefinition = "TEXT")
     var tourAttractionPicksJson: String? = null,
 
+    @Column(name = "is_recommended", nullable = false)
+    var isRecommended: Boolean = false,
+
+    @Column(name = "recommendation_score", nullable = false)
+    var recommendationScore: Int = 0,
+
     ) : BaseEntity() {
 
     @get:Transient

@@ -152,3 +152,27 @@ CREATE INDEX idx_survey_submission_user_id ON survey_submission(user_id);
 CREATE INDEX idx_survey_answer_submission_id ON survey_answer(survey_submission_id);
 CREATE INDEX idx_survey_answer_question_id ON survey_answer(survey_question_id);
 CREATE INDEX idx_survey_answer_option_answer_id ON survey_answer_option(survey_answer_id);
+
+
+ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS is_recommended BOOLEAN NOT NULL DEFAULT FALSE COMMENT '관리자 추천 노출 여부';
+
+ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS recommendation_score INT NOT NULL DEFAULT 0 COMMENT '관리자 수동 추천 점수(높을수록 우선)';
+
+CREATE TABLE IF NOT EXISTS product_latest_korea_recommendation (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
+    display_order INT NOT NULL COMMENT '화면 노출 순서(1부터 증가)',
+    product_id BIGINT NOT NULL COMMENT '추천 대상 상품 ID',
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_latest_korea_product
+        FOREIGN KEY (product_id)
+        REFERENCES products(id)
+        ON DELETE CASCADE,
+    CONSTRAINT uk_latest_korea_display_order UNIQUE (display_order),
+    CONSTRAINT uk_latest_korea_product_id UNIQUE (product_id)
+) COMMENT='latest-in-korea 추천 상품 수동 큐레이션 순서';
+
+CREATE INDEX idx_latest_korea_product_id
+    ON product_latest_korea_recommendation(product_id);
