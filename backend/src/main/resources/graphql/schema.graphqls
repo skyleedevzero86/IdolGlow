@@ -48,6 +48,9 @@ type Query {
     me: UserProfile!
     myPromo: MypagePromo!
     mySurvey: UserSurvey!
+    currentSurveyForm: SurveyForm
+    adminCurrentSurveyForm: SurveyForm
+    myLatestSurveySubmission: SurveySubmission
     schedules(cursorId: ID, size: Int = 20): ScheduleSlice!
     schedule(id: ID!): Schedule!
     scheduleCalendarExport(scheduleId: ID!): ScheduleCalendarExport!
@@ -94,6 +97,8 @@ type Mutation {
     cancelAdminReservation(reservationId: ID!): AdminReservationSummary!
     cancelMyPayment(paymentId: ID!, reason: String): MyPaymentSummary!
     mockPaymentWebhook(secret: String!, input: MockPaymentWebhookInput!): Payment!
+    upsertAdminCurrentSurveyForm(input: UpsertAdminSurveyFormInput!): SurveyForm!
+    submitCurrentSurveyForm(input: SubmitSurveyFormInput!): SurveySubmission!
 }
 
 type ProductSlice {
@@ -561,6 +566,42 @@ enum ConceptType {
     ETC
 }
 
+enum SurveyQuestionType {
+    TEXT
+    SINGLE_CHOICE
+    MULTIPLE_CHOICE
+}
+
+type SurveyForm {
+    id: ID!
+    title: String!
+    description: String
+    questions: [SurveyQuestion!]!
+}
+
+type SurveyQuestion {
+    id: ID!
+    order: Int!
+    title: String!
+    description: String
+    type: SurveyQuestionType!
+    required: Boolean!
+    options: [String!]!
+}
+
+type SurveySubmission {
+    id: ID!
+    formId: ID!
+    submittedAt: String
+    answers: [SurveySubmittedAnswer!]!
+}
+
+type SurveySubmittedAnswer {
+    questionId: ID!
+    answerText: String
+    selectedOptions: [String!]!
+}
+
 enum MockPaymentWebhookStatus {
     SUCCEEDED
     FAILED
@@ -676,4 +717,29 @@ input MockPaymentWebhookInput {
     paymentReference: String!
     status: MockPaymentWebhookStatus!
     failureReason: String
+}
+
+input UpsertAdminSurveyFormInput {
+    title: String!
+    description: String
+    questions: [UpsertAdminSurveyQuestionInput!]!
+}
+
+input UpsertAdminSurveyQuestionInput {
+    order: Int!
+    title: String!
+    description: String
+    type: SurveyQuestionType!
+    required: Boolean = false
+    options: [String!]! = []
+}
+
+input SubmitSurveyFormInput {
+    answers: [SubmitSurveyAnswerInput!]!
+}
+
+input SubmitSurveyAnswerInput {
+    questionId: ID!
+    answerText: String
+    selectedOptions: [String!]! = []
 }
