@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface SurveySubmissionJpaRepository : JpaRepository<SurveySubmission, Long> {
     fun findFirstByUserIdOrderByIdDesc(userId: Long): SurveySubmission?
+    fun findByIdAndUserId(id: Long, userId: Long): SurveySubmission?
 }
