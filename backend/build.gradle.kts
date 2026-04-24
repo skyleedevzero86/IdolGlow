@@ -56,13 +56,13 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("io.rest-assured:rest-assured:5.4.0")
 
-	//Jsypt
+	//jsypt
 	implementation("com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.flywaydb:flyway-mysql:11.14.1")
 
-	// Spring Data jpa
+	// spring data jpa
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-websocket")
@@ -74,13 +74,13 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64")
 
-	// QueryDsl
+	//QueryDsl
 	implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
 	kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
 	kapt("jakarta.annotation:jakarta.annotation-api")
 	kapt("jakarta.persistence:jakarta.persistence-api")
 
-	// 로컬 스토리지서버
+	// 로컬에서 사용하는 스토리지 서버
 	implementation("io.minio:minio:8.5.17")
 
 	//JWT
@@ -88,7 +88,7 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2")
 
-	// SWAGGER
+	// swagger
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 }
 
