@@ -39,6 +39,12 @@ class UserSurvey(
     @Column(name = "visit_end_date", nullable = false)
     var visitEndDate: LocalDate,
 
+    @Column(name = "visit_start_time", length = 5)
+    var visitStartTime: String? = null,
+
+    @Column(name = "visit_end_time", length = 5)
+    var visitEndTime: String? = null,
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
         name = "user_survey_places",
@@ -57,6 +63,8 @@ class UserSurvey(
             idolName = command.idolName,
             visitStartDate = command.visitStartDate,
             visitEndDate = command.visitEndDate,
+            visitStartTime = command.visitStartTime,
+            visitEndTime = command.visitEndTime,
             places = Places.of(command.places)
         )
     }
@@ -66,6 +74,8 @@ class UserSurvey(
         idolName: String,
         visitStartDate: LocalDate,
         visitEndDate: LocalDate,
+        visitStartTime: String?,
+        visitEndTime: String?,
         places: Places
     ) {
         require(!visitEndDate.isBefore(visitStartDate)) {
@@ -76,6 +86,8 @@ class UserSurvey(
         this.idolName = idolName.trim()
         this.visitStartDate = visitStartDate
         this.visitEndDate = visitEndDate
+        this.visitStartTime = visitStartTime?.trim()?.ifBlank { null }
+        this.visitEndTime = visitEndTime?.trim()?.ifBlank { null }
         places.applyTo(this.places)
     }
 
@@ -92,6 +104,8 @@ class UserSurvey(
             idolName: String,
             visitStartDate: LocalDate,
             visitEndDate: LocalDate,
+            visitStartTime: String?,
+            visitEndTime: String?,
             places: List<String>
         ): UserSurvey {
             val survey = UserSurvey(
@@ -107,6 +121,8 @@ class UserSurvey(
                 idolName = idolName,
                 visitStartDate = visitStartDate,
                 visitEndDate = visitEndDate,
+                visitStartTime = visitStartTime,
+                visitEndTime = visitEndTime,
                 places = Places.of(places)
             )
 

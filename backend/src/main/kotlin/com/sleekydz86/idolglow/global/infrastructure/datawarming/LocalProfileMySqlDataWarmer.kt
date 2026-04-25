@@ -88,6 +88,8 @@ class LocalProfileMySqlDataWarmer(
                 idolName = "샘플 아이돌",
                 visitStartDate = LocalDate.now().plusDays(3),
                 visitEndDate = LocalDate.now().plusDays(5),
+                visitStartTime = "09:00",
+                visitEndTime = "24:00",
                 places = listOf("서울", "홍대")
             )
         )

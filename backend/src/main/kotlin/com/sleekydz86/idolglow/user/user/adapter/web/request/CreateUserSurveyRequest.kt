@@ -25,6 +25,12 @@ data class CreateUserSurveyRequest(
     @field:NotNull
     val visitEndDate: LocalDate,
 
+    @field:Schema(description = "여행 시작 시각(HH:mm)", example = "09:00")
+    val visitStartTime: String? = null,
+
+    @field:Schema(description = "여행 종료 시각(HH:mm)", example = "24:00")
+    val visitEndTime: String? = null,
+
     @field:Schema(description = "여행 장소", example = "['용산구', '마포구']")
     val places: List<@NotBlank String>
 )
@@ -35,5 +41,7 @@ fun CreateUserSurveyRequest.toCommand(): UpsertUserSurveyCommand =
         idolName = idolName,
         visitStartDate = visitStartDate,
         visitEndDate = visitEndDate,
+        visitStartTime = visitStartTime?.trim()?.ifBlank { null },
+        visitEndTime = visitEndTime?.trim()?.ifBlank { null },
         places = places
     )
