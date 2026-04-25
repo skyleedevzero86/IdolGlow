@@ -15,11 +15,19 @@ import org.springframework.transaction.annotation.Transactional
 class AdminSurveyFormService(
     private val surveyFormJpaRepository: SurveyFormJpaRepository,
 ) {
+    companion object {
+        private const val MAX_SURVEY_QUESTIONS = 5
+    }
+
     @Transactional(readOnly = true)
     fun findCurrent(): SurveyFormResponse? =
         surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
 
     fun upsertCurrent(request: AdminUpsertSurveyFormRequest): SurveyFormResponse {
+        require(request.questions.isNotEmpty()) { "문항이 없으면 저장할 수 없습니다." }
+        require(request.questions.size <= MAX_SURVEY_QUESTIONS) {
+            "문항은 최대 ${MAX_SURVEY_QUESTIONS}개까지 등록할 수 있습니다."
+        }
         val form = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()
             ?.apply {
                 title = request.title.trim()
