@@ -28,6 +28,8 @@ class UserSurveyCommandService(
                     idolName = command.idolName,
                     visitStartDate = command.visitStartDate,
                     visitEndDate = command.visitEndDate,
+                    visitStartTime = command.visitStartTime,
+                    visitEndTime = command.visitEndTime,
                     places = command.places
                 )
             )
@@ -44,6 +46,8 @@ class UserSurveyCommandService(
             idolName = survey.idolName,
             visitStartDate = survey.visitStartDate,
             visitEndDate = survey.visitEndDate,
+            visitStartTime = survey.visitStartTime,
+            visitEndTime = survey.visitEndTime,
             places = com.sleekydz86.idolglow.user.user.domain.vo.Places.of(emptyList()),
         )
         userSurveyRepository.save(survey)
