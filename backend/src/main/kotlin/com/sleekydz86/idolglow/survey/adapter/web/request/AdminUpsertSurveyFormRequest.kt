@@ -14,6 +14,7 @@ data class AdminUpsertSurveyFormRequest(
     @field:Size(max = 2000)
     val description: String? = null,
     @field:NotEmpty
+    @field:Size(min = 1, max = 5, message = "문항은 1개 이상 5개 이하여야 합니다.")
     val questions: List<@Valid AdminSurveyQuestionRequest>,
 )
 
