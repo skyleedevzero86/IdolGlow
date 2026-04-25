@@ -10,11 +10,15 @@ class UserSurveyRepositoryImpl(
 ): UserSurveyRepository {
 
     override fun findByUserId(userId: Long): UserSurvey? =
-        userSurveyJpaRepository.findByUserId(userId)
+        userSurveyJpaRepository.findFirstByUserIdOrderByIdDesc(userId)
 
     override fun existsByUserId(userId: Long): Boolean =
         userSurveyJpaRepository.existsByUserId(userId)
 
     override fun save(userSurvey: UserSurvey): UserSurvey =
         userSurveyJpaRepository.save(userSurvey)
+
+    override fun deleteByUserId(userId: Long) {
+        userSurveyJpaRepository.deleteByUserId(userId)
+    }
 }

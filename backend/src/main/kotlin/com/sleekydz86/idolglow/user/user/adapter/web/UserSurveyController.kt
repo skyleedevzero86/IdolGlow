@@ -40,4 +40,10 @@ class UserSurveyController(
         return ResponseEntity.created(URI.create("/surveys"))
             .body(UserSurveyUpsertResponse(id = survey.id))
     }
+
+    @DeleteMapping("/places")
+    override fun clearUserSurveyPlaces(@LoginUser userId: Long): ResponseEntity<Void> {
+        userSurveyCommandService.clearUserSurveyPlaces(userId)
+        return ResponseEntity.noContent().build()
+    }
 }

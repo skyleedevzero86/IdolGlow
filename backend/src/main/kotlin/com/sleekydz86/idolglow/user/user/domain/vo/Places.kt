@@ -12,9 +12,6 @@ class Places private constructor(
                 .filter { it.isNotBlank() }
                 .distinct()
                 .toList()
-
-            require(normalized.isNotEmpty()) { "장소는 하나 이상 입력해야 합니다." }
-
             return Places(normalized)
         }
     }

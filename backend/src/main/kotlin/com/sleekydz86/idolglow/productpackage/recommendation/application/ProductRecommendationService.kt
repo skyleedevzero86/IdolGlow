@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.productpackage.recommendation.application.dto.Pro
 import com.sleekydz86.idolglow.productpackage.recommendation.domain.ProductLatestKoreaRecommendation
 import com.sleekydz86.idolglow.productpackage.recommendation.infrastructure.ProductLatestKoreaRecommendationJpaRepository
 import com.sleekydz86.idolglow.productpackage.recommendation.infrastructure.RecommendationProductJpaRepository
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,6 +19,8 @@ class ProductRecommendationService(
     private val productRepository: RecommendationProductJpaRepository,
     private val aggregateImageQueryService: AggregateImageQueryService,
 ) {
+    private val log = LoggerFactory.getLogger(this::class.java)
+
     @Transactional
     fun replaceLatestInKorea(productIds: List<Long>): Int {
         val normalized = productIds.distinct()
@@ -86,12 +89,35 @@ class ProductRecommendationService(
         val resolvedSize = size.coerceIn(1, 50)
         val normalizedTag = tagName?.trim()?.takeIf { it.isNotEmpty() }
         val normalizedKeyword = searchKeyword?.trim()?.takeIf { it.isNotEmpty() }
-        val products = productRepository.findAdminPicked(
-            tag = normalizedTag,
-            keyword = normalizedKeyword,
-            pageable = PageRequest.of(0, resolvedSize),
-        )
-        return toPagingResponses(products)
+
+        return runCatching {
+            val candidates = productRepository.findByIsRecommendedTrueOrderByRecommendationScoreDescIdDesc(
+                PageRequest.of(0, 200),
+            )
+
+            val filtered = candidates.asSequence()
+                .filter { product ->
+                    normalizedTag == null || product.productTags.any { tag ->
+                        tag.tagName.equals(normalizedTag, ignoreCase = true)
+                    }
+                }
+                .filter { product ->
+                    normalizedKeyword == null || product.name.contains(normalizedKeyword, ignoreCase = true)
+                }
+                .take(resolvedSize)
+                .toList()
+
+            toPagingResponses(filtered)
+        }.getOrElse { exception ->
+            log.warn(
+                "findAdminRecommended failed. size={}, tag={}, query={}, cause={}",
+                resolvedSize,
+                normalizedTag,
+                normalizedKeyword,
+                exception.message,
+            )
+            emptyList()
+        }
     }
 
     private fun toPagingResponses(products: List<com.sleekydz86.idolglow.productpackage.product.domain.Product>): List<ProductPagingQueryResponse> {
@@ -108,3 +134,4 @@ class ProductRecommendationService(
         }
     }
 }
+

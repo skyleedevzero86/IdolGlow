@@ -46,4 +46,19 @@ interface UserSurveyApi {
         userId: Long,
         @Valid request: CreateUserSurveyRequest
     ): ResponseEntity<UserSurveyUpsertResponse>
+
+    @Operation(
+        summary = "설문 장소 비우기",
+        description = "설문의 장소 목록만 비웁니다."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "204", description = "비우기 성공"),
+            ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        ]
+    )
+    fun clearUserSurveyPlaces(
+        @Parameter(hidden = true)
+        userId: Long,
+    ): ResponseEntity<Void>
 }
