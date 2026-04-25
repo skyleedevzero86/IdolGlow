@@ -4,7 +4,6 @@ import com.sleekydz86.idolglow.user.user.application.dto.UpsertUserSurveyCommand
 import com.sleekydz86.idolglow.user.user.domain.vo.ConceptType
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
@@ -27,7 +26,6 @@ data class CreateUserSurveyRequest(
     val visitEndDate: LocalDate,
 
     @field:Schema(description = "여행 장소", example = "['용산구', '마포구']")
-    @field:NotEmpty
     val places: List<@NotBlank String>
 )
 
