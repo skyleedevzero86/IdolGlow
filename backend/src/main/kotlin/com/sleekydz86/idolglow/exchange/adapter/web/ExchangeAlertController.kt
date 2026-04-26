@@ -18,7 +18,7 @@ class ExchangeAlertController(
     private val exchangeAlertCommandService: ExchangeAlertCommandService,
 ) {
 
-    @PostMapping("/exchange-alerts")
+    @PostMapping("/exchange-alerts", "/mypage/exchange-alerts", "/api/exchange-alerts")
     fun create(
         @LoginUser userId: Long,
         @Valid @RequestBody body: CreateExchangeAlertRequest,

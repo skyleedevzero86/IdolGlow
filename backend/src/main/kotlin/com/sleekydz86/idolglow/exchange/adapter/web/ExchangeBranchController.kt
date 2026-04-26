@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "환전")
 @RestController
-@RequestMapping("/exchange")
+@RequestMapping("/exchange", "/mypage/exchange", "/api/exchange")
 class ExchangeBranchController(
     private val exchangeBranchQueryService: ExchangeBranchQueryService,
 ) {
