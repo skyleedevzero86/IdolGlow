@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.exchange.infrastructure
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import com.sleekydz86.idolglow.global.infrastructure.config.NaverDirectionsProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -72,7 +72,7 @@ class NaverDirectionsClient(
         }
         val routeNode = root["route"] ?: return null
         val optionNode = routeNode[optionKey] ?: return null
-        if (!optionNode.isArray || optionNode.isEmpty) {
+        if (!optionNode.isArray || optionNode.size() == 0) {
             return null
         }
         val summary = optionNode[0]["summary"] ?: return null

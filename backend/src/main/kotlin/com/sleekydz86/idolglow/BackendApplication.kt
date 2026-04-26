@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperti
 import com.sleekydz86.idolglow.global.infrastructure.config.ExchangeAirportHubProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.KoreaEximExchangeProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.NaverDirectionsProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.SubwayProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
@@ -30,6 +31,7 @@ import org.springframework.cache.annotation.EnableCaching
     KoreaEximExchangeProperties::class,
     NaverDirectionsProperties::class,
     ExchangeAirportHubProperties::class,
+    SubwayProperties::class,
 )
 class BackendApplication
 
