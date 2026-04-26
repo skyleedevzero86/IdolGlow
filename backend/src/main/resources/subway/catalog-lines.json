@@ -7,5 +7,7 @@
   {"id": "6", "name": "6호선", "colorHex": "#CD7C2F"},
   {"id": "7", "name": "7호선", "colorHex": "#747F00"},
   {"id": "8", "name": "8호선", "colorHex": "#E6186C"},
-  {"id": "9", "name": "9호선", "colorHex": "#BDB092"}
+  {"id": "9", "name": "9호선", "colorHex": "#BDB092"},
+  {"id": "AREX", "name": "공항철도", "colorHex": "#0099D8"},
+  {"id": "SUINBUNDANG", "name": "수인·분당선", "colorHex": "#FABE00"}
 ]

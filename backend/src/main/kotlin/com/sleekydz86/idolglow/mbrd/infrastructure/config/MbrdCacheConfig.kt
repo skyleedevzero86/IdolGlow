@@ -17,5 +17,6 @@ class MbrdCacheConfig {
             "mbrd-editor-document-by-id",
             "mbrd-editor-document-by-slug",
             "mbrd-editor-document-pages",
+            "subway-station-llm-summary",
         )
 }

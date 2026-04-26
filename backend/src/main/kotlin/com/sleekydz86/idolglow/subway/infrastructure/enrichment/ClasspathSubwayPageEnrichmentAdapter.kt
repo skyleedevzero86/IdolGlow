@@ -3,19 +3,25 @@ package com.sleekydz86.idolglow.subway.infrastructure.enrichment
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.sleekydz86.idolglow.subway.application.port.out.SubwayPageEnrichmentPort
 import com.sleekydz86.idolglow.subway.domain.SubwayPageEnrichment
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Component
 class ClasspathSubwayPageEnrichmentAdapter(
     private val objectMapper: ObjectMapper,
-) : SubwayPageEnrichmentPort {
+) {
 
     private val fileRoot: EnrichmentFileRoot by lazy(::readFile)
 
-    override fun loadFor(lineId: String, stationCd: String, stationDisplayName: String): SubwayPageEnrichment {
+    fun loadClasspathEnrichment(
+        lineId: String,
+        @Suppress("UNUSED_PARAMETER") lineName: String,
+        stationCd: String,
+        stationDisplayName: String,
+    ): SubwayPageEnrichment {
         val key = "$lineId:$stationCd"
         val ov = fileRoot.overrides[key]
         val def = fileRoot.defaultBlock
@@ -45,7 +51,8 @@ class ClasspathSubwayPageEnrichmentAdapter(
             def.learnMoreLabel != null -> def.learnMoreLabel
             else -> def.learnMoreLabelTemplate ?: "{stationName} 에 대해 더 알아보세요"
         }
-        val learnUrl = ov?.learnMoreUrl ?: def.learnMoreUrl
+        val learnUrlRaw = ov?.learnMoreUrl ?: def.learnMoreUrl
+        val learnUrl = learnUrlRaw?.trim()?.takeIf { it.isNotEmpty() }?.let { tpl(it, stationName) }
         val radius = ov?.nearbyRadiusMeters ?: def.nearbyRadiusMeters
         val count = ov?.nearbyCount ?: def.nearbyCount
         val nearbyLabelRaw = ov?.nearbyLabel ?: def.nearbyLabel
@@ -53,15 +60,18 @@ class ClasspathSubwayPageEnrichmentAdapter(
             summaryTitle = tpl(titleRaw, stationName),
             summaryBullets = bulletsRaw.map { tpl(it, stationName) },
             learnMoreLabel = tpl(learnRaw, stationName),
-            learnMoreUrl = learnUrl?.trim()?.takeIf { it.isNotEmpty() },
+            learnMoreUrl = learnUrl?.takeIf { it.isNotEmpty() },
             nearbyRadiusMeters = radius,
             nearbyCount = count,
             nearbyLabel = tpl(nearbyLabelRaw, stationName),
         )
     }
 
-    private fun tpl(s: String, stationName: String): String =
-        s.replace("{stationName}", stationName)
+    private fun tpl(s: String, stationName: String): String {
+        val mapsQuery = URLEncoder.encode("${stationName}역", StandardCharsets.UTF_8)
+        return s.replace("{stationName}", stationName)
+            .replace("{stationNameForMaps}", mapsQuery)
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private data class EnrichmentFileRoot(

@@ -1,3 +1,13 @@
 {
-  "2": "subway/line-02-stations.json"
+  "3": "subway/line-03-stations.json",
+  "4": "subway/line-04-stations.json",
+  "5": "subway/line-05-stations.json",
+  "6": "subway/line-06-stations.json",
+  "7": "subway/line-07-stations.json",
+  "8": "subway/line-08-stations.json",
+  "9": "subway/line-09-stations.json",
+  "1": "subway/line-01-stations.json",
+  "2": "subway/line-02-stations.json",
+  "AREX": "subway/line-arex-stations.json",
+  "SUINBUNDANG": "subway/line-suinbundang-stations.json"
 }
