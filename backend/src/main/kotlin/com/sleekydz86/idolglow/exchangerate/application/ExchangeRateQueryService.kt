@@ -2,50 +2,45 @@ package com.sleekydz86.idolglow.exchangerate.application
 
 import com.sleekydz86.idolglow.exchangerate.application.port.out.ExchangeRateQueryPort
 import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
-import com.sleekydz86.idolglow.exchange.infrastructure.ExchangeBranchJpaRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.ZoneId
 
 @Transactional(readOnly = true)
 @Service
 class ExchangeRateQueryService(
     private val exchangeRateQueryPort: ExchangeRateQueryPort,
-    private val exchangeBranchJpaRepository: ExchangeBranchJpaRepository,
 ) {
     fun getDailyRates(searchDate: LocalDate?): List<ExchangeRateQuote> {
-        val official = exchangeRateQueryPort.fetchDailyRates(searchDate)
-        if (official.isNotEmpty()) {
-            return official
+        val baseDate = searchDate ?: LocalDate.now(KOREA_ZONE_ID)
+        val sameDay = exchangeRateQueryPort.fetchDailyRates(baseDate)
+        if (sameDay.isNotEmpty()) {
+            return sameDay
         }
-        return fallbackBranchRates()
+
+        var candidate = baseDate
+        repeat(MAX_PREVIOUS_BUSINESS_DAY_RETRIES) {
+            candidate = previousBusinessDay(candidate)
+            val fallback = exchangeRateQueryPort.fetchDailyRates(candidate)
+            if (fallback.isNotEmpty()) {
+                return fallback
+            }
+        }
+
+        return emptyList()
     }
 
-    private fun fallbackBranchRates(): List<ExchangeRateQuote> =
-        exchangeBranchJpaRepository.findAll()
-            .sortedWith(compareBy({ it.currency }, { it.sortOrder }))
-            .groupBy { it.currency.uppercase() }
-            .mapNotNull { (currency, rows) ->
-                val hub = rows.firstOrNull { it.airportHub } ?: rows.firstOrNull() ?: return@mapNotNull null
-                ExchangeRateQuote(
-                    curUnit = currency,
-                    curNm = FALLBACK_CURRENCY_NAMES[currency] ?: currency,
-                    ttb = hub.rate.stripTrailingZeros().toPlainString(),
-                    tts = hub.rate.stripTrailingZeros().toPlainString(),
-                    dealBasR = hub.rate.stripTrailingZeros().toPlainString(),
-                    bkpr = hub.rate.stripTrailingZeros().toPlainString(),
-                )
-            }
-            .sortedBy { FALLBACK_ORDER.indexOf(it.curUnit).let { idx -> if (idx >= 0) idx else Int.MAX_VALUE } }
+    private fun previousBusinessDay(date: LocalDate): LocalDate {
+        var candidate = date.minusDays(1)
+        while (candidate.dayOfWeek.value >= 6) {
+            candidate = candidate.minusDays(1)
+        }
+        return candidate
+    }
 
     companion object {
-        private val FALLBACK_ORDER = listOf("CNY", "EUR", "JPY", "USD")
-
-        private val FALLBACK_CURRENCY_NAMES = mapOf(
-            "CNY" to "위안",
-            "EUR" to "유로",
-            "JPY" to "엔",
-            "USD" to "달러",
-        )
+        private val KOREA_ZONE_ID: ZoneId = ZoneId.of("Asia/Seoul")
+        private const val MAX_PREVIOUS_BUSINESS_DAY_RETRIES = 7
     }
 }
