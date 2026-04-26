@@ -7,7 +7,7 @@ import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductBro
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendedAttractionResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendationResponse
-import com.sleekydz86.idolglow.survey.infrastructure.OpenAiSurveyRecommendationClient
+import com.sleekydz86.idolglow.survey.infrastructure.SurveyRecommendationLlmRouter
 import com.sleekydz86.idolglow.survey.infrastructure.SurveySubmissionJpaRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,7 +21,7 @@ class SurveyRecommendationService(
     private val surveySubmissionJpaRepository: SurveySubmissionJpaRepository,
     private val productQueryService: ProductQueryService,
     private val tourAttractionQueryPort: TourAttractionQueryPort,
-    private val openAiSurveyRecommendationClient: OpenAiSurveyRecommendationClient,
+    private val surveyRecommendationLlmRouter: SurveyRecommendationLlmRouter,
 ) {
     fun generate(userId: Long, submissionId: Long, useLlm: Boolean): SurveyRecommendationResponse {
         val submission = surveySubmissionJpaRepository.findByIdAndUserId(submissionId, userId)
@@ -55,7 +55,7 @@ class SurveyRecommendationService(
         }.getOrDefault(emptyList()).take(5)
 
         val llm = if (useLlm) {
-            openAiSurveyRecommendationClient.generate(
+            surveyRecommendationLlmRouter.generate(
                 titleFallback = titleFallback,
                 subtitleFallback = subtitleFallback,
                 narrativeFallback = narrativeFallback,

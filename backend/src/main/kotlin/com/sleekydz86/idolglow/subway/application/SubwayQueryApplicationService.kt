@@ -80,7 +80,7 @@ class SubwayQueryApplicationService(
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "해당 노선에 속하지 않는 역입니다.")
         }
         val current = ring.at(idx)
-        val enrichment = pageEnrichmentPort.loadFor(lineId, stationCd, current.name)
+        val enrichment = pageEnrichmentPort.loadFor(line.id, line.name, stationCd, current.name)
         return SubwayStationPageResult(
             line = line,
             station = current,

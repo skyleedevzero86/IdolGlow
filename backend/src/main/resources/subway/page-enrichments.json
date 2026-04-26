@@ -1,29 +1,16 @@
 {
   "default": {
-    "summaryTitleTemplate": "{stationName}",
+    "summaryTitleTemplate": "{stationName}역",
     "summaryBullets": [
-      "{stationName} 역 안내는 운영 데이터와 연동해 확장할 수 있습니다.",
-      "주변 추천·거점 수는 서비스 DB·지도 API와 연결해 갱신합니다."
+      "{stationName}역 주변은 지하철 노선과 연결된 생활·상권 정보를 바탕으로 안내 문구를 구성할 수 있습니다.",
+      "주변 추천·거점 수는 서비스 DB·지도 API와 연결해 역별로 갱신합니다.",
+      "OpenAI 요약이 비활성화되었거나 호출에 실패한 경우 이 기본 문구가 표시됩니다."
     ],
-    "learnMoreLabelTemplate": "{stationName} 에 대해 더 알아보세요",
-    "learnMoreUrl": null,
+    "learnMoreLabelTemplate": "{stationName}에 대해 더 알아보세요",
+    "learnMoreUrl": "https://www.google.com/maps/search/?api=1&query={stationNameForMaps}",
     "nearbyRadiusMeters": 2000,
     "nearbyCount": 0,
     "nearbyLabel": "따릉이"
   },
-  "overrides": {
-    "2:0222": {
-      "summaryTitle": "강남",
-      "summaryBullets": [
-        "강남역 주변은 서울의 대표 트렌드 중심지로, 최신 유행과 다양한 외식·뷰티·엔터 경험이 함께 어우러집니다.",
-        "역세권에는 대형 백화점과 복합 쇼핑몰이 밀집해 있어 쇼핑·미식을 한 번에 즐기기 좋습니다.",
-        "업무 지구와 주거 지구가 인접해 있어 낮과 밤 모두 활기찬 도시 풍경을 느낄 수 있습니다."
-      ],
-      "learnMoreLabel": "강남에 대해 더 알아보세요",
-      "learnMoreUrl": "https://www.google.com/maps/search/?api=1&query=%EA%B0%95%EB%82%A8%EC%97%AD",
-      "nearbyRadiusMeters": 2000,
-      "nearbyCount": 61,
-      "nearbyLabel": "따릉이"
-    }
-  }
+  "overrides": {}
 }

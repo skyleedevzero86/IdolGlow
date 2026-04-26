@@ -44,40 +44,17 @@ class OpenAiSurveyRecommendationClient(
             messages = listOf(
                 SurveyChatMessage(
                     role = "system",
-                    content = """
-                        한국 여행 추천 카피라이터 역할로 동작하세요.
-                        반드시 JSON 객체만 출력하세요.
-                        형식:
-                        {
-                          "title":"...",
-                          "subtitle":"...",
-                          "narrative":"...",
-                          "attractionReasons":{"<attractionCode>":"..."}
-                        }
-                    """.trimIndent(),
+                    content = SurveyLlmPrompts.system,
                 ),
                 SurveyChatMessage(
                     role = "user",
-                    content = objectMapper.writeValueAsString(
-                        mapOf(
-                            "fallback" to mapOf(
-                                "title" to titleFallback,
-                                "subtitle" to subtitleFallback,
-                                "narrative" to narrativeFallback,
-                            ),
-                            "answerHighlights" to answerHighlights,
-                            "attractions" to attractions.map {
-                                mapOf(
-                                    "attractionCode" to it.attractionCode,
-                                    "name" to it.name,
-                                    "areaName" to it.areaName,
-                                    "signguName" to it.signguName,
-                                    "categoryLarge" to it.categoryLarge,
-                                    "categoryMiddle" to it.categoryMiddle,
-                                    "rank" to it.rank,
-                                )
-                            },
-                        )
+                    content = SurveyLlmPrompts.userJson(
+                        objectMapper,
+                        titleFallback,
+                        subtitleFallback,
+                        narrativeFallback,
+                        answerHighlights,
+                        attractions,
                     ),
                 ),
             ),
