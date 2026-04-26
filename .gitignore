@@ -22,5 +22,6 @@ rad.json
 TestResults.xml
 docs/
 frontend/
+.run/
 infra/jenkins-local/.env
 infra/jenkins-local/deployments/

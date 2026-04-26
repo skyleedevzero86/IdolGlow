@@ -11,6 +11,10 @@ group = "com.sleekydz86"
 version = "0.0.1-SNAPSHOT"
 description = "backend"
 
+springBoot {
+	mainClass.set("com.sleekydz86.idolglow.BackendApplicationKt")
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(25)
