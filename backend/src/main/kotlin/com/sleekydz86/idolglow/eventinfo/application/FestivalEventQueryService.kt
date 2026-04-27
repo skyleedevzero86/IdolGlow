@@ -52,19 +52,29 @@ class FestivalEventQueryService(
         lclsSystm2: String?,
         lclsSystm3: String?,
     ): List<FestivalEvent> {
-        val q = keyword.trim()
-        require(q.isNotEmpty()) { "keyword는 필수입니다." }
+        val trimmed = keyword.trim()
+        val regn = lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() }
+        val signgu = lDongSignguCd?.trim()?.takeIf { it.isNotEmpty() }
+        val c1 = lclsSystm1?.trim()?.takeIf { it.isNotEmpty() }
+        val c2 = lclsSystm2?.trim()?.takeIf { it.isNotEmpty() }
+        val c3 = lclsSystm3?.trim()?.takeIf { it.isNotEmpty() }
+        val hasFilter = regn != null || signgu != null || c1 != null || c2 != null || c3 != null
+        val q = when {
+            trimmed.isNotEmpty() -> trimmed
+            hasFilter -> DEFAULT_KEYWORD_FOR_FILTER_ONLY_SEARCH
+            else -> throw IllegalArgumentException("keyword는 필수입니다. 지역·분류만 검색할 때는 조건을 하나 이상 선택하세요.")
+        }
         val page = pageNo.coerceAtLeast(1)
         val rows = numOfRows.coerceIn(1, 100)
         return festivalEventExternalQueryPort.searchKeyword(
             keyword = q,
             pageNo = page,
             numOfRows = rows,
-            lDongRegnCd = lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() },
-            lDongSignguCd = lDongSignguCd?.trim()?.takeIf { it.isNotEmpty() },
-            lclsSystm1 = lclsSystm1?.trim()?.takeIf { it.isNotEmpty() },
-            lclsSystm2 = lclsSystm2?.trim()?.takeIf { it.isNotEmpty() },
-            lclsSystm3 = lclsSystm3?.trim()?.takeIf { it.isNotEmpty() },
+            lDongRegnCd = regn,
+            lDongSignguCd = signgu,
+            lclsSystm1 = c1,
+            lclsSystm2 = c2,
+            lclsSystm3 = c3,
         )
     }
 
@@ -92,5 +102,6 @@ class FestivalEventQueryService(
 
     companion object {
         private val YYYYMMDD = Regex("^\\d{8}$")
+        private const val DEFAULT_KEYWORD_FOR_FILTER_ONLY_SEARCH = "축제"
     }
 }

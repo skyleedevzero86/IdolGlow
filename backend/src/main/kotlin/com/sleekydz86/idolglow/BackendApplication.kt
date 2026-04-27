@@ -11,6 +11,7 @@ import com.sleekydz86.idolglow.global.infrastructure.config.KopisApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.NaverDirectionsProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.SubwayProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.SeoulSjwApiProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.CultureInfoApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.SpcdeInfoApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourKorApiProperties
@@ -35,6 +36,7 @@ import org.springframework.cache.annotation.EnableCaching
     TourKorApiProperties::class,
     SeoulSjwApiProperties::class,
     SpcdeInfoApiProperties::class,
+    CultureInfoApiProperties::class,
     KoreaEximExchangeProperties::class,
     KopisApiProperties::class,
     NaverDirectionsProperties::class,
