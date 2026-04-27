@@ -7,9 +7,13 @@ import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.ExchangeAirportHubProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.KoreaEximExchangeProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.KopisApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.NaverDirectionsProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.SubwayProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.SeoulSjwApiProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.SpcdeInfoApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.TourKorApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -28,7 +32,11 @@ import org.springframework.cache.annotation.EnableCaching
     GemmaProperties::class,
     PlatformAuthProperties::class,
     TourApiProperties::class,
+    TourKorApiProperties::class,
+    SeoulSjwApiProperties::class,
+    SpcdeInfoApiProperties::class,
     KoreaEximExchangeProperties::class,
+    KopisApiProperties::class,
     NaverDirectionsProperties::class,
     ExchangeAirportHubProperties::class,
     SubwayProperties::class,
