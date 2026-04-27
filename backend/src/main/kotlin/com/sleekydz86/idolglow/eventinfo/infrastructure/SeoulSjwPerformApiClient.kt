@@ -7,13 +7,19 @@ import com.sleekydz86.idolglow.global.infrastructure.config.SeoulSjwApiPropertie
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.w3c.dom.Element
+import org.xml.sax.InputSource
+import tools.jackson.databind.ObjectMapper
+import java.io.StringReader
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import javax.xml.parsers.DocumentBuilderFactory
 
 @Component
 class SeoulSjwPerformApiClient(
     private val webClient: WebClient,
     private val seoulSjwApiProperties: SeoulSjwApiProperties,
+    private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
@@ -23,15 +29,7 @@ class SeoulSjwPerformApiClient(
         val start = ((pageNo.coerceAtLeast(1) - 1) * numOfRows.coerceIn(1, 1000)) + 1
         val end = start + numOfRows.coerceIn(1, 1000) - 1
         val path = "/$key/json/SJWPerform/$start/$end"
-        val response = runCatching {
-            webClient.get().uri("${seoulSjwApiProperties.baseUrl.trimEnd('/')}$path")
-                .retrieve()
-                .bodyToMono(SjwEnvelope::class.java)
-                .block()
-        }.getOrElse {
-            log.warn("SJWPerform 목록 호출 실패: {}", it.message)
-            null
-        } ?: return emptyList()
+        val response = fetchSjwEnvelope(path) ?: return emptyList()
         val resultCode = response.sjwPerform?.result?.code
         if (resultCode != null && resultCode != "INFO-000" && resultCode != "INFO-200") {
             log.warn("SJWPerform 제공기관 오류. code={}, message={}", resultCode, response.sjwPerform?.result?.message)
@@ -44,15 +42,7 @@ class SeoulSjwPerformApiClient(
         val key = seoulSjwApiProperties.apiKey.trim()
         if (key.isEmpty()) return null
         val path = "/$key/json/SJWPerform/1/1/$performIdx"
-        val response = runCatching {
-            webClient.get().uri("${seoulSjwApiProperties.baseUrl.trimEnd('/')}$path")
-                .retrieve()
-                .bodyToMono(SjwEnvelope::class.java)
-                .block()
-        }.getOrElse {
-            log.warn("SJWPerform 상세 호출 실패: {}", it.message)
-            null
-        } ?: return null
+        val response = fetchSjwEnvelope(path) ?: return null
         val resultCode = response.sjwPerform?.result?.code
         if (resultCode != null && resultCode != "INFO-000") {
             return null
@@ -74,6 +64,97 @@ class SeoulSjwPerformApiClient(
 
     private fun parseDate(value: String): LocalDate? =
         runCatching { LocalDate.parse(value, DateTimeFormatter.BASIC_ISO_DATE) }.getOrNull()
+
+    private fun fetchSjwEnvelope(path: String): SjwEnvelope? {
+        val base = seoulSjwApiProperties.baseUrl.trimEnd('/')
+        val uri = "$base$path"
+        val raw = runCatching {
+            webClient.get().uri(uri).retrieve().bodyToMono(String::class.java).block()
+        }.getOrElse {
+            log.warn("SJWPerform 호출 실패: {}", it.message)
+            return null
+        } ?: return null
+        val trimmed = raw.trim()
+        return when {
+            trimmed.startsWith("<") -> parseSjwXmlEnvelope(trimmed)
+            else ->
+                runCatching {
+                    objectMapper.readValue(trimmed, SjwEnvelope::class.java)
+                }.getOrElse {
+                    log.warn("SJWPerform JSON 파싱 실패: {}", it.message)
+                    null
+                }
+        }
+    }
+
+    private fun parseSjwXmlEnvelope(xml: String): SjwEnvelope? =
+        runCatching {
+            val factory = DocumentBuilderFactory.newInstance()
+            factory.isNamespaceAware = false
+            val doc = factory.newDocumentBuilder().parse(InputSource(StringReader(xml)))
+            val performEl = doc.getElementsByTagName("SJWPerform").item(0) as? Element
+                ?: doc.documentElement
+                ?: return null
+            val resultEl = firstChildElement(performEl, "RESULT")
+            val result = resultEl?.let { el ->
+                SjwResult(
+                    code = childText(el, "CODE"),
+                    message = childText(el, "MESSAGE"),
+                )
+            }
+            val rows = mutableListOf<SjwRow>()
+            val rowNodes = performEl.getElementsByTagName("row")
+            for (i in 0 until rowNodes.length) {
+                val rowEl = rowNodes.item(i) as? Element ?: continue
+                rows.add(sjwRowFromXmlElement(rowEl))
+            }
+            SjwEnvelope(SjwBody(result = result, rows = rows))
+        }.getOrElse {
+            log.warn("SJWPerform XML 파싱 실패: {}", it.message)
+            null
+        }
+
+    private fun firstChildElement(parent: Element, tag: String): Element? {
+        for (i in 0 until parent.childNodes.length) {
+            val n = parent.childNodes.item(i)
+            if (n is Element && n.tagName.equals(tag, ignoreCase = true)) return n
+        }
+        return null
+    }
+
+    private fun childText(parent: Element, tag: String): String? {
+        val el = firstChildElement(parent, tag) ?: return null
+        return el.textContent?.trim()?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun sjwRowFromXmlElement(row: Element): SjwRow {
+        val map = linkedMapOf<String, String>()
+        for (i in 0 until row.childNodes.length) {
+            val n = row.childNodes.item(i)
+            if (n is Element) {
+                val t = n.textContent?.trim().orEmpty()
+                if (t.isNotEmpty()) map[n.tagName.uppercase()] = t
+            }
+        }
+        fun t(vararg keys: String): String? {
+            for (k in keys) {
+                map.entries.firstOrNull { it.key.equals(k, ignoreCase = true) }?.value?.let { return it }
+            }
+            return null
+        }
+        return SjwRow(
+            performIdx = t("PERFORM_IDX"),
+            title = t("TITLE"),
+            startDate = t("START_DATE"),
+            endDate = t("END_DATE"),
+            placeList = t("PLACE_LIST"),
+            fileUrl = t("FILE_URL"),
+            infoUrl = t("INFO_URL"),
+            genreName = t("GENRE_NAME"),
+            synopsis = t("SYNOPSIS"),
+            inquiryPhone = t("INQUIRY_PHONE"),
+        )
+    }
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

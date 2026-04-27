@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.sleekydz86.idolglow.eventinfo.application.port.out.FestivalEventExternalQueryPort
 import com.sleekydz86.idolglow.eventinfo.domain.CodeEntry
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
@@ -13,6 +14,10 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriUtils
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.JsonDeserializer
 import tools.jackson.databind.ObjectMapper
 import java.net.URI
 import java.nio.charset.StandardCharsets
@@ -243,8 +248,18 @@ private data class FestivalHeader(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class FestivalBody(
+    @JsonDeserialize(using = LenientFestivalItemsDeserializer::class)
     val items: FestivalItems = FestivalItems(),
 )
+
+private class LenientFestivalItemsDeserializer : JsonDeserializer<FestivalItems>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): FestivalItems =
+        when (p.currentToken()) {
+            JsonToken.VALUE_STRING, JsonToken.VALUE_NULL -> FestivalItems()
+            JsonToken.START_OBJECT -> ctxt.readValue(p, FestivalItems::class.java)
+            else -> FestivalItems()
+        }
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class FestivalItems(
@@ -355,15 +370,46 @@ private data class CodeItem(
     val lclsSystm3Cd: String? = null,
     val lclsSystm3Nm: String? = null,
 ) {
-    fun toDomain(): CodeEntry =
-        CodeEntry(
+    fun toDomain(): CodeEntry {
+        val noLcls =
+            lclsSystm1Cd.isNullOrBlank() &&
+                lclsSystm2Cd.isNullOrBlank() &&
+                lclsSystm3Cd.isNullOrBlank()
+        val rawRegn = lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() }
+        val rawSigngu = lDongSignguCd?.trim()?.takeIf { it.isNotEmpty() }
+        val trimmedCode = code?.trim()?.takeIf { it.isNotEmpty() }
+        val regnFromCode =
+            rawRegn == null &&
+                rawSigngu == null &&
+                noLcls &&
+                trimmedCode != null
+        val effectiveRegnCd = rawRegn ?: if (regnFromCode) trimmedCode else null
+        val effectiveRegnNm =
+            lDongRegnNm?.trim()?.takeIf { it.isNotEmpty() }
+                ?: if (regnFromCode) name?.trim()?.takeIf { it.isNotEmpty() } else null
+        val effectiveSignguCd =
+            rawSigngu
+                ?: if (
+                    noLcls &&
+                        effectiveRegnCd != null &&
+                        trimmedCode != null &&
+                        trimmedCode != effectiveRegnCd
+                ) {
+                    trimmedCode
+                } else {
+                    null
+                }
+        val effectiveSignguNm =
+            lDongSignguNm?.trim()?.takeIf { it.isNotEmpty() }
+                ?: if (effectiveSignguCd != null && rawSigngu == null) name?.trim()?.takeIf { it.isNotEmpty() } else null
+        return CodeEntry(
             code = code,
             name = name,
             rnum = rnum,
-            lDongRegnCd = lDongRegnCd,
-            lDongRegnNm = lDongRegnNm,
-            lDongSignguCd = lDongSignguCd,
-            lDongSignguNm = lDongSignguNm,
+            lDongRegnCd = effectiveRegnCd,
+            lDongRegnNm = effectiveRegnNm,
+            lDongSignguCd = effectiveSignguCd,
+            lDongSignguNm = effectiveSignguNm,
             lclsSystm1Cd = lclsSystm1Cd,
             lclsSystm1Nm = lclsSystm1Nm,
             lclsSystm2Cd = lclsSystm2Cd,
@@ -371,4 +417,5 @@ private data class CodeItem(
             lclsSystm3Cd = lclsSystm3Cd,
             lclsSystm3Nm = lclsSystm3Nm,
         )
+    }
 }
