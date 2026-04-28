@@ -1,0 +1,28 @@
+package com.sleekydz86.idolglow.global.adapter.security
+
+
+import jakarta.servlet.FilterChain
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.filter.OncePerRequestFilter
+
+class JwtFilter(
+    private val jwtProvider: JwtProvider
+) : OncePerRequestFilter() {
+
+    override fun doFilterInternal(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
+    ) {
+        val jwt = jwtProvider.resolveToken(request)
+
+        if (!jwt.isNullOrBlank() && jwtProvider.validateAccessToken(jwt)) {
+            val authentication = jwtProvider.findAuthentication(jwt)
+            SecurityContextHolder.getContext().authentication = authentication
+        }
+
+        filterChain.doFilter(request, response)
+    }
+}

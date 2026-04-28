@@ -28,10 +28,28 @@ class UserSurveyCommandService(
                     idolName = command.idolName,
                     visitStartDate = command.visitStartDate,
                     visitEndDate = command.visitEndDate,
+                    visitStartTime = command.visitStartTime,
+                    visitEndTime = command.visitEndTime,
                     places = command.places
                 )
             )
 
         return UserSurveyUpsertResponse(survey.id)
+    }
+
+    fun clearUserSurveyPlaces(userId: Long) {
+        userRepository.findById(userId)
+            ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
+        val survey = userSurveyRepository.findByUserId(userId) ?: return
+        survey.apply(
+            concept = survey.concept,
+            idolName = survey.idolName,
+            visitStartDate = survey.visitStartDate,
+            visitEndDate = survey.visitEndDate,
+            visitStartTime = survey.visitStartTime,
+            visitEndTime = survey.visitEndTime,
+            places = com.sleekydz86.idolglow.user.user.domain.vo.Places.of(emptyList()),
+        )
+        userSurveyRepository.save(survey)
     }
 }

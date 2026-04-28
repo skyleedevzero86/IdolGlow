@@ -10,7 +10,7 @@ import com.sleekydz86.idolglow.admin.ui.dto.AdminMemoryStatusResponse
 import com.sleekydz86.idolglow.admin.ui.dto.AdminServerStatusResponse
 import com.sleekydz86.idolglow.admin.ui.dto.AdminServerSummaryResponse
 import com.sleekydz86.idolglow.admin.ui.dto.AdminSystemStatusResponse
-import com.sleekydz86.idolglow.global.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
 import io.micrometer.core.instrument.MeterRegistry
 import io.minio.BucketExistsArgs
 import io.minio.MinioClient

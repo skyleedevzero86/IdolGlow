@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.gemma.infrastructure
 
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
-import com.sleekydz86.idolglow.global.config.GemmaProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType

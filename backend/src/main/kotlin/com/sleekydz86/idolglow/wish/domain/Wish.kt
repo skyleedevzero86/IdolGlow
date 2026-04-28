@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.wish.domain
 
-import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.user.user.domain.User
 import jakarta.persistence.*

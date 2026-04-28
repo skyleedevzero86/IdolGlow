@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.payment.infrastructure
 
-import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest

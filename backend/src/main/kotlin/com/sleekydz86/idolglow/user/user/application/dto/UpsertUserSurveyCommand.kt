@@ -8,5 +8,7 @@ data class UpsertUserSurveyCommand (
     val idolName: String,
     val visitStartDate: LocalDate,
     val visitEndDate: LocalDate,
+    val visitStartTime: String?,
+    val visitEndTime: String?,
     val places: List<String>
 )
