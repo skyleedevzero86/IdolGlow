@@ -28,6 +28,16 @@ interface FestivalEventExternalQueryPort {
         lclsSystm3: String? = null,
     ): List<FestivalEvent>
 
+    fun areaBasedList(
+        pageNo: Int,
+        numOfRows: Int,
+        lDongRegnCd: String? = null,
+        lDongSignguCd: String? = null,
+        lclsSystm1: String? = null,
+        lclsSystm2: String? = null,
+        lclsSystm3: String? = null,
+    ): List<FestivalEvent>
+
     fun lDongCodes(lDongRegnCd: String?, lDongListYn: String): List<CodeEntry>
 
     fun lclsCodes(

@@ -66,6 +66,17 @@ class FestivalEventQueryService(
         }
         val page = pageNo.coerceAtLeast(1)
         val rows = numOfRows.coerceIn(1, 100)
+        if (trimmed.isEmpty()) {
+            return festivalEventExternalQueryPort.areaBasedList(
+                pageNo = page,
+                numOfRows = rows,
+                lDongRegnCd = regn,
+                lDongSignguCd = signgu,
+                lclsSystm1 = c1,
+                lclsSystm2 = c2,
+                lclsSystm3 = c3,
+            )
+        }
         return festivalEventExternalQueryPort.searchKeyword(
             keyword = q,
             pageNo = page,
