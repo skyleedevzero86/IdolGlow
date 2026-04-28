@@ -45,6 +45,43 @@ class AirportCrowdQueryService(
             }
     }
 
+    fun crowdCriteria(zone: String?): List<CrowdCriteriaView> {
+        val normalizedZone = zone?.trim()?.lowercase()
+        return when (normalizedZone) {
+            "arrival" -> listOf(
+                crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "시간당 1,000명 미만", "#0ac84c"),
+                crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "시간당 1,000~2,500명", "#fdd83f"),
+                crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "시간당 2,500~4,000명", "#ff8a00"),
+                crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "시간당 4,000명 이상이 유입됩니다", "#f24548"),
+            )
+            "parking" -> listOf(
+                crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "주차 점유율 55% 미만", "#0ac84c"),
+                crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "주차 점유율 55~75%", "#fdd83f"),
+                crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "주차 점유율 75~90%", "#ff8a00"),
+                crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "주차 점유율 90% 이상", "#f24548"),
+            )
+            else -> listOf(
+                crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "대기시간 20분 미만", "#0ac84c"),
+                crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "대기시간 20~30분", "#fdd83f"),
+                crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "대기시간 30~40분", "#ff8a00"),
+                crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "대기시간 40분 이상", "#f24548"),
+            )
+        }
+    }
+
+    private fun crowdCriteria(
+        level: DepartureCrowdLevel,
+        title: String,
+        description: String,
+        color: String,
+    ): CrowdCriteriaView =
+        CrowdCriteriaView(
+            level = level,
+            title = title,
+            description = description,
+            color = color,
+        )
+
     private fun toLevel(waitTimeMinutes: Int?): DepartureCrowdLevel {
         if (waitTimeMinutes == null) return DepartureCrowdLevel.UNKNOWN
         return when {
@@ -187,6 +224,13 @@ data class DepartureCongestionView(
     val occurredAt: java.time.LocalDateTime?,
     val operatingTime: String?,
     val level: DepartureCrowdLevel,
+)
+
+data class CrowdCriteriaView(
+    val level: DepartureCrowdLevel,
+    val title: String,
+    val description: String,
+    val color: String,
 )
 
 data class PassengerForecastBundleView(
