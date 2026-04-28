@@ -20,6 +20,7 @@ class IncheonDepartureCongestionApiClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,
     private val properties: IncheonAirportCongestionProperties,
+    private val authCooldown: IncheonAirportApiAuthCooldown,
 ) : DepartureCongestionQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
 
@@ -29,6 +30,7 @@ class IncheonDepartureCongestionApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): List<DepartureCongestion> {
+        if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
         val uri = buildUrl(
@@ -40,6 +42,12 @@ class IncheonDepartureCongestionApiClient(
         )
         val response = requestRaw(uri)
         if (!response.statusCode.is2xxSuccessful) {
+            if (response.statusCode.value() == 401) {
+                if (authCooldown.markUnauthorized(API_NAME)) {
+                    log.warn("{} API 인증 실패(401). 서비스키 승인/인코딩 상태를 확인하세요. 5분 동안 재호출을 생략합니다.", API_NAME)
+                }
+                return emptyList()
+            }
             log.warn("출국장 혼잡도 HTTP 오류. status={}, body={}", response.statusCode.value(), response.body.take(300))
             return emptyList()
         }
@@ -147,6 +155,7 @@ class IncheonDepartureCongestionApiClient(
         }
 
     companion object {
+        private const val API_NAME = "출국장 혼잡도"
         private val OCCUR_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
     }
 }
