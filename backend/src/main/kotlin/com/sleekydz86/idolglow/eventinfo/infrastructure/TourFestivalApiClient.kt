@@ -1,12 +1,6 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
-import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.sleekydz86.idolglow.eventinfo.application.port.out.FestivalEventExternalQueryPort
 import com.sleekydz86.idolglow.eventinfo.domain.CodeEntry
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
@@ -18,6 +12,7 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriUtils
+import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import java.net.URI
 import java.nio.charset.StandardCharsets
@@ -101,7 +96,33 @@ class TourFestivalApiClient(
             params = buildMap {
                 put("arrange", "Q")
                 put("keyword", keyword)
-                put("contentTypeId", "85")
+                put("pageNo", pageNo.toString())
+                put("numOfRows", numOfRows.toString())
+                lDongRegnCd?.let { put("lDongRegnCd", it) }
+                lDongSignguCd?.let { put("lDongSignguCd", it) }
+                lclsSystm1?.let { put("lclsSystm1", it) }
+                lclsSystm2?.let { put("lclsSystm2", it) }
+                lclsSystm3?.let { put("lclsSystm3", it) }
+            },
+        ).mapNotNull { it.toDomain() }
+    }
+
+    override fun areaBasedList(
+        pageNo: Int,
+        numOfRows: Int,
+        lDongRegnCd: String?,
+        lDongSignguCd: String?,
+        lclsSystm1: String?,
+        lclsSystm2: String?,
+        lclsSystm3: String?,
+    ): List<FestivalEvent> {
+        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        if (encodedKey.isEmpty()) return emptyList()
+        return fetchList<FestivalItem>(
+            endpoint = "areaBasedList2",
+            encodedServiceKey = encodedKey,
+            params = buildMap {
+                put("arrange", "Q")
                 put("pageNo", pageNo.toString())
                 put("numOfRows", numOfRows.toString())
                 lDongRegnCd?.let { put("lDongRegnCd", it) }
@@ -116,16 +137,17 @@ class TourFestivalApiClient(
     override fun lDongCodes(lDongRegnCd: String?, lDongListYn: String): List<CodeEntry> {
         val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
         if (encodedKey.isEmpty()) return emptyList()
+        val parentRegnCd = lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() }
         return fetchList<CodeItem>(
             endpoint = "ldongCode2",
             encodedServiceKey = encodedKey,
             params = buildMap {
                 put("lDongListYn", lDongListYn)
                 put("pageNo", "1")
-                put("numOfRows", "500")
-                lDongRegnCd?.let { put("lDongRegnCd", it) }
+                put("numOfRows", "1000")
+                parentRegnCd?.let { put("lDongRegnCd", it) }
             },
-        ).map { it.toDomain() }
+        ).map { it.toDomain(parentRegnCd = parentRegnCd) }
     }
 
     override fun lclsCodes(
@@ -142,7 +164,7 @@ class TourFestivalApiClient(
             params = buildMap {
                 put("lclsSystmListYn", lclsSystmListYn)
                 put("pageNo", "1")
-                put("numOfRows", "500")
+                put("numOfRows", "1000")
                 lclsSystm1?.let { put("lclsSystm1", it) }
                 lclsSystm2?.let { put("lclsSystm2", it) }
                 lclsSystm3?.let { put("lclsSystm3", it) }
@@ -164,24 +186,34 @@ class TourFestivalApiClient(
             log.warn("Tour API XML 오류 응답. endpoint={}, body={}", endpoint, response.body.take(300))
             return emptyList()
         }
-        val parsed = runCatching {
-            objectMapper.readValue(response.body, FestivalResponseEnvelope::class.java)
+        val root = runCatching {
+            objectMapper.readTree(response.body)
         }.getOrElse { e ->
             log.warn("Tour API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
             return emptyList()
         }
-        if (parsed.response?.header?.resultCode != "0000") {
+        val responseNode = root.path("response")
+        val headerNode = responseNode.path("header")
+        val resultCode = headerNode.path("resultCode").asText("")
+        if (resultCode != "0000") {
             log.warn(
                 "Tour API 제공기관 오류. endpoint={}, resultCode={}, resultMsg={}",
                 endpoint,
-                parsed.response?.header?.resultCode,
-                parsed.response?.header?.resultMsg,
+                resultCode,
+                headerNode.path("resultMsg").asText(""),
             )
             return emptyList()
         }
-        return parsed.response?.body?.items?.item.orEmpty().mapNotNull {
+        return extractItemNodes(responseNode.path("body").path("items")).mapNotNull {
             runCatching { objectMapper.convertValue(it, T::class.java) }.getOrNull()
         }
+    }
+
+    private fun extractItemNodes(itemsNode: JsonNode): List<JsonNode> {
+        if (itemsNode.isMissingNode || itemsNode.isNull || itemsNode.isTextual) return emptyList()
+        val itemNode = itemsNode.path("item")
+        if (itemNode.isMissingNode || itemNode.isNull || itemNode.isTextual) return emptyList()
+        return if (itemNode.isArray) itemNode.toList() else listOf(itemNode)
     }
 
     private fun requestRaw(
@@ -231,41 +263,33 @@ class TourFestivalApiClient(
 
 private data class RawFestivalResponse(val statusCode: HttpStatusCode, val body: String)
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FestivalResponseEnvelope(val response: FestivalResponse? = null)
+private val HREF_ATTR_REGEX = Regex("""href\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+private val HTML_TAG_REGEX = Regex("<[^>]+>")
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FestivalResponse(
-    val header: FestivalHeader = FestivalHeader(),
-    val body: FestivalBody = FestivalBody(),
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FestivalHeader(
-    val resultCode: String? = null,
-    val resultMsg: String? = null,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FestivalBody(
-    @JsonDeserialize(using = LenientFestivalItemsDeserializer::class)
-    val items: FestivalItems = FestivalItems(),
-)
-
-private class LenientFestivalItemsDeserializer : JsonDeserializer<FestivalItems>() {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): FestivalItems =
-        when (p.currentToken()) {
-            JsonToken.VALUE_STRING, JsonToken.VALUE_NULL -> FestivalItems()
-            JsonToken.START_OBJECT -> ctxt.readValue(p, FestivalItems::class.java)
-            else -> FestivalItems()
-        }
+private fun cleanTourHomepage(raw: String?): String? {
+    val source = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val href = HREF_ATTR_REGEX.find(source)?.groupValues?.getOrNull(1)
+    val candidate = href ?: cleanTourHtmlText(source)
+    return decodeBasicHtmlEntities(candidate)
+        ?.trim()
+        ?.takeIf { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) }
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FestivalItems(
-    @JsonFormat(with = [JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY])
-    val item: List<Map<String, Any?>> = emptyList(),
-)
+private fun cleanTourHtmlText(raw: String?): String? {
+    val source = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    return decodeBasicHtmlEntities(source.replace(HTML_TAG_REGEX, " "))
+        ?.replace(Regex("\\s+"), " ")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+}
+
+private fun decodeBasicHtmlEntities(raw: String?): String? =
+    raw
+        ?.replace("&amp;", "&")
+        ?.replace("&lt;", "<")
+        ?.replace("&gt;", ">")
+        ?.replace("&quot;", "\"")
+        ?.replace("&#39;", "'")
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class FestivalItem(
@@ -319,8 +343,8 @@ private data class DetailCommonItem(
             contentId = id,
             contentTypeId = contenttypeid?.trim()?.takeIf { it.isNotEmpty() },
             title = title?.trim()?.takeIf { it.isNotEmpty() },
-            homepage = homepage?.trim()?.takeIf { it.isNotEmpty() },
-            overview = overview?.trim()?.takeIf { it.isNotEmpty() },
+            homepage = cleanTourHomepage(homepage),
+            overview = cleanTourHtmlText(overview),
             address = addr1?.trim()?.takeIf { it.isNotEmpty() },
             addressDetail = addr2?.trim()?.takeIf { it.isNotEmpty() },
             mapX = mapx?.toDoubleOrNull(),
@@ -370,7 +394,7 @@ private data class CodeItem(
     val lclsSystm3Cd: String? = null,
     val lclsSystm3Nm: String? = null,
 ) {
-    fun toDomain(): CodeEntry {
+    fun toDomain(parentRegnCd: String? = null): CodeEntry {
         val noLcls =
             lclsSystm1Cd.isNullOrBlank() &&
                 lclsSystm2Cd.isNullOrBlank() &&
@@ -379,11 +403,12 @@ private data class CodeItem(
         val rawSigngu = lDongSignguCd?.trim()?.takeIf { it.isNotEmpty() }
         val trimmedCode = code?.trim()?.takeIf { it.isNotEmpty() }
         val regnFromCode =
+            parentRegnCd == null &&
             rawRegn == null &&
                 rawSigngu == null &&
                 noLcls &&
                 trimmedCode != null
-        val effectiveRegnCd = rawRegn ?: if (regnFromCode) trimmedCode else null
+        val effectiveRegnCd = rawRegn ?: parentRegnCd ?: if (regnFromCode) trimmedCode else null
         val effectiveRegnNm =
             lDongRegnNm?.trim()?.takeIf { it.isNotEmpty() }
                 ?: if (regnFromCode) name?.trim()?.takeIf { it.isNotEmpty() } else null
