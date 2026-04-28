@@ -6,6 +6,50 @@
 작성 규칙은 [docs/CHANGELOG_POLICY.md](IdolGlow/CHANGELOG_POLICY.md)를 참고합니다.
 자동 갱신은 [release-please.yml](IdolGlow/.github/workflows/release-please.yml)에서 처리합니다.
 
+## [0.4.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.3.0...v0.4.0) (2026-04-28)
+
+
+### Features
+
+* **#9:** expand travel services and recommendation APIs ([29e14e2](https://github.com/skyleedevzero86/IdolGlow/commit/29e14e25886ac6d642c8a6bd8b047e1759692d11))
+* complete event detail modal and source-specific integrations ([74a4459](https://github.com/skyleedevzero86/IdolGlow/commit/74a4459baa5b50beb4c59756ecebaad7e756e2a8))
+* Glow 지하철 페이지 추가 ([6607edc](https://github.com/skyleedevzero86/IdolGlow/commit/6607edce9cb794521419cb86d7dc810f87374dbf))
+* improve survey UX and add visit time slots ([fa409fe](https://github.com/skyleedevzero86/IdolGlow/commit/fa409fefcd4fe438a774c2fcb0ac33960ac32425))
+* LLM 라우팅 및 공항철도·수인분당 노선 데이터 추가 ([a5e6009](https://github.com/skyleedevzero86/IdolGlow/commit/a5e60098e47141fe9e1619436a92c2b4944c2199))
+* persist tour attraction picks and wire Tour API ([3f43c83](https://github.com/skyleedevzero86/IdolGlow/commit/3f43c8332471fe69e42632eeede82157eff5712f))
+* Tour 추천 기능 구현 및 아키텍처 정렬 ([4b600f0](https://github.com/skyleedevzero86/IdolGlow/commit/4b600f02007073fd49bfb1b57ae6d222ea7bf4de))
+* 문화캘린더 API·고급검색·요청 파라미터 바인딩 정리 ([5dda84c](https://github.com/skyleedevzero86/IdolGlow/commit/5dda84c1cc8498d98cf41126b2795b90d02aa0aa))
+* 상품 관광지 추천 API 문서화 및 퍼블릭 상품 상세 연결 ([8c74327](https://github.com/skyleedevzero86/IdolGlow/commit/8c74327f05353c2e7a6787db9dbb52ba17dc3004))
+* 상품 주변 관광지 추천 GraphQL 연동 및 Tour 설정 정리 ([403d998](https://github.com/skyleedevzero86/IdolGlow/commit/403d998383e8fa3815abd3c79c8fe05650f681b9))
+* 상품 추천 API·DB 및 설문 기반 추천·OpenAI 연동 추가 ([cc0cd56](https://github.com/skyleedevzero86/IdolGlow/commit/cc0cd56bcf26dc1233318410532f96d78052b9ab))
+* 상품 테이블·등록폼·테마 동작 정리 ([de4b5ea](https://github.com/skyleedevzero86/IdolGlow/commit/de4b5ea75cf5b64fbf7e4db0ec711b72f521e29c))
+* 설문 도메인 구조화 및 추천/AI 연계 기반 확장 ([6ed0b06](https://github.com/skyleedevzero86/IdolGlow/commit/6ed0b064e191064b2ddee87280c75fc2b01ef5ed))
+* 옵션 검색·페이징 API 및 상품 편집에 추가 아이템 팝업 ([f6b5050](https://github.com/skyleedevzero86/IdolGlow/commit/f6b5050d948ffc95ee93ea29630d9f98203df0d5))
+* 지역·분류 기반 Tour 축제 조회 및 홈페이지/HTML 정제 ([934c43d](https://github.com/skyleedevzero86/IdolGlow/commit/934c43dc22abf878341c1cbe180e62179e3d886d))
+* 환율 조회 API 추가 ([933f0ac](https://github.com/skyleedevzero86/IdolGlow/commit/933f0ac5649fd43f99cc191c1e9e0b6eefdc1ac6))
+* 환전소 목록·NAVER 차량 이동시간·환율 알림 API 및 환율 페이지 UI ([0b1fb7f](https://github.com/skyleedevzero86/IdolGlow/commit/0b1fb7f045656bf922364003cdbf1f6613d0a024))
+
+
+### Bug Fixes
+
+* Glow추천 장소 비우기/삭제 저장 안정화 ([98f0863](https://github.com/skyleedevzero86/IdolGlow/commit/98f086386ae844b212e434d5451ec8c8c525d4d4))
+* ObjectMapper 패키지 변경 ([a5e8bf7](https://github.com/skyleedevzero86/IdolGlow/commit/a5e8bf7632d9e5057d69cc1a2e01e116d29431b4))
+* Spring Boot 메인 클래스 실행 설정 명시 ([c9b1dc5](https://github.com/skyleedevzero86/IdolGlow/commit/c9b1dc5fa96edae7d9ddd454ac64bb695515b2eb))
+* Tour 역직렬화에 Jackson 2(fasterxml) 타입 정렬 ([1ba28c4](https://github.com/skyleedevzero86/IdolGlow/commit/1ba28c44e32344b764796eca752f0d3e9c7307b9))
+* 공식 환율 조회 시 이전 영업일 fallback 추가 ([bb5aeab](https://github.com/skyleedevzero86/IdolGlow/commit/bb5aeab464909558e873e9adee55d9c1f870fd07))
+* 목록 조회 시 대표 위치 로드 및 Tour 연계 필드 정리 ([5f67f58](https://github.com/skyleedevzero86/IdolGlow/commit/5f67f5821e2acb6bff9a81c583090a7ef37eb2b8))
+* 상품 UI·테마·DB 마이그레이션 정리 ([af333d4](https://github.com/skyleedevzero86/IdolGlow/commit/af333d4bd632340ababfe631c9c7706c113e0b7f))
+* 서울 SJW XML 응답 처리 및 Tour API 빈 items 역직렬화 ([6e0bcf9](https://github.com/skyleedevzero86/IdolGlow/commit/6e0bcf91c7014c4651d7abf16ea137c618ef4de1))
+* 코드정리 ([13bcd01](https://github.com/skyleedevzero86/IdolGlow/commit/13bcd011672ef10d5fec69e758fb79877cc912de))
+* 쿼리 수정 ([e6bcfd9](https://github.com/skyleedevzero86/IdolGlow/commit/e6bcfd9f42a90184b357f7eaff968b4d9b10066c))
+* 패키지 정리 ([4a372e2](https://github.com/skyleedevzero86/IdolGlow/commit/4a372e216ba5e970f179ad7e2969139f3d792b53))
+* 환율 계산기 및 환전소 통화 표시 보정 ([789584f](https://github.com/skyleedevzero86/IdolGlow/commit/789584ff80a85bc248dcd877e16c2add7b0e25a5))
+
+
+### Refactoring
+
+* decouple tour attraction lookup from product location persistence ([7cb2813](https://github.com/skyleedevzero86/IdolGlow/commit/7cb28137b39e30db60a3741cba40f487c54e54e4))
+
 ## [0.3.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.2.0...v0.3.0) (2026-04-22)
 
 
