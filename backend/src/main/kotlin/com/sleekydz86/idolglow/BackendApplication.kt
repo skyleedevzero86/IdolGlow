@@ -16,6 +16,10 @@ import com.sleekydz86.idolglow.global.infrastructure.config.SpcdeInfoApiProperti
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourKorApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.IncheonAirportCongestionProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.IncheonAirportArrivalsCongestionProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.IncheonAirportPassengerForecastProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.IncheonAirportParkingProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -42,6 +46,10 @@ import org.springframework.cache.annotation.EnableCaching
     NaverDirectionsProperties::class,
     ExchangeAirportHubProperties::class,
     SubwayProperties::class,
+    IncheonAirportCongestionProperties::class,
+    IncheonAirportArrivalsCongestionProperties::class,
+    IncheonAirportPassengerForecastProperties::class,
+    IncheonAirportParkingProperties::class,
 )
 class BackendApplication
 
