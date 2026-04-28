@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.airportcrowd.adapter.web
 
 import com.sleekydz86.idolglow.airportcrowd.application.AirportCrowdQueryService
 import com.sleekydz86.idolglow.airportcrowd.application.ArrivalCongestionView
+import com.sleekydz86.idolglow.airportcrowd.application.CrowdCriteriaView
 import com.sleekydz86.idolglow.airportcrowd.application.DepartureCongestionView
 import com.sleekydz86.idolglow.airportcrowd.application.ParkingCongestionView
 import com.sleekydz86.idolglow.airportcrowd.application.PassengerForecastBundleView
@@ -62,6 +63,42 @@ class AirportCrowdController(
         return airportCrowdQueryService
             .listParkingCongestion(terminal = terno)
             .map { ParkingCongestionResponse.from(it) }
+    }
+
+    @GetMapping("/criteria")
+    fun criteria(
+        @LoginUser userId: Long,
+        @RequestParam(required = false) zone: String?,
+    ): List<CrowdCriteriaResponse> {
+        check(userId > 0L) { "로그인이 필요합니다." }
+        return airportCrowdQueryService
+            .crowdCriteria(zone)
+            .map { CrowdCriteriaResponse.from(it) }
+    }
+}
+
+data class CrowdCriteriaResponse(
+    val level: String,
+    val levelLabel: String,
+    val title: String,
+    val description: String,
+    val color: String,
+) {
+    companion object {
+        fun from(view: CrowdCriteriaView): CrowdCriteriaResponse =
+            CrowdCriteriaResponse(
+                level = view.level.name.lowercase(),
+                levelLabel = when (view.level) {
+                    DepartureCrowdLevel.SMOOTH -> "정상"
+                    DepartureCrowdLevel.MODERATE -> "다소 붐빔"
+                    DepartureCrowdLevel.BUSY -> "붐빔"
+                    DepartureCrowdLevel.HEAVY -> "매우 혼잡"
+                    DepartureCrowdLevel.UNKNOWN -> "확인중"
+                },
+                title = view.title,
+                description = view.description,
+                color = view.color,
+            )
     }
 }
 
