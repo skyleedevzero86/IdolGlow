@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.user.user.application
 
-import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
-import com.sleekydz86.idolglow.global.config.MinioStorageProperties
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.UserExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.UserExceptionType
 import io.minio.BucketExistsArgs
 import io.minio.MakeBucketArgs
 import io.minio.MinioClient

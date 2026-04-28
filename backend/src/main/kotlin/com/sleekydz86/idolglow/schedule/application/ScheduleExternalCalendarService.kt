@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.schedule.application
 
-import com.sleekydz86.idolglow.global.config.AppCalendarProperties
-import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppCalendarProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
 import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
 import org.springframework.stereotype.Service

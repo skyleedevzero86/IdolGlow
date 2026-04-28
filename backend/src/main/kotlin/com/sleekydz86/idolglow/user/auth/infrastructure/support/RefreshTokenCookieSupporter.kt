@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.infrastructure.support
 
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.auth.AuthExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value

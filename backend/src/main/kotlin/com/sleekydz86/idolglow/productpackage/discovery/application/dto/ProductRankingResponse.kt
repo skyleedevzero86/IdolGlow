@@ -13,6 +13,10 @@ data class ProductRankingResponse(
     val name: String,
     @field:Schema(description = "상품 설명", example = "헤어와 메이크업 코스가 포함된 상품입니다.")
     val description: String,
+    @field:Schema(description = "상품 기본가(옵션 합과 별도)", example = "10000.00")
+    val basePrice: BigDecimal,
+    @field:Schema(description = "옵션 가격 합(기본가 제외)", example = "90000.00")
+    val optionsTotalPrice: BigDecimal,
     @field:Schema(description = "최소 가격", example = "100000.00")
     val minPrice: BigDecimal,
     @field:Schema(description = "총 가격", example = "300000.00")
@@ -48,6 +52,8 @@ data class ProductRankingResponse(
                 id = product.id,
                 name = product.name,
                 description = product.description,
+                basePrice = product.basePrice,
+                optionsTotalPrice = product.optionsTotalPrice,
                 minPrice = product.minPrice,
                 totalPrice = product.totalPrice,
                 tagNames = tagNames,

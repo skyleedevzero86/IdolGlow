@@ -4,9 +4,9 @@ import tools.jackson.databind.JsonNode
 import com.sleekydz86.idolglow.gemma.application.dto.GemmaChatCommand
 import com.sleekydz86.idolglow.gemma.application.dto.GemmaChatResult
 import com.sleekydz86.idolglow.gemma.infrastructure.GemmaApiClient
-import com.sleekydz86.idolglow.global.config.GemmaProperties
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.gemma.GemmaExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.gemma.GemmaExceptionType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 

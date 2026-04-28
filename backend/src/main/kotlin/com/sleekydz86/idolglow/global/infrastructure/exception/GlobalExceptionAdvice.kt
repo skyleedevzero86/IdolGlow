@@ -1,0 +1,269 @@
+package com.sleekydz86.idolglow.global.infrastructure.exception
+
+import tools.jackson.databind.DatabindException
+import io.minio.errors.ErrorResponseException
+import jakarta.persistence.EntityNotFoundException
+import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.server.ResponseStatusException
+import org.springframework.web.servlet.resource.NoResourceFoundException
+
+@RestControllerAdvice
+class GlobalExceptionAdvice {
+
+    private val log = LoggerFactory.getLogger(this::class.java)
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationException(
+        request: HttpServletRequest,
+        exception: MethodArgumentNotValidException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("검증 실패: {} {}", request.method, request.requestURI)
+
+        val errors = exception.bindingResult.fieldErrors
+            .joinToString("; ") { "${it.field}: ${it.defaultMessage ?: "유효하지 않음"}" }
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "VALIDATION_ERROR",
+                    errorCode = "BAD_REQUEST",
+                    message = if (errors.isNotBlank()) errors else "요청 파라미터가 유효하지 않습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleDeserializationException(
+        exception: HttpMessageNotReadableException
+    ): ResponseEntity<ExceptionResponse> {
+        val message = when (val cause = exception.cause) {
+            is DatabindException -> {
+                when {
+                    cause.message?.contains("Required request body is missing") == true ->
+                        "요청 본문이 필요합니다."
+
+                    cause.message?.contains("null") == true -> {
+                        val fieldPath = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
+                        "필수 필드 '$fieldPath'는 null일 수 없습니다."
+                    }
+
+                    else -> {
+                        val fieldPath = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
+                        "JSON 형식이 올바르지 않습니다. (필드: $fieldPath)"
+                    }
+                }
+            }
+
+            else -> "요청 본문을 읽을 수 없습니다."
+        }
+
+        log.warn("역직렬화 오류: {}", message, exception)
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "DESERIALIZATION_ERROR",
+                    errorCode = "BAD_REQUEST",
+                    message = message
+                )
+            )
+    }
+
+    @ExceptionHandler(CustomException::class)
+    fun handleCustomException(
+        request: HttpServletRequest,
+        exception: CustomException
+    ): ResponseEntity<ExceptionResponse> {
+        val type = exception.getExceptionType()
+
+        log.warn(
+            "커스텀 예외 발생: {} | URI: {} {} | 메시지: {}",
+            type.errorCode, request.method, request.requestURI, type.message, exception
+        )
+
+        return ResponseEntity
+            .status(type.httpStatusCode)
+            .body(
+                ExceptionResponse(
+                    name = type::class.simpleName ?: type.errorCode,
+                    errorCode = type.errorCode,
+                    message = type.message
+                )
+            )
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(
+        request: HttpServletRequest,
+        exception: IllegalArgumentException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("잘못된 요청: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "BAD_REQUEST",
+                    errorCode = "BAD_REQUEST",
+                    message = exception.message ?: "잘못된 요청입니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(IllegalStateException::class)
+    fun handleIllegalStateException(
+        request: HttpServletRequest,
+        exception: IllegalStateException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("충돌 발생: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(
+                ExceptionResponse(
+                    name = "CONFLICT",
+                    errorCode = "CONFLICT",
+                    message = exception.message ?: "요청을 처리할 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(ResponseStatusException::class)
+    fun handleResponseStatusException(
+        request: HttpServletRequest,
+        exception: ResponseStatusException,
+    ): ResponseEntity<ExceptionResponse> {
+        val code = exception.statusCode.value()
+        val status = HttpStatus.values().find { it.value() == code } ?: HttpStatus.INTERNAL_SERVER_ERROR
+        val message = exception.reason ?: status.reasonPhrase
+        log.warn("HTTP 상태 예외: {} {} {} | {}", status.value(), request.method, request.requestURI, message)
+        return ResponseEntity
+            .status(status)
+            .body(
+                ExceptionResponse(
+                    name = status.name,
+                    errorCode = status.name,
+                    message = message,
+                ),
+            )
+    }
+
+    @ExceptionHandler(ErrorResponseException::class)
+    fun handleMinioErrorResponse(
+        request: HttpServletRequest,
+        exception: ErrorResponseException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn(
+            "MinIO 오류: {} {} | code={} message={}",
+            request.method,
+            request.requestURI,
+            exception.errorResponse().code(),
+            exception.errorResponse().message(),
+            exception
+        )
+        return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(
+                ExceptionResponse(
+                    name = "PROFILE_IMAGE_STORAGE_UNAVAILABLE",
+                    errorCode = "PROFILE_IMAGE_STORAGE_UNAVAILABLE",
+                    message = UserExceptionType.PROFILE_IMAGE_STORAGE_UNAVAILABLE.message
+                )
+            )
+    }
+
+    @ExceptionHandler(EntityNotFoundException::class)
+    fun handleEntityNotFoundException(
+        request: HttpServletRequest,
+        exception: EntityNotFoundException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("대상을 찾을 수 없음: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                ExceptionResponse(
+                    name = "NOT_FOUND",
+                    errorCode = "NOT_FOUND",
+                    message = "대상을 찾을 수 없습니다."
+                )
+            )
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFoundException(
+        request: HttpServletRequest,
+        exception: NoResourceFoundException
+    ): ResponseEntity<ExceptionResponse> {
+        log.warn("리소스를 찾지 못함: {} {} | {}", request.method, request.requestURI, exception.message)
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                ExceptionResponse(
+                    name = "NOT_FOUND",
+                    errorCode = "NOT_FOUND",
+                    message = "요청한 API 경로를 찾지 못했습니다. 백엔드를 재시작했는지 확인해 주세요."
+                )
+            )
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(
+        request: HttpServletRequest,
+        exception: DataIntegrityViolationException,
+    ): ResponseEntity<ExceptionResponse> {
+        val detail = exception.mostSpecificCause.message ?: exception.message.orEmpty()
+        val tooLong =
+            detail.contains("too long", ignoreCase = true) ||
+                detail.contains("character varying", ignoreCase = true) ||
+                detail.contains("Data too long", ignoreCase = true)
+        val message =
+            if (tooLong) {
+                "저장할 텍스트가 DB 컬럼 길이를 초과했습니다. 백엔드 재기동으로 Flyway editor_documents.introduction 확장 적용됐는지 확인하세요."
+            } else {
+                "데이터 제약 조건으로 저장할 수 없습니다."
+            }
+        log.warn("데이터 무결성 위반: {} {} | {}", request.method, request.requestURI, detail)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ExceptionResponse(
+                    name = "DATA_INTEGRITY_VIOLATION",
+                    errorCode = "BAD_REQUEST",
+                    message = message,
+                ),
+            )
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleUnexpectedException(
+        request: HttpServletRequest,
+        exception: Exception
+    ): ResponseEntity<ExceptionResponse> {
+        log.error(
+            "예상하지 못한 오류 발생: {} {} | 메시지: {}",
+            request.method, request.requestURI, exception.message, exception
+        )
+
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ExceptionResponse(
+                    name = "INTERNAL_SERVER_ERROR",
+                    errorCode = "INTERNAL_SERVER_ERROR",
+                    message = "서버 내부 오류가 발생했습니다."
+                )
+            )
+    }
+}

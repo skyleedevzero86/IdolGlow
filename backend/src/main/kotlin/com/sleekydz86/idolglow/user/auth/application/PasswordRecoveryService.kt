@@ -1,10 +1,10 @@
 package com.sleekydz86.idolglow.user.auth.application
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
-import com.sleekydz86.idolglow.global.config.AppMailProperties
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.auth.AuthExceptionType
-import com.sleekydz86.idolglow.global.security.JwtProvider
+import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
+import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse

@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.image.domain
 
-import com.sleekydz86.idolglow.global.BaseEntity
+import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.image.domain.domainservice.ImageStorage
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import jakarta.persistence.Column

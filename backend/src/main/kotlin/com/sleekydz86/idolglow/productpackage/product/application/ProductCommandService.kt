@@ -9,11 +9,13 @@ import com.sleekydz86.idolglow.productpackage.product.application.event.ProductC
 import com.sleekydz86.idolglow.productpackage.product.application.event.ProductLocationCommandService
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
+import com.sleekydz86.idolglow.productpackage.product.infrastructure.TourAttractionPicksJsonCodec
 import com.sleekydz86.idolglow.wish.application.WishEventPublisher
 import com.sleekydz86.idolglow.wish.domain.vo.WishAggregateType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 
 @Transactional
@@ -25,6 +27,7 @@ class ProductCommandService(
     private val productLocationCommandService: ProductLocationCommandService,
     private val wishEventPublisher: WishEventPublisher,
     private val imageEventPublisher: ImageEventPublisher,
+    private val objectMapper: ObjectMapper,
 ) {
 
     fun createProduct(command: CreateProductCommand): Product {
@@ -35,13 +38,16 @@ class ProductCommandService(
         val product = Product.createWithTimeSlots(
             name = command.name,
             description = command.description,
+            basePrice = command.basePrice,
             options = options,
             tagNames = command.tagNames,
             slotStartDate = slotStartDate,
             slotEndDate = slotEndDate,
-            slotStartHour = command.slotStartHour,
-            slotEndHour = command.slotEndHour
+            slotStartTime = command.slotStartTime,
+            slotEndTime = command.slotEndTime
         )
+        product.tourAttractionPicksJson =
+            TourAttractionPicksJsonCodec.encode(command.tourAttractionPicks, objectMapper)
         val saved = productCommandRepository.save(product)
 
         eventPublisher.publishEvent(
@@ -64,9 +70,12 @@ class ProductCommandService(
         product.updateBasics(
             name = command.name,
             description = command.description,
+            basePrice = command.basePrice,
         )
         product.replaceOptions(options)
         product.replaceTags(command.tagNames)
+        product.tourAttractionPicksJson =
+            TourAttractionPicksJsonCodec.encode(command.tourAttractionPicks, objectMapper)
         command.location?.let { payload ->
             productLocationCommandService.upsertProductLocation(productId, payload)
         }
@@ -90,8 +99,16 @@ class ProductCommandService(
     }
 
     private fun findOptions(optionIds: List<Long>): List<Option> {
-        val options = optionRepository.findAllByIdIn(optionIds)
-        require(options.size == optionIds.size) { "옵션 중 일부를 찾을 수 없습니다." }
-        return options
+        val distinctIds = optionIds.distinct()
+        if (distinctIds.isEmpty()) {
+            return emptyList()
+        }
+        val options = optionRepository.findAllByIdIn(distinctIds)
+        require(options.size == distinctIds.size) { "옵션 중 일부를 찾을 수 없습니다." }
+        val byId = options.associateBy { it.id }
+        return distinctIds.map { optionId ->
+            byId[optionId]
+                ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
+        }
     }
 }

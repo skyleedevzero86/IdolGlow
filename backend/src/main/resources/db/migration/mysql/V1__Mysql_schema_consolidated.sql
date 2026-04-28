@@ -1,4 +1,4 @@
--- MySQL 전체 스키마
+-- MySQL 전체 스키마 (V1~V2 Flyway 단계를 단일 본에 반영, 예: products.base_price)
 -- 새 데이터베이스를 처음 만들 때만 사용한다. 이미 같은 스키마가 반영된 환경에는 실행하지 않는다.
 
 -- 초기 스키마
@@ -54,7 +54,9 @@ CREATE TABLE products (
     name VARCHAR(120) NOT NULL COMMENT '상품명',
     description TEXT NOT NULL COMMENT '상품 설명',
     created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
-    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각'
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    tour_attraction_picks_json TEXT NULL COMMENT 'Tour API 관광지 다중 선택(JSON)',
+    base_price DECIMAL(19, 2) NOT NULL DEFAULT 0.00 COMMENT '상품 기본가(옵션 합산과 별도)'
 ) COMMENT='상품 기본 정보';
 
 ---
@@ -140,6 +142,7 @@ CREATE TABLE reservations (
     visit_end_time TIME NOT NULL COMMENT '방문 종료 시각',
     total_price DECIMAL(15, 2) NOT NULL COMMENT '예약 총액',
     status VARCHAR(20) NOT NULL COMMENT 'PREBOOK/PENDING/BOOKED/COMPLETED/CANCELED',
+    admin_memo TEXT NULL COMMENT '관리자 메모',
     created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
     updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
     CONSTRAINT fk_reservations_reservation_slot FOREIGN KEY (reservation_slot_id) REFERENCES reservation_slots (id),
@@ -1076,3 +1079,8 @@ ALTER TABLE users
     ADD COLUMN temporary_password_required BOOLEAN NOT NULL DEFAULT FALSE
         COMMENT '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 1';
 
+ALTER TABLE reservation_slots
+    ADD COLUMN IF NOT EXISTS admin_note TEXT NULL COMMENT '운영자 메모';
+
+ALTER TABLE reservations
+    ADD COLUMN IF NOT EXISTS admin_memo TEXT NULL COMMENT '관리자 메모';

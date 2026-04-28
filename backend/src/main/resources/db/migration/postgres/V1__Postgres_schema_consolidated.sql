@@ -1,4 +1,4 @@
--- PostgreSQL 전체 스키마
+-- PostgreSQL 전체 스키마 (V1~V2 Flyway 단계를 단일 본에 반영, 예: products.base_price)
 -- 새 데이터베이스를 처음 만들 때만 사용한다. 이미 같은 스키마가 반영된 환경에는 실행하지 않는다.
 
 -- 초기 스키마
@@ -76,7 +76,9 @@ CREATE TABLE products (
     name VARCHAR(120) NOT NULL,
     description TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    tour_attraction_picks_json TEXT,
+    base_price NUMERIC(19, 2) NOT NULL DEFAULT 0
 );
 
 COMMENT ON TABLE products IS '상품 기본 정보';
@@ -85,6 +87,8 @@ COMMENT ON COLUMN products.name IS '상품명';
 COMMENT ON COLUMN products.description IS '상품 설명';
 COMMENT ON COLUMN products.created_at IS '생성 시각';
 COMMENT ON COLUMN products.updated_at IS '수정 시각';
+COMMENT ON COLUMN products.tour_attraction_picks_json IS 'Tour API 관광지 다중 선택(JSON 배열 문자열)';
+COMMENT ON COLUMN products.base_price IS '상품 기본가(옵션 합산과 별도)';
 
 ---
 -- product_option: 상품-옵션 N:M
@@ -206,6 +210,7 @@ CREATE TABLE reservations (
     visit_end_time TIME NOT NULL,
     total_price NUMERIC(15, 2) NOT NULL,
     status VARCHAR(20) NOT NULL,
+    admin_memo TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT fk_reservations_reservation_slot FOREIGN KEY (reservation_slot_id) REFERENCES reservation_slots (id),
@@ -224,6 +229,7 @@ COMMENT ON COLUMN reservations.visit_start_time IS '방문 시작 시각';
 COMMENT ON COLUMN reservations.visit_end_time IS '방문 종료 시각';
 COMMENT ON COLUMN reservations.total_price IS '예약 총액';
 COMMENT ON COLUMN reservations.status IS '예약 상태(PREBOOK/PENDING/BOOKED/COMPLETED/CANCELED)';
+COMMENT ON COLUMN reservations.admin_memo IS '관리자 메모';
 COMMENT ON COLUMN reservations.created_at IS '생성 시각';
 COMMENT ON COLUMN reservations.updated_at IS '수정 시각';
 
@@ -1861,3 +1867,13 @@ alter table users
     add column if not exists temporary_password_required boolean not null default false;
 
 COMMENT ON COLUMN users.temporary_password_required IS '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 true';
+
+
+ALTER TABLE reservation_slots
+    ADD COLUMN IF NOT EXISTS admin_note TEXT;
+
+ALTER TABLE reservations
+    ADD COLUMN IF NOT EXISTS admin_memo TEXT;
+
+COMMENT ON COLUMN reservation_slots.admin_note IS '운영자 메모';
+COMMENT ON COLUMN reservations.admin_memo IS '관리자 메모';

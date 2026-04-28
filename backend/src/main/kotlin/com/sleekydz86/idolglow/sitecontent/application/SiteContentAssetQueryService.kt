@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.sitecontent.application
 
-import com.sleekydz86.idolglow.global.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
 import com.sleekydz86.idolglow.sitecontent.application.dto.SiteContentAssetPayload
 import io.minio.GetObjectArgs
 import io.minio.MinioClient

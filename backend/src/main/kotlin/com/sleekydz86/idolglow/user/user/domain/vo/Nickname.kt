@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.user.user.domain.vo
 
-import com.sleekydz86.idolglow.global.exceptions.CustomException
-import com.sleekydz86.idolglow.global.exceptions.UserExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.UserExceptionType
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
 

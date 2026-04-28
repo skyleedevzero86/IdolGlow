@@ -21,6 +21,12 @@ data class UserSurveyResponse(
     @field:Schema(description = "여행 종료일", example = "2025-07-22")
     val visitEndDate: LocalDate,
 
+    @field:Schema(description = "여행 시작 시각(HH:mm)", example = "09:00")
+    val visitStartTime: String?,
+
+    @field:Schema(description = "여행 종료 시각(HH:mm)", example = "24:00")
+    val visitEndTime: String?,
+
     @field:Schema(description = "여행 장소", example = "['용산구', '마포구']")
     val places: List<String>
 ) {
@@ -32,6 +38,8 @@ data class UserSurveyResponse(
                 idolName = userSurvey.idolName,
                 visitStartDate = userSurvey.visitStartDate,
                 visitEndDate = userSurvey.visitEndDate,
+                visitStartTime = userSurvey.visitStartTime,
+                visitEndTime = userSurvey.visitEndTime,
                 places = userSurvey.places
             )
         }

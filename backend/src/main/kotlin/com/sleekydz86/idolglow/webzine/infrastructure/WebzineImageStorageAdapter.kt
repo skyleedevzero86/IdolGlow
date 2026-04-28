@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.webzine.infrastructure
 
-import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
-import com.sleekydz86.idolglow.global.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
 import com.sleekydz86.idolglow.webzine.application.StoreWebzineImageCommand
 import com.sleekydz86.idolglow.webzine.application.StoredWebzineImage
 import com.sleekydz86.idolglow.webzine.application.WebzineImageStoragePort

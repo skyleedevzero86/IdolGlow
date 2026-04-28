@@ -3,9 +3,8 @@ package com.sleekydz86.idolglow.productpackage.product.infrastructure
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSearchCriteria
 import jakarta.persistence.EntityManager
+import org.hibernate.query.UnknownParameterException
 import org.springframework.stereotype.Repository
-import java.sql.Timestamp
-import java.time.LocalDateTime
 
 @Repository
 class ProductSearchQueryRepository(
@@ -22,9 +21,29 @@ class ProductSearchQueryRepository(
         }
         @Suppress("UNCHECKED_CAST")
         val rows = entityManager.createNativeQuery(sql.sql)
-            .also { q -> sql.params.forEach { (k, v) -> q.setParameter(k, v) } }
+            .also { q ->
+
+                val declaredParams = q.parameters.mapNotNull { it.name }.toSet()
+                sql.params.forEach { (k, v) ->
+                    if (k in declaredParams) {
+                        bindIfPresent(q, k, v)
+                    }
+                }
+            }
             .resultList as List<Number>
         return rows.map { it.toLong() }
+    }
+
+    private fun bindIfPresent(query: jakarta.persistence.Query, name: String, value: Any) {
+        try {
+            query.setParameter(name, value)
+        } catch (ex: IllegalArgumentException) {
+            val msg = ex.message.orEmpty()
+            if (msg.contains("No parameter named")) return
+            throw ex
+        } catch (_: UnknownParameterException) {
+            return
+        }
     }
 
     private data class BuiltSql(val sql: String, val params: Map<String, Any>)
@@ -33,8 +52,6 @@ class ProductSearchQueryRepository(
         val params = linkedMapOf<String, Any>(
             "size" to c.size,
             "lastIdBound" to (c.lastId ?: Long.MAX_VALUE),
-            "now" to c.now.asTimestamp(),
-            "today" to c.today,
         )
         val join = locationJoinClause(c)
         val filter = filterWhereClause(c, params)
@@ -57,8 +74,6 @@ class ProductSearchQueryRepository(
         val params = linkedMapOf<String, Any>(
             "size" to c.size,
             "offset" to c.offset,
-            "now" to c.now.asTimestamp(),
-            "today" to c.today,
             "nearLat" to c.nearLatitude!!.toDouble(),
             "nearLng" to c.nearLongitude!!.toDouble(),
         )
@@ -91,8 +106,6 @@ class ProductSearchQueryRepository(
         val params = linkedMapOf<String, Any>(
             "size" to c.size,
             "offset" to c.offset,
-            "now" to c.now.asTimestamp(),
-            "today" to c.today,
         )
         val join = locationJoinClause(c)
         val filter = filterWhereClause(c, params)
@@ -210,6 +223,7 @@ class ProductSearchQueryRepository(
         }
         c.visitDate?.let { d ->
             params["visitDate"] = d
+            params["now"] = c.now
             sb.append(
                 """
                 AND EXISTS (
@@ -223,6 +237,8 @@ class ProductSearchQueryRepository(
             )
         }
         if (c.reservableOnly && c.visitDate == null) {
+            params["today"] = c.today
+            params["now"] = c.now
             sb.append(
                 """
                 AND EXISTS (
@@ -245,8 +261,6 @@ class ProductSearchQueryRepository(
           + SIN(RADIANS(:nearLat)) * SIN(RADIANS(pl.latitude))
         ))))
         """.trimIndent()
-
-    private fun LocalDateTime.asTimestamp(): Timestamp = Timestamp.valueOf(this)
 
     private fun escapeLike(raw: String): String =
         raw.replace("\\", "\\\\")
