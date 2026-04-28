@@ -20,10 +20,12 @@ import javax.xml.parsers.DocumentBuilderFactory
 class IncheonParkingCongestionApiClient(
     private val webClient: WebClient,
     private val properties: IncheonAirportParkingProperties,
+    private val authCooldown: IncheonAirportApiAuthCooldown,
 ) : ParkingCongestionQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     override fun fetchCurrent(pageNo: Int, numOfRows: Int): List<ParkingCongestion> {
+        if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
 
@@ -34,6 +36,12 @@ class IncheonParkingCongestionApiClient(
         )
         val response = requestRaw(url)
         if (!response.statusCode.is2xxSuccessful) {
+            if (response.statusCode.value() == 401) {
+                if (authCooldown.markUnauthorized(API_NAME)) {
+                    log.warn("{} API 인증 실패(401). 서비스키 승인/인코딩 상태를 확인하세요. 5분 동안 재호출을 생략합니다.", API_NAME)
+                }
+                return emptyList()
+            }
             log.warn("주차장 혼잡도 HTTP 오류. status={}, body={}", response.statusCode.value(), response.body.take(300))
             return emptyList()
         }
@@ -141,6 +149,7 @@ class IncheonParkingCongestionApiClient(
     }
 
     companion object {
+        private const val API_NAME = "주차장 혼잡도"
         private val DATE_TIME_FORMATTER_MILLIS = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSS")
         private val DATE_TIME_FORMATTER_PLAIN = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
     }

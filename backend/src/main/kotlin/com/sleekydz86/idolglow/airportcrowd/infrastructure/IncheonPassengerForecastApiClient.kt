@@ -20,11 +20,13 @@ import javax.xml.parsers.DocumentBuilderFactory
 class IncheonPassengerForecastApiClient(
     private val webClient: WebClient,
     private val properties: IncheonAirportPassengerForecastProperties,
+    private val authCooldown: IncheonAirportApiAuthCooldown,
 ) : PassengerForecastQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     override fun fetch(selectDate: Int, pageNo: Int, numOfRows: Int): List<PassengerForecast> {
         require(selectDate == 0 || selectDate == 1) { "selectDate는 0 또는 1이어야 합니다." }
+        if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
         val uri = buildUrl(
@@ -35,6 +37,12 @@ class IncheonPassengerForecastApiClient(
         )
         val response = requestRaw(uri)
         if (!response.statusCode.is2xxSuccessful) {
+            if (response.statusCode.value() == 401) {
+                if (authCooldown.markUnauthorized(API_NAME)) {
+                    log.warn("{} API 인증 실패(401). 서비스키 승인/인코딩 상태를 확인하세요. 5분 동안 재호출을 생략합니다.", API_NAME)
+                }
+                return emptyList()
+            }
             log.warn("출입국 승객 예고 HTTP 오류. status={}, body={}", response.statusCode.value(), response.body.take(300))
             return emptyList()
         }
@@ -129,6 +137,7 @@ class IncheonPassengerForecastApiClient(
     }
 
     companion object {
+        private const val API_NAME = "출입국 승객 예고"
         private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE
     }
 }
