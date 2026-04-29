@@ -77,6 +77,8 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tourist-attractions").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
+                auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
