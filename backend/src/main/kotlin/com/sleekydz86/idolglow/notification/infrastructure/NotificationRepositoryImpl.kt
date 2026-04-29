@@ -21,11 +21,17 @@ class NotificationRepositoryImpl(
     override fun findAllByUserId(userId: Long): List<Notification> =
         notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
 
+    override fun findVisibleByUserId(userId: Long, createdAtFrom: LocalDateTime): List<Notification> =
+        notificationJpaRepository.findAllByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(userId, createdAtFrom)
+
     override fun findAllByUserIdAndType(userId: Long, type: NotificationType): List<Notification> =
         notificationJpaRepository.findAllByUserIdAndTypeOrderByCreatedAtDesc(userId, type)
 
     override fun countUnreadByUserId(userId: Long): Long =
         notificationJpaRepository.countByUserIdAndReadAtIsNull(userId)
+
+    override fun countUnreadVisibleByUserId(userId: Long, createdAtFrom: LocalDateTime): Long =
+        notificationJpaRepository.countByUserIdAndReadAtIsNullAndCreatedAtGreaterThanEqual(userId, createdAtFrom)
 
     override fun markAllReadByUserId(userId: Long, readAt: LocalDateTime) {
         notificationJpaRepository.markAllReadByUserId(userId, readAt)

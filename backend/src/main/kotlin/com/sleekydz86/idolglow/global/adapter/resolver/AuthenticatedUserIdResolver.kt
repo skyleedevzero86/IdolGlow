@@ -11,6 +11,9 @@ class AuthenticatedUserIdResolver(
     private val userRepository: UserRepository,
 ) {
 
+    fun resolveOrNull(): Long? =
+        runCatching { resolveRequired() }.getOrNull()
+
     fun resolveRequired(): Long {
         val authentication = SecurityContextHolder.getContext().authentication
             ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
