@@ -40,7 +40,28 @@ class IncheonDepartureCongestionApiClient(
             pageNo = pageNo.coerceAtLeast(1),
             numOfRows = numOfRows.coerceIn(1, 1000),
         )
-        val response = requestRaw(uri)
+        val rows = fetchByUrl(uri)
+        if (rows.isNotEmpty()) return rows
+
+        if (!terminalId.isNullOrBlank() || !gateId.isNullOrBlank()) {
+            val fallbackUri = buildUrl(
+                encodedServiceKey = encodedKey,
+                terminalId = null,
+                gateId = null,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = numOfRows.coerceIn(1, 1000),
+            )
+            return fetchByUrl(fallbackUri).filter { item ->
+                val terminalMatch = terminalId.isNullOrBlank() || item.terminalId.equals(terminalId, ignoreCase = true)
+                val gateMatch = gateId.isNullOrBlank() || item.gateId.equals(gateId, ignoreCase = true)
+                terminalMatch && gateMatch
+            }
+        }
+        return emptyList()
+    }
+
+    private fun fetchByUrl(url: String): List<DepartureCongestion> {
+        val response = requestRaw(url)
         if (!response.statusCode.is2xxSuccessful) {
             if (response.statusCode.value() == 401) {
                 if (authCooldown.markUnauthorized(API_NAME)) {

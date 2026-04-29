@@ -34,6 +34,21 @@ class IncheonParkingCongestionApiClient(
             pageNo = pageNo.coerceAtLeast(1),
             numOfRows = numOfRows.coerceIn(1, 1000),
         )
+        val rows = fetchByUrl(url)
+        if (rows.isNotEmpty()) return rows
+
+        val fallbackUrl = buildUrl(
+            encodedServiceKey = encodedKey,
+            pageNo = pageNo.coerceAtLeast(1),
+            numOfRows = 1000,
+        )
+        if (fallbackUrl != url) {
+            return fetchByUrl(fallbackUrl)
+        }
+        return emptyList()
+    }
+
+    private fun fetchByUrl(url: String): List<ParkingCongestion> {
         val response = requestRaw(url)
         if (!response.statusCode.is2xxSuccessful) {
             if (response.statusCode.value() == 401) {

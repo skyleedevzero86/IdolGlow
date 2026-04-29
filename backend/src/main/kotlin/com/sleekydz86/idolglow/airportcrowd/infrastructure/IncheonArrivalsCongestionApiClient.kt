@@ -40,6 +40,27 @@ class IncheonArrivalsCongestionApiClient(
             pageNo = pageNo.coerceAtLeast(1),
             numOfRows = numOfRows.coerceIn(1, 1000),
         )
+        val rows = fetchByUrl(url)
+        if (rows.isNotEmpty()) return rows
+
+        if (!terminal.isNullOrBlank() || !airport.isNullOrBlank()) {
+            val fallbackUrl = buildUrl(
+                encodedServiceKey = encodedKey,
+                terminal = null,
+                airport = null,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = numOfRows.coerceIn(1, 1000),
+            )
+            return fetchByUrl(fallbackUrl).filter { item ->
+                val terminalMatch = terminal.isNullOrBlank() || item.terminal.equals(terminal, ignoreCase = true)
+                val airportMatch = airport.isNullOrBlank() || item.airport.equals(airport, ignoreCase = true)
+                terminalMatch && airportMatch
+            }
+        }
+        return emptyList()
+    }
+
+    private fun fetchByUrl(url: String): List<ArrivalCongestion> {
         val response = requestRaw(url)
         if (!response.statusCode.is2xxSuccessful) {
             if (response.statusCode.value() == 401) {
