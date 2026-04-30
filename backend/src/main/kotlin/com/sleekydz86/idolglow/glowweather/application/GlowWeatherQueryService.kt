@@ -55,7 +55,10 @@ class GlowWeatherQueryService(
         val forecast = if (forecastFromApi) builtForecast else fallbackForecast(region, now.toLocalDate())
         val currentFromApi = currentObservation != null
         val fallbackCurrentFromForecast = buildFallbackCurrent(region, now.toLocalDate(), ultraShortForecast, forecast)
-        val current = buildCurrentResponse(region, zoneInfo, currentObservation, fallbackCurrentFromForecast)
+        val current = enrichWindFromForecast(
+            buildCurrentResponse(region, zoneInfo, currentObservation, fallbackCurrentFromForecast),
+            forecast,
+        )
         val monthlySummary = buildMonthlySummary(region, now.toLocalDate(), asosDaily, forecast)
         val outlookSummary = when {
             !outlook.isNullOrBlank() -> outlook
@@ -101,6 +104,28 @@ class GlowWeatherQueryService(
             glowWeatherDataPort.fetchAsosDaily(region.asosStationId, startDate, endDate)
         }.getOrElse { emptyList() }
     }
+
+    private fun enrichWindFromForecast(
+        current: CurrentWeatherResponse,
+        forecast: List<GlowWeatherForecastDay>,
+    ): CurrentWeatherResponse {
+        val first = forecast.firstOrNull()
+        val deg = current.windDirectionDegrees ?: first?.windDirectionDegrees
+        val spd = current.windSpeedMps ?: first?.windSpeedMps
+        val label = when {
+            meaningfulWindLabel(current.windDirectionLabel) -> current.windDirectionLabel
+            deg != null -> WindDirection.to16Point(deg).takeIf { it != "-" } ?: "-"
+            else -> current.windDirectionLabel
+        }
+        return current.copy(
+            windDirectionDegrees = deg,
+            windSpeedMps = spd,
+            windDirectionLabel = label,
+        )
+    }
+
+    private fun meaningfulWindLabel(label: String): Boolean =
+        label.isNotBlank() && label != "-"
 
     private fun buildCurrentResponse(
         region: GlowWeatherRegion,
@@ -343,7 +368,7 @@ class GlowWeatherQueryService(
         if (liveComplete) {
             val degrees = liveDeg!!
             val speed = liveSpeed!!
-            val direction = current.windDirectionLabel.takeIf { it.isNotBlank() }
+            val direction = current.windDirectionLabel.takeIf { meaningfulWindLabel(it) }
                 ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
             val message = when {
                 speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
@@ -381,7 +406,8 @@ class GlowWeatherQueryService(
         }
 
         val degrees = liveDeg
-        val direction = current.windDirectionLabel.ifBlank { WindDirection.to16Point(degrees) }
+        val direction = current.windDirectionLabel.takeIf { meaningfulWindLabel(it) }
+            ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
         val speed = liveSpeed
         val message = when {
             speed == null -> "풍향 데이터가 없어서 예보 기준으로만 보여드리고 있어요."
