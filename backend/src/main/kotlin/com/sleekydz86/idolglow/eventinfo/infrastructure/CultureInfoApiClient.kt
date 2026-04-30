@@ -75,7 +75,7 @@ class CultureInfoApiClient(
         )
         val xml = fetchXml(buildCultureUrl("area2", key, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
-            log.warn("cultureinfo area2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
+            log.warn("문화시설정보 area2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
             return emptyList()
         }
         return parseItems(xml).mapNotNull { mapCultureItem(it, serviceTp, "CULTURE_AREA2") }
@@ -94,7 +94,7 @@ class CultureInfoApiClient(
             )
             val xml = fetchXml(buildCultureUrl("area2", encodedKey, params)) ?: return@flatMap emptyList()
             if (!isResultOk(xml)) {
-                log.debug("cultureinfo area2 건너뜀. tp={}", tp)
+                log.debug("문화시설정보 area2 건너뜀. tp={}", tp)
                 return@flatMap emptyList()
             }
             parseItems(xml).mapNotNull { mapCultureItem(it, tp, "CULTURE_AREA2") }
@@ -123,7 +123,7 @@ class CultureInfoApiClient(
         }
         val xml = fetchXml(buildCultureUrl("realm2", key, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
-            log.warn("cultureinfo realm2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
+            log.warn("문화시설정보 realm2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
             return emptyList()
         }
         return parseItems(xml).mapNotNull { mapCultureItem(it, serviceTp, "CULTURE_REALM2") }
@@ -144,7 +144,7 @@ class CultureInfoApiClient(
                 )
                 val xml = fetchXml(buildCultureUrl("realm2", encodedKey, params)) ?: return@flatMap emptyList()
                 if (!isResultOk(xml)) {
-                    log.debug("cultureinfo realm2 건너뜀. tp={}, realmCode={}", tp, code)
+                    log.debug("문화시설정보 realm2 건너뜀. tp={}, realmCode={}", tp, code)
                     return@flatMap emptyList()
                 }
                 parseItems(xml).mapNotNull { mapCultureItem(it, tp, "CULTURE_REALM2") }
@@ -158,7 +158,7 @@ class CultureInfoApiClient(
         val url = buildCultureUrl("detail2", key, mapOf("seq" to seq.trim()))
         val xml = fetchXml(url) ?: return null
         if (!isResultOk(xml)) {
-            log.warn("cultureinfo detail2 비정상 응답. seq={}, bodyPrefix={}", seq, xml.take(200))
+            log.warn("문화시설정보 detail2 비정상 응답. seq={}, bodyPrefix={}", seq, xml.take(200))
             return null
         }
         val item = parseItems(xml).firstOrNull() ?: return null
@@ -206,7 +206,7 @@ class CultureInfoApiClient(
         }
         val xml = fetchXml(buildCultureUrl(operation, encodedKey, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
-            log.warn("cultureinfo {} 비정상 응답. bodyPrefix={}", operation, xml.take(200))
+            log.warn("문화시설정보 {} 비정상 응답. bodyPrefix={}", operation, xml.take(200))
             return emptyList()
         }
         return parseItems(xml)
@@ -250,7 +250,7 @@ class CultureInfoApiClient(
         runCatching {
             webClient.get().uri(url).retrieve().bodyToMono(String::class.java).block()
         }.getOrElse {
-            log.warn("cultureinfo 호출 실패: {}", it.message)
+            log.warn("문화시설정보 API 호출 실패: {}", it.message)
             null
         }
 

@@ -120,13 +120,13 @@ class TourApiClient(
             )
             if (response.statusCode.is2xxSuccessful) {
                 if (size != primarySize) {
-                    log.info("Tour API 재시도 성공. numOfRows={} -> {}", primarySize, size)
+                    log.info("관광 API 재시도 성공. numOfRows={} -> {}", primarySize, size)
                 }
                 return response
             }
             lastFailedResponse = response
             log.warn(
-                "Tour API 비정상 응답. status={}, numOfRows={}, body={}",
+                "관광 API 비정상 응답. status={}, numOfRows={}, body={}",
                 response.statusCode.value(),
                 size,
                 response.body.take(300),
@@ -135,7 +135,7 @@ class TourApiClient(
 
         if (lastFailedResponse != null) {
             log.warn(
-                "Tour API 최종 실패. status={}, body={}",
+                "관광 API 최종 실패. status={}, body={}",
                 lastFailedResponse.statusCode.value(),
                 lastFailedResponse.body.take(300),
             )
@@ -172,7 +172,7 @@ class TourApiClient(
                 ?: RawTourApiResponse(HttpStatusCode.valueOf(502), "")
         } catch (exception: Exception) {
             log.warn(
-                "Tour API 호출 예외. baseYm={}, areaCode={}, signguCode={}, numOfRows={}, message={}",
+                "관광 API 호출 중 예외. baseYm={}, areaCode={}, signguCode={}, numOfRows={}, message={}",
                 baseYm,
                 areaCode,
                 signguCode,
@@ -212,7 +212,7 @@ class TourApiClient(
     private fun staleOrThrow(key: TourApiCacheKey, causeType: TourAttractionExceptionType): List<TourAttraction> {
         val stale = cache[key]
         if (stale != null) {
-            log.warn("Tour API 호출 실패로 오래된 캐시를 사용합니다. key={}, cachedAt={}", key, stale.cachedAt)
+            log.warn("관광 API 호출 실패로 오래된 캐시를 사용합니다. key={}, cachedAt={}", key, stale.cachedAt)
             return stale.attractions
         }
         throw CustomException(causeType)

@@ -10,6 +10,7 @@ import com.sleekydz86.idolglow.glowweather.application.port.out.ZoneInfoSnapshot
 import com.sleekydz86.idolglow.glowweather.domain.GlowWeatherRegion
 import com.sleekydz86.idolglow.glowweather.domain.GlowWeatherRegions
 import com.sleekydz86.idolglow.glowweather.domain.WindDirection
+import com.sleekydz86.idolglow.glowweather.infrastructure.GlowClimateWindRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -23,6 +24,7 @@ import kotlin.math.round
 @Service
 class GlowWeatherQueryService(
     private val glowWeatherDataPort: GlowWeatherDataPort,
+    private val glowClimateWindRepository: GlowClimateWindRepository,
 ) {
     private val zoneId: ZoneId = ZoneId.of("Asia/Seoul")
 
@@ -61,7 +63,7 @@ class GlowWeatherQueryService(
             else -> ""
         }
         val recommendations = buildRecommendations(region, current, forecast, monthlySummary, outlookSummary)
-        val windGuide = buildWindGuide(current, forecast)
+        val windGuide = buildWindGuide(region, now, current, forecast)
 
         return GlowWeatherDashboardResponse(
             selectedRegionId = region.id,
@@ -323,12 +325,64 @@ class GlowWeatherQueryService(
     }
 
     private fun buildWindGuide(
+        region: GlowWeatherRegion,
+        now: ZonedDateTime,
         current: CurrentWeatherResponse,
         forecast: List<GlowWeatherForecastDay>,
     ): GlowWeatherWindGuide {
-        val degrees = current.windDirectionDegrees ?: forecast.firstNotNullOfOrNull { it.windDirectionDegrees }
+        val liveDeg = current.windDirectionDegrees ?: forecast.firstNotNullOfOrNull { it.windDirectionDegrees }
+        val liveSpeed = current.windSpeedMps ?: forecast.firstNotNullOfOrNull { it.windSpeedMps }
+        val liveComplete = liveDeg != null && liveSpeed != null
+        val month = now.monthValue
+        val climateCell = glowClimateWindRepository.month(region.id, month)
+
+        val referencePoints = WindDirection.referencePoints().map { (label, degree) ->
+            GlowWeatherWindPoint(label, degree)
+        }
+
+        if (liveComplete) {
+            val degrees = liveDeg!!
+            val speed = liveSpeed!!
+            val direction = current.windDirectionLabel.takeIf { it.isNotBlank() }
+                ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
+            val message = when {
+                speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
+                speed >= 4.0 -> "약간 바람이 느껴질 수 있어요. 야외 이동 시 체감온도가 내려갈 수 있어요."
+                else -> "바람은 비교적 잔잔한 편이에요."
+            }
+            return GlowWeatherWindGuide(
+                directionDegrees = degrees,
+                directionLabel = direction,
+                speedMps = speed,
+                message = message,
+                referencePoints = referencePoints,
+                windFromClimateStatistics = false,
+                climateStatisticsMonth = null,
+            )
+        }
+
+        if (climateCell != null) {
+            val deg = WindDirection.degreesFromCompassAbbreviation(climateCell.dir)
+            val direction = when {
+                deg != null -> WindDirection.to16Point(deg).takeIf { it != "-" } ?: climateCell.dir.trim().uppercase()
+                else -> climateCell.dir.trim().uppercase()
+            }
+            val message =
+                "실시간 풍향·풍속 대신, 이 지역·이 달 기후통계(최다풍향·평균풍속)을 보여드려요."
+            return GlowWeatherWindGuide(
+                directionDegrees = deg,
+                directionLabel = direction,
+                speedMps = climateCell.mps,
+                message = message,
+                referencePoints = referencePoints,
+                windFromClimateStatistics = true,
+                climateStatisticsMonth = month,
+            )
+        }
+
+        val degrees = liveDeg
         val direction = current.windDirectionLabel.ifBlank { WindDirection.to16Point(degrees) }
-        val speed = current.windSpeedMps ?: forecast.firstNotNullOfOrNull { it.windSpeedMps }
+        val speed = liveSpeed
         val message = when {
             speed == null -> "풍향 데이터가 없어서 예보 기준으로만 보여드리고 있어요."
             speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
@@ -340,9 +394,9 @@ class GlowWeatherQueryService(
             directionLabel = direction,
             speedMps = speed,
             message = message,
-            referencePoints = WindDirection.referencePoints().map { (label, degree) ->
-                GlowWeatherWindPoint(label, degree)
-            },
+            referencePoints = referencePoints,
+            windFromClimateStatistics = false,
+            climateStatisticsMonth = null,
         )
     }
 
@@ -560,6 +614,8 @@ data class GlowWeatherWindGuide(
     val speedMps: Double?,
     val message: String,
     val referencePoints: List<GlowWeatherWindPoint>,
+    val windFromClimateStatistics: Boolean = false,
+    val climateStatisticsMonth: Int? = null,
 )
 
 data class GlowWeatherWindPoint(

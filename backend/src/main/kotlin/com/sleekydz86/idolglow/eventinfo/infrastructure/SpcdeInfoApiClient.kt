@@ -34,17 +34,17 @@ class SpcdeInfoApiClient(
         val body = runCatching {
             webClient.get().uri(url).retrieve().bodyToMono(String::class.java).block()
         }.getOrElse {
-            log.warn("Spcde API 호출 실패. op={}, message={}", operation, it.message)
+            log.warn("특일 정보 API 호출 실패. op={}, message={}", operation, it.message)
             null
         } ?: return emptyList()
         val root = runCatching { objectMapper.readTree(body) }.getOrElse {
-            log.warn("Spcde API 파싱 실패. op={}, message={}", operation, it.message)
+            log.warn("특일 정보 API 파싱 실패. op={}, message={}", operation, it.message)
             return emptyList()
         }
         val resultCode = root.path("response").path("header").path("resultCode").asText("")
         if (resultCode != "00") {
             log.warn(
-                "Spcde API 오류. op={}, resultCode={}, resultMsg={}",
+                "특일 정보 API 오류. op={}, resultCode={}, resultMsg={}",
                 operation,
                 resultCode,
                 root.path("response").path("header").path("resultMsg").asText(""),

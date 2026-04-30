@@ -97,7 +97,7 @@ class ProductTourAttractionQueryService(
             val exceptionType = exception.getExceptionType()
             if (exceptionType is TourAttractionExceptionType && exceptionType in EXTERNAL_TOUR_API_FAILURES) {
                 log.warn(
-                    "외부 Tour API 연동 실패로 빈 관광지 추천 목록을 반환합니다. baseYm={}, areaCode={}, signguCode={}, errorCode={}",
+                    "외부 관광 API 연동 실패로 빈 관광지 추천 목록을 반환합니다. baseYm={}, areaCode={}, signguCode={}, errorCode={}",
                     baseYm,
                     areaCode,
                     signguCode,

@@ -65,7 +65,7 @@ class AnthropicSubwayStationSummaryClient(
                 .bodyToMono(String::class.java)
                 .block()
         } catch (e: Exception) {
-            log.warn("Subway Anthropic 요약 호출 실패: {}", e.message)
+            log.warn("지하철 역 요약 Anthropic 호출 실패: {}", e.message)
             return null
         } ?: return null
 
@@ -83,7 +83,7 @@ class AnthropicSubwayStationSummaryClient(
         return runCatching {
             objectMapper.readValue(json, LlmSubwayStationSummary::class.java).normalize(stationDisplayName)
         }.getOrElse { e ->
-            log.warn("Subway Anthropic JSON 파싱 실패: {}", e.message)
+            log.warn("지하철 역 요약 Anthropic JSON 파싱 실패: {}", e.message)
             null
         }
     }

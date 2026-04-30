@@ -47,7 +47,7 @@ class NaverDirectionsClient(
                 .bodyToMono(String::class.java)
                 .block(Duration.ofSeconds(12))
         } catch (e: Exception) {
-            log.warn("Naver Directions request failed: {}", e.message)
+            log.warn("네이버 Directions 요청 실패: {}", e.message)
             return null
         } ?: return null
 
@@ -62,12 +62,12 @@ class NaverDirectionsClient(
         val root: JsonNode = try {
             objectMapper.readTree(json)
         } catch (e: Exception) {
-            log.warn("Naver Directions JSON parse failed: {}", e.message)
+            log.warn("네이버 Directions JSON 파싱 실패: {}", e.message)
             return null
         }
         val code = root["code"]?.asInt() ?: return null
         if (code != 0) {
-            log.debug("Naver Directions code={} message={}", code, root["message"]?.asText())
+            log.debug("네이버 Directions 응답 code={}, message={}", code, root["message"]?.asText())
             return null
         }
         val routeNode = root["route"] ?: return null
