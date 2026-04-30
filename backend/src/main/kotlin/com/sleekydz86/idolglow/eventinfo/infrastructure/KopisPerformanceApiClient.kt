@@ -170,7 +170,7 @@ class KopisPerformanceApiClient(
         return runCatching {
             webClient.get().uri(url).retrieve().bodyToMono(String::class.java).block()
         }.onFailure {
-            log.warn("KOPIS 호출 실패. path={}, message={}", path, it.message)
+            log.warn("KOPIS(공연) 호출 실패. path={}, message={}", path, it.message)
         }.getOrNull()
     }
 
@@ -183,7 +183,7 @@ class KopisPerformanceApiClient(
             val nodes = document.getElementsByTagName(rowTag)
             (0 until nodes.length).mapNotNull { nodes.item(it) as? Element }
         }.getOrElse {
-            log.warn("KOPIS XML 파싱 실패: {}", it.message)
+            log.warn("KOPIS(공연) XML 파싱 실패: {}", it.message)
             emptyList()
         }
     }

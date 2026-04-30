@@ -29,22 +29,22 @@ enum class TourAttractionExceptionType(
     ),
     TOUR_API_KEY_MISSING(
         "TOUR_API_KEY_MISSING",
-        "Tour API 서비스 키가 설정되지 않았습니다.",
+        "관광 API 서비스 키가 설정되지 않았습니다.",
         500,
     ),
     TOUR_API_CALL_FAILED(
         "TOUR_API_CALL_FAILED",
-        "외부 Tour API 호출에 실패했습니다.",
+        "외부 관광 API 호출에 실패했습니다.",
         502,
     ),
     TOUR_API_BAD_RESPONSE(
         "TOUR_API_BAD_RESPONSE",
-        "외부 Tour API 응답 형식이 올바르지 않습니다.",
+        "외부 관광 API 응답 형식이 올바르지 않습니다.",
         502,
     ),
     TOUR_API_ERROR(
         "TOUR_API_ERROR",
-        "외부 Tour API가 오류를 반환했습니다.",
+        "외부 관광 API가 오류를 반환했습니다.",
         502,
     ),
 }

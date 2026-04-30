@@ -44,7 +44,7 @@ class GemmaChatService(
 
         if (!response.isSuccess2xx || response.json == null) {
             log.warn(
-                "Gemma 호출 실패: status={} body={} error={}",
+                "젬마(Gemma) 호출 실패. HTTP상태={}, 응답본문={}, 오류메시지={}",
                 response.httpStatus,
                 response.rawBody,
                 response.error?.message,
@@ -54,7 +54,7 @@ class GemmaChatService(
 
         val answer = extractAssistantText(response.json)
         if (answer.isBlank()) {
-            log.warn("Gemma 응답 본문이 비어 있습니다: {}", response.rawBody)
+            log.warn("젬마(Gemma) 응답 본문이 비어 있습니다: {}", response.rawBody)
             throw CustomException(GemmaExceptionType.GEMMA_EMPTY_RESPONSE)
         }
 

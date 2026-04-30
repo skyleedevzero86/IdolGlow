@@ -33,7 +33,7 @@ class TourFestivalApiClient(
     ): List<FestivalEvent> {
         val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
         if (encodedKey.isEmpty()) {
-            log.warn("Tour Kor API serviceKey가 비어 있습니다.")
+            log.warn("한국관광공사(TourKor) API 서비스키가 비어 있습니다.")
             return emptyList()
         }
         return fetchList<FestivalItem>(
@@ -179,17 +179,17 @@ class TourFestivalApiClient(
     ): List<T> {
         val response = requestRaw(endpoint, encodedServiceKey, params)
         if (!response.statusCode.is2xxSuccessful) {
-            log.warn("Tour API HTTP 오류. endpoint={}, status={}, body={}", endpoint, response.statusCode.value(), response.body.take(300))
+            log.warn("관광(축제) API HTTP 오류. endpoint={}, status={}, body={}", endpoint, response.statusCode.value(), response.body.take(300))
             return emptyList()
         }
         if (response.body.contains("<OpenAPI_ServiceResponse>", ignoreCase = true)) {
-            log.warn("Tour API XML 오류 응답. endpoint={}, body={}", endpoint, response.body.take(300))
+            log.warn("관광(축제) API XML 오류 응답. endpoint={}, body={}", endpoint, response.body.take(300))
             return emptyList()
         }
         val root = runCatching {
             objectMapper.readTree(response.body)
         }.getOrElse { e ->
-            log.warn("Tour API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
+            log.warn("관광(축제) API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
             return emptyList()
         }
         val responseNode = root.path("response")
@@ -197,7 +197,7 @@ class TourFestivalApiClient(
         val resultCode = headerNode.path("resultCode").asText("")
         if (resultCode != "0000") {
             log.warn(
-                "Tour API 제공기관 오류. endpoint={}, resultCode={}, resultMsg={}",
+                "관광(축제) API 제공기관 오류. endpoint={}, resultCode={}, resultMsg={}",
                 endpoint,
                 resultCode,
                 headerNode.path("resultMsg").asText(""),
@@ -235,7 +235,7 @@ class TourFestivalApiClient(
                 .block()
                 ?: RawFestivalResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
-            log.warn("Tour festival API 호출 실패: {}", e.message)
+            log.warn("관광 축제 API 호출 실패: {}", e.message)
             RawFestivalResponse(HttpStatusCode.valueOf(502), e.message ?: "")
         }
     }

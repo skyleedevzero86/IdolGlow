@@ -73,7 +73,7 @@ class OpenAiSurveyRecommendationClient(
                 }
                 .block()
         } catch (exception: Exception) {
-            log.warn("Survey OpenAI call failed: {}", exception.message)
+            log.warn("설문 추천 OpenAI 호출 실패: {}", exception.message)
             null
         } ?: return null
 

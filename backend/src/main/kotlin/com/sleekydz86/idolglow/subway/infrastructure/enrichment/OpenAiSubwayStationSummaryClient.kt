@@ -74,12 +74,12 @@ class OpenAiSubwayStationSummaryClient(
                 }
                 .block()
         } catch (e: Exception) {
-            log.warn("Subway OpenAI 요약 호출 실패: {}", e.message)
+            log.warn("지하철 역 요약 OpenAI 호출 실패: {}", e.message)
             null
         } ?: return null
 
         if (!raw.statusCode.is2xxSuccessful) {
-            log.warn("Subway OpenAI 요약 비정상 응답: status={} body={}", raw.statusCode, raw.body.take(500))
+            log.warn("지하철 역 요약 OpenAI 비정상 응답: status={} body={}", raw.statusCode, raw.body.take(500))
             return null
         }
 
@@ -97,7 +97,7 @@ class OpenAiSubwayStationSummaryClient(
         return runCatching {
             objectMapper.readValue(json, LlmSubwayStationSummary::class.java).normalize(stationDisplayName)
         }.getOrElse { e ->
-            log.warn("Subway OpenAI JSON 파싱 실패: {}", e.message)
+            log.warn("지하철 역 요약 OpenAI JSON 파싱 실패: {}", e.message)
             null
         }
     }

@@ -68,7 +68,7 @@ class AnthropicSurveyRecommendationClient(
                 .bodyToMono(String::class.java)
                 .block()
         } catch (e: Exception) {
-            log.warn("Survey Anthropic call failed: {}", e.message)
+            log.warn("설문 추천 Anthropic 호출 실패: {}", e.message)
             return null
         } ?: return null
 
@@ -86,7 +86,7 @@ class AnthropicSurveyRecommendationClient(
         return runCatching {
             objectMapper.readValue(json, LlmSurveyRecommendation::class.java).normalize()
         }.getOrElse { e ->
-            log.warn("Survey Anthropic JSON parse failed: {}", e.message)
+            log.warn("설문 추천 Anthropic JSON 파싱 실패: {}", e.message)
             null
         }
     }

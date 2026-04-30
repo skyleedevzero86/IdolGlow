@@ -110,7 +110,7 @@ class ProductRecommendationService(
             toPagingResponses(filtered)
         }.getOrElse { exception ->
             log.warn(
-                "findAdminRecommended failed. size={}, tag={}, query={}, cause={}",
+                "관리자 추천 상품 조회 실패. size={}, tag={}, query={}, cause={}",
                 resolvedSize,
                 normalizedTag,
                 normalizedKeyword,

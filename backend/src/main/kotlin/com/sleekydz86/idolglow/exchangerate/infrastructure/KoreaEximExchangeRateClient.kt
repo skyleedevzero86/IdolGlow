@@ -24,7 +24,7 @@ class KoreaEximExchangeRateClient(
     override fun fetchDailyRates(searchDate: LocalDate?): List<ExchangeRateQuote> {
         val key = properties.authKey.trim()
         if (key.isEmpty()) {
-            log.warn("app.exchange.korea-exim.auth-key is empty; return empty list")
+            log.warn("app.exchange.korea-exim.auth-key가 비어 있어 빈 목록을 반환합니다.")
             return emptyList()
         }
         val base = properties.baseUrl.trim().trimEnd('/')
@@ -44,13 +44,13 @@ class KoreaEximExchangeRateClient(
                 .bodyToMono(object : ParameterizedTypeReference<List<KoreaEximRowJson>>() {})
                 .block()
         } catch (e: Exception) {
-            log.warn("KoreaExim exchange API failed: {}", e.message)
+            log.warn("한국수출입은행 환율 API 호출 실패: {}", e.message)
             return emptyList()
         } ?: emptyList()
 
         if (raw.isNotEmpty() && raw.first().result != null && raw.first().result != 1) {
             val code = raw.first().result
-            log.warn("KoreaExim exchange API returned result=$code (1=정상, 2=DATA, 3=인증, 4=일일한도). No rows applied.")
+            log.warn("한국수출입은행 환율 API 응답 result={} (1=정상, 2=DATA, 3=인증, 4=일일한도). 적용할 행이 없습니다.", code)
             return emptyList()
         }
 

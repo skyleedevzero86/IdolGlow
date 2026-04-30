@@ -242,7 +242,7 @@ class KmaGlowWeatherClient(
             val code = response.path("header").path("resultCode").asText()
             if (code != "00" && code != "0") {
                 val message = response.path("header").path("resultMsg").asText()
-                log.warn("KMA weather API returned code={} message={} endpoint={}", code, message, endpoint)
+                log.warn("기상청 날씨 API 비정상 응답. code={}, message={}, endpoint={}", code, message, endpoint)
                 return emptyList()
             }
             val itemNode = response.path("body").path("items").path("item")
@@ -263,7 +263,7 @@ class KmaGlowWeatherClient(
             is WebClientResponseException.Unauthorized -> {
                 if (markUnauthorizedCooldown()) {
                     log.warn(
-                        "KMA weather API returned 401 Unauthorized for endpoint={}. Check KMA_WEATHER_SERVICE_KEY value/encoding. Fallback dashboard will be used for {} minutes.",
+                        "기상청 날씨 API 401(미인증). endpoint={}. KMA_WEATHER_SERVICE_KEY 값·인코딩을 확인하세요. {}분간 호출을 생략하고 폴백 대시보드를 사용합니다.",
                         endpoint,
                         UNAUTHORIZED_COOLDOWN.toMinutes(),
                     )
@@ -272,14 +272,14 @@ class KmaGlowWeatherClient(
 
             is WebClientResponseException -> {
                 log.warn(
-                    "Failed to call KMA weather endpoint={} status={} response={}",
+                    "기상청 날씨 API 호출 실패. endpoint={}, status={}, response={}",
                     endpoint,
                     throwable.statusCode.value(),
                     throwable.responseBodyAsString.take(200),
                 )
             }
 
-            else -> log.warn("Failed to call KMA weather endpoint={} message={}", endpoint, throwable.message)
+            else -> log.warn("기상청 날씨 API 호출 실패. endpoint={}, message={}", endpoint, throwable.message)
         }
     }
 
@@ -306,7 +306,7 @@ class KmaGlowWeatherClient(
             .removePrefix("KMA_WEATHER_SERVICE_KEY=")
             .removeSurrounding("\"")
         if (trimmed.isEmpty()) {
-            log.info("KMA weather serviceKey is empty. Fallback dashboard will be used.")
+            log.info("기상청 날씨 서비스키가 비어 있어 폴백 대시보드를 사용합니다.")
             return null
         }
         return if (trimmed.contains('%')) trimmed else UriUtils.encodeQueryParam(trimmed, StandardCharsets.UTF_8)
