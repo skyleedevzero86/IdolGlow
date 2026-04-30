@@ -48,13 +48,19 @@ class GlowWeatherQueryService(
         val outlook = runCatching { glowWeatherDataPort.fetchMidOutlook(region.midForecastStationId, midBase) }.getOrNull()
         val asosDaily = fetchMonthlyAsos(region, now.toLocalDate())
 
-        val forecast = buildForecast(region.name, now.toLocalDate(), villageForecast, midLand, midTemp)
-            .takeIf(::hasForecastMeasurements)
-            ?: fallbackForecast(now.toLocalDate())
-        val fallbackCurrentFromForecast = buildFallbackCurrent(now.toLocalDate(), ultraShortForecast, forecast)
+        val builtForecast = buildForecast(region.name, now.toLocalDate(), villageForecast, midLand, midTemp)
+        val forecastFromApi = hasForecastMeasurements(builtForecast)
+        val forecast = if (forecastFromApi) builtForecast else fallbackForecast(region, now.toLocalDate())
+        val currentFromApi = currentObservation != null
+        val fallbackCurrentFromForecast = buildFallbackCurrent(region, now.toLocalDate(), ultraShortForecast, forecast)
         val current = buildCurrentResponse(region, zoneInfo, currentObservation, fallbackCurrentFromForecast)
         val monthlySummary = buildMonthlySummary(region, now.toLocalDate(), asosDaily, forecast)
-        val recommendations = buildRecommendations(region, current, forecast, monthlySummary, outlook)
+        val outlookSummary = when {
+            !outlook.isNullOrBlank() -> outlook
+            !forecastFromApi -> "${region.name} 기준 최근 예보를 바탕으로 화면을 구성했어요."
+            else -> ""
+        }
+        val recommendations = buildRecommendations(region, current, forecast, monthlySummary, outlookSummary)
         val windGuide = buildWindGuide(current, forecast)
 
         return GlowWeatherDashboardResponse(
@@ -75,10 +81,12 @@ class GlowWeatherQueryService(
             ),
             current = current,
             monthlySummary = monthlySummary,
-            outlookSummary = outlook?.takeIf { it.isNotBlank() } ?: "${region.name} 기준 최근 예보를 바탕으로 화면을 구성했어요.",
+            outlookSummary = outlookSummary,
             forecast = forecast,
             recommendations = recommendations,
             windGuide = windGuide,
+            forecastFromApi = forecastFromApi,
+            currentFromApi = currentFromApi,
             generatedAt = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
         )
     }
@@ -112,13 +120,14 @@ class GlowWeatherQueryService(
     }
 
     private fun buildFallbackCurrent(
+        region: GlowWeatherRegion,
         today: LocalDate,
         ultraShortForecast: List<ShortForecastSnapshot>,
         forecast: List<GlowWeatherForecastDay>,
     ): CurrentWeatherResponse {
         val grouped = ultraShortForecast.groupBy { it.forecastDateTime }
         val nearest = grouped.keys.sorted().firstOrNull()
-        val fallbackDay = forecast.firstOrNull() ?: fallbackForecast(today).first()
+        val fallbackDay = forecast.firstOrNull() ?: fallbackForecast(region, today).first()
         val entries = nearest?.let { grouped[it].orEmpty() } ?: emptyList()
 
         fun value(category: String): String? = entries.firstOrNull { it.category == category }?.value
@@ -346,11 +355,12 @@ class GlowWeatherQueryService(
                 it.windSpeedMps != null
         }
 
-    private fun fallbackForecast(today: LocalDate): List<GlowWeatherForecastDay> =
-        (0 until 10).map { index ->
+    private fun fallbackForecast(region: GlowWeatherRegion, today: LocalDate): List<GlowWeatherForecastDay> {
+        val bias = fallbackTemperatureBias(region)
+        return (0 until 10).map { index ->
             val date = today.plusDays(index.toLong())
             GlowWeatherForecastDay(
-                regionName = "서울",
+                regionName = region.name,
                 date = date,
                 dateLabel = date.format(DATE_LABEL),
                 dayLabel = dayLabel(date),
@@ -366,8 +376,8 @@ class GlowWeatherQueryService(
                     2 -> "cloud"
                     else -> "rain"
                 },
-                minTempC = 11.0 + index,
-                maxTempC = 19.0 + index,
+                minTempC = 11.0 + index + bias,
+                maxTempC = 19.0 + index + bias,
                 precipitationChance = if (index % 4 == 3) 70 else 20,
                 windDirectionDegrees = 90 + (index * 10),
                 windDirectionLabel = WindDirection.to16Point(90 + (index * 10)),
@@ -375,6 +385,12 @@ class GlowWeatherQueryService(
                 source = "fallback",
             )
         }
+    }
+
+    private fun fallbackTemperatureBias(region: GlowWeatherRegion): Double {
+        val h = region.id.fold(0) { acc, ch -> 31 * acc + ch.code }
+        return ((h % 13) - 6) * 0.5
+    }
 
     private fun skyLabel(skyCode: Int?, ptyCode: Int?): String? {
         val precipitation = precipitationTypeLabel(ptyCode)
@@ -475,6 +491,8 @@ data class GlowWeatherDashboardResponse(
     val forecast: List<GlowWeatherForecastDay>,
     val recommendations: List<GlowWeatherRecommendation>,
     val windGuide: GlowWeatherWindGuide,
+    val forecastFromApi: Boolean,
+    val currentFromApi: Boolean,
     val generatedAt: String,
 )
 
