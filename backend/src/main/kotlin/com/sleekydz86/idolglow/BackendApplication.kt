@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.global.infrastructure.config.SubwayProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.SeoulSjwApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.CultureInfoApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.SpcdeInfoApiProperties
+import com.sleekydz86.idolglow.global.infrastructure.config.KmaWeatherProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TourKorApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
@@ -41,6 +42,7 @@ import org.springframework.cache.annotation.EnableCaching
     SeoulSjwApiProperties::class,
     SpcdeInfoApiProperties::class,
     CultureInfoApiProperties::class,
+    KmaWeatherProperties::class,
     KoreaEximExchangeProperties::class,
     KopisApiProperties::class,
     NaverDirectionsProperties::class,
