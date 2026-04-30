@@ -15,12 +15,15 @@ import com.sleekydz86.idolglow.glowweather.domain.KmaGridConverter
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriUtils
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.Duration
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicLong
 
 @Component
 class KmaGlowWeatherClient(
@@ -29,6 +32,7 @@ class KmaGlowWeatherClient(
     private val properties: KmaWeatherProperties,
 ) : GlowWeatherDataPort {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val unauthorizedBlockedUntilMillis = AtomicLong(0)
 
     override fun fetchUltraShortObservation(
         region: GlowWeatherRegion,
@@ -223,6 +227,7 @@ class KmaGlowWeatherClient(
         endpoint: String,
         params: Map<String, String>,
     ): List<JsonNode> {
+        if (isUnauthorizedBlocked()) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey) ?: return emptyList()
         val url = buildUrl(endpoint, encodedKey, params)
         return runCatching {
@@ -248,8 +253,33 @@ class KmaGlowWeatherClient(
                 else -> emptyList()
             }
         }.getOrElse {
-            log.warn("Failed to call KMA weather endpoint={}", endpoint, it)
+            handleFetchFailure(endpoint, it)
             emptyList()
+        }
+    }
+
+    private fun handleFetchFailure(endpoint: String, throwable: Throwable) {
+        when (throwable) {
+            is WebClientResponseException.Unauthorized -> {
+                if (markUnauthorizedCooldown()) {
+                    log.warn(
+                        "KMA weather API returned 401 Unauthorized for endpoint={}. Check KMA_WEATHER_SERVICE_KEY value/encoding. Fallback dashboard will be used for {} minutes.",
+                        endpoint,
+                        UNAUTHORIZED_COOLDOWN.toMinutes(),
+                    )
+                }
+            }
+
+            is WebClientResponseException -> {
+                log.warn(
+                    "Failed to call KMA weather endpoint={} status={} response={}",
+                    endpoint,
+                    throwable.statusCode.value(),
+                    throwable.responseBodyAsString.take(200),
+                )
+            }
+
+            else -> log.warn("Failed to call KMA weather endpoint={} message={}", endpoint, throwable.message)
         }
     }
 
@@ -274,11 +304,34 @@ class KmaGlowWeatherClient(
         val trimmed = rawServiceKey.trim()
             .removePrefix("serviceKey=")
             .removePrefix("KMA_WEATHER_SERVICE_KEY=")
+            .removeSurrounding("\"")
         if (trimmed.isEmpty()) {
             log.info("KMA weather serviceKey is empty. Fallback dashboard will be used.")
             return null
         }
-        return UriUtils.encodeQueryParam(trimmed, StandardCharsets.UTF_8)
+        return if (trimmed.contains('%')) trimmed else UriUtils.encodeQueryParam(trimmed, StandardCharsets.UTF_8)
+    }
+
+    private fun isUnauthorizedBlocked(): Boolean {
+        val now = System.currentTimeMillis()
+        val blockedUntil = unauthorizedBlockedUntilMillis.get()
+        if (blockedUntil <= now) {
+            if (blockedUntil != 0L) {
+                unauthorizedBlockedUntilMillis.compareAndSet(blockedUntil, 0)
+            }
+            return false
+        }
+        return true
+    }
+
+    private fun markUnauthorizedCooldown(): Boolean {
+        val now = System.currentTimeMillis()
+        val blockedUntil = now + UNAUTHORIZED_COOLDOWN.toMillis()
+        while (true) {
+            val current = unauthorizedBlockedUntilMillis.get()
+            if (current > now) return false
+            if (unauthorizedBlockedUntilMillis.compareAndSet(current, blockedUntil)) return true
+        }
     }
 
     private fun normalizeNullableInt(value: String?): Int? {
@@ -292,6 +345,7 @@ class KmaGlowWeatherClient(
     }
 
     companion object {
+        private val UNAUTHORIZED_COOLDOWN: Duration = Duration.ofMinutes(5)
         private val BASIC_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
         private val MID_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")

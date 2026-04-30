@@ -49,6 +49,8 @@ class GlowWeatherQueryService(
         val asosDaily = fetchMonthlyAsos(region, now.toLocalDate())
 
         val forecast = buildForecast(region.name, now.toLocalDate(), villageForecast, midLand, midTemp)
+            .takeIf(::hasForecastMeasurements)
+            ?: fallbackForecast(now.toLocalDate())
         val fallbackCurrentFromForecast = buildFallbackCurrent(now.toLocalDate(), ultraShortForecast, forecast)
         val current = buildCurrentResponse(region, zoneInfo, currentObservation, fallbackCurrentFromForecast)
         val monthlySummary = buildMonthlySummary(region, now.toLocalDate(), asosDaily, forecast)
@@ -74,7 +76,7 @@ class GlowWeatherQueryService(
             current = current,
             monthlySummary = monthlySummary,
             outlookSummary = outlook?.takeIf { it.isNotBlank() } ?: "${region.name} 기준 최근 예보를 바탕으로 화면을 구성했어요.",
-            forecast = forecast.ifEmpty { fallbackForecast(now.toLocalDate()) },
+            forecast = forecast,
             recommendations = recommendations,
             windGuide = windGuide,
             generatedAt = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
@@ -334,6 +336,15 @@ class GlowWeatherQueryService(
             },
         )
     }
+
+    private fun hasForecastMeasurements(forecast: List<GlowWeatherForecastDay>): Boolean =
+        forecast.any {
+            it.minTempC != null ||
+                it.maxTempC != null ||
+                it.precipitationChance != null ||
+                it.windDirectionDegrees != null ||
+                it.windSpeedMps != null
+        }
 
     private fun fallbackForecast(today: LocalDate): List<GlowWeatherForecastDay> =
         (0 until 10).map { index ->
