@@ -3,15 +3,24 @@
 <img width="981" height="534" alt="image" src="https://github.com/user-attachments/assets/07637feb-f9f7-42c8-9d10-ef9f5e7fc4bf" />
 <br/>
 
-
-패키지형 상품을 예약하고, 결제 상태에 따라 예약이 확정되거나 자동 만료되며, 이후 리뷰, 위시, 일정, 알림까지 이어지는 흐름을 다루는 Kotlin/Spring 기반 백엔드 프로젝트입니다.
+외국인 이용자를 대상으로 설문조사 기반 개인화 추천을 제공하는 K-pop 뷰티·공연·체험 예약 플랫폼입니다.
+핵심은 Kotlin/Spring 기반 백엔드에서 시간 슬롯·수량·좌석 같은 예약 자원을 안전하게 관리하고, 결제 성공/실패/취소/만료에 따라 예약 상태를 일관되게 전이시키는 것입니다.
+<br/>
 
 ## 프로젝트 목표
 
+- 외국인 사용자의 설문 응답을 기반으로 취향형 상품 탐색과 예약 경험을 제공합니다.
 - 예약형 서비스에서 자주 발생하는 상태 전이 문제를 안정적으로 처리합니다.
 - OAuth2, JWT, Refresh Token, CORS, 관리자 권한 같은 운영형 보안 이슈를 다룹니다.
 - 결제 성공/실패/만료에 따라 예약과 슬롯 상태가 일관되게 변하도록 설계합니다.
 - REST와 GraphQL을 함께 제공해 운영 API와 조회 API의 역할을 분리합니다.
+
+## 프로젝트 구성
+
+- `backend`
+  - 예약/결제/상태 전이, 인증/인가, 설문/추천, 관리자 운영 API를 담당합니다.
+- `frontend`
+  - 관리자/운영 화면과 사용자 접점 UI를 담당합니다.
 
 ## 핵심 기능
 
@@ -84,18 +93,18 @@
 
 ## 기술 스택
 
-| 구분 | 기술 |
-| --- | --- |
-| Language | Kotlin 2.2.21 |
-| JDK | Java 21 |
-| Framework | Spring Boot 4.0.3 |
-| Security | Spring Security, OAuth2 Client, JWT |
-| Persistence | Spring Data JPA, Querydsl, Flyway |
-| Database | H2, MySQL, PostgreSQL |
-| API | REST, Spring GraphQL, Swagger/OpenAPI |
-| Async / Event | Scheduler, SSE, Async Event |
-| Utilities | Jasypt, WebClient |
-| Test | Spring Boot Test, Kotest, MockK, RestAssured, Spring Security Test |
+| 구분          | 기술                                                               |
+| ------------- | ------------------------------------------------------------------ |
+| Language      | Kotlin 2.2.21                                                      |
+| JDK           | Java 21                                                            |
+| Framework     | Spring Boot 4.0.3                                                  |
+| Security      | Spring Security, OAuth2 Client, JWT                                |
+| Persistence   | Spring Data JPA, Querydsl, Flyway                                  |
+| Database      | H2, MySQL, PostgreSQL                                              |
+| API           | REST, Spring GraphQL, Swagger/OpenAPI                              |
+| Async / Event | Scheduler, SSE, Async Event                                        |
+| Utilities     | Jasypt, WebClient                                                  |
+| Test          | Spring Boot Test, Kotest, MockK, RestAssured, Spring Security Test |
 
 ## 아키텍처
 
@@ -287,5 +296,3 @@ $env:ENCRYPT_KEY="your-encrypt-key"
 - `RESERVATION_PENDING_TIMEOUT_SECONDS`
 - `RESERVATION_EXPIRATION_INTERVAL_MS`
 - `NOTIFICATION_SSE_TIMEOUT_MS`
-
-
