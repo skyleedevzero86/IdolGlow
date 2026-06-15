@@ -25,3 +25,7 @@ frontend/
 .run/
 infra/jenkins-local/.env
 infra/jenkins-local/deployments/
+infra/jenkins-local/init.groovy.d/02-create-pipeline-job.groovy
+infra/jenkins-local/start-jenkins.ps1
+infra/up.ps1
+infra/up.sh
