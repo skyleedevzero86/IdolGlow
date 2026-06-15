@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        JENKINS_BASE_IMAGE: ${JENKINS_BASE_IMAGE:-jenkins/jenkins:jdk21}
     container_name: idolglow-jenkins
     restart: unless-stopped
     ports:
@@ -16,6 +18,10 @@ services:
       GITHUB_CREDENTIALS_ID: "${GITHUB_CREDENTIALS_ID:-github-http-token}"
       GITHUB_USERNAME: "${GITHUB_USERNAME:-}"
       GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      GITHUB_REPO_URL: "${GITHUB_REPO_URL:-}"
+      GITHUB_BRANCH: "${GITHUB_BRANCH:-*/main}"
+      JENKINS_JOB_NAME: "${JENKINS_JOB_NAME:-IdolGlow}"
+      JENKINS_SCM_POLL: "${JENKINS_SCM_POLL:-H/2 * * * *}"
     volumes:
       - jenkins_home:/var/jenkins_home
       - type: bind

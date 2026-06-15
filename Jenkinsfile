@@ -39,6 +39,10 @@ def resolveFrontendDir() {
         return 'frontend'
     }
 
+    if (fileExists('docs/acc-webzine/package.json')) {
+        return 'docs/acc-webzine'
+    }
+
     return ''
 }
 
