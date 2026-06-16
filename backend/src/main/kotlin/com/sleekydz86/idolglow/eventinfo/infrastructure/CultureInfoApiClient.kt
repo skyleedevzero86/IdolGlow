@@ -4,13 +4,17 @@ import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.global.infrastructure.config.CultureInfoApiProperties
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriUtils
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import java.io.StringReader
+import java.net.URI
 import java.nio.charset.StandardCharsets
+import java.time.Duration
+import java.util.concurrent.atomic.AtomicLong
 import javax.xml.parsers.DocumentBuilderFactory
 
 @Component
@@ -19,6 +23,7 @@ class CultureInfoApiClient(
     private val properties: CultureInfoApiProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val unauthorizedBlockedUntilMillis = AtomicLong(0)
 
     fun listEventsForCalendarDay(
         yyyyMMdd: String,
@@ -246,12 +251,49 @@ class CultureInfoApiClient(
         )
     }
 
-    private fun fetchXml(url: String): String? =
+    private fun fetchXml(url: String): String? {
+        if (isUnauthorizedBlocked()) return null
+
+        val response = requestRaw(url)
+        if (response.statusCode.is2xxSuccessful) return response.body
+
+        val operation = operationName(url)
+        if (response.statusCode.value() == 401) {
+            if (markUnauthorizedCooldown()) {
+                log.warn(
+                    "문화시설정보 API 인증 실패. operation={}, status=401, bodyPrefix={}. " +
+                        "CULTURE_INFO_SERVICE_KEY 값을 정규화해 한 번만 인코딩해서 전송합니다. " +
+                        "{}분 동안 추가 호출을 생략합니다.",
+                    operation,
+                    response.body.take(200),
+                    UNAUTHORIZED_COOLDOWN.toMinutes(),
+                )
+            }
+        } else {
+            log.warn(
+                "문화시설정보 API 호출 실패. operation={}, status={}, bodyPrefix={}",
+                operation,
+                response.statusCode.value(),
+                response.body.take(200),
+            )
+        }
+        return null
+    }
+
+    private fun requestRaw(url: String): RawCultureResponse =
         runCatching {
-            webClient.get().uri(url).retrieve().bodyToMono(String::class.java).block()
+            webClient.get()
+                .uri(URI.create(url))
+                .exchangeToMono { clientResponse ->
+                    clientResponse.bodyToMono(String::class.java)
+                        .defaultIfEmpty("")
+                        .map { body -> RawCultureResponse(clientResponse.statusCode(), body) }
+                }
+                .block()
+                ?: RawCultureResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse {
-            log.warn("문화시설정보 API 호출 실패: {}", it.message)
-            null
+            log.warn("문화시설정보 API 호출 실패. operation={}, message={}", operationName(url), it.message)
+            RawCultureResponse(HttpStatusCode.valueOf(502), it.message ?: "")
         }
 
     private fun isResultOk(xml: String): Boolean {
@@ -292,12 +334,52 @@ class CultureInfoApiClient(
     }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
-        val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("CULTURE_INFO_SERVICE_KEY=")
+        val trimmed = rawServiceKey.trim()
+            .removePrefix("serviceKey=")
+            .removePrefix("CULTURE_INFO_SERVICE_KEY=")
+            .removeSurrounding("\"")
+            .removeSurrounding("'")
         if (trimmed.isEmpty()) return ""
-        return if (trimmed.contains('%')) trimmed else UriUtils.encodeQueryParam(trimmed, StandardCharsets.UTF_8)
+        var decoded = trimmed
+        repeat(MAX_SERVICE_KEY_DECODE_PASSES) {
+            if (!PERCENT_ENCODED_REGEX.containsMatchIn(decoded)) return@repeat
+            val next = runCatching { UriUtils.decode(decoded, StandardCharsets.UTF_8) }.getOrDefault(decoded)
+            if (next == decoded) return@repeat
+            decoded = next
+        }
+        return UriUtils.encodeQueryParam(decoded, StandardCharsets.UTF_8)
+    }
+
+    private fun operationName(url: String): String =
+        runCatching { URI.create(url).path.substringAfterLast('/') }
+            .getOrDefault(url.substringBefore('?').substringAfterLast('/'))
+
+    private fun isUnauthorizedBlocked(): Boolean {
+        val now = System.currentTimeMillis()
+        val blockedUntil = unauthorizedBlockedUntilMillis.get()
+        if (blockedUntil <= now) {
+            if (blockedUntil != 0L) {
+                unauthorizedBlockedUntilMillis.compareAndSet(blockedUntil, 0)
+            }
+            return false
+        }
+        return true
+    }
+
+    private fun markUnauthorizedCooldown(): Boolean {
+        val now = System.currentTimeMillis()
+        val blockedUntil = now + UNAUTHORIZED_COOLDOWN.toMillis()
+        while (true) {
+            val current = unauthorizedBlockedUntilMillis.get()
+            if (current > now) return false
+            if (unauthorizedBlockedUntilMillis.compareAndSet(current, blockedUntil)) return true
+        }
     }
 
     companion object {
+        private val UNAUTHORIZED_COOLDOWN: Duration = Duration.ofMinutes(5)
+        private const val MAX_SERVICE_KEY_DECODE_PASSES = 3
+        private val PERCENT_ENCODED_REGEX = Regex("%[0-9A-Fa-f]{2}")
         private val SERVICE_TYPES = listOf("A", "B", "C")
         private val REALM_CODES = listOf(
             "A000",
@@ -316,3 +398,5 @@ class CultureInfoApiClient(
         private val RESULT_CODE_REGEX = Regex("<resultCode>\\s*([^<]+)\\s*</resultCode>", RegexOption.IGNORE_CASE)
     }
 }
+
+private data class RawCultureResponse(val statusCode: HttpStatusCode, val body: String)
