@@ -246,13 +246,18 @@ class TourFestivalApiClient(
         val query = params.entries.joinToString("&") { (k, v) ->
             "$k=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
         }
-        return "${tourKorApiProperties.baseUrl.trimEnd('/')}/$endpoint" +
+        return "${koreanServiceBaseUrl()}/$endpoint" +
             "?serviceKey=$encodedServiceKey" +
             "&MobileOS=$encodedMobileOs" +
             "&MobileApp=$encodedMobileApp" +
             "&_type=json" +
             if (query.isBlank()) "" else "&$query"
     }
+
+    private fun koreanServiceBaseUrl(): String =
+        tourKorApiProperties.baseUrl
+            .trimEnd('/')
+            .replace("/EngService2", "/KorService2")
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim().removePrefix("TOUR_API_SERVICE_KEY=").removePrefix("serviceKey=")
