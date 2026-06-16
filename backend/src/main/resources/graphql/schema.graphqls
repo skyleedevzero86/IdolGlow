@@ -572,10 +572,57 @@ enum SurveyQuestionType {
     MULTIPLE_CHOICE
 }
 
+enum SurveyFormStatus {
+    PLANNED
+    SCHEDULED
+    IN_PROGRESS
+    COMPLETED
+}
+
+enum SurveyFormPrimaryCategory {
+    ALL
+    TOUR_EXPERIENCE
+    TRAVEL_ESSENTIALS
+    BEAUTY
+    MEDICAL
+    ETC
+}
+
+enum SurveyFormSecondaryCategory {
+    ACTIVITY
+    FOOD
+    K_POP
+    ATTRACTIONS_TICKETS
+    PHOTO
+    TOUR
+    WIFI_SIM
+    TRANSPORTATION
+    TRAVEL_SERVICE
+    EXCHANGE
+    INSURANCE
+    HAIR_SALON
+    K_BEAUTY
+    SKIN_CARE
+    CLINIC
+    PHARMACY
+    VISION_CORRECTION
+    HEALTH_CHECKUP
+    KOREAN_MEDICINE
+    SPA_HEALING
+    COUPON
+}
+
 type SurveyForm {
     id: ID!
     title: String!
     description: String
+    descriptionTags: [String!]!
+    status: SurveyFormStatus!
+    statusLabel: String!
+    primaryCategory: SurveyFormPrimaryCategory!
+    primaryCategoryLabel: String!
+    secondaryCategory: SurveyFormSecondaryCategory
+    secondaryCategoryLabel: String
     questions: [SurveyQuestion!]!
 }
 
@@ -722,6 +769,10 @@ input MockPaymentWebhookInput {
 input UpsertAdminSurveyFormInput {
     title: String!
     description: String
+    descriptionTags: [String!]! = []
+    status: SurveyFormStatus = SCHEDULED
+    primaryCategory: SurveyFormPrimaryCategory = ALL
+    secondaryCategory: SurveyFormSecondaryCategory
     questions: [UpsertAdminSurveyQuestionInput!]!
 }
 

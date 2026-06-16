@@ -1,6 +1,9 @@
 package com.sleekydz86.idolglow.survey.application
 
 import com.sleekydz86.idolglow.survey.domain.SurveyForm
+import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestion
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionOption
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
@@ -32,30 +35,54 @@ class AdminSurveyFormService(
         surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
 
     @Transactional(readOnly = true)
-    fun list(keyword: String?): List<SurveyFormSummaryResponse> {
+    fun list(
+        keyword: String?,
+        status: SurveyFormStatus?,
+        primaryCategory: SurveyFormPrimaryCategory?,
+        secondaryCategory: SurveyFormSecondaryCategory?,
+    ): List<SurveyFormSummaryResponse> {
         val normalized = keyword?.trim().orEmpty()
-        val forms =
-            if (normalized.isBlank()) {
-                surveyFormJpaRepository.findAllByOrderByUpdatedAtDesc()
-            } else {
-                surveyFormJpaRepository.searchByKeyword(normalized)
-            }
+        val normalizedFilters = normalizeFilters(primaryCategory, secondaryCategory)
+        val forms = surveyFormJpaRepository.search(
+            keyword = normalized.takeIf { it.isNotBlank() },
+            status = status,
+            primaryCategory = normalizedFilters.first,
+            secondaryCategory = normalizedFilters.second,
+        )
         return forms.map(SurveyFormSummaryResponse::from)
     }
 
     @Transactional(readOnly = true)
     fun listPage(
         keyword: String?,
+        status: SurveyFormStatus?,
+        primaryCategory: SurveyFormPrimaryCategory?,
+        secondaryCategory: SurveyFormSecondaryCategory?,
         page: Int?,
         size: Int?,
     ): SurveyFormPageResponse {
         val normalizedKeyword = keyword?.trim().orEmpty()
+        val normalizedFilters = normalizeFilters(primaryCategory, secondaryCategory)
         val resolvedSize = (size ?: DEFAULT_PAGE_SIZE).coerceIn(1, MAX_PAGE_SIZE)
         val requestedPage = (page ?: 1).coerceAtLeast(1)
-        val firstResult = fetchPage(normalizedKeyword, requestedPage - 1, resolvedSize)
+        val firstResult = fetchPage(
+            keyword = normalizedKeyword,
+            status = status,
+            primaryCategory = normalizedFilters.first,
+            secondaryCategory = normalizedFilters.second,
+            pageIndex = requestedPage - 1,
+            size = resolvedSize,
+        )
         val result =
             if (firstResult.totalElements > 0 && requestedPage > firstResult.totalPages) {
-                fetchPage(normalizedKeyword, firstResult.totalPages - 1, resolvedSize)
+                fetchPage(
+                    keyword = normalizedKeyword,
+                    status = status,
+                    primaryCategory = normalizedFilters.first,
+                    secondaryCategory = normalizedFilters.second,
+                    pageIndex = firstResult.totalPages - 1,
+                    size = resolvedSize,
+                )
             } else {
                 firstResult
             }
@@ -71,7 +98,6 @@ class AdminSurveyFormService(
         saveForm(
             form = SurveyForm(
                 title = request.title.trim(),
-                description = request.description?.trim()?.takeIf { it.isNotBlank() },
                 active = true,
             ),
             request = request,
@@ -81,7 +107,6 @@ class AdminSurveyFormService(
         saveForm(
             form = findForm(id).apply {
                 title = request.title.trim()
-                description = request.description?.trim()?.takeIf { it.isNotBlank() }
             },
             request = request,
         )
@@ -90,11 +115,9 @@ class AdminSurveyFormService(
         val form = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()
             ?.apply {
                 title = request.title.trim()
-                description = request.description?.trim()?.takeIf { it.isNotBlank() }
             }
             ?: SurveyForm(
                 title = request.title.trim(),
-                description = request.description?.trim()?.takeIf { it.isNotBlank() },
                 active = true,
             )
         return saveForm(form, request)
@@ -105,6 +128,12 @@ class AdminSurveyFormService(
         require(request.questions.size <= MAX_SURVEY_QUESTIONS) {
             "문항은 최대 ${MAX_SURVEY_QUESTIONS}개까지 등록할 수 있습니다."
         }
+        val secondaryCategory = validateCategory(request.primaryCategory, request.secondaryCategory)
+        form.status = request.status
+        form.primaryCategory = request.primaryCategory
+        form.secondaryCategory = secondaryCategory
+        form.replaceDescription(request.description, request.descriptionTags)
+
         val nextQuestions = request.questions
             .sortedBy { it.order }
             .map { q ->
@@ -142,13 +171,47 @@ class AdminSurveyFormService(
         surveyFormJpaRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "설문지를 찾을 수 없습니다.") }
 
-    private fun fetchPage(keyword: String, pageIndex: Int, size: Int): Page<SurveyForm> {
+    private fun fetchPage(
+        keyword: String,
+        status: SurveyFormStatus?,
+        primaryCategory: SurveyFormPrimaryCategory?,
+        secondaryCategory: SurveyFormSecondaryCategory?,
+        pageIndex: Int,
+        size: Int,
+    ): Page<SurveyForm> {
         val pageable = PageRequest.of(pageIndex.coerceAtLeast(0), size)
-        return if (keyword.isBlank()) {
-            surveyFormJpaRepository.findAllByOrderByUpdatedAtDesc(pageable)
-        } else {
-            surveyFormJpaRepository.searchByKeyword(keyword, pageable)
+        return surveyFormJpaRepository.search(
+            keyword = keyword.takeIf { it.isNotBlank() },
+            status = status,
+            primaryCategory = primaryCategory,
+            secondaryCategory = secondaryCategory,
+            pageable = pageable,
+        )
+    }
+
+    private fun validateCategory(
+        primaryCategory: SurveyFormPrimaryCategory,
+        secondaryCategory: SurveyFormSecondaryCategory?,
+    ): SurveyFormSecondaryCategory? {
+        if (primaryCategory == SurveyFormPrimaryCategory.ALL) {
+            require(secondaryCategory == null) { "전체 카테고리는 소분류를 선택할 수 없습니다." }
+            return null
         }
+
+        val secondary = requireNotNull(secondaryCategory) { "${primaryCategory.label}의 소분류를 선택해 주세요." }
+        require(secondary.primaryCategory == primaryCategory) { "대분류와 소분류가 일치하지 않습니다." }
+        return secondary
+    }
+
+    private fun normalizeFilters(
+        primaryCategory: SurveyFormPrimaryCategory?,
+        secondaryCategory: SurveyFormSecondaryCategory?,
+    ): Pair<SurveyFormPrimaryCategory?, SurveyFormSecondaryCategory?> {
+        val normalizedPrimary = primaryCategory?.takeUnless { it == SurveyFormPrimaryCategory.ALL }
+        require(secondaryCategory == null || normalizedPrimary == null || secondaryCategory.primaryCategory == normalizedPrimary) {
+            "대분류와 소분류가 일치하지 않습니다."
+        }
+        return normalizedPrimary to secondaryCategory
     }
 
     private fun validateQuestion(type: SurveyQuestionType, options: List<String>) {
