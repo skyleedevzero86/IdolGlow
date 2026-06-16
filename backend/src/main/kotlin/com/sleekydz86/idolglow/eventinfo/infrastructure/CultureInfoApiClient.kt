@@ -260,12 +260,9 @@ class CultureInfoApiClient(
         val operation = operationName(url)
         if (response.statusCode.value() == 401) {
             if (markUnauthorizedCooldown()) {
-                log.warn(
-                    "문화시설정보 API 인증 실패. operation={}, status=401, bodyPrefix={}. " +
-                        "CULTURE_INFO_SERVICE_KEY 값을 정규화해 한 번만 인코딩해서 전송합니다. " +
-                        "{}분 동안 추가 호출을 생략합니다.",
+                log.debug(
+                    "문화시설정보 API 인증 실패. operation={}, status=401. {}분 동안 추가 호출을 생략합니다.",
                     operation,
-                    response.body.take(200),
                     UNAUTHORIZED_COOLDOWN.toMinutes(),
                 )
             }

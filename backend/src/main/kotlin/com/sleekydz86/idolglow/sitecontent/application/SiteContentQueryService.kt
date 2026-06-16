@@ -60,6 +60,7 @@ class SiteContentQueryService(
         val popups = pupRepository.findPublicByDomain(resolvedDomainId)
             .asSequence()
             .filter { isVisiblePopup(it.noticeStartDate, it.noticeEndDate, now) }
+            .filter { !it.imagePath.isNullOrBlank() }
             .map {
                 SitePopupResponse(
                     popupId = it.popupId,
@@ -124,8 +125,19 @@ class SiteContentQueryService(
             return null
         }
 
+        parseDate(value, true)?.let { return it }
+        parseDate(value, false)?.let { return it }
+
         return DATE_TIME_FORMATTERS.firstNotNullOfOrNull { formatter ->
             runCatching { LocalDateTime.parse(value, formatter) }.getOrNull()
+        }
+    }
+
+    private fun parseDate(value: String, isStart: Boolean): LocalDateTime? {
+        return DATE_FORMATTERS.firstNotNullOfOrNull { formatter ->
+            runCatching { java.time.LocalDate.parse(value, formatter) }
+                .map { if (isStart) it.atStartOfDay() else it.atTime(23, 59, 59) }
+                .getOrNull()
         }
     }
 
@@ -135,6 +147,10 @@ class SiteContentQueryService(
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss"),
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+        )
+        private val DATE_FORMATTERS = listOf(
+            DateTimeFormatter.ofPattern("yyyyMMdd"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
         )
     }
 }
