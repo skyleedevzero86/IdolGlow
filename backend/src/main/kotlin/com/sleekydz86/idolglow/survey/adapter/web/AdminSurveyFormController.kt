@@ -1,6 +1,9 @@
 package com.sleekydz86.idolglow.survey.ui
 
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
+import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormPageResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormSummaryResponse
@@ -26,16 +29,22 @@ class AdminSurveyFormController(
     @GetMapping
     fun list(
         @RequestParam(required = false) keyword: String?,
+        @RequestParam(required = false) status: SurveyFormStatus?,
+        @RequestParam(required = false) primaryCategory: SurveyFormPrimaryCategory?,
+        @RequestParam(required = false) secondaryCategory: SurveyFormSecondaryCategory?,
     ): List<SurveyFormSummaryResponse> =
-        adminSurveyFormService.list(keyword)
+        adminSurveyFormService.list(keyword, status, primaryCategory, secondaryCategory)
 
     @GetMapping("/page")
     fun listPage(
         @RequestParam(required = false) keyword: String?,
+        @RequestParam(required = false) status: SurveyFormStatus?,
+        @RequestParam(required = false) primaryCategory: SurveyFormPrimaryCategory?,
+        @RequestParam(required = false) secondaryCategory: SurveyFormSecondaryCategory?,
         @RequestParam(required = false) page: Int?,
         @RequestParam(required = false) size: Int?,
     ): SurveyFormPageResponse =
-        adminSurveyFormService.listPage(keyword, page, size)
+        adminSurveyFormService.listPage(keyword, status, primaryCategory, secondaryCategory, page, size)
 
     @GetMapping("/current")
     fun findCurrent(): ResponseEntity<SurveyFormResponse> =

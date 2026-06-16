@@ -3,6 +3,9 @@ package com.sleekydz86.idolglow.survey.graphql
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
+import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
@@ -44,6 +47,10 @@ class SurveyFormGraphQlController(
             AdminUpsertSurveyFormRequest(
                 title = input.title,
                 description = input.description,
+                descriptionTags = input.descriptionTags,
+                status = input.status,
+                primaryCategory = input.primaryCategory,
+                secondaryCategory = input.secondaryCategory,
                 questions = input.questions.map {
                     AdminSurveyQuestionRequest(
                         order = it.order,
@@ -81,6 +88,10 @@ class SurveyFormGraphQlController(
 data class UpsertAdminSurveyFormGraphQlInput(
     val title: String,
     val description: String?,
+    val descriptionTags: List<String> = emptyList(),
+    val status: SurveyFormStatus = SurveyFormStatus.SCHEDULED,
+    val primaryCategory: SurveyFormPrimaryCategory = SurveyFormPrimaryCategory.ALL,
+    val secondaryCategory: SurveyFormSecondaryCategory? = null,
     val questions: List<UpsertAdminSurveyQuestionGraphQlInput>,
 )
 
@@ -107,6 +118,13 @@ data class SurveyFormGraphQlResponse(
     val id: Long,
     val title: String,
     val description: String?,
+    val descriptionTags: List<String>,
+    val status: SurveyFormStatus,
+    val statusLabel: String,
+    val primaryCategory: SurveyFormPrimaryCategory,
+    val primaryCategoryLabel: String,
+    val secondaryCategory: SurveyFormSecondaryCategory?,
+    val secondaryCategoryLabel: String?,
     val questions: List<SurveyQuestionGraphQlResponse>,
 ) {
     companion object {
@@ -115,6 +133,13 @@ data class SurveyFormGraphQlResponse(
                 id = source.id,
                 title = source.title,
                 description = source.description,
+                descriptionTags = source.descriptionTags,
+                status = source.status,
+                statusLabel = source.statusLabel,
+                primaryCategory = source.primaryCategory,
+                primaryCategoryLabel = source.primaryCategoryLabel,
+                secondaryCategory = source.secondaryCategory,
+                secondaryCategoryLabel = source.secondaryCategoryLabel,
                 questions = source.questions.map {
                     SurveyQuestionGraphQlResponse(
                         id = it.id,

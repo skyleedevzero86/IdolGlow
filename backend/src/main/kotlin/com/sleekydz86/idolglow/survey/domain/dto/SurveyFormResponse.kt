@@ -1,6 +1,9 @@
 package com.sleekydz86.idolglow.survey.domain.dto
 
 import com.sleekydz86.idolglow.survey.domain.SurveyForm
+import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import org.springframework.data.domain.Page
 import java.time.LocalDateTime
@@ -9,6 +12,13 @@ data class SurveyFormResponse(
     val id: Long,
     val title: String,
     val description: String?,
+    val descriptionTags: List<String>,
+    val status: SurveyFormStatus,
+    val statusLabel: String,
+    val primaryCategory: SurveyFormPrimaryCategory,
+    val primaryCategoryLabel: String,
+    val secondaryCategory: SurveyFormSecondaryCategory?,
+    val secondaryCategoryLabel: String?,
     val questions: List<SurveyQuestionResponse>,
 ) {
     companion object {
@@ -16,7 +26,14 @@ data class SurveyFormResponse(
             SurveyFormResponse(
                 id = form.id,
                 title = form.title,
-                description = form.description,
+                description = form.descriptionMarkdown(),
+                descriptionTags = form.descriptionTagNames(),
+                status = form.status,
+                statusLabel = form.status.label,
+                primaryCategory = form.primaryCategory,
+                primaryCategoryLabel = form.primaryCategory.label,
+                secondaryCategory = form.secondaryCategory,
+                secondaryCategoryLabel = form.secondaryCategory?.label,
                 questions = form.questions
                     .sortedBy { it.displayOrder }
                     .map { q ->
@@ -48,7 +65,14 @@ data class SurveyFormSummaryResponse(
     val id: Long,
     val title: String,
     val description: String?,
+    val descriptionTags: List<String>,
     val active: Boolean,
+    val status: SurveyFormStatus,
+    val statusLabel: String,
+    val primaryCategory: SurveyFormPrimaryCategory,
+    val primaryCategoryLabel: String,
+    val secondaryCategory: SurveyFormSecondaryCategory?,
+    val secondaryCategoryLabel: String?,
     val questionCount: Int,
     val requiredQuestionCount: Int,
     val choiceQuestionCount: Int,
@@ -61,8 +85,15 @@ data class SurveyFormSummaryResponse(
             return SurveyFormSummaryResponse(
                 id = form.id,
                 title = form.title,
-                description = form.description,
+                description = form.descriptionMarkdown(),
+                descriptionTags = form.descriptionTagNames(),
                 active = form.active,
+                status = form.status,
+                statusLabel = form.status.label,
+                primaryCategory = form.primaryCategory,
+                primaryCategoryLabel = form.primaryCategory.label,
+                secondaryCategory = form.secondaryCategory,
+                secondaryCategoryLabel = form.secondaryCategory?.label,
                 questionCount = questions.size,
                 requiredQuestionCount = questions.count { it.required },
                 choiceQuestionCount = questions.count { it.questionType != SurveyQuestionType.TEXT },
@@ -72,6 +103,17 @@ data class SurveyFormSummaryResponse(
         }
     }
 }
+
+private fun SurveyForm.descriptionMarkdown(): String? =
+    descriptionContent?.markdown?.takeIf { it.isNotBlank() }
+        ?: description.takeIf { descriptionContent == null }
+
+private fun SurveyForm.descriptionTagNames(): List<String> =
+    descriptionContent
+        ?.tags
+        ?.sortedBy { it.displayOrder }
+        ?.map { it.tagName }
+        ?: emptyList()
 
 data class SurveyFormPageResponse(
     val content: List<SurveyFormSummaryResponse>,
