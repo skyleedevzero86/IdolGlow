@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.pup.application
 
+import com.sleekydz86.idolglow.global.support.NoticePeriodDateTimeParser
 import com.sleekydz86.idolglow.pup.application.dto.PupAdminItemResponse
 import com.sleekydz86.idolglow.pup.application.dto.PupAdminPageResponse
 import com.sleekydz86.idolglow.pup.application.dto.UpsertPupRequest
@@ -9,8 +10,6 @@ import com.sleekydz86.idolglow.pup.domain.PupRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.math.ceil
 
 @Service
@@ -142,31 +141,12 @@ class PupAdminService(
         noticeStartDate: String?,
         noticeEndDate: String?,
     ) {
-        val start = parseDateTime(noticeStartDate)
-        val end = parseDateTime(noticeEndDate)
+        val start = NoticePeriodDateTimeParser.parse(noticeStartDate)
+        val end = NoticePeriodDateTimeParser.parse(noticeEndDate)
 
         if (start != null && end != null && start.isAfter(end)) {
             throw IllegalArgumentException("게시 종료일은 게시 시작일보다 빠를 수 없습니다.")
         }
     }
 
-    private fun parseDateTime(raw: String?): LocalDateTime? {
-        val value = raw?.trim().orEmpty()
-        if (value.isEmpty()) {
-            return null
-        }
-
-        return DATE_TIME_FORMATTERS.firstNotNullOfOrNull { formatter ->
-            runCatching { LocalDateTime.parse(value, formatter) }.getOrNull()
-        }
-    }
-
-    companion object {
-        private val DATE_TIME_FORMATTERS = listOf(
-            DateTimeFormatter.ofPattern("yyyyMMddHHmm"),
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-        )
-    }
 }

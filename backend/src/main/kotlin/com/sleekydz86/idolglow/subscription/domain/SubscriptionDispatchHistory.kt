@@ -87,18 +87,3 @@ class SubscriptionDispatchHistory(
         }
     }
 }
-
-enum class SubscriptionContentType(val label: String, val audience: SubscriptionAudience) {
-    NEWSLETTER("뉴스레터", SubscriptionAudience.NEWSLETTER),
-    WEBZINE_ISSUE("웹진", SubscriptionAudience.WEBZINE_ISSUE),
-}
-
-enum class SubscriptionDispatchChannel(val label: String) {
-    EMAIL("이메일"),
-}
-
-enum class SubscriptionDispatchStatus(val label: String) {
-    RECORDED("기록됨"),
-    SENT("발송완료"),
-    FAILED("발송실패"),
-}

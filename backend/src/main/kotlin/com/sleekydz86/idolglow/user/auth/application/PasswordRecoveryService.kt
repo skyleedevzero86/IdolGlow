@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 import java.time.LocalDateTime
 
-@Service
 class PasswordRecoveryService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
@@ -144,8 +143,3 @@ class PasswordRecoveryService(
         )
     }
 }
-
-data class PasswordLoginResult(
-    val token: TokenResponse,
-    val requirePasswordChange: Boolean,
-)

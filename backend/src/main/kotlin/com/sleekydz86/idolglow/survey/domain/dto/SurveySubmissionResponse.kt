@@ -27,9 +27,3 @@ data class SurveySubmissionResponse(
             )
     }
 }
-
-data class SurveySubmittedAnswerResponse(
-    val questionId: Long,
-    val answerText: String?,
-    val selectedOptions: List<String>,
-)

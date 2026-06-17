@@ -19,10 +19,3 @@ interface UserRepository {
     fun save(user: User): User
     fun saveAndFlush(user: User): User
 }
-
-data class UserAdminPage(
-    val items: List<User>,
-    val totalElements: Long,
-    val totalPages: Int,
-    val hasNext: Boolean,
-)

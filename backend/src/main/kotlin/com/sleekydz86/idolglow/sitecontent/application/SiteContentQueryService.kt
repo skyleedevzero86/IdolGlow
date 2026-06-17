@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.sitecontent.application
 
 import com.sleekydz86.idolglow.bnr.domain.BnrRepository
 import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.support.NoticePeriodDateTimeParser
 import com.sleekydz86.idolglow.mim.domain.MimRepository
 import com.sleekydz86.idolglow.pup.domain.PupRepository
 import com.sleekydz86.idolglow.sitecontent.application.dto.SiteBannerResponse
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Service
 @Transactional(readOnly = true)
@@ -37,7 +37,7 @@ class SiteContentQueryService(
                     subtitle = it.description?.takeIf(String::isNotBlank),
                     imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
                     linkUrl = "/articles",
-                    categoryLabel = "main",
+                    categoryLabel = "메인",
                 )
             }
             .toList()
@@ -59,7 +59,7 @@ class SiteContentQueryService(
         val now = LocalDateTime.now()
         val popups = pupRepository.findPublicByDomain(resolvedDomainId)
             .asSequence()
-            .filter { isVisiblePopup(it.noticeStartDate, it.noticeEndDate, now) }
+            .filter { NoticePeriodDateTimeParser.isWithinPeriod(it.noticeStartDate, it.noticeEndDate, now) }
             .filter { !it.imagePath.isNullOrBlank() }
             .map {
                 SitePopupResponse(
@@ -100,57 +100,4 @@ class SiteContentQueryService(
         return "$baseUrl/site-content/assets?objectKey=$encodedObjectKey"
     }
 
-    private fun isVisiblePopup(
-        noticeStartDate: String?,
-        noticeEndDate: String?,
-        now: LocalDateTime,
-    ): Boolean {
-        val start = parseDateTime(noticeStartDate)
-        val end = parseDateTime(noticeEndDate)
-
-        if (start != null && now.isBefore(start)) {
-            return false
-        }
-
-        if (end != null && now.isAfter(end)) {
-            return false
-        }
-
-        return true
-    }
-
-    private fun parseDateTime(raw: String?): LocalDateTime? {
-        val value = raw?.trim().orEmpty()
-        if (value.isEmpty()) {
-            return null
-        }
-
-        parseDate(value, true)?.let { return it }
-        parseDate(value, false)?.let { return it }
-
-        return DATE_TIME_FORMATTERS.firstNotNullOfOrNull { formatter ->
-            runCatching { LocalDateTime.parse(value, formatter) }.getOrNull()
-        }
-    }
-
-    private fun parseDate(value: String, isStart: Boolean): LocalDateTime? {
-        return DATE_FORMATTERS.firstNotNullOfOrNull { formatter ->
-            runCatching { java.time.LocalDate.parse(value, formatter) }
-                .map { if (isStart) it.atStartOfDay() else it.atTime(23, 59, 59) }
-                .getOrNull()
-        }
-    }
-
-    companion object {
-        private val DATE_TIME_FORMATTERS = listOf(
-            DateTimeFormatter.ofPattern("yyyyMMddHHmm"),
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-        )
-        private val DATE_FORMATTERS = listOf(
-            DateTimeFormatter.ofPattern("yyyyMMdd"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-        )
-    }
 }

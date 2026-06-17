@@ -1,0 +1,48 @@
+package com.sleekydz86.idolglow.subway.infrastructure.enrichment
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatusCode
+import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.client.WebClient
+import tools.jackson.databind.ObjectMapper
+
+private data class RawSubwayOpenAiResponse(
+    val statusCode: HttpStatusCode,
+    val body: String,
+)
+
+private data class SubwayChatCompletionRequest(
+    val model: String,
+    val temperature: Double,
+    val messages: List<SubwayChatMessage>,
+    @JsonProperty("response_format")
+    val responseFormat: SubwayResponseFormat,
+)
+
+private data class SubwayChatMessage(
+    val role: String,
+    val content: String,
+)
+
+private data class SubwayResponseFormat(
+    val type: String,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class SubwayChatCompletionResponse(
+    val choices: List<SubwayChatChoice> = emptyList(),
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class SubwayChatChoice(
+    val message: SubwayChatChoiceMessage = SubwayChatChoiceMessage(),
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class SubwayChatChoiceMessage(
+    val content: String? = null,
+)

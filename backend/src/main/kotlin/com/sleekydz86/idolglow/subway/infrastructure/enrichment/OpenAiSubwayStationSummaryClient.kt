@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import tools.jackson.databind.ObjectMapper
 
-@Component
 class OpenAiSubwayStationSummaryClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,
@@ -106,55 +105,3 @@ class OpenAiSubwayStationSummaryClient(
         const val CACHE_NAME: String = "subway-station-llm-summary"
     }
 }
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class LlmSubwayStationSummary(
-    val title: String? = null,
-    val bullets: List<String>? = null,
-    val learnMoreLabel: String? = null,
-) {
-    fun normalize(stationName: String): LlmSubwayStationSummary {
-        val t = title?.trim()?.takeIf { it.isNotEmpty() }
-        val bs = (bullets ?: emptyList()).map { it.trim() }.filter { it.isNotEmpty() }.take(3)
-        val learn = learnMoreLabel?.trim()?.takeIf { it.isNotEmpty() }
-            ?: "${stationName}에 대해 더 알아보세요"
-        return LlmSubwayStationSummary(title = t, bullets = bs, learnMoreLabel = learn)
-    }
-}
-
-private data class RawSubwayOpenAiResponse(
-    val statusCode: HttpStatusCode,
-    val body: String,
-)
-
-private data class SubwayChatCompletionRequest(
-    val model: String,
-    val temperature: Double,
-    val messages: List<SubwayChatMessage>,
-    @JsonProperty("response_format")
-    val responseFormat: SubwayResponseFormat,
-)
-
-private data class SubwayChatMessage(
-    val role: String,
-    val content: String,
-)
-
-private data class SubwayResponseFormat(
-    val type: String,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class SubwayChatCompletionResponse(
-    val choices: List<SubwayChatChoice> = emptyList(),
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class SubwayChatChoice(
-    val message: SubwayChatChoiceMessage = SubwayChatChoiceMessage(),
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class SubwayChatChoiceMessage(
-    val content: String? = null,
-)

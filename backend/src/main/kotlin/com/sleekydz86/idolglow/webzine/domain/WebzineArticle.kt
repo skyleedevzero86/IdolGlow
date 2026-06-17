@@ -17,35 +17,12 @@ import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 
-data class WebzineArticleDraft(
-    val title: String,
-    val kicker: String,
-    val summary: String,
-    val heroImageUrl: String,
-    val cardImageUrl: String,
-    val category: IssueCategory,
-    val formatLabel: String,
-    val authorName: String,
-    val authorEmail: String,
-    val creditLine: String,
-    val highlightQuote: String?,
-    val sections: List<WebzineArticleSectionDraft>,
-    val galleryImageUrls: List<String>,
-    val tags: List<String>,
-)
-
-data class WebzineArticleSectionDraft(
-    val heading: String?,
-    val body: String,
-    val note: String?,
-)
-
 @Entity
 @Table(
     name = "webzine_articles",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_issue_slug", columnNames = ["issue_id", "slug"])
-    ]
+        UniqueConstraint(name = "uk_webzine_article_issue_slug", columnNames = ["issue_id", "slug"]),
+    ],
 )
 class WebzineArticle(
     @Id
@@ -203,78 +180,3 @@ class WebzineArticle(
         }
     }
 }
-
-@Entity
-@Table(
-    name = "webzine_article_sections",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_section_order", columnNames = ["article_id", "display_order"])
-    ]
-)
-class WebzineArticleSection(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0L,
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "article_id", nullable = false)
-    val article: WebzineArticle,
-
-    @Column(name = "display_order", nullable = false)
-    val displayOrder: Int,
-
-    @Column(length = 200)
-    val heading: String? = null,
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    val body: String,
-
-    @Column(length = 1000)
-    val note: String? = null,
-) : BaseEntity()
-
-@Entity
-@Table(
-    name = "webzine_article_gallery_images",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_gallery_order", columnNames = ["article_id", "display_order"])
-    ]
-)
-class WebzineArticleGalleryImage(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0L,
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "article_id", nullable = false)
-    val article: WebzineArticle,
-
-    @Column(name = "display_order", nullable = false)
-    val displayOrder: Int,
-
-    @Column(name = "image_url", nullable = false, length = 500)
-    val imageUrl: String,
-) : BaseEntity()
-
-@Entity
-@Table(
-    name = "webzine_article_tags",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_tag_name", columnNames = ["article_id", "tag_name"])
-    ]
-)
-class WebzineArticleTag(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0L,
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "article_id", nullable = false)
-    val article: WebzineArticle,
-
-    @Column(name = "display_order", nullable = false)
-    val displayOrder: Int,
-
-    @Column(name = "tag_name", nullable = false, length = 80)
-    val tagName: String,
-) : BaseEntity()
