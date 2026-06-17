@@ -10,11 +10,3 @@ data class DepartureCongestion(
     val occurredAt: LocalDateTime?,
     val operatingTime: String?,
 )
-
-enum class DepartureCrowdLevel {
-    SMOOTH,
-    MODERATE,
-    BUSY,
-    HEAVY,
-    UNKNOWN,
-}

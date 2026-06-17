@@ -11,7 +11,6 @@ import com.sleekydz86.idolglow.airportcrowd.domain.PassengerForecast
 import com.sleekydz86.idolglow.airportcrowd.domain.ParkingCongestion
 import org.springframework.stereotype.Service
 
-@Service
 class AirportCrowdQueryService(
     private val departureCongestionQueryPort: DepartureCongestionQueryPort,
     private val arrivalCongestionQueryPort: ArrivalCongestionQueryPort,
@@ -215,61 +214,3 @@ class AirportCrowdQueryService(
     }
 
 }
-
-data class DepartureCongestionView(
-    val gateId: String,
-    val terminalId: String,
-    val waitTimeMinutes: Int?,
-    val waitLength: Int?,
-    val occurredAt: java.time.LocalDateTime?,
-    val operatingTime: String?,
-    val level: DepartureCrowdLevel,
-)
-
-data class CrowdCriteriaView(
-    val level: DepartureCrowdLevel,
-    val title: String,
-    val description: String,
-    val color: String,
-)
-
-data class PassengerForecastBundleView(
-    val today: List<PassengerForecastView>,
-    val tomorrow: List<PassengerForecastView>,
-)
-
-data class PassengerForecastView(
-    val date: String?,
-    val timeSlot: String,
-    val terminal1DepartureTotal: Int?,
-    val terminal2DepartureTotal: Int?,
-    val terminal1ArrivalTotal: Int?,
-    val terminal2ArrivalTotal: Int?,
-    val totalDeparture: Int,
-    val level: DepartureCrowdLevel,
-)
-
-data class ArrivalCongestionView(
-    val terminal: String,
-    val airport: String?,
-    val entryGate: String?,
-    val gateNumber: String?,
-    val flightId: String?,
-    val korean: Int?,
-    val foreigner: Int?,
-    val totalFlow: Int,
-    val scheduleTime: java.time.LocalDateTime?,
-    val estimatedTime: java.time.LocalDateTime?,
-    val level: DepartureCrowdLevel,
-)
-
-data class ParkingCongestionView(
-    val terminal: String?,
-    val floor: String,
-    val parking: Int?,
-    val parkingArea: Int?,
-    val available: Int?,
-    val occupancyRate: Double?,
-    val observedAt: java.time.LocalDateTime?,
-    val level: DepartureCrowdLevel,
-)

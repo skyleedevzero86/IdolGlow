@@ -1,0 +1,32 @@
+package com.sleekydz86.idolglow.admin.ui.dto
+
+import com.sleekydz86.idolglow.subscription.application.dto.asSubscriptionDateTime
+import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
+import io.swagger.v3.oas.annotations.media.Schema
+import java.time.DayOfWeek
+import java.time.LocalDateTime
+
+data class AdminSubscriptionSubscriberResponse(
+    val id: Long,
+    val email: String,
+    val subscribedTargets: List<String>,
+    val active: Boolean,
+    val source: String,
+    val consentedAt: String,
+    val subscribedAt: String,
+) {
+    companion object {
+        fun from(subscription: EmailSubscription): AdminSubscriptionSubscriberResponse =
+            AdminSubscriptionSubscriberResponse(
+                id = subscription.id,
+                email = subscription.email,
+                subscribedTargets = subscription.subscribedTargets().map { it.label },
+                active = subscription.active,
+                source = subscription.subscriptionSource,
+                consentedAt = subscription.consentedAt.asSubscriptionDateTime(),
+                subscribedAt = subscription.subscribedAt.asSubscriptionDateTime(),
+            )
+    }
+}

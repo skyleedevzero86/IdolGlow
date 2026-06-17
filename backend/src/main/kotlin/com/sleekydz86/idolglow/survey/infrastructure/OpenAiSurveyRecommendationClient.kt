@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 
-@Component
 class OpenAiSurveyRecommendationClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,
@@ -89,56 +88,3 @@ class OpenAiSurveyRecommendationClient(
         return runCatching { objectMapper.readValue(json, LlmSurveyRecommendation::class.java).normalize() }.getOrNull()
     }
 }
-
-data class LlmSurveyRecommendation(
-    val title: String? = null,
-    val subtitle: String? = null,
-    val narrative: String? = null,
-    val attractionReasons: Map<String, String> = emptyMap(),
-) {
-    fun normalize(): LlmSurveyRecommendation = copy(
-        title = title?.trim()?.takeIf { it.isNotEmpty() },
-        subtitle = subtitle?.trim()?.takeIf { it.isNotEmpty() },
-        narrative = narrative?.trim()?.takeIf { it.isNotEmpty() },
-        attractionReasons = attractionReasons
-            .mapValues { (_, value) -> value.trim() }
-            .filterValues { it.isNotEmpty() },
-    )
-}
-
-private data class RawSurveyOpenAiResponse(
-    val statusCode: HttpStatusCode,
-    val body: String,
-)
-
-private data class SurveyChatCompletionRequest(
-    val model: String,
-    val temperature: Double,
-    val messages: List<SurveyChatMessage>,
-    @JsonProperty("response_format")
-    val responseFormat: SurveyResponseFormat,
-)
-
-private data class SurveyChatMessage(
-    val role: String,
-    val content: String,
-)
-
-private data class SurveyResponseFormat(
-    val type: String,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class SurveyChatCompletionResponse(
-    val choices: List<SurveyChatChoice> = emptyList(),
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class SurveyChatChoice(
-    val message: SurveyChatChoiceMessage = SurveyChatChoiceMessage(),
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class SurveyChatChoiceMessage(
-    val content: String? = null,
-)

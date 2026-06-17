@@ -8,30 +8,18 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.time.LocalDate
 
-data class NewsletterDraft(
-    val title: String,
-    val categoryLabel: String,
-    val publishedAt: LocalDate,
-    val imageUrl: String,
-    val summary: String,
-    val tags: List<String>,
-    val paragraphs: List<String>,
-)
-
 @Entity
 @Table(
     name = "newsletters",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_newsletter_slug", columnNames = ["slug"]),
-    ]
+    ],
 )
 class Newsletter(
     @Id
@@ -128,49 +116,3 @@ class Newsletter(
         }
     }
 }
-
-@Entity
-@Table(
-    name = "newsletter_tags",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uk_newsletter_tag_name", columnNames = ["newsletter_id", "tag_name"]),
-    ]
-)
-class NewsletterTag(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0L,
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "newsletter_id", nullable = false)
-    val newsletter: Newsletter,
-
-    @Column(name = "display_order", nullable = false)
-    val displayOrder: Int,
-
-    @Column(name = "tag_name", nullable = false, length = 80)
-    val tagName: String,
-) : BaseEntity()
-
-@Entity
-@Table(
-    name = "newsletter_paragraphs",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uk_newsletter_paragraph_order", columnNames = ["newsletter_id", "display_order"]),
-    ]
-)
-class NewsletterParagraph(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0L,
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "newsletter_id", nullable = false)
-    val newsletter: Newsletter,
-
-    @Column(name = "display_order", nullable = false)
-    val displayOrder: Int,
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    val body: String,
-) : BaseEntity()

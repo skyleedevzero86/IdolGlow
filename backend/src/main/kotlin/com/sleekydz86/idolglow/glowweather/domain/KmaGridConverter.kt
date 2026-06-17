@@ -9,11 +9,6 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.tan
 
-data class KmaGridPoint(
-    val nx: Int,
-    val ny: Int,
-)
-
 object KmaGridConverter {
     private const val RE = 6371.00877
     private const val GRID = 5.0

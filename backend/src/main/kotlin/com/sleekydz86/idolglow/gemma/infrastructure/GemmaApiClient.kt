@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
-@Component
 class GemmaApiClient(
     private val props: GemmaProperties,
     @param:Qualifier("gemmaRestClient") private val restClient: RestClient,
@@ -113,13 +112,4 @@ class GemmaApiClient(
 
         return messages
     }
-}
-
-data class GemmaApiResponse(
-    val httpStatus: Int,
-    val json: JsonNode?,
-    val rawBody: String?,
-    val error: Throwable? = null,
-) {
-    val isSuccess2xx: Boolean get() = httpStatus in 200..299
 }

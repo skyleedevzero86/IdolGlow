@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.auth.application
+﻿package com.sleekydz86.idolglow.user.auth.application
 
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.UserExceptionType
@@ -13,11 +13,6 @@ import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-data class SignupFieldCheckResult(
-    val available: Boolean,
-    val code: String? = null,
-)
 
 @Service
 class SignupService(

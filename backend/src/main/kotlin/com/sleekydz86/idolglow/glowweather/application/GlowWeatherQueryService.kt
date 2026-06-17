@@ -21,7 +21,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.round
 
-@Service
 class GlowWeatherQueryService(
     private val glowWeatherDataPort: GlowWeatherDataPort,
     private val glowClimateWindRepository: GlowClimateWindRepository,
@@ -560,91 +559,3 @@ class GlowWeatherQueryService(
         private val DISPLAY_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
     }
 }
-
-data class GlowWeatherDashboardResponse(
-    val selectedRegionId: String,
-    val regions: List<GlowWeatherRegionSummary>,
-    val region: GlowWeatherSelectedRegion,
-    val current: CurrentWeatherResponse,
-    val monthlySummary: GlowWeatherMonthlySummary,
-    val outlookSummary: String,
-    val forecast: List<GlowWeatherForecastDay>,
-    val recommendations: List<GlowWeatherRecommendation>,
-    val windGuide: GlowWeatherWindGuide,
-    val forecastFromApi: Boolean,
-    val currentFromApi: Boolean,
-    val generatedAt: String,
-)
-
-data class GlowWeatherRegionSummary(
-    val id: String,
-    val name: String,
-    val areaLabel: String,
-)
-
-data class GlowWeatherSelectedRegion(
-    val id: String,
-    val name: String,
-    val areaLabel: String,
-    val latitude: Double,
-    val longitude: Double,
-)
-
-data class CurrentWeatherResponse(
-    val regionName: String,
-    val observedAt: String,
-    val temperatureC: Double?,
-    val humidity: Int?,
-    val skyLabel: String = "구름많음",
-    val precipitationLabel: String = "강수 없음",
-    val windDirectionDegrees: Int?,
-    val windDirectionLabel: String,
-    val windSpeedMps: Double?,
-)
-
-data class GlowWeatherMonthlySummary(
-    val monthLabel: String,
-    val averageTemperatureC: Double?,
-    val rainyDays: Int,
-    val basedOn: String,
-)
-
-data class GlowWeatherForecastDay(
-    val regionName: String,
-    val date: LocalDate,
-    val dateLabel: String,
-    val dayLabel: String,
-    val summary: String,
-    val icon: String,
-    val minTempC: Double?,
-    val maxTempC: Double?,
-    val precipitationChance: Int?,
-    val windDirectionDegrees: Int?,
-    val windDirectionLabel: String?,
-    val windSpeedMps: Double?,
-    val source: String,
-)
-
-data class GlowWeatherRecommendation(
-    val id: String,
-    val icon: String,
-    val tone: String,
-    val title: String,
-    val subtitle: String,
-    val description: String,
-)
-
-data class GlowWeatherWindGuide(
-    val directionDegrees: Int?,
-    val directionLabel: String,
-    val speedMps: Double?,
-    val message: String,
-    val referencePoints: List<GlowWeatherWindPoint>,
-    val windFromClimateStatistics: Boolean = false,
-    val climateStatisticsMonth: Int? = null,
-)
-
-data class GlowWeatherWindPoint(
-    val label: String,
-    val degrees: Int,
-)

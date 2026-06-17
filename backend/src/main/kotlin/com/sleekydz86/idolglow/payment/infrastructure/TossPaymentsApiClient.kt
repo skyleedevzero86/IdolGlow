@@ -13,7 +13,6 @@ import org.springframework.web.util.UriUtils
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-@Component
 class TossPaymentsApiClient(
     private val props: TossPaymentProperties,
     @param:Qualifier("tossRestClient") private val restClient: RestClient,
@@ -104,13 +103,4 @@ class TossPaymentsApiClient(
             TossApiResponse(0, null, e.message, e)
         }
     }
-}
-
-data class TossApiResponse(
-    val httpStatus: Int,
-    val json: JsonNode?,
-    val rawBody: String?,
-    val error: Throwable? = null,
-) {
-    val isSuccess2xx: Boolean get() = httpStatus in 200..299
 }

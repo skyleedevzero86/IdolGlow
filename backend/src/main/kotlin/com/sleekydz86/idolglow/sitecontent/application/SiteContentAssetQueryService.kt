@@ -30,7 +30,7 @@ class SiteContentAssetQueryService(
 
     private fun readFromMinio(objectKey: String): SiteContentAssetPayload {
         val client = minioClientProvider.getIfAvailable()
-            ?: throw IllegalStateException("MinIO가 활성화되어 있으나 MinioClient 빈을 사용할 수 없습니다.")
+            ?: throw IllegalStateException("객체 스토리지가 활성화되어 있으나 클라이언트 빈을 사용할 수 없습니다.")
 
         val bytes = client.getObject(
             GetObjectArgs.builder()

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@Component
 class SubscriptionEmailComposer(
     private val appMailProperties: AppMailProperties,
     private val appPublicUrlProperties: AppPublicUrlProperties,
@@ -145,9 +144,3 @@ class SubscriptionEmailComposer(
         private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
     }
 }
-
-data class ComposedSubscriptionEmail(
-    val subject: String,
-    val plainText: String,
-    val htmlBody: String,
-)

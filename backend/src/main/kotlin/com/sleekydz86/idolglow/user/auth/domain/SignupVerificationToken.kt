@@ -10,8 +10,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
-@Entity
-@Table(name = "signup_verification_tokens")
 class SignupVerificationToken(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,17 +42,4 @@ class SignupVerificationToken(
     var detail: String? = null,
 ) {
     fun isExpired(now: LocalDateTime): Boolean = now.isAfter(expiresAt)
-}
-
-enum class SignupVerificationType {
-    EMAIL_SIGNUP_VERIFY,
-    ACCOUNT_CONFIRM,
-}
-
-enum class SignupVerificationStatus {
-    PENDING,
-    VERIFIED,
-    USED,
-    REJECTED,
-    EXPIRED,
 }

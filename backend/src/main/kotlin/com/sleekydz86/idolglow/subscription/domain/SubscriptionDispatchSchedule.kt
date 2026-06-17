@@ -107,8 +107,3 @@ class SubscriptionDispatchSchedule(
         }
     }
 }
-
-enum class SubscriptionDispatchFrequency(val label: String) {
-    DAILY("매일"),
-    WEEKLY("매주"),
-}
