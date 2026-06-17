@@ -21,6 +21,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.round
 
+@Service
 class GlowWeatherQueryService(
     private val glowWeatherDataPort: GlowWeatherDataPort,
     private val glowClimateWindRepository: GlowClimateWindRepository,

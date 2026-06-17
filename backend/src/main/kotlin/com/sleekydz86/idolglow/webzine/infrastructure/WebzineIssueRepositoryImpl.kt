@@ -21,6 +21,9 @@ class WebzineIssueRepositoryImpl(
     override fun findBySlug(slug: String): WebzineIssue? =
         webzineIssueJpaRepository.findBySlug(slug)
 
+    override fun findBySlugWithArticles(slug: String): WebzineIssue? =
+        webzineIssueJpaRepository.findBySlugWithArticles(slug)
+
     override fun existsByVolumeOrSlug(volume: Int, slug: String): Boolean =
         webzineIssueJpaRepository.existsByVolumeOrSlug(volume, slug)
 

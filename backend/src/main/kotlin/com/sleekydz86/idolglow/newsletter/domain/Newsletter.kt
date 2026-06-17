@@ -19,7 +19,7 @@ import java.time.LocalDate
     name = "newsletters",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_newsletter_slug", columnNames = ["slug"]),
-    ],
+    ]
 )
 class Newsletter(
     @Id

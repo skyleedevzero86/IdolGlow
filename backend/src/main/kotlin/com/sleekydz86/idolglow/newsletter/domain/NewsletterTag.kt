@@ -17,7 +17,7 @@ import jakarta.persistence.UniqueConstraint
     name = "newsletter_tags",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_newsletter_tag_name", columnNames = ["newsletter_id", "tag_name"]),
-    ],
+    ]
 )
 class NewsletterTag(
     @Id

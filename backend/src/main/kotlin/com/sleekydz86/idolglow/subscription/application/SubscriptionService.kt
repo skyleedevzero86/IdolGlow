@@ -165,17 +165,18 @@ class SubscriptionService(
 
     @Transactional
     override fun recordWebzineIssueDispatch(issue: WebzineIssue) {
+        val loadedIssue = webzineIssueRepository.findBySlugWithArticles(issue.slug) ?: return
         applicationEventPublisher.publishEvent(
             WebzineIssueDispatchRequestedEvent(
-                slug = issue.slug,
-                volume = issue.volume,
-                issueDate = issue.issueDate,
-                teaser = issue.teaser,
-                coverImageUrl = issue.coverImageUrl,
-                articleTitles = issue.articles
+                slug = loadedIssue.slug,
+                volume = loadedIssue.volume,
+                issueDate = loadedIssue.issueDate,
+                teaser = loadedIssue.teaser,
+                coverImageUrl = loadedIssue.coverImageUrl,
+                articleTitles = loadedIssue.articles
                     .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
                     .map { it.title },
-                contentCreatedAt = issue.createdAt,
+                contentCreatedAt = loadedIssue.createdAt,
             )
         )
     }

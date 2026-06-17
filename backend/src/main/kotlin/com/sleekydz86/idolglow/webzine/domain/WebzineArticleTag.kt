@@ -16,8 +16,8 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "webzine_article_tags",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_tag_name", columnNames = ["article_id", "tag_name"]),
-    ],
+        UniqueConstraint(name = "uk_webzine_article_tag_name", columnNames = ["article_id", "tag_name"])
+    ]
 )
 class WebzineArticleTag(
     @Id

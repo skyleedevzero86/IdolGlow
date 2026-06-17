@@ -16,8 +16,8 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "webzine_article_gallery_images",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_gallery_order", columnNames = ["article_id", "display_order"]),
-    ],
+        UniqueConstraint(name = "uk_webzine_article_gallery_order", columnNames = ["article_id", "display_order"])
+    ]
 )
 class WebzineArticleGalleryImage(
     @Id

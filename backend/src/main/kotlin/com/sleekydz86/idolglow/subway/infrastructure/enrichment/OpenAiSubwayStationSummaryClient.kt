@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import tools.jackson.databind.ObjectMapper
 
+@Component
 class OpenAiSubwayStationSummaryClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
+@Component
 class GemmaApiClient(
     private val props: GemmaProperties,
     @param:Qualifier("gemmaRestClient") private val restClient: RestClient,
