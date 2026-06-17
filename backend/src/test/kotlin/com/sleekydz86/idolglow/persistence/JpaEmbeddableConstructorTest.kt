@@ -8,14 +8,22 @@ import org.junit.jupiter.api.Test
 class JpaEmbeddableConstructorTest {
 
     @Test
-    fun `nickname embeddable exposes no arg constructor for hibernate`() {
+    fun `닉네임_임베디드_타입은_기본_생성자를_제공한다`() {
+        // given
+
+        // when
+        // then
         assertDoesNotThrow {
             Nickname::class.java.getDeclaredConstructor()
         }
     }
 
     @Test
-    fun `review rating embeddable exposes no arg constructor for hibernate`() {
+    fun `리뷰_평점_임베디드_타입은_기본_생성자를_제공한다`() {
+        // given
+
+        // when
+        // then
         assertDoesNotThrow {
             ReviewRating::class.java.getDeclaredConstructor()
         }

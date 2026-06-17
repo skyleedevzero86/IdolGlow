@@ -15,13 +15,15 @@ import java.util.concurrent.atomic.AtomicReference
 class CultureInfoApiClientTest {
 
     @Test
-    fun `preserves already encoded public data service key`() {
+    fun `이미_인코딩된_공공데이터_서비스키를_그대로_유지한다`() {
+        // given
         val capturedUri = AtomicReference<URI>()
-        val client = clientWithCapturedUri(
+        val client = 요청Uri를_캡처하는_클라이언트(
             capturedUri = capturedUri,
             serviceKey = "abc%2Bdef%2Fghi%3D%3D",
         )
 
+        // when
         val result = client.listArea2Events(
             fromYyyyMMdd = "20260616",
             toYyyyMMdd = "20260616",
@@ -31,6 +33,7 @@ class CultureInfoApiClientTest {
             numOfrows = 1,
         )
 
+        // then
         assertEquals(1, result.size)
         val query = requireNotNull(capturedUri.get().rawQuery)
         assertTrue(query.contains("serviceKey=abc%2Bdef%2Fghi%3D%3D"), query)
@@ -38,13 +41,15 @@ class CultureInfoApiClientTest {
     }
 
     @Test
-    fun `encodes raw public data service key once`() {
+    fun `원본_공공데이터_서비스키를_한_번만_인코딩한다`() {
+        // given
         val capturedUri = AtomicReference<URI>()
-        val client = clientWithCapturedUri(
+        val client = 요청Uri를_캡처하는_클라이언트(
             capturedUri = capturedUri,
             serviceKey = "abc+def/ghi==",
         )
 
+        // when
         val result = client.listArea2Events(
             fromYyyyMMdd = "20260616",
             toYyyyMMdd = "20260616",
@@ -54,6 +59,7 @@ class CultureInfoApiClientTest {
             numOfrows = 1,
         )
 
+        // then
         assertEquals(1, result.size)
         val query = requireNotNull(capturedUri.get().rawQuery)
         assertTrue(query.contains("serviceKey=abc%2Bdef%2Fghi%3D%3D"), query)
@@ -61,13 +67,15 @@ class CultureInfoApiClientTest {
     }
 
     @Test
-    fun `normalizes double encoded public data service key`() {
+    fun `이중_인코딩된_공공데이터_서비스키를_정규화한다`() {
+        // given
         val capturedUri = AtomicReference<URI>()
-        val client = clientWithCapturedUri(
+        val client = 요청Uri를_캡처하는_클라이언트(
             capturedUri = capturedUri,
             serviceKey = "abc%252Bdef%252Fghi%253D%253D",
         )
 
+        // when
         val result = client.listArea2Events(
             fromYyyyMMdd = "20260616",
             toYyyyMMdd = "20260616",
@@ -77,13 +85,14 @@ class CultureInfoApiClientTest {
             numOfrows = 1,
         )
 
+        // then
         assertEquals(1, result.size)
         val query = requireNotNull(capturedUri.get().rawQuery)
         assertTrue(query.contains("serviceKey=abc%2Bdef%2Fghi%3D%3D"), query)
         assertFalse(query.contains("%252B"), query)
     }
 
-    private fun clientWithCapturedUri(
+    private fun 요청Uri를_캡처하는_클라이언트(
         capturedUri: AtomicReference<URI>,
         serviceKey: String,
     ): CultureInfoApiClient {
