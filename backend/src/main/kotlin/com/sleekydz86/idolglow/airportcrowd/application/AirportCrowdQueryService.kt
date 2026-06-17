@@ -11,6 +11,7 @@ import com.sleekydz86.idolglow.airportcrowd.domain.PassengerForecast
 import com.sleekydz86.idolglow.airportcrowd.domain.ParkingCongestion
 import org.springframework.stereotype.Service
 
+@Service
 class AirportCrowdQueryService(
     private val departureCongestionQueryPort: DepartureCongestionQueryPort,
     private val arrivalCongestionQueryPort: ArrivalCongestionQueryPort,

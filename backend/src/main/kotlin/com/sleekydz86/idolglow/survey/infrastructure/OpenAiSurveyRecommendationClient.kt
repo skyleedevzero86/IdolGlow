@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 
+@Component
 class OpenAiSurveyRecommendationClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,

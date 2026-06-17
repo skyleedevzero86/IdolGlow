@@ -17,7 +17,7 @@ import jakarta.persistence.UniqueConstraint
     name = "newsletter_paragraphs",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_newsletter_paragraph_order", columnNames = ["newsletter_id", "display_order"]),
-    ],
+    ]
 )
 class NewsletterParagraph(
     @Id

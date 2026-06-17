@@ -11,12 +11,12 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 
-private data class RawSurveyOpenAiResponse(
+data class RawSurveyOpenAiResponse(
     val statusCode: HttpStatusCode,
     val body: String,
 )
 
-private data class SurveyChatCompletionRequest(
+data class SurveyChatCompletionRequest(
     val model: String,
     val temperature: Double,
     val messages: List<SurveyChatMessage>,
@@ -24,26 +24,26 @@ private data class SurveyChatCompletionRequest(
     val responseFormat: SurveyResponseFormat,
 )
 
-private data class SurveyChatMessage(
+data class SurveyChatMessage(
     val role: String,
     val content: String,
 )
 
-private data class SurveyResponseFormat(
+data class SurveyResponseFormat(
     val type: String,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class SurveyChatCompletionResponse(
+data class SurveyChatCompletionResponse(
     val choices: List<SurveyChatChoice> = emptyList(),
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class SurveyChatChoice(
+data class SurveyChatChoice(
     val message: SurveyChatChoiceMessage = SurveyChatChoiceMessage(),
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class SurveyChatChoiceMessage(
+data class SurveyChatChoiceMessage(
     val content: String? = null,
 )

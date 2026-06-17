@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+@Component
 class SubscriptionEmailComposer(
     private val appMailProperties: AppMailProperties,
     private val appPublicUrlProperties: AppPublicUrlProperties,

@@ -13,6 +13,7 @@ import org.springframework.web.util.UriUtils
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
+@Component
 class TossPaymentsApiClient(
     private val props: TossPaymentProperties,
     @param:Qualifier("tossRestClient") private val restClient: RestClient,

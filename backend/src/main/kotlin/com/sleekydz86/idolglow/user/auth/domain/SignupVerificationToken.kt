@@ -10,6 +10,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
+@Entity
+@Table(name = "signup_verification_tokens")
 class SignupVerificationToken(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
