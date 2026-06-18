@@ -33,5 +33,5 @@ infra/up.ps1
 infra/up.sh
 .idea/
 infra/jenkins-local/
-*.ps1
-*.sh
+infra/jenkins-local/deploy-local.ps1
+infra/jenkins-local/deploy-local.sh

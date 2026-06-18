@@ -39,8 +39,15 @@ resolve_frontend_build_dir() {
 
 TARGET_DIR="${DEPLOY_ROOT}/${DEPLOY_ENV}/${BUILD_ID}"
 LATEST_DIR="${DEPLOY_ROOT}/${DEPLOY_ENV}/latest"
+PREVIOUS_DIR="${DEPLOY_ROOT}/${DEPLOY_ENV}/previous"
 
 mkdir -p "${TARGET_DIR}/backend" "${TARGET_DIR}/frontend"
+
+if [[ -d "${LATEST_DIR}" ]]; then
+  rm -rf "${PREVIOUS_DIR}"
+  cp -a "${LATEST_DIR}" "${PREVIOUS_DIR}"
+  echo "이전 배포본을 보관했습니다: ${PREVIOUS_DIR}"
+fi
 
 BACKEND_JAR="$(find "${WORKSPACE_DIR}/backend/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' | sort | tail -n 1 || true)"
 if [[ -n "${BACKEND_JAR}" ]]; then
@@ -73,6 +80,7 @@ WORKSPACE_DIR=${WORKSPACE_DIR}
 BACKEND_JAR=$(basename "${BACKEND_JAR:-}")
 FRONTEND_DIR=${FRONTEND_DIR}
 FRONTEND_BUILD_DIR=${FRONTEND_BUILD_DIR}
+PREVIOUS_DIR=${PREVIOUS_DIR}
 EOF
 
 rm -rf "${LATEST_DIR}"
