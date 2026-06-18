@@ -12,6 +12,8 @@ import com.sleekydz86.idolglow.eventinfo.infrastructure.KopisPerformanceApiClien
 import com.sleekydz86.idolglow.eventinfo.infrastructure.SeoulSjwPerformApiClient
 import com.sleekydz86.idolglow.eventinfo.infrastructure.SpcdeInfoApiClient
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@Tag(name = "Glow 행사 정보")
+@Tag(name = "Glow 행사 정보", description = "축제·공연·문화행사 및 공휴일 조회 API (한국관광공사·KOPIS·서울문화재단·문화정보)")
 @RestController
 @RequestMapping("/mypage/event-info", "/api/event-info")
 class EventInfoController(
@@ -31,6 +33,11 @@ class EventInfoController(
     private val spcdeInfoApiClient: SpcdeInfoApiClient,
     private val cultureInfoApiClient: CultureInfoApiClient,
 ) {
+    @Operation(
+        summary = "통합 행사 목록 조회",
+        description = "한국관광공사·서울문화재단·KOPIS·문화정보 캘린더를 date 기준으로 통합 조회합니다.",
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/festivals")
     fun festivals(
         @LoginUser userId: Long,
@@ -91,6 +98,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "KOPIS 공연 목록 조회", description = "signgucode(기본 11=서울), prfstate(기본 02=공연중) 필터 지원.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/performances")
     fun kopisPerformances(
         @LoginUser userId: Long,
@@ -113,6 +122,8 @@ class EventInfoController(
             ).map(::toFestivalResponse)
     }
 
+    @Operation(summary = "KOPIS 공연 상세 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/performances/{mt20id}")
     fun kopisPerformanceDetail(
         @LoginUser userId: Long,
@@ -122,6 +133,8 @@ class EventInfoController(
         return kopisPerformanceApiClient.detailPerformance(mt20id)?.let(::toFestivalResponse)
     }
 
+    @Operation(summary = "KOPIS 축제 목록 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/festivals")
     fun kopisFestivals(
         @LoginUser userId: Long,
@@ -140,6 +153,8 @@ class EventInfoController(
             ).map(::toFestivalResponse)
     }
 
+    @Operation(summary = "KOPIS 지역 통계 조회", description = "stDate~edDate 구간 최대 31일.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/area-stats")
     fun kopisAreaStats(
         @LoginUser userId: Long,
@@ -167,6 +182,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "공휴일 조회", description = "solYear·solMonth 미입력 시 당월 기준.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/special-days/holidays")
     fun specialHolidays(
         @LoginUser userId: Long,
@@ -178,6 +195,8 @@ class EventInfoController(
         return spcdeInfoApiClient.getHoliDeInfo(year, month).map(::toSpecialDayResponse)
     }
 
+    @Operation(summary = "대체공휴일·쉬는 날 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/special-days/rest-days")
     fun specialRestDays(
         @LoginUser userId: Long,
@@ -189,6 +208,8 @@ class EventInfoController(
         return spcdeInfoApiClient.getRestDeInfo(year, month).map(::toSpecialDayResponse)
     }
 
+    @Operation(summary = "기념일 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/special-days/anniversaries")
     fun specialAnniversaries(
         @LoginUser userId: Long,
@@ -200,6 +221,8 @@ class EventInfoController(
         return spcdeInfoApiClient.getAnniversaryInfo(year, month).map(::toSpecialDayResponse)
     }
 
+    @Operation(summary = "서울문화재단 공연 목록 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/sjw-perform")
     fun sjwList(
         @LoginUser userId: Long,
@@ -232,6 +255,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "서울문화재단 공연 상세 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/sjw-perform/{performIdx}")
     fun sjwDetail(
         @LoginUser userId: Long,
@@ -262,6 +287,8 @@ class EventInfoController(
         )
     }
 
+    @Operation(summary = "축제 공통 상세 조회", description = "한국관광공사 contentId 기준 공통 상세.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/festivals/{contentId}/common")
     fun festivalCommon(
         @LoginUser userId: Long,
@@ -286,6 +313,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "축제 이미지 목록 조회", description = "imageYn 기본값 Y.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/festivals/{contentId}/images")
     fun festivalImages(
         @LoginUser userId: Long,
@@ -305,6 +334,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "행사 키워드 검색", description = "법정동·분류 코드 필터와 페이지네이션 지원.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/search-keyword")
     fun searchKeyword(
         @LoginUser userId: Long,
@@ -353,6 +384,8 @@ class EventInfoController(
             }
     }
 
+    @Operation(summary = "법정동 코드 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/ldong-codes")
     fun lDongCodes(
         @LoginUser userId: Long,
@@ -379,6 +412,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "행사 분류 코드 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/lcls-codes")
     fun lclsCodes(
         @LoginUser userId: Long,
@@ -413,6 +448,8 @@ class EventInfoController(
             }
     }
 
+    @Operation(summary = "문화정보 캘린더 상세 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/detail")
     fun cultureCalendarDetail(
         @LoginUser userId: Long,
@@ -437,6 +474,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "문화정보 지역(시·도) 참조 목록")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/areas")
     fun cultureCalendarAreas(
         @LoginUser userId: Long,
@@ -447,6 +486,8 @@ class EventInfoController(
         }
     }
 
+    @Operation(summary = "문화정보 분야별 행사 조회", description = "serviceTp: A(전체), B(무료), C(유료). from~to yyyyMMdd.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/realm2")
     fun cultureCalendarRealm2(
         @LoginUser userId: Long,
@@ -476,6 +517,8 @@ class EventInfoController(
             ).map(::toFestivalResponse)
     }
 
+    @Operation(summary = "문화정보 지역별 행사 조회", description = "serviceTp: A(전체), B(무료), C(유료). from~to yyyyMMdd.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/area2")
     fun cultureCalendarArea2(
         @LoginUser userId: Long,
@@ -503,6 +546,8 @@ class EventInfoController(
             ).map(::toFestivalResponse)
     }
 
+    @Operation(summary = "문화정보 분야 코드 참조 목록")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/realm-code-reference")
     fun cultureCalendarRealmCodeReference(
         @LoginUser userId: Long,
