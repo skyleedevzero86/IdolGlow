@@ -15,9 +15,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class SubwayWebMapper {
-
-    fun toLineDto(line: SubwayLine): SubwayLineDto =
-        SubwayLineDto(id = line.id, name = line.name, colorHex = line.colorHex)
+    fun toLineDto(line: SubwayLine): SubwayLineDto = SubwayLineDto(id = line.id, name = line.name, colorHex = line.colorHex)
 
     fun toStationDto(on: SubwayStationOnLine): SubwayStationDto =
         SubwayStationDto(
@@ -28,7 +26,10 @@ class SubwayWebMapper {
             lineName = on.line.name,
         )
 
-    fun toRefDto(line: SubwayLine, stop: SubwayStationStop): SubwayStationRefDto =
+    fun toRefDto(
+        line: SubwayLine,
+        stop: SubwayStationStop,
+    ): SubwayStationRefDto =
         SubwayStationRefDto(
             lineId = line.id,
             lineName = line.name,

@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.platform.auth.application
 
-import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.platform.auth.application.dto.AccountRecoveryRequest
 import com.sleekydz86.idolglow.platform.auth.application.dto.AccountRecoveryResponse
 import com.sleekydz86.idolglow.platform.auth.application.dto.PasswordResetRequest
+import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.platform.auth.util.JwtTokenUtil
 import com.sleekydz86.idolglow.platform.user.domain.exception.UserNotFoundException
 import com.sleekydz86.idolglow.platform.user.password.PasswordPolicyValidator
@@ -26,12 +26,12 @@ class AccountRecoveryService(
     private val passwordPolicyValidator: PasswordPolicyValidator,
     private val properties: PlatformAuthProperties,
 ) {
-
     private val log = LoggerFactory.getLogger(AccountRecoveryService::class.java)
 
     @Transactional(readOnly = true)
     fun initiate(request: AccountRecoveryRequest): AccountRecoveryResponse {
-        userAccountPort.findByEmailAndUsername(request.email, request.username)
+        userAccountPort
+            .findByEmailAndUsername(request.email, request.username)
             .orElseThrow { UserNotFoundException(request.email) }
 
         val jti = UUID.randomUUID().toString()
@@ -40,7 +40,8 @@ class AccountRecoveryService(
 
         log.info("복구 토큰 발급: email={}, username={}", request.email, request.username)
 
-        return AccountRecoveryResponse.builder()
+        return AccountRecoveryResponse
+            .builder()
             .success(true)
             .message("복구 토큰이 발급되었습니다. 안전한 채널로 사용자에게 전달하세요.")
             .recoveryToken(token)
@@ -65,8 +66,10 @@ class AccountRecoveryService(
             throw IllegalArgumentException("유효하지 않은 복구 토큰 페이로드입니다.")
         }
 
-        val user = userAccountPort.findByEmailAndUsername(parts[0], parts[1])
-            .orElseThrow { UserNotFoundException(parts[0]) }
+        val user =
+            userAccountPort
+                .findByEmailAndUsername(parts[0], parts[1])
+                .orElseThrow { UserNotFoundException(parts[0]) }
 
         if (request.newPassword != request.confirmPassword) {
             throw IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.")
@@ -84,7 +87,8 @@ class AccountRecoveryService(
 
         log.info("복구 토큰으로 비밀번호 재설정: userId={}", user.id ?: "알 수 없음")
 
-        return AccountRecoveryResponse.builder()
+        return AccountRecoveryResponse
+            .builder()
             .success(true)
             .message("비밀번호가 재설정되었습니다.")
             .build()

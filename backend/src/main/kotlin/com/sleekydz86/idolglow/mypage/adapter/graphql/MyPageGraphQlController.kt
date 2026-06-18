@@ -12,10 +12,9 @@ class MyPageGraphQlController(
     private val mypagePromoService: MypagePromoService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
     fun myPromo(): MypagePromoGraphQlResponse =
         MypagePromoGraphQlResponse.from(
-            mypagePromoService.promoStrip(authenticatedUserIdResolver.resolveRequired())
+            mypagePromoService.promoStrip(authenticatedUserIdResolver.resolveRequired()),
         )
 }

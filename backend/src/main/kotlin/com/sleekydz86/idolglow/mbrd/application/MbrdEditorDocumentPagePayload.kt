@@ -1,7 +1,5 @@
 package com.sleekydz86.idolglow.mbrd.application
 
-import java.time.Instant
-
 data class MbrdEditorDocumentPagePayload(
     val content: List<MbrdEditorDocumentSummaryPayload>,
     val page: Int,

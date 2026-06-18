@@ -3,9 +3,9 @@ package com.sleekydz86.idolglow.exchange.application
 import com.sleekydz86.idolglow.exchange.adapter.web.dto.ExchangeBranchResponse
 import com.sleekydz86.idolglow.exchange.domain.ExchangeBranch
 import com.sleekydz86.idolglow.exchange.infrastructure.ExchangeBranchJpaRepository
+import com.sleekydz86.idolglow.exchange.infrastructure.NaverDirectionsClient
 import com.sleekydz86.idolglow.exchangerate.application.port.out.ExchangeRateQueryPort
 import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
-import com.sleekydz86.idolglow.exchange.infrastructure.NaverDirectionsClient
 import com.sleekydz86.idolglow.global.infrastructure.config.ExchangeAirportHubProperties
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -20,9 +20,13 @@ class ExchangeBranchQueryService(
     private val naverDirectionsClient: NaverDirectionsClient,
     private val exchangeAirportHubProperties: ExchangeAirportHubProperties,
 ) {
-
     fun listBranchesWithDrivingMinutes(currencyParam: String): List<ExchangeBranchResponse> {
-        val currency = currencyParam.trim().uppercase().substringBefore('(').trim()
+        val currency =
+            currencyParam
+                .trim()
+                .uppercase()
+                .substringBefore('(')
+                .trim()
         val rows = loadBranchRows(currency)
         val hubLng = exchangeAirportHubProperties.longitude
         val hubLat = exchangeAirportHubProperties.latitude
@@ -72,13 +76,14 @@ class ExchangeBranchQueryService(
         targetHubRate: BigDecimal,
         templateHubRate: BigDecimal,
     ): ExchangeBranch {
-        val scaledRate = if (template.airportHub) {
-            targetHubRate
-        } else {
-            targetHubRate
-                .multiply(template.rate)
-                .divide(templateHubRate, 4, RoundingMode.HALF_UP)
-        }
+        val scaledRate =
+            if (template.airportHub) {
+                targetHubRate
+            } else {
+                targetHubRate
+                    .multiply(template.rate)
+                    .divide(templateHubRate, 4, RoundingMode.HALF_UP)
+            }
         return ExchangeBranch(
             id = -1_000L - template.sortOrder.toLong(),
             name = template.name,
@@ -112,14 +117,28 @@ class ExchangeBranchQueryService(
     }
 
     private fun krwPerOneUnit(rate: ExchangeRateQuote): BigDecimal? {
-        val deal = rate.dealBasR.replace(",", "").trim().takeIf { it.isNotEmpty() }?.toBigDecimalOrNull() ?: return null
-        val divisor = Regex("\\((\\d+)\\)\\s*$").find(rate.curUnit)?.groupValues?.get(1)?.toBigDecimalOrNull()
-            ?: BigDecimal.ONE
+        val deal =
+            rate.dealBasR
+                .replace(",", "")
+                .trim()
+                .takeIf { it.isNotEmpty() }
+                ?.toBigDecimalOrNull() ?: return null
+        val divisor =
+            Regex("\\((\\d+)\\)\\s*$")
+                .find(rate.curUnit)
+                ?.groupValues
+                ?.get(1)
+                ?.toBigDecimalOrNull()
+                ?: BigDecimal.ONE
         if (divisor.compareTo(BigDecimal.ZERO) <= 0) return null
         return deal.divide(divisor, 6, RoundingMode.HALF_UP)
     }
 
-    private fun resolveDurationMinutes(row: ExchangeBranch, hubLng: Double, hubLat: Double): Int? {
+    private fun resolveDurationMinutes(
+        row: ExchangeBranch,
+        hubLng: Double,
+        hubLat: Double,
+    ): Int? {
         if (row.airportHub) {
             return 0
         }
@@ -140,8 +159,12 @@ class ExchangeBranchQueryService(
             else -> null
         }
 
-    private fun isSamePoint(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Boolean =
-        abs(lat1 - lat2) < DEMO_POINT_TOLERANCE && abs(lng1 - lng2) < DEMO_POINT_TOLERANCE
+    private fun isSamePoint(
+        lat1: Double,
+        lng1: Double,
+        lat2: Double,
+        lng2: Double,
+    ): Boolean = abs(lat1 - lat2) < DEMO_POINT_TOLERANCE && abs(lng1 - lng2) < DEMO_POINT_TOLERANCE
 
     companion object {
         private const val DEMO_POINT_TOLERANCE = 0.0001

@@ -17,7 +17,6 @@ class ProductRepositoryImpl(
     private val productSearchQueryRepository: ProductSearchQueryRepository,
     private val productDiscoveryQueryRepository: ProductDiscoveryQueryRepository,
 ) : ProductRepository {
-
     override fun findProductsByNoOffset(
         lastId: Long?,
         size: Int,
@@ -41,7 +40,7 @@ class ProductRepositoryImpl(
                 radiusMeters = null,
                 now = java.time.LocalDateTime.now(java.time.ZoneOffset.UTC),
                 today = java.time.LocalDate.now(java.time.ZoneOffset.UTC),
-            )
+            ),
         ).items
 
     override fun browseProducts(criteria: ProductSearchCriteria): ProductBrowseResult {
@@ -51,16 +50,18 @@ class ProductRepositoryImpl(
         }
         val wishCounts = productDiscoveryQueryRepository.findWishCounts(ids)
         val reviewMetrics = productDiscoveryQueryRepository.findReviewMetrics(ids)
-        val reviewRows = reviewMetrics.mapValues { (_, v) ->
-            ProductQueryRepository.ReviewMetricRow(v.averageRating, v.reviewCount)
-        }
-        val items = productQueryRepository.hydrateForBrowse(
-            orderedIds = ids,
-            wishCounts = wishCounts,
-            reviewMetrics = reviewRows,
-            nearLatitude = criteria.nearLatitude,
-            nearLongitude = criteria.nearLongitude,
-        )
+        val reviewRows =
+            reviewMetrics.mapValues { (_, v) ->
+                ProductQueryRepository.ReviewMetricRow(v.averageRating, v.reviewCount)
+            }
+        val items =
+            productQueryRepository.hydrateForBrowse(
+                orderedIds = ids,
+                wishCounts = wishCounts,
+                reviewMetrics = reviewRows,
+                nearLatitude = criteria.nearLatitude,
+                nearLongitude = criteria.nearLongitude,
+            )
         val nextCursor =
             if (ids.size == criteria.size && criteria.sort == ProductSort.NEWEST) ids.last() else null
         val nextOffset =
@@ -75,13 +76,9 @@ class ProductRepositoryImpl(
     override fun findProductSpecificById(productId: Long): ProductSpecificResponse? =
         productQueryRepository.findProductSpecificById(productId)
 
-    override fun findById(productId: Long): Product? {
-        return productCommandRepository.findById(productId)
-    }
+    override fun findById(productId: Long): Product? = productCommandRepository.findById(productId)
 
-    override fun existsById(productId: Long): Boolean =
-        productCommandRepository.existsById(productId)
+    override fun existsById(productId: Long): Boolean = productCommandRepository.existsById(productId)
 
-    override fun getReferenceById(productId: Long): Product =
-        productCommandRepository.getReferenceById(productId)
+    override fun getReferenceById(productId: Long): Product = productCommandRepository.getReferenceById(productId)
 }

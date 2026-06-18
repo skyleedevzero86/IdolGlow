@@ -15,7 +15,10 @@ interface FestivalEventQueryUseCase {
 
     fun detailCommon(contentId: String): FestivalCommonDetail?
 
-    fun detailImages(contentId: String, imageYn: String = "Y"): List<FestivalImage>
+    fun detailImages(
+        contentId: String,
+        imageYn: String = "Y",
+    ): List<FestivalImage>
 
     fun searchKeyword(
         keyword: String,
@@ -28,7 +31,10 @@ interface FestivalEventQueryUseCase {
         lclsSystm3: String? = null,
     ): List<FestivalEvent>
 
-    fun lDongCodes(lDongRegnCd: String?, lDongListYn: String): List<CodeEntry>
+    fun lDongCodes(
+        lDongRegnCd: String?,
+        lDongListYn: String,
+    ): List<CodeEntry>
 
     fun lclsCodes(
         lclsSystm1: String?,

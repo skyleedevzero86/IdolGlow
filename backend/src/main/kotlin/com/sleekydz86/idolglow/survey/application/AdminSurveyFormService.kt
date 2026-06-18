@@ -31,8 +31,7 @@ class AdminSurveyFormService(
     }
 
     @Transactional(readOnly = true)
-    fun findCurrent(): SurveyFormResponse? =
-        surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
+    fun findCurrent(): SurveyFormResponse? = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
 
     @Transactional(readOnly = true)
     fun list(
@@ -43,12 +42,13 @@ class AdminSurveyFormService(
     ): List<SurveyFormSummaryResponse> {
         val normalized = keyword?.trim().orEmpty()
         val normalizedFilters = normalizeFilters(primaryCategory, secondaryCategory)
-        val forms = surveyFormJpaRepository.search(
-            keyword = normalized.takeIf { it.isNotBlank() },
-            status = status,
-            primaryCategory = normalizedFilters.first,
-            secondaryCategory = normalizedFilters.second,
-        )
+        val forms =
+            surveyFormJpaRepository.search(
+                keyword = normalized.takeIf { it.isNotBlank() },
+                status = status,
+                primaryCategory = normalizedFilters.first,
+                secondaryCategory = normalizedFilters.second,
+            )
         return forms.map(SurveyFormSummaryResponse::from)
     }
 
@@ -65,14 +65,15 @@ class AdminSurveyFormService(
         val normalizedFilters = normalizeFilters(primaryCategory, secondaryCategory)
         val resolvedSize = (size ?: DEFAULT_PAGE_SIZE).coerceIn(1, MAX_PAGE_SIZE)
         val requestedPage = (page ?: 1).coerceAtLeast(1)
-        val firstResult = fetchPage(
-            keyword = normalizedKeyword,
-            status = status,
-            primaryCategory = normalizedFilters.first,
-            secondaryCategory = normalizedFilters.second,
-            pageIndex = requestedPage - 1,
-            size = resolvedSize,
-        )
+        val firstResult =
+            fetchPage(
+                keyword = normalizedKeyword,
+                status = status,
+                primaryCategory = normalizedFilters.first,
+                secondaryCategory = normalizedFilters.second,
+                pageIndex = requestedPage - 1,
+                size = resolvedSize,
+            )
         val result =
             if (firstResult.totalElements > 0 && requestedPage > firstResult.totalPages) {
                 fetchPage(
@@ -91,39 +92,48 @@ class AdminSurveyFormService(
     }
 
     @Transactional(readOnly = true)
-    fun find(id: Long): SurveyFormResponse =
-        SurveyFormResponse.from(findForm(id))
+    fun find(id: Long): SurveyFormResponse = SurveyFormResponse.from(findForm(id))
 
     fun create(request: AdminUpsertSurveyFormRequest): SurveyFormResponse =
         saveForm(
-            form = SurveyForm(
-                title = request.title.trim(),
-                active = true,
-            ),
+            form =
+                SurveyForm(
+                    title = request.title.trim(),
+                    active = true,
+                ),
             request = request,
         )
 
-    fun update(id: Long, request: AdminUpsertSurveyFormRequest): SurveyFormResponse =
+    fun update(
+        id: Long,
+        request: AdminUpsertSurveyFormRequest,
+    ): SurveyFormResponse =
         saveForm(
-            form = findForm(id).apply {
-                title = request.title.trim()
-            },
+            form =
+                findForm(id).apply {
+                    title = request.title.trim()
+                },
             request = request,
         )
 
     fun upsertCurrent(request: AdminUpsertSurveyFormRequest): SurveyFormResponse {
-        val form = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()
-            ?.apply {
-                title = request.title.trim()
-            }
-            ?: SurveyForm(
-                title = request.title.trim(),
-                active = true,
-            )
+        val form =
+            surveyFormJpaRepository
+                .findFirstByActiveTrueOrderByIdDesc()
+                ?.apply {
+                    title = request.title.trim()
+                }
+                ?: SurveyForm(
+                    title = request.title.trim(),
+                    active = true,
+                )
         return saveForm(form, request)
     }
 
-    private fun saveForm(form: SurveyForm, request: AdminUpsertSurveyFormRequest): SurveyFormResponse {
+    private fun saveForm(
+        form: SurveyForm,
+        request: AdminUpsertSurveyFormRequest,
+    ): SurveyFormResponse {
         require(request.questions.isNotEmpty()) { "문항이 없으면 저장할 수 없습니다." }
         require(request.questions.size <= MAX_SURVEY_QUESTIONS) {
             "문항은 최대 ${MAX_SURVEY_QUESTIONS}개까지 등록할 수 있습니다."
@@ -134,33 +144,35 @@ class AdminSurveyFormService(
         form.secondaryCategory = secondaryCategory
         form.replaceDescription(request.description, request.descriptionTags)
 
-        val nextQuestions = request.questions
-            .sortedBy { it.order }
-            .map { q ->
-                validateQuestion(q.type, q.options)
-                val question = SurveyQuestion(
-                    form = form,
-                    displayOrder = q.order,
-                    title = q.title.trim(),
-                    description = q.description?.trim()?.takeIf { it.isNotBlank() },
-                    questionType = q.type,
-                    required = q.required,
-                )
-                question.options.addAll(
-                    q.options
-                        .map { it.trim() }
-                        .filter { it.isNotBlank() }
-                        .distinct()
-                        .mapIndexed { idx, option ->
-                            SurveyQuestionOption(
-                                question = question,
-                                displayOrder = idx + 1,
-                                optionText = option,
-                            )
-                        },
-                )
-                question
-            }
+        val nextQuestions =
+            request.questions
+                .sortedBy { it.order }
+                .map { q ->
+                    validateQuestion(q.type, q.options)
+                    val question =
+                        SurveyQuestion(
+                            form = form,
+                            displayOrder = q.order,
+                            title = q.title.trim(),
+                            description = q.description?.trim()?.takeIf { it.isNotBlank() },
+                            questionType = q.type,
+                            required = q.required,
+                        )
+                    question.options.addAll(
+                        q.options
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                            .mapIndexed { idx, option ->
+                                SurveyQuestionOption(
+                                    question = question,
+                                    displayOrder = idx + 1,
+                                    optionText = option,
+                                )
+                            },
+                    )
+                    question
+                }
 
         form.replaceQuestions(nextQuestions)
         val saved = surveyFormJpaRepository.save(form)
@@ -168,7 +180,8 @@ class AdminSurveyFormService(
     }
 
     private fun findForm(id: Long): SurveyForm =
-        surveyFormJpaRepository.findById(id)
+        surveyFormJpaRepository
+            .findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "설문지를 찾을 수 없습니다.") }
 
     private fun fetchPage(
@@ -214,7 +227,10 @@ class AdminSurveyFormService(
         return normalizedPrimary to secondaryCategory
     }
 
-    private fun validateQuestion(type: SurveyQuestionType, options: List<String>) {
+    private fun validateQuestion(
+        type: SurveyQuestionType,
+        options: List<String>,
+    ) {
         if (type == SurveyQuestionType.TEXT) {
             return
         }

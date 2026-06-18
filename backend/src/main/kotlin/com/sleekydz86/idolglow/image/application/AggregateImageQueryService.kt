@@ -10,13 +10,14 @@ import org.springframework.transaction.annotation.Transactional
 class AggregateImageQueryService(
     private val imageRepository: ImageRepository,
 ) {
-
     fun firstProductImageUrlByProductIds(productIds: Collection<Long>): Map<Long, String> {
         if (productIds.isEmpty()) return emptyMap()
         val rows = imageRepository.findByAggregates(ImageAggregateType.PRODUCT, productIds)
-        return rows.groupBy { it.aggregateId }.mapNotNull { (id, list) ->
-            list.minByOrNull { it.sortOrder }?.url?.let { url -> id to url }
-        }.toMap()
+        return rows
+            .groupBy { it.aggregateId }
+            .mapNotNull { (id, list) ->
+                list.minByOrNull { it.sortOrder }?.url?.let { url -> id to url }
+            }.toMap()
     }
 
     fun orderedProductImageUrls(productId: Long): List<String> =

@@ -8,18 +8,21 @@ import org.aspectj.lang.annotation.Aspect
 @Aspect
 class DistributedLockAspect(
     private val lockProvider: DistributedLockProvider,
-    private val keyResolver: KeyExpressionResolver
+    private val keyResolver: KeyExpressionResolver,
 ) {
-
     @Around("@annotation(distributedLock)")
-    fun around(joinPoint: ProceedingJoinPoint, distributedLock: DistributedLock): Any? {
+    fun around(
+        joinPoint: ProceedingJoinPoint,
+        distributedLock: DistributedLock,
+    ): Any? {
         val resolvedKey = keyResolver.resolve(distributedLock.key, joinPoint)
         val lockKey = "${distributedLock.prefix}:$resolvedKey"
-        val handle = lockProvider.tryLock(
-            lockKey,
-            distributedLock.waitTimeMillis,
-            distributedLock.leaseTimeMillis
-        ) ?: throw IllegalStateException("락 획득에 실패했습니다. 식별키=$lockKey")
+        val handle =
+            lockProvider.tryLock(
+                lockKey,
+                distributedLock.waitTimeMillis,
+                distributedLock.leaseTimeMillis,
+            ) ?: throw IllegalStateException("락 획득에 실패했습니다. 식별키=$lockKey")
 
         return try {
             joinPoint.proceed()

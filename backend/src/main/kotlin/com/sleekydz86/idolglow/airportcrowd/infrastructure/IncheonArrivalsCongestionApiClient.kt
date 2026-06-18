@@ -33,24 +33,26 @@ class IncheonArrivalsCongestionApiClient(
         if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
-        val url = buildUrl(
-            encodedServiceKey = encodedKey,
-            terminal = terminal,
-            airport = airport,
-            pageNo = pageNo.coerceAtLeast(1),
-            numOfRows = numOfRows.coerceIn(1, 1000),
-        )
+        val url =
+            buildUrl(
+                encodedServiceKey = encodedKey,
+                terminal = terminal,
+                airport = airport,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = numOfRows.coerceIn(1, 1000),
+            )
         val rows = fetchByUrl(url)
         if (rows.isNotEmpty()) return rows
 
         if (!terminal.isNullOrBlank() || !airport.isNullOrBlank()) {
-            val fallbackUrl = buildUrl(
-                encodedServiceKey = encodedKey,
-                terminal = null,
-                airport = null,
-                pageNo = pageNo.coerceAtLeast(1),
-                numOfRows = numOfRows.coerceIn(1, 1000),
-            )
+            val fallbackUrl =
+                buildUrl(
+                    encodedServiceKey = encodedKey,
+                    terminal = null,
+                    airport = null,
+                    pageNo = pageNo.coerceAtLeast(1),
+                    numOfRows = numOfRows.coerceIn(1, 1000),
+                )
             return fetchByUrl(fallbackUrl).filter { item ->
                 val terminalMatch = terminal.isNullOrBlank() || item.terminal.equals(terminal, ignoreCase = true)
                 val airportMatch = airport.isNullOrBlank() || item.airport.equals(airport, ignoreCase = true)
@@ -97,7 +99,12 @@ class IncheonArrivalsCongestionApiClient(
             val itemNodes = doc.getElementsByTagName("item")
             (0 until itemNodes.length).mapNotNull { idx ->
                 val item = itemNodes.item(idx) as? Element ?: return@mapNotNull null
-                val terminal = item.childText("terno")?.trim()?.uppercase().orEmpty()
+                val terminal =
+                    item
+                        .childText("terno")
+                        ?.trim()
+                        ?.uppercase()
+                        .orEmpty()
                 if (terminal.isBlank()) return@mapNotNull null
                 ArrivalCongestion(
                     terminal = terminal,
@@ -124,37 +131,38 @@ class IncheonArrivalsCongestionApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): String {
-        val query = buildList {
-            add("serviceKey=$encodedServiceKey")
-            add("type=xml")
-            add("pageNo=$pageNo")
-            add("numOfRows=$numOfRows")
-            terminal?.takeIf { it.isNotBlank() }?.let {
-                add("terno=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
-            }
-            airport?.takeIf { it.isNotBlank() }?.let {
-                add("airport=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
-            }
-        }.joinToString("&")
+        val query =
+            buildList {
+                add("serviceKey=$encodedServiceKey")
+                add("type=xml")
+                add("pageNo=$pageNo")
+                add("numOfRows=$numOfRows")
+                terminal?.takeIf { it.isNotBlank() }?.let {
+                    add("terno=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
+                }
+                airport?.takeIf { it.isNotBlank() }?.let {
+                    add("airport=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
+                }
+            }.joinToString("&")
         return "${properties.baseUrl.trimEnd('/')}?$query"
     }
 
-    private fun requestRaw(url: String): RawHttpResponse {
-        return runCatching {
-            webClient.get()
+    private fun requestRaw(url: String): RawHttpResponse =
+        runCatching {
+            webClient
+                .get()
                 .uri(url)
                 .exchangeToMono { response ->
-                    response.bodyToMono(String::class.java)
+                    response
+                        .bodyToMono(String::class.java)
                         .defaultIfEmpty("")
                         .map { body -> RawHttpResponse(response.statusCode(), body) }
-                }
-                .block()
+                }.block()
                 ?: RawHttpResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
             log.warn("입국장 혼잡도 API 호출 실패: {}", e.message)
             RawHttpResponse(HttpStatusCode.valueOf(502), e.message ?: "")
         }
-    }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("AIRPORT_ARRIVALS_CONGESTION_SERVICE_KEY=")

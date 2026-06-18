@@ -16,10 +16,9 @@ import org.springframework.http.ResponseEntity
 
 @Tag(name = "상품", description = "상품 조회 및 생성 관련 API")
 interface ProductApi {
-
     @Operation(
         summary = "상품 목록 조회",
-        description = "키워드·태그·가격·예약 가능일·위치 반경·정렬 등으로 상품을 탐색합니다. 최신순은 lastId 커서, 그 외 정렬은 offset으로 페이지네이션합니다."
+        description = "키워드·태그·가격·예약 가능일·위치 반경·정렬 등으로 상품을 탐색합니다. 최신순은 lastId 커서, 그 외 정렬은 offset으로 페이지네이션합니다.",
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     fun findProducts(
@@ -55,7 +54,7 @@ interface ProductApi {
 
     @Operation(
         summary = "상품 상세 조회",
-        description = "특정 상품의 상세 정보와 포함 옵션, 예약 가능 범위를 조회합니다."
+        description = "특정 상품의 상세 정보와 포함 옵션, 예약 가능 범위를 조회합니다.",
     )
     @ApiResponses(
         value = [
@@ -63,18 +62,18 @@ interface ProductApi {
             ApiResponse(
                 responseCode = "404",
                 description = "상품을 찾을 수 없음",
-                content = [Content(schema = Schema(hidden = true))]
-            )
-        ]
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
     )
     fun findProduct(
         @Parameter(description = "상품 ID", example = "1")
-        productId: Long
+        productId: Long,
     ): ResponseEntity<ProductSpecificResponse>
 
     @Operation(
         summary = "상품 생성",
-        description = "관리자가 상품과 기본 예약 슬롯 범위를 생성합니다."
+        description = "관리자가 상품과 기본 예약 슬롯 범위를 생성합니다.",
     )
     @ApiResponses(
         value = [
@@ -82,12 +81,12 @@ interface ProductApi {
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청",
-                content = [Content(schema = Schema(hidden = true))]
-            )
-        ]
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
     )
     fun createProduct(
         @Parameter(description = "상품 생성 요청 본문")
-        @Valid request: CreateProductRequest
+        @Valid request: CreateProductRequest,
     ): ResponseEntity<ProductCreatedResponse>
 }

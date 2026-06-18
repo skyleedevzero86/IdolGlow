@@ -3,7 +3,15 @@ package com.sleekydz86.idolglow.wish.domain
 import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.user.user.domain.User
-import jakarta.persistence.*
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
 @Table(
@@ -11,21 +19,18 @@ import jakarta.persistence.*
     uniqueConstraints = [
         UniqueConstraint(
             name = "uk_user_product_wish",
-            columnNames = ["user_id", "product_id"]
-        )
-    ]
+            columnNames = ["user_id", "product_id"],
+        ),
+    ],
 )
 class Wish(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     val user: User,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
     val product: Product,
-  ) : BaseEntity() {
-}
+) : BaseEntity()

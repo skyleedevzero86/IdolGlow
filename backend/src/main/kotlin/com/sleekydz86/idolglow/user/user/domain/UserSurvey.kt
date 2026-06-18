@@ -11,52 +11,43 @@ import java.time.LocalDate
 @Table(
     name = "user_survey",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_user_survey_user_id", columnNames = ["user_id"])
+        UniqueConstraint(name = "uk_user_survey_user_id", columnNames = ["user_id"]),
     ],
     indexes = [
-        Index(name = "idx_user_survey_user_id", columnList = "user_id")
-    ]
+        Index(name = "idx_user_survey_user_id", columnList = "user_id"),
+    ],
 )
 class UserSurvey(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     val user: User,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     var concept: ConceptType,
-
     @Column(name = "idol_name", nullable = false)
     var idolName: String,
-
     @Column(name = "visit_start_date", nullable = false)
     var visitStartDate: LocalDate,
-
     @Column(name = "visit_end_date", nullable = false)
     var visitEndDate: LocalDate,
-
     @Column(name = "visit_start_time", length = 5)
     var visitStartTime: String? = null,
-
     @Column(name = "visit_end_time", length = 5)
     var visitEndTime: String? = null,
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
         name = "user_survey_places",
         joinColumns = [JoinColumn(name = "user_survey_id")],
         indexes = [
-            Index(name = "idx_user_survey_places_survey_id", columnList = "user_survey_id")
-        ]
+            Index(name = "idx_user_survey_places_survey_id", columnList = "user_survey_id"),
+        ],
     )
     @Column(name = "place", nullable = false, length = 100)
-    val places: MutableList<String> = mutableListOf()
+    val places: MutableList<String> = mutableListOf(),
 ) : BaseEntity() {
-
     fun update(command: UpsertUserSurveyCommand) {
         apply(
             concept = command.concept,
@@ -65,7 +56,7 @@ class UserSurvey(
             visitEndDate = command.visitEndDate,
             visitStartTime = command.visitStartTime,
             visitEndTime = command.visitEndTime,
-            places = Places.of(command.places)
+            places = Places.of(command.places),
         )
     }
 
@@ -76,7 +67,7 @@ class UserSurvey(
         visitEndDate: LocalDate,
         visitStartTime: String?,
         visitEndTime: String?,
-        places: Places
+        places: Places,
     ) {
         require(!visitEndDate.isBefore(visitStartDate)) {
             "방문 종료일은 방문 시작일과 같거나 이후여야 합니다."
@@ -93,7 +84,8 @@ class UserSurvey(
 
     companion object {
         private fun normalizePlaces(places: List<String>): List<String> =
-            places.map { it.trim() }
+            places
+                .map { it.trim() }
                 .filter { it.isNotBlank() }
                 .distinct()
                 .toList()
@@ -106,15 +98,16 @@ class UserSurvey(
             visitEndDate: LocalDate,
             visitStartTime: String?,
             visitEndTime: String?,
-            places: List<String>
+            places: List<String>,
         ): UserSurvey {
-            val survey = UserSurvey(
-                user = user,
-                concept = concept,
-                idolName = idolName.trim(),
-                visitStartDate = visitStartDate,
-                visitEndDate = visitEndDate
-            )
+            val survey =
+                UserSurvey(
+                    user = user,
+                    concept = concept,
+                    idolName = idolName.trim(),
+                    visitStartDate = visitStartDate,
+                    visitEndDate = visitEndDate,
+                )
 
             survey.apply(
                 concept = concept,
@@ -123,7 +116,7 @@ class UserSurvey(
                 visitEndDate = visitEndDate,
                 visitStartTime = visitStartTime,
                 visitEndTime = visitEndTime,
-                places = Places.of(places)
+                places = Places.of(places),
             )
 
             return survey

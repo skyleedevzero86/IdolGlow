@@ -17,14 +17,11 @@ class SurveyFormDescriptionTag(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_form_description_id", nullable = false)
     val description: SurveyFormDescription,
-
     @Column(name = "display_order", nullable = false)
     var displayOrder: Int,
-
     @Column(name = "tag_name", nullable = false, length = 100)
     var tagName: String,
 ) : BaseEntity()

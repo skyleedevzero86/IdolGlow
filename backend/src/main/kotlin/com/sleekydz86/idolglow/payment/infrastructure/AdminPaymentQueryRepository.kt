@@ -10,7 +10,6 @@ import java.time.LocalDate
 class AdminPaymentQueryRepository(
     private val entityManager: EntityManager,
 ) {
-
     fun findPayments(
         status: PaymentStatus?,
         visitDate: LocalDate?,
@@ -30,17 +29,19 @@ class AdminPaymentQueryRepository(
 
         val whereClause = if (conditions.isEmpty()) "" else "where ${conditions.joinToString(" and ")}"
 
-        val query = entityManager.createQuery(
-            """
-            select p from Payment p
-            join fetch p.reservation r
-            join fetch r.reservationSlot rs
-            join fetch rs.product prod
-            $whereClause
-            order by p.createdAt desc
-            """.trimIndent(),
-            Payment::class.java,
-        ).setMaxResults(size)
+        val query =
+            entityManager
+                .createQuery(
+                    """
+                    select p from Payment p
+                    join fetch p.reservation r
+                    join fetch r.reservationSlot rs
+                    join fetch rs.product prod
+                    $whereClause
+                    order by p.createdAt desc
+                    """.trimIndent(),
+                    Payment::class.java,
+                ).setMaxResults(size)
 
         if (status != null) {
             query.setParameter("status", status)
@@ -56,17 +57,17 @@ class AdminPaymentQueryRepository(
     }
 
     fun findPaymentById(paymentId: Long): Payment? =
-        entityManager.createQuery(
-            """
-            select p from Payment p
-            join fetch p.reservation r
-            join fetch r.reservationSlot rs
-            join fetch rs.product prod
-            where p.id = :paymentId
-            """.trimIndent(),
-            Payment::class.java,
-        )
-            .setParameter("paymentId", paymentId)
+        entityManager
+            .createQuery(
+                """
+                select p from Payment p
+                join fetch p.reservation r
+                join fetch r.reservationSlot rs
+                join fetch rs.product prod
+                where p.id = :paymentId
+                """.trimIndent(),
+                Payment::class.java,
+            ).setParameter("paymentId", paymentId)
             .resultList
             .firstOrNull()
 
@@ -74,18 +75,18 @@ class AdminPaymentQueryRepository(
         userId: Long,
         size: Int,
     ): List<Payment> =
-        entityManager.createQuery(
-            """
-            select p from Payment p
-            join fetch p.reservation r
-            join fetch r.reservationSlot rs
-            join fetch rs.product prod
-            where r.userId = :userId
-            order by p.createdAt desc
-            """.trimIndent(),
-            Payment::class.java,
-        )
-            .setParameter("userId", userId)
+        entityManager
+            .createQuery(
+                """
+                select p from Payment p
+                join fetch p.reservation r
+                join fetch r.reservationSlot rs
+                join fetch rs.product prod
+                where r.userId = :userId
+                order by p.createdAt desc
+                """.trimIndent(),
+                Payment::class.java,
+            ).setParameter("userId", userId)
             .setMaxResults(size)
             .resultList
 
@@ -93,18 +94,18 @@ class AdminPaymentQueryRepository(
         paymentId: Long,
         userId: Long,
     ): Payment? =
-        entityManager.createQuery(
-            """
-            select p from Payment p
-            join fetch p.reservation r
-            join fetch r.reservationSlot rs
-            join fetch rs.product prod
-            where p.id = :paymentId
-              and r.userId = :userId
-            """.trimIndent(),
-            Payment::class.java,
-        )
-            .setParameter("paymentId", paymentId)
+        entityManager
+            .createQuery(
+                """
+                select p from Payment p
+                join fetch p.reservation r
+                join fetch r.reservationSlot rs
+                join fetch rs.product prod
+                where p.id = :paymentId
+                  and r.userId = :userId
+                """.trimIndent(),
+                Payment::class.java,
+            ).setParameter("paymentId", paymentId)
             .setParameter("userId", userId)
             .resultList
             .firstOrNull()

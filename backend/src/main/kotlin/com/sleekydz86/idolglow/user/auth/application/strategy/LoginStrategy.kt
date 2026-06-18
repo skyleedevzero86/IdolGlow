@@ -6,5 +6,6 @@ import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 
 interface LoginStrategy {
     val provider: AuthProvider
+
     fun login(request: LoginRequest): TokenResponse
 }

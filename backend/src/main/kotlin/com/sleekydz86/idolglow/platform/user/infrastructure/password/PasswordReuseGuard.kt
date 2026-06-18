@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component
 @Component
 @ConditionalOnProperty(prefix = "platform.auth", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class PasswordReuseGuard {
-
     fun matchesRecentHistory(
         userId: Long,
         rawPassword: String,

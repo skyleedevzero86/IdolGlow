@@ -10,13 +10,12 @@ import org.springframework.stereotype.Component
 class AuthenticatedUserIdResolver(
     private val userRepository: UserRepository,
 ) {
-
-    fun resolveOrNull(): Long? =
-        runCatching { resolveRequired() }.getOrNull()
+    fun resolveOrNull(): Long? = runCatching { resolveRequired() }.getOrNull()
 
     fun resolveRequired(): Long {
-        val authentication = SecurityContextHolder.getContext().authentication
-            ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
+        val authentication =
+            SecurityContextHolder.getContext().authentication
+                ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
 
         if (!authentication.isAuthenticated || authentication.name == "anonymousUser") {
             throw CustomException(AuthExceptionType.UNAUTHENTICATED)
@@ -26,8 +25,9 @@ class AuthenticatedUserIdResolver(
         name.toLongOrNull()?.let { return it }
 
         if (name.contains('@')) {
-            val user = userRepository.findByEmail(name)
-                ?: throw CustomException(AuthExceptionType.INVALID_AUTH_PRINCIPAL)
+            val user =
+                userRepository.findByEmail(name)
+                    ?: throw CustomException(AuthExceptionType.INVALID_AUTH_PRINCIPAL)
             return user.id
         }
 

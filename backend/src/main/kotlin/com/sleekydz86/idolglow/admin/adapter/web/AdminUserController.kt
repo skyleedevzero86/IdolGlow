@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminUserController(
     private val adminUserService: AdminUserService,
 ) {
-
     @Operation(summary = "회원 목록 조회")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
@@ -38,8 +37,7 @@ class AdminUserController(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) role: UserRole?,
         @RequestParam(required = false) accountStatus: UserAccountStatus?,
-    ): ResponseEntity<AdminUserPageResponse> =
-        ResponseEntity.ok(adminUserService.findUsers(keyword, role, accountStatus, page, size))
+    ): ResponseEntity<AdminUserPageResponse> = ResponseEntity.ok(adminUserService.findUsers(keyword, role, accountStatus, page, size))
 
     @Operation(summary = "회원 역할 변경")
     @SecurityRequirement(name = "bearerAuth")
@@ -47,8 +45,7 @@ class AdminUserController(
     fun updateRole(
         @PathVariable userId: Long,
         @RequestBody request: UpdateAdminUserRoleRequest,
-    ): ResponseEntity<AdminUserSummaryResponse> =
-        ResponseEntity.ok(adminUserService.updateUserRole(userId, request.role))
+    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.updateUserRole(userId, request.role))
 
     @Operation(summary = "회원 상태 변경")
     @SecurityRequirement(name = "bearerAuth")
@@ -56,14 +53,12 @@ class AdminUserController(
     fun updateStatus(
         @PathVariable userId: Long,
         @RequestBody request: UpdateAdminUserStatusRequest,
-    ): ResponseEntity<AdminUserSummaryResponse> =
-        ResponseEntity.ok(adminUserService.updateUserStatus(userId, request.accountStatus))
+    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.updateUserStatus(userId, request.accountStatus))
 
     @Operation(summary = "회원 잠금 해제")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{userId}/unlock")
     fun unlock(
         @PathVariable userId: Long,
-    ): ResponseEntity<AdminUserSummaryResponse> =
-        ResponseEntity.ok(adminUserService.unlockUser(userId))
+    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.unlockUser(userId))
 }

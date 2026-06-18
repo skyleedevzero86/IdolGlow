@@ -18,10 +18,10 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriUtils
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.Duration
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicLong
 
@@ -40,16 +40,17 @@ class KmaGlowWeatherClient(
         baseTime: LocalTime,
     ): CurrentObservationSnapshot? {
         val point = KmaGridConverter.toGrid(region.latitude, region.longitude)
-        val items = fetchItems(
-            "${properties.villageBaseUrl.trimEnd('/')}/getUltraSrtNcst",
-            mapOf(
-                "base_date" to baseDate.format(BASIC_DATE),
-                "base_time" to baseTime.format(HHMM),
-                "nx" to point.nx.toString(),
-                "ny" to point.ny.toString(),
-                "numOfRows" to "100",
-            ),
-        )
+        val items =
+            fetchItems(
+                "${properties.villageBaseUrl.trimEnd('/')}/getUltraSrtNcst",
+                mapOf(
+                    "base_date" to baseDate.format(BASIC_DATE),
+                    "base_time" to baseTime.format(HHMM),
+                    "nx" to point.nx.toString(),
+                    "ny" to point.ny.toString(),
+                    "numOfRows" to "100",
+                ),
+            )
         if (items.isEmpty()) return null
         val byCategory = items.associateBy({ it.path("category").asText() }, { it.path("obsrValue").asText() })
         return CurrentObservationSnapshot(
@@ -68,16 +69,17 @@ class KmaGlowWeatherClient(
         baseTime: LocalTime,
     ): List<ShortForecastSnapshot> {
         val point = KmaGridConverter.toGrid(region.latitude, region.longitude)
-        val items = fetchItems(
-            "${properties.villageBaseUrl.trimEnd('/')}/getUltraSrtFcst",
-            mapOf(
-                "base_date" to baseDate.format(BASIC_DATE),
-                "base_time" to baseTime.format(HHMM),
-                "nx" to point.nx.toString(),
-                "ny" to point.ny.toString(),
-                "numOfRows" to "120",
-            ),
-        )
+        val items =
+            fetchItems(
+                "${properties.villageBaseUrl.trimEnd('/')}/getUltraSrtFcst",
+                mapOf(
+                    "base_date" to baseDate.format(BASIC_DATE),
+                    "base_time" to baseTime.format(HHMM),
+                    "nx" to point.nx.toString(),
+                    "ny" to point.ny.toString(),
+                    "numOfRows" to "120",
+                ),
+            )
         return items.mapNotNull(::toShortForecastSnapshot)
     }
 
@@ -87,20 +89,24 @@ class KmaGlowWeatherClient(
         baseTime: LocalTime,
     ): List<ShortForecastSnapshot> {
         val point = KmaGridConverter.toGrid(region.latitude, region.longitude)
-        val items = fetchItems(
-            "${properties.villageBaseUrl.trimEnd('/')}/getVilageFcst",
-            mapOf(
-                "base_date" to baseDate.format(BASIC_DATE),
-                "base_time" to baseTime.format(HHMM),
-                "nx" to point.nx.toString(),
-                "ny" to point.ny.toString(),
-                "numOfRows" to "1000",
-            ),
-        )
+        val items =
+            fetchItems(
+                "${properties.villageBaseUrl.trimEnd('/')}/getVilageFcst",
+                mapOf(
+                    "base_date" to baseDate.format(BASIC_DATE),
+                    "base_time" to baseTime.format(HHMM),
+                    "nx" to point.nx.toString(),
+                    "ny" to point.ny.toString(),
+                    "numOfRows" to "1000",
+                ),
+            )
         return items.mapNotNull(::toShortForecastSnapshot)
     }
 
-    override fun fetchMidOutlook(stationId: Int, tmFc: LocalDateTime): String? =
+    override fun fetchMidOutlook(
+        stationId: Int,
+        tmFc: LocalDateTime,
+    ): String? =
         fetchSingleItem(
             "${properties.midBaseUrl.trimEnd('/')}/getMidFcst",
             mapOf(
@@ -109,50 +115,60 @@ class KmaGlowWeatherClient(
             ),
         )?.path("wfSv")?.asText()?.trim()?.takeIf { it.isNotEmpty() }
 
-    override fun fetchMidLandForecast(regionId: String, tmFc: LocalDateTime): MidLandForecastSnapshot? {
-        val item = fetchSingleItem(
-            "${properties.midBaseUrl.trimEnd('/')}/getMidLandFcst",
-            mapOf(
-                "regId" to regionId,
-                "tmFc" to tmFc.format(MID_DATE_TIME),
-            ),
-        ) ?: return null
+    override fun fetchMidLandForecast(
+        regionId: String,
+        tmFc: LocalDateTime,
+    ): MidLandForecastSnapshot? {
+        val item =
+            fetchSingleItem(
+                "${properties.midBaseUrl.trimEnd('/')}/getMidLandFcst",
+                mapOf(
+                    "regId" to regionId,
+                    "tmFc" to tmFc.format(MID_DATE_TIME),
+                ),
+            ) ?: return null
 
         val weather = linkedMapOf<Int, String>()
         val rain = linkedMapOf<Int, Int>()
         for (day in 4..10) {
-            val weatherValue = when (day) {
-                4 -> item.path("wf4Pm").asText().ifBlank { item.path("wf4Am").asText() }
-                5 -> item.path("wf5Pm").asText().ifBlank { item.path("wf5Am").asText() }
-                6 -> item.path("wf6Pm").asText().ifBlank { item.path("wf6Am").asText() }
-                7 -> item.path("wf7Pm").asText().ifBlank { item.path("wf7Am").asText() }
-                8 -> item.path("wf8").asText()
-                9 -> item.path("wf9").asText()
-                else -> item.path("wf10").asText()
-            }.trim()
-            val rainValue = when (day) {
-                4 -> item.path("rnSt4Pm").asInt(item.path("rnSt4Am").asInt(-1))
-                5 -> item.path("rnSt5Pm").asInt(item.path("rnSt5Am").asInt(-1))
-                6 -> item.path("rnSt6Pm").asInt(item.path("rnSt6Am").asInt(-1))
-                7 -> item.path("rnSt7Pm").asInt(item.path("rnSt7Am").asInt(-1))
-                8 -> item.path("rnSt8").asInt(-1)
-                9 -> item.path("rnSt9").asInt(-1)
-                else -> item.path("rnSt10").asInt(-1)
-            }
+            val weatherValue =
+                when (day) {
+                    4 -> item.path("wf4Pm").asText().ifBlank { item.path("wf4Am").asText() }
+                    5 -> item.path("wf5Pm").asText().ifBlank { item.path("wf5Am").asText() }
+                    6 -> item.path("wf6Pm").asText().ifBlank { item.path("wf6Am").asText() }
+                    7 -> item.path("wf7Pm").asText().ifBlank { item.path("wf7Am").asText() }
+                    8 -> item.path("wf8").asText()
+                    9 -> item.path("wf9").asText()
+                    else -> item.path("wf10").asText()
+                }.trim()
+            val rainValue =
+                when (day) {
+                    4 -> item.path("rnSt4Pm").asInt(item.path("rnSt4Am").asInt(-1))
+                    5 -> item.path("rnSt5Pm").asInt(item.path("rnSt5Am").asInt(-1))
+                    6 -> item.path("rnSt6Pm").asInt(item.path("rnSt6Am").asInt(-1))
+                    7 -> item.path("rnSt7Pm").asInt(item.path("rnSt7Am").asInt(-1))
+                    8 -> item.path("rnSt8").asInt(-1)
+                    9 -> item.path("rnSt9").asInt(-1)
+                    else -> item.path("rnSt10").asInt(-1)
+                }
             if (weatherValue.isNotBlank()) weather[day] = weatherValue
             if (rainValue >= 0) rain[day] = rainValue
         }
         return MidLandForecastSnapshot(rainProbabilityByDay = rain, weatherByDay = weather)
     }
 
-    override fun fetchMidTemperature(regionId: String, tmFc: LocalDateTime): MidTemperatureSnapshot? {
-        val item = fetchSingleItem(
-            "${properties.midBaseUrl.trimEnd('/')}/getMidTa",
-            mapOf(
-                "regId" to regionId,
-                "tmFc" to tmFc.format(MID_DATE_TIME),
-            ),
-        ) ?: return null
+    override fun fetchMidTemperature(
+        regionId: String,
+        tmFc: LocalDateTime,
+    ): MidTemperatureSnapshot? {
+        val item =
+            fetchSingleItem(
+                "${properties.midBaseUrl.trimEnd('/')}/getMidTa",
+                mapOf(
+                    "regId" to regionId,
+                    "tmFc" to tmFc.format(MID_DATE_TIME),
+                ),
+            ) ?: return null
 
         val minTemps = linkedMapOf<Int, Double>()
         val maxTemps = linkedMapOf<Int, Double>()
@@ -164,10 +180,11 @@ class KmaGlowWeatherClient(
     }
 
     override fun fetchZoneInfo(regId: String): ZoneInfoSnapshot? {
-        val item = fetchSingleItem(
-            "${properties.zoneBaseUrl.trimEnd('/')}/getFcstZoneCd",
-            mapOf("regId" to regId),
-        ) ?: return null
+        val item =
+            fetchSingleItem(
+                "${properties.zoneBaseUrl.trimEnd('/')}/getFcstZoneCd",
+                mapOf("regId" to regId),
+            ) ?: return null
 
         return ZoneInfoSnapshot(
             regId = item.path("regId").asText(regId),
@@ -182,17 +199,18 @@ class KmaGlowWeatherClient(
         startDate: LocalDate,
         endDate: LocalDate,
     ): List<AsosDailySnapshot> {
-        val items = fetchItems(
-            "${properties.asosBaseUrl.trimEnd('/')}/getWthrDataList",
-            mapOf(
-                "dataCd" to "ASOS",
-                "dateCd" to "DAY",
-                "startDt" to startDate.format(BASIC_DATE),
-                "endDt" to endDate.format(BASIC_DATE),
-                "stnIds" to stationId.toString(),
-                "numOfRows" to "366",
-            ),
-        )
+        val items =
+            fetchItems(
+                "${properties.asosBaseUrl.trimEnd('/')}/getWthrDataList",
+                mapOf(
+                    "dataCd" to "ASOS",
+                    "dateCd" to "DAY",
+                    "startDt" to startDate.format(BASIC_DATE),
+                    "endDt" to endDate.format(BASIC_DATE),
+                    "stnIds" to stationId.toString(),
+                    "numOfRows" to "366",
+                ),
+            )
         return items.mapNotNull { item ->
             val date = runCatching { LocalDate.parse(item.path("tm").asText()) }.getOrNull() ?: return@mapNotNull null
             AsosDailySnapshot(
@@ -205,7 +223,12 @@ class KmaGlowWeatherClient(
 
     private fun toShortForecastSnapshot(item: JsonNode): ShortForecastSnapshot? {
         val dateText = item.path("fcstDate").asText().trim()
-        val timeText = item.path("fcstTime").asText().trim().padStart(4, '0')
+        val timeText =
+            item
+                .path("fcstTime")
+                .asText()
+                .trim()
+                .padStart(4, '0')
         val category = item.path("category").asText().trim()
         val value = item.path("fcstValue").asText().trim()
         if (dateText.isEmpty() || timeText.isEmpty() || category.isEmpty()) return null
@@ -231,12 +254,14 @@ class KmaGlowWeatherClient(
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey) ?: return emptyList()
         val url = buildUrl(endpoint, encodedKey, params)
         return runCatching {
-            val body = webClient.get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(String::class.java)
-                .block()
-                ?: return emptyList()
+            val body =
+                webClient
+                    .get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .block()
+                    ?: return emptyList()
             val root = objectMapper.readTree(body)
             val response = root.path("response")
             val code = response.path("header").path("resultCode").asText()
@@ -258,7 +283,10 @@ class KmaGlowWeatherClient(
         }
     }
 
-    private fun handleFetchFailure(endpoint: String, throwable: Throwable) {
+    private fun handleFetchFailure(
+        endpoint: String,
+        throwable: Throwable,
+    ) {
         when (throwable) {
             is WebClientResponseException.Unauthorized -> {
                 if (markUnauthorizedCooldown()) {
@@ -288,11 +316,12 @@ class KmaGlowWeatherClient(
         encodedServiceKey: String,
         params: Map<String, String>,
     ): String {
-        val baseQuery = mutableListOf(
-            "serviceKey=$encodedServiceKey",
-            "pageNo=1",
-            "dataType=JSON",
-        )
+        val baseQuery =
+            mutableListOf(
+                "serviceKey=$encodedServiceKey",
+                "pageNo=1",
+                "dataType=JSON",
+            )
         params.forEach { (key, value) ->
             val encoded = UriUtils.encodeQueryParam(value, StandardCharsets.UTF_8)
             baseQuery.add("$key=$encoded")
@@ -301,10 +330,12 @@ class KmaGlowWeatherClient(
     }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String? {
-        val trimmed = rawServiceKey.trim()
-            .removePrefix("serviceKey=")
-            .removePrefix("KMA_WEATHER_SERVICE_KEY=")
-            .removeSurrounding("\"")
+        val trimmed =
+            rawServiceKey
+                .trim()
+                .removePrefix("serviceKey=")
+                .removePrefix("KMA_WEATHER_SERVICE_KEY=")
+                .removeSurrounding("\"")
         if (trimmed.isEmpty()) {
             log.info("기상청 날씨 서비스키가 비어 있어 폴백 대시보드를 사용합니다.")
             return null

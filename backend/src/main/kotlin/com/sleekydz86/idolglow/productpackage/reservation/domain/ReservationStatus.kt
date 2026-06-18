@@ -5,5 +5,5 @@ enum class ReservationStatus {
     PENDING,
     BOOKED,
     COMPLETED,
-    CANCELED
+    CANCELED,
 }

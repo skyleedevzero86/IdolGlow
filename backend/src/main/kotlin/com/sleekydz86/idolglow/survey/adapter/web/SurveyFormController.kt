@@ -27,7 +27,8 @@ class SurveyFormController(
 ) {
     @GetMapping("/current")
     fun findCurrent(): ResponseEntity<SurveyFormResponse> =
-        userSurveyFormService.findCurrentForm()
+        userSurveyFormService
+            .findCurrentForm()
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
 
@@ -40,8 +41,11 @@ class SurveyFormController(
         ResponseEntity.status(HttpStatus.CREATED).body(userSurveyFormService.submitCurrentForm(userId, request))
 
     @GetMapping("/current/submissions/me/latest")
-    fun findMyLatest(@LoginUser userId: Long): ResponseEntity<SurveySubmissionResponse> =
-        userSurveyFormService.findMyLatestSubmission(userId)
+    fun findMyLatest(
+        @LoginUser userId: Long,
+    ): ResponseEntity<SurveySubmissionResponse> =
+        userSurveyFormService
+            .findMyLatestSubmission(userId)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
 
@@ -56,6 +60,6 @@ class SurveyFormController(
                 userId = userId,
                 submissionId = submissionId,
                 useLlm = useLlm,
-            )
+            ),
         )
 }

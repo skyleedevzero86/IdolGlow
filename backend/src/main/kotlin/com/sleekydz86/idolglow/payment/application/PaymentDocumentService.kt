@@ -19,34 +19,35 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class PaymentDocumentService {
-
     fun exportPaymentsXlsx(payments: List<Payment>): ByteArray {
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet("payments")
-        val headerStyle = workbook.createCellStyle().apply {
-            fillForegroundColor = org.apache.poi.ss.usermodel.IndexedColors.GREY_25_PERCENT.index
-            fillPattern = org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND
-        }
+        val headerStyle =
+            workbook.createCellStyle().apply {
+                fillForegroundColor = org.apache.poi.ss.usermodel.IndexedColors.GREY_25_PERCENT.index
+                fillPattern = org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND
+            }
 
-        val headers = listOf(
-            "결제ID",
-            "예약ID",
-            "회원ID",
-            "상품명",
-            "결제상태",
-            "결제수단",
-            "결제참조",
-            "주문번호",
-            "결제금액",
-            "취소금액",
-            "실패사유",
-            "결제일시",
-            "실패일시",
-            "취소일시",
-            "방문일",
-            "방문시작",
-            "방문종료",
-        )
+        val headers =
+            listOf(
+                "결제ID",
+                "예약ID",
+                "회원ID",
+                "상품명",
+                "결제상태",
+                "결제수단",
+                "결제참조",
+                "주문번호",
+                "결제금액",
+                "취소금액",
+                "실패사유",
+                "결제일시",
+                "실패일시",
+                "취소일시",
+                "방문일",
+                "방문시작",
+                "방문종료",
+            )
 
         val headerRow = sheet.createRow(0)
         headers.forEachIndexed { index, label ->
@@ -85,7 +86,10 @@ class PaymentDocumentService {
         }
     }
 
-    fun buildReceiptPdf(payment: Payment, receiverLabel: String): ByteArray {
+    fun buildReceiptPdf(
+        payment: Payment,
+        receiverLabel: String,
+    ): ByteArray {
         val baseFont = loadBaseFont()
         val titleFont = Font(baseFont, 18f, Font.BOLD)
         val sectionFont = Font(baseFont, 12f, Font.BOLD)
@@ -109,13 +113,21 @@ class PaymentDocumentService {
         }
     }
 
-    private fun infoTable(payment: Payment, bodyFont: Font, sectionFont: Font): PdfPTable {
-        val table = PdfPTable(floatArrayOf(1.4f, 3.6f)).apply {
-            widthPercentage = 100f
-            setSpacingBefore(8f)
-        }
+    private fun infoTable(
+        payment: Payment,
+        bodyFont: Font,
+        sectionFont: Font,
+    ): PdfPTable {
+        val table =
+            PdfPTable(floatArrayOf(1.4f, 3.6f)).apply {
+                widthPercentage = 100f
+                setSpacingBefore(8f)
+            }
 
-        fun addRow(label: String, value: String) {
+        fun addRow(
+            label: String,
+            value: String,
+        ) {
             table.addCell(cell(label, sectionFont))
             table.addCell(cell(value, bodyFont))
         }
@@ -135,7 +147,10 @@ class PaymentDocumentService {
         return table
     }
 
-    private fun cell(value: String, font: Font): PdfPCell =
+    private fun cell(
+        value: String,
+        font: Font,
+    ): PdfPCell =
         PdfPCell(Phrase(value, font)).apply {
             setPadding(8f)
             border = Rectangle.BOX
@@ -162,10 +177,11 @@ class PaymentDocumentService {
 
     companion object {
         private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        private val FONT_CANDIDATES = listOf(
-            "C:/Windows/Fonts/malgun.ttf",
-            "C:/Windows/Fonts/NanumGothic.ttf",
-            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
-        )
+        private val FONT_CANDIDATES =
+            listOf(
+                "C:/Windows/Fonts/malgun.ttf",
+                "C:/Windows/Fonts/NanumGothic.ttf",
+                "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+            )
     }
 }

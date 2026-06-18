@@ -13,9 +13,14 @@ interface UserJpaRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): User?
 
     @Query("SELECT u FROM User u WHERE u.nickname.value = :nickname")
-    fun findByNicknameValue(@Param("nickname") nickname: String): User?
+    fun findByNicknameValue(
+        @Param("nickname") nickname: String,
+    ): User?
 
-    fun findByEmailAndPlatformUsername(email: String, platformUsername: String): User?
+    fun findByEmailAndPlatformUsername(
+        email: String,
+        platformUsername: String,
+    ): User?
 
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.nickname.value = :username")
     fun findByEmailAndNicknameValue(
@@ -32,7 +37,7 @@ interface UserJpaRepository : JpaRepository<User, Long> {
           lower(u.nickname.value) LIKE lower(concat('%', :keyword, '%')))
           AND (:role IS NULL OR u.role = :role)
           AND (:accountStatus IS NULL OR u.accountStatus = :accountStatus)
-        """
+        """,
     )
     fun searchAdminUsers(
         @Param("keyword") keyword: String?,

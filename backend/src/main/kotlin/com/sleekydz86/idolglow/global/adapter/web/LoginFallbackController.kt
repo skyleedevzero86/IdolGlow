@@ -10,7 +10,6 @@ import org.springframework.web.servlet.view.RedirectView
 class LoginFallbackController(
     @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
 ) {
-
     @GetMapping("/login")
     fun login(request: HttpServletRequest): RedirectView {
         val base = redirectUri.trim()

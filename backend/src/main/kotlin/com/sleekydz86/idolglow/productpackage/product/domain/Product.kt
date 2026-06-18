@@ -25,50 +25,39 @@ class Product(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 120)
     var name: String,
-
     @Column(nullable = false, columnDefinition = "TEXT")
     var description: String,
-
     @Column(name = "base_price", nullable = false, precision = 19, scale = 2)
     var basePrice: BigDecimal = BigDecimal.ZERO,
-
     @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val productOptions: MutableList<ProductOption> = mutableListOf(),
-
     @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val productTags: MutableList<ProductTag> = mutableListOf(),
-
     @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val reservationSlots: MutableList<ReservationSlot> = mutableListOf(),
-
     @OneToOne(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var productLocation: ProductLocation? = null,
-
     @Column(name = "tour_attraction_picks_json", columnDefinition = "TEXT")
     var tourAttractionPicksJson: String? = null,
-
     @Column(name = "is_recommended", nullable = false)
     var isRecommended: Boolean = false,
-
     @Column(name = "recommendation_score", nullable = false)
     var recommendationScore: Int = 0,
-
-    ) : BaseEntity() {
-
+) : BaseEntity() {
     @get:Transient
     val optionsMinPrice: BigDecimal
-        get() = productOptions
-            .asSequence()
-            .map { it.option.price }
-            .minOrNull()
-            ?: BigDecimal.ZERO
+        get() =
+            productOptions
+                .asSequence()
+                .map { it.option.price }
+                .minOrNull()
+                ?: BigDecimal.ZERO
 
     @get:Transient
     val optionsTotalPrice: BigDecimal
-        get() = productOptions            .fold(BigDecimal.ZERO) { sum, productOption -> sum + productOption.option.price }
+        get() = productOptions.fold(BigDecimal.ZERO) { sum, productOption -> sum + productOption.option.price }
 
     @get:Transient
     val minPrice: BigDecimal
@@ -85,26 +74,29 @@ class Product(
     }
 
     fun addOptions(options: Collection<Option>) {
-        options.distinctBy { it.id }
+        options
+            .distinctBy { it.id }
             .forEach { option ->
                 productOptions.add(ProductOption(product = this, option = option))
             }
     }
 
     fun replaceOptions(options: Collection<Option>) {
-        val requestedById = options
-            .asSequence()
-            .distinctBy { it.id }
-            .associateBy { it.id }
+        val requestedById =
+            options
+                .asSequence()
+                .distinctBy { it.id }
+                .associateBy { it.id }
 
         if (requestedById.isEmpty()) {
             productOptions.clear()
             return
         }
 
-        val existingOptionIds = productOptions
-            .map { it.option.id }
-            .toSet()
+        val existingOptionIds =
+            productOptions
+                .map { it.option.id }
+                .toSet()
 
         productOptions.removeIf { productOption ->
             productOption.option.id !in requestedById
@@ -118,7 +110,8 @@ class Product(
     }
 
     fun addTags(tagNames: Collection<String>) {
-        tagNames.map { it.trim() }
+        tagNames
+            .map { it.trim() }
             .filter { it.isNotEmpty() }
             .distinct()
             .forEach { name ->
@@ -127,10 +120,12 @@ class Product(
     }
 
     fun replaceTags(tagNames: Collection<String>) {
-        val normalizedRequested = tagNames.asSequence()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .toSet()
+        val normalizedRequested =
+            tagNames
+                .asSequence()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .toSet()
 
         if (normalizedRequested.isEmpty()) {
             productTags.clear()
@@ -162,7 +157,7 @@ class Product(
         startDate: LocalDate,
         endDate: LocalDate,
         startTime: LocalTime = DEFAULT_RESERVATION_START_TIME,
-        endTime: LocalTime = DEFAULT_RESERVATION_END_TIME
+        endTime: LocalTime = DEFAULT_RESERVATION_END_TIME,
     ) {
         require(!endDate.isBefore(startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
         require(startTime < endTime) { "예약 시작 시간은 종료 시간보다 빨라야 합니다." }
@@ -177,8 +172,8 @@ class Product(
                         product = this,
                         reservationDate = currentDate,
                         startTime = currentStartTime,
-                        endTime = currentEndTime
-                    )
+                        endTime = currentEndTime,
+                    ),
                 )
                 currentStartTime = currentStartTime.plusHours(1)
             }
@@ -208,21 +203,22 @@ class Product(
             slotStartDate: LocalDate,
             slotEndDate: LocalDate,
             slotStartTime: LocalTime = DEFAULT_RESERVATION_START_TIME,
-            slotEndTime: LocalTime = DEFAULT_RESERVATION_END_TIME
+            slotEndTime: LocalTime = DEFAULT_RESERVATION_END_TIME,
         ): Product {
             require(basePrice >= BigDecimal.ZERO) { "상품 가격(기본)은 0 이상이어야 합니다." }
-            val product = Product(
-                name = name,
-                description = description,
-                basePrice = basePrice,
-            )
+            val product =
+                Product(
+                    name = name,
+                    description = description,
+                    basePrice = basePrice,
+                )
             product.addOptions(options)
             product.addTags(tagNames)
             product.addReservationSlots(
                 startDate = slotStartDate,
                 endDate = slotEndDate,
                 startTime = slotStartTime,
-                endTime = slotEndTime
+                endTime = slotEndTime,
             )
             return product
         }

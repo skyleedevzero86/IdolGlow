@@ -15,7 +15,7 @@ data class ProductReviewImageGraphQlResponse(
                 id = response.id.asGraphQlId(),
                 originalFilename = response.originalFilename,
                 url = response.url,
-                sortOrder = response.sortOrder
+                sortOrder = response.sortOrder,
             )
     }
 }

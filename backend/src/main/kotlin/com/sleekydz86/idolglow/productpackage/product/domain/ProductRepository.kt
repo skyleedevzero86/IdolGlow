@@ -5,7 +5,6 @@ import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQu
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSearchCriteria
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 
-
 interface ProductRepository {
     fun findProductsByNoOffset(
         lastId: Long?,
@@ -16,7 +15,10 @@ interface ProductRepository {
     fun browseProducts(criteria: ProductSearchCriteria): ProductBrowseResult
 
     fun findProductSpecificById(productId: Long): ProductSpecificResponse?
+
     fun findById(productId: Long): Product?
+
     fun existsById(productId: Long): Boolean
+
     fun getReferenceById(productId: Long): Product
 }

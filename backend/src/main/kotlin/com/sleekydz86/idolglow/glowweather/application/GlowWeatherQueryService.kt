@@ -31,18 +31,21 @@ class GlowWeatherQueryService(
     fun dashboard(regionId: String?): GlowWeatherDashboardResponse {
         val region = GlowWeatherRegions.find(regionId)
         val now = ZonedDateTime.now(zoneId)
-        val currentObservation = runCatching {
-            val base = resolveUltraShortObservationBase(now)
-            glowWeatherDataPort.fetchUltraShortObservation(region, base.first, base.second)
-        }.getOrNull()
-        val ultraShortForecast = runCatching {
-            val base = resolveUltraShortForecastBase(now)
-            glowWeatherDataPort.fetchUltraShortForecast(region, base.first, base.second)
-        }.getOrElse { emptyList() }
-        val villageForecast = runCatching {
-            val base = resolveVillageForecastBase(now)
-            glowWeatherDataPort.fetchVillageForecast(region, base.first, base.second)
-        }.getOrElse { emptyList() }
+        val currentObservation =
+            runCatching {
+                val base = resolveUltraShortObservationBase(now)
+                glowWeatherDataPort.fetchUltraShortObservation(region, base.first, base.second)
+            }.getOrNull()
+        val ultraShortForecast =
+            runCatching {
+                val base = resolveUltraShortForecastBase(now)
+                glowWeatherDataPort.fetchUltraShortForecast(region, base.first, base.second)
+            }.getOrElse { emptyList() }
+        val villageForecast =
+            runCatching {
+                val base = resolveVillageForecastBase(now)
+                glowWeatherDataPort.fetchVillageForecast(region, base.first, base.second)
+            }.getOrElse { emptyList() }
         val midBase = resolveMidForecastBase(now)
         val midLand = runCatching { glowWeatherDataPort.fetchMidLandForecast(region.midLandRegionId, midBase) }.getOrNull()
         val midTemp = runCatching { glowWeatherDataPort.fetchMidTemperature(region.midTemperatureRegionId, midBase) }.getOrNull()
@@ -55,35 +58,39 @@ class GlowWeatherQueryService(
         val forecast = if (forecastFromApi) builtForecast else fallbackForecast(region, now.toLocalDate())
         val currentFromApi = currentObservation != null
         val fallbackCurrentFromForecast = buildFallbackCurrent(region, now.toLocalDate(), ultraShortForecast, forecast)
-        val current = enrichWindFromForecast(
-            buildCurrentResponse(region, zoneInfo, currentObservation, fallbackCurrentFromForecast),
-            forecast,
-        )
+        val current =
+            enrichWindFromForecast(
+                buildCurrentResponse(region, zoneInfo, currentObservation, fallbackCurrentFromForecast),
+                forecast,
+            )
         val monthlySummary = buildMonthlySummary(region, now.toLocalDate(), asosDaily, forecast)
-        val outlookSummary = when {
-            !outlook.isNullOrBlank() -> outlook
-            !forecastFromApi -> "${region.name} 기준 최근 예보를 바탕으로 화면을 구성했어요."
-            else -> ""
-        }
+        val outlookSummary =
+            when {
+                !outlook.isNullOrBlank() -> outlook
+                !forecastFromApi -> "${region.name} 기준 최근 예보를 바탕으로 화면을 구성했어요."
+                else -> ""
+            }
         val recommendations = buildRecommendations(region, current, forecast, monthlySummary, outlookSummary)
         val windGuide = buildWindGuide(region, now, current, forecast)
 
         return GlowWeatherDashboardResponse(
             selectedRegionId = region.id,
-            regions = GlowWeatherRegions.all.map { candidate ->
-                GlowWeatherRegionSummary(
-                    id = candidate.id,
-                    name = candidate.name,
-                    areaLabel = candidate.areaLabel,
-                )
-            },
-            region = GlowWeatherSelectedRegion(
-                id = region.id,
-                name = zoneInfo?.regName ?: region.name,
-                areaLabel = region.areaLabel,
-                latitude = zoneInfo?.latitude ?: region.latitude,
-                longitude = zoneInfo?.longitude ?: region.longitude,
-            ),
+            regions =
+                GlowWeatherRegions.all.map { candidate ->
+                    GlowWeatherRegionSummary(
+                        id = candidate.id,
+                        name = candidate.name,
+                        areaLabel = candidate.areaLabel,
+                    )
+                },
+            region =
+                GlowWeatherSelectedRegion(
+                    id = region.id,
+                    name = zoneInfo?.regName ?: region.name,
+                    areaLabel = region.areaLabel,
+                    latitude = zoneInfo?.latitude ?: region.latitude,
+                    longitude = zoneInfo?.longitude ?: region.longitude,
+                ),
             current = current,
             monthlySummary = monthlySummary,
             outlookSummary = outlookSummary,
@@ -96,7 +103,10 @@ class GlowWeatherQueryService(
         )
     }
 
-    private fun fetchMonthlyAsos(region: GlowWeatherRegion, today: LocalDate): List<AsosDailySnapshot> {
+    private fun fetchMonthlyAsos(
+        region: GlowWeatherRegion,
+        today: LocalDate,
+    ): List<AsosDailySnapshot> {
         val endDate = today.minusDays(1)
         if (endDate.month != today.month || endDate.year != today.year) return emptyList()
         val startDate = YearMonth.from(today).atDay(1)
@@ -112,11 +122,12 @@ class GlowWeatherQueryService(
         val first = forecast.firstOrNull()
         val deg = current.windDirectionDegrees ?: first?.windDirectionDegrees
         val spd = current.windSpeedMps ?: first?.windSpeedMps
-        val label = when {
-            meaningfulWindLabel(current.windDirectionLabel) -> current.windDirectionLabel
-            deg != null -> WindDirection.to16Point(deg).takeIf { it != "-" } ?: "-"
-            else -> current.windDirectionLabel
-        }
+        val label =
+            when {
+                meaningfulWindLabel(current.windDirectionLabel) -> current.windDirectionLabel
+                deg != null -> WindDirection.to16Point(deg).takeIf { it != "-" } ?: "-"
+                else -> current.windDirectionLabel
+            }
         return current.copy(
             windDirectionDegrees = deg,
             windSpeedMps = spd,
@@ -124,8 +135,7 @@ class GlowWeatherQueryService(
         )
     }
 
-    private fun meaningfulWindLabel(label: String): Boolean =
-        label.isNotBlank() && label != "-"
+    private fun meaningfulWindLabel(label: String): Boolean = label.isNotBlank() && label != "-"
 
     private fun buildCurrentResponse(
         region: GlowWeatherRegion,
@@ -171,7 +181,8 @@ class GlowWeatherQueryService(
             temperatureC = temperature,
             humidity = value("REH")?.toIntOrNull(),
             skyLabel = skyLabel(skyCode, ptyCode) ?: fallbackDay.summary,
-            precipitationLabel = precipitationTypeLabel(ptyCode) ?: if ((fallbackDay.precipitationChance ?: 0) >= 60) "비 가능성 높음" else "강수 없음",
+            precipitationLabel =
+                precipitationTypeLabel(ptyCode) ?: if ((fallbackDay.precipitationChance ?: 0) >= 60) "비 가능성 높음" else "강수 없음",
             windDirectionDegrees = windDeg,
             windDirectionLabel = WindDirection.to16Point(windDeg),
             windSpeedMps = windSpeed,
@@ -185,9 +196,10 @@ class GlowWeatherQueryService(
         midLand: MidLandForecastSnapshot?,
         midTemp: MidTemperatureSnapshot?,
     ): List<GlowWeatherForecastDay> {
-        val shortMap = shortForecast
-            .groupBy { it.forecastDateTime.toLocalDate() }
-            .mapValues { (_, items) -> toDailyForecastFromShort(items) }
+        val shortMap =
+            shortForecast
+                .groupBy { it.forecastDateTime.toLocalDate() }
+                .mapValues { (_, items) -> toDailyForecastFromShort(items) }
 
         return (0 until 10).map { offset ->
             val date = startDate.plusDays(offset.toLong())
@@ -248,8 +260,10 @@ class GlowWeatherQueryService(
         )
     }
 
-    private fun chooseNearest(items: List<ShortForecastSnapshot>, hour: Int): ShortForecastSnapshot? =
-        items.minByOrNull { kotlin.math.abs(it.forecastDateTime.hour - hour) }
+    private fun chooseNearest(
+        items: List<ShortForecastSnapshot>,
+        hour: Int,
+    ): ShortForecastSnapshot? = items.minByOrNull { kotlin.math.abs(it.forecastDateTime.hour - hour) }
 
     private fun buildMonthlySummary(
         region: GlowWeatherRegion,
@@ -269,11 +283,12 @@ class GlowWeatherQueryService(
             )
         }
 
-        val temps = forecast.take(5).mapNotNull {
-            val min = it.minTempC
-            val max = it.maxTempC
-            if (min == null || max == null) null else (min + max) / 2.0
-        }
+        val temps =
+            forecast.take(5).mapNotNull {
+                val min = it.minTempC
+                val max = it.maxTempC
+                if (min == null || max == null) null else (min + max) / 2.0
+            }
         return GlowWeatherMonthlySummary(
             monthLabel = monthLabel,
             averageTemperatureC = temps.averageOrNull(),
@@ -294,32 +309,37 @@ class GlowWeatherQueryService(
         val warmest = forecast.mapNotNull { it.maxTempC }.maxOrNull()
         val coldest = forecast.mapNotNull { it.minTempC }.minOrNull()
 
-        val activityTone = when {
-            (today?.precipitationChance ?: 0) >= 60 -> "rain"
-            (today?.maxTempC ?: 0.0) >= 24.0 -> "sunny"
-            else -> "mint"
-        }
-        val activityTitle = when (activityTone) {
-            "rain" -> "비 예보가 있어요"
-            "sunny" -> "날씨도 좋아요"
-            else -> "산책하기 무난해요"
-        }
-        val activitySubtitle = when (activityTone) {
-            "rain" -> "실내 일정이나 우산 준비를 먼저 챙겨보세요."
-            "sunny" -> "바깥 일정 잡기 좋은 컨디션이에요."
-            else -> "이 시간에 어떻게 플레이하나요?"
-        }
+        val activityTone =
+            when {
+                (today?.precipitationChance ?: 0) >= 60 -> "rain"
+                (today?.maxTempC ?: 0.0) >= 24.0 -> "sunny"
+                else -> "mint"
+            }
+        val activityTitle =
+            when (activityTone) {
+                "rain" -> "비 예보가 있어요"
+                "sunny" -> "날씨도 좋아요"
+                else -> "산책하기 무난해요"
+            }
+        val activitySubtitle =
+            when (activityTone) {
+                "rain" -> "실내 일정이나 우산 준비를 먼저 챙겨보세요."
+                "sunny" -> "바깥 일정 잡기 좋은 컨디션이에요."
+                else -> "이 시간에 어떻게 플레이하나요?"
+            }
 
-        val outfitTitle = when {
-            warmest != null && warmest >= 27.0 -> "가벼운 옷차림이 잘 맞아요"
-            coldest != null && coldest <= 8.0 -> "겉옷을 챙기는 편이 좋아요"
-            else -> "한국에서 어떻게 옷을 입어야 할까요?"
-        }
-        val outfitSubtitle = when {
-            warmest != null && warmest >= 27.0 -> "얇은 셔츠, 반팔, 자외선 대비 아이템을 추천해요."
-            coldest != null && coldest <= 8.0 -> "아침저녁 기온 차가 커서 가벼운 아우터가 좋아요."
-            else -> "${region.name} ${monthlySummary.monthLabel} 기준 계절감에 맞춘 의상 가이드예요."
-        }
+        val outfitTitle =
+            when {
+                warmest != null && warmest >= 27.0 -> "가벼운 옷차림이 잘 맞아요"
+                coldest != null && coldest <= 8.0 -> "겉옷을 챙기는 편이 좋아요"
+                else -> "한국에서 어떻게 옷을 입어야 할까요?"
+            }
+        val outfitSubtitle =
+            when {
+                warmest != null && warmest >= 27.0 -> "얇은 셔츠, 반팔, 자외선 대비 아이템을 추천해요."
+                coldest != null && coldest <= 8.0 -> "아침저녁 기온 차가 커서 가벼운 아우터가 좋아요."
+                else -> "${region.name} ${monthlySummary.monthLabel} 기준 계절감에 맞춘 의상 가이드예요."
+            }
 
         return listOf(
             GlowWeatherRecommendation(
@@ -361,20 +381,23 @@ class GlowWeatherQueryService(
         val month = now.monthValue
         val climateCell = glowClimateWindRepository.month(region.id, month)
 
-        val referencePoints = WindDirection.referencePoints().map { (label, degree) ->
-            GlowWeatherWindPoint(label, degree)
-        }
+        val referencePoints =
+            WindDirection.referencePoints().map { (label, degree) ->
+                GlowWeatherWindPoint(label, degree)
+            }
 
         if (liveComplete) {
             val degrees = liveDeg!!
             val speed = liveSpeed!!
-            val direction = current.windDirectionLabel.takeIf { meaningfulWindLabel(it) }
-                ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
-            val message = when {
-                speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
-                speed >= 4.0 -> "약간 바람이 느껴질 수 있어요. 야외 이동 시 체감온도가 내려갈 수 있어요."
-                else -> "바람은 비교적 잔잔한 편이에요."
-            }
+            val direction =
+                current.windDirectionLabel.takeIf { meaningfulWindLabel(it) }
+                    ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
+            val message =
+                when {
+                    speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
+                    speed >= 4.0 -> "약간 바람이 느껴질 수 있어요. 야외 이동 시 체감온도가 내려갈 수 있어요."
+                    else -> "바람은 비교적 잔잔한 편이에요."
+                }
             return GlowWeatherWindGuide(
                 directionDegrees = degrees,
                 directionLabel = direction,
@@ -388,10 +411,11 @@ class GlowWeatherQueryService(
 
         if (climateCell != null) {
             val deg = WindDirection.degreesFromCompassAbbreviation(climateCell.dir)
-            val direction = when {
-                deg != null -> WindDirection.to16Point(deg).takeIf { it != "-" } ?: climateCell.dir.trim().uppercase()
-                else -> climateCell.dir.trim().uppercase()
-            }
+            val direction =
+                when {
+                    deg != null -> WindDirection.to16Point(deg).takeIf { it != "-" } ?: climateCell.dir.trim().uppercase()
+                    else -> climateCell.dir.trim().uppercase()
+                }
             val message =
                 "실시간 풍향·풍속 대신, 이 지역·이 달 기후통계(최다풍향·평균풍속)을 보여드려요."
             return GlowWeatherWindGuide(
@@ -406,15 +430,17 @@ class GlowWeatherQueryService(
         }
 
         val degrees = liveDeg
-        val direction = current.windDirectionLabel.takeIf { meaningfulWindLabel(it) }
-            ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
+        val direction =
+            current.windDirectionLabel.takeIf { meaningfulWindLabel(it) }
+                ?: WindDirection.to16Point(degrees).takeIf { it != "-" } ?: "-"
         val speed = liveSpeed
-        val message = when {
-            speed == null -> "풍향 데이터가 없어서 예보 기준으로만 보여드리고 있어요."
-            speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
-            speed >= 4.0 -> "약간 바람이 느껴질 수 있어요. 야외 이동 시 체감온도가 내려갈 수 있어요."
-            else -> "바람은 비교적 잔잔한 편이에요."
-        }
+        val message =
+            when {
+                speed == null -> "풍향 데이터가 없어서 예보 기준으로만 보여드리고 있어요."
+                speed >= 9.0 -> "강한 바람 구간에 가까워요. 가벼운 겉옷이나 모자 고정을 신경 써주세요."
+                speed >= 4.0 -> "약간 바람이 느껴질 수 있어요. 야외 이동 시 체감온도가 내려갈 수 있어요."
+                else -> "바람은 비교적 잔잔한 편이에요."
+            }
         return GlowWeatherWindGuide(
             directionDegrees = degrees,
             directionLabel = direction,
@@ -435,7 +461,10 @@ class GlowWeatherQueryService(
                 it.windSpeedMps != null
         }
 
-    private fun fallbackForecast(region: GlowWeatherRegion, today: LocalDate): List<GlowWeatherForecastDay> {
+    private fun fallbackForecast(
+        region: GlowWeatherRegion,
+        today: LocalDate,
+    ): List<GlowWeatherForecastDay> {
         val bias = fallbackTemperatureBias(region)
         return (0 until 10).map { index ->
             val date = today.plusDays(index.toLong())
@@ -444,18 +473,20 @@ class GlowWeatherQueryService(
                 date = date,
                 dateLabel = date.format(DATE_LABEL),
                 dayLabel = dayLabel(date),
-                summary = when (index % 4) {
-                    0 -> "맑음"
-                    1 -> "구름많음"
-                    2 -> "흐림"
-                    else -> "구름많고 비"
-                },
-                icon = when (index % 4) {
-                    0 -> "sun"
-                    1 -> "partly"
-                    2 -> "cloud"
-                    else -> "rain"
-                },
+                summary =
+                    when (index % 4) {
+                        0 -> "맑음"
+                        1 -> "구름많음"
+                        2 -> "흐림"
+                        else -> "구름많고 비"
+                    },
+                icon =
+                    when (index % 4) {
+                        0 -> "sun"
+                        1 -> "partly"
+                        2 -> "cloud"
+                        else -> "rain"
+                    },
                 minTempC = 11.0 + index + bias,
                 maxTempC = 19.0 + index + bias,
                 precipitationChance = if (index % 4 == 3) 70 else 20,
@@ -472,7 +503,10 @@ class GlowWeatherQueryService(
         return ((h % 13) - 6) * 0.5
     }
 
-    private fun skyLabel(skyCode: Int?, ptyCode: Int?): String? {
+    private fun skyLabel(
+        skyCode: Int?,
+        ptyCode: Int?,
+    ): String? {
         val precipitation = precipitationTypeLabel(ptyCode)
         if (precipitation != null && precipitation != "없음") return precipitation
         return when (skyCode) {
@@ -496,7 +530,11 @@ class GlowWeatherQueryService(
             else -> null
         }
 
-    private fun forecastIcon(weather: String?, skyCode: Int?, ptyCode: Int?): String {
+    private fun forecastIcon(
+        weather: String?,
+        skyCode: Int?,
+        ptyCode: Int?,
+    ): String {
         val label = weather.orEmpty()
         return when {
             ptyCode == 1 || label.contains("비") || label.contains("소나기") -> "rain"

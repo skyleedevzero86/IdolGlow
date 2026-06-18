@@ -8,10 +8,12 @@ import java.util.concurrent.ConcurrentHashMap
 @Component
 @ConditionalOnProperty(prefix = "platform.auth", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class InMemoryRecoveryJtiStore : RecoveryJtiStore {
-
     private val expiryMillisByJti = ConcurrentHashMap<String, Long>()
 
-    override fun register(jti: String, ttl: Duration) {
+    override fun register(
+        jti: String,
+        ttl: Duration,
+    ) {
         expiryMillisByJti[jti] = System.currentTimeMillis() + ttl.toMillis()
     }
 

@@ -15,7 +15,12 @@ class AdminEventService(
     private val mbrdEditorBootstrapService: MbrdEditorBootstrapService,
 ) {
     @Transactional(readOnly = true)
-    fun findEvents(page: Int, size: Int, query: String, status: String): AdminEventPageResponse {
+    fun findEvents(
+        page: Int,
+        size: Int,
+        query: String,
+        status: String,
+    ): AdminEventPageResponse {
         val normalizedStatus = status.trim().lowercase()
         if (normalizedStatus == "all") {
             return findAllStatusEvents(page, size, query)
@@ -27,15 +32,20 @@ class AdminEventService(
             .toAdminEventPageResponse()
     }
 
-    private fun findAllStatusEvents(page: Int, size: Int, query: String): AdminEventPageResponse {
+    private fun findAllStatusEvents(
+        page: Int,
+        size: Int,
+        query: String,
+    ): AdminEventPageResponse {
         val normalizedPage = page.coerceAtLeast(1)
         val normalizedSize = size.coerceIn(1, 50)
         val published = mbrdEditorBootstrapService.list(0, 1000, query, "published").content
         val drafts = mbrdEditorBootstrapService.list(0, 1000, query, "draft").content
-        val merged = (published + drafts)
-            .distinctBy { it.documentId }
-            .sortedByDescending { it.updatedAt }
-            .map(AdminEventSummaryResponse::from)
+        val merged =
+            (published + drafts)
+                .distinctBy { it.documentId }
+                .sortedByDescending { it.updatedAt }
+                .map(AdminEventSummaryResponse::from)
         val totalElements = merged.size.toLong()
         val totalPages = if (totalElements == 0L) 1 else ((totalElements + normalizedSize - 1) / normalizedSize).toInt()
         val fromIndex = ((normalizedPage - 1) * normalizedSize).coerceAtMost(merged.size)

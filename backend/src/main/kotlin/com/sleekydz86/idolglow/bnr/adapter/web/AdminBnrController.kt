@@ -40,17 +40,19 @@ class AdminBnrController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) searchType: String?,
         @RequestParam(required = false) keyword: String?,
-    ): ResponseEntity<BnrAdminPageResponse> =
-        ResponseEntity.ok(bnrAdminService.findPage(page, size, searchType, keyword))
+    ): ResponseEntity<BnrAdminPageResponse> = ResponseEntity.ok(bnrAdminService.findPage(page, size, searchType, keyword))
 
     @Operation(summary = "배너 단건 조회")
     @GetMapping("/{bannerId}")
-    fun one(@PathVariable bannerId: String) =
-        ResponseEntity.ok(bnrAdminService.findOne(bannerId))
+    fun one(
+        @PathVariable bannerId: String,
+    ) = ResponseEntity.ok(bnrAdminService.findOne(bannerId))
 
     @Operation(summary = "배너 등록")
     @PostMapping
-    fun create(@Valid @RequestBody request: UpsertBnrRequest): ResponseEntity<*> {
+    fun create(
+        @Valid @RequestBody request: UpsertBnrRequest,
+    ): ResponseEntity<*> {
         val created = bnrAdminService.create(request)
         return ResponseEntity
             .created(URI.create("/admin/bnr/${created.bannerId}"))
@@ -61,8 +63,7 @@ class AdminBnrController(
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
-    ): ResponseEntity<AdminIssueImageUploadResponse> =
-        ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/banners"))
+    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/banners"))
 
     @Operation(summary = "배너 수정")
     @PutMapping("/{bannerId}")
@@ -73,7 +74,9 @@ class AdminBnrController(
 
     @Operation(summary = "배너 삭제")
     @DeleteMapping("/{bannerId}")
-    fun delete(@PathVariable bannerId: String): ResponseEntity<Void> {
+    fun delete(
+        @PathVariable bannerId: String,
+    ): ResponseEntity<Void> {
         bnrAdminService.delete(bannerId)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }

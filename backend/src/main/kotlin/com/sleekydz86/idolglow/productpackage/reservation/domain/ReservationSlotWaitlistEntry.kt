@@ -16,17 +16,15 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "reservation_slot_waitlist",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_rsw_user_slot", columnNames = ["user_id", "reservation_slot_id"])
-    ]
+        UniqueConstraint(name = "uk_rsw_user_slot", columnNames = ["user_id", "reservation_slot_id"]),
+    ],
 )
 class ReservationSlotWaitlistEntry(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(name = "user_id", nullable = false)
     val userId: Long,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "reservation_slot_id", nullable = false)
     val reservationSlot: ReservationSlot,

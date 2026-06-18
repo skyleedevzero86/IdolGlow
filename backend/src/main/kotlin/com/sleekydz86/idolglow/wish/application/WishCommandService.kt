@@ -16,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional
 class WishCommandService(
     private val userRepository: UserRepository,
     private val productRepository: ProductRepository,
-    private val wishRepository: WishRepository
+    private val wishRepository: WishRepository,
 ) {
-
-    fun toggle(userId: Long, productId: Long): WishToggleResponse {
+    fun toggle(
+        userId: Long,
+        productId: Long,
+    ): WishToggleResponse {
         val user = loadUser(userId)
         val product = loadProduct(productId)
         val existing = wishRepository.findByUserIdAndProductId(userId, productId)

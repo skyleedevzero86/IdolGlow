@@ -18,7 +18,6 @@ class AdminUserService(
     private val userOAuthRepository: UserOAuthRepository,
     private val adminAuditService: AdminAuditService,
 ) {
-
     fun findUsers(
         keyword: String?,
         role: UserRole?,
@@ -28,30 +27,33 @@ class AdminUserService(
     ): AdminUserPageResponse {
         val resolvedSize = size.coerceIn(1, 20)
         var pageIndex0 = page.coerceAtLeast(1) - 1
-        var result = userRepository.findAllByAdminSearch(
-            keyword = keyword,
-            role = role,
-            accountStatus = accountStatus,
-            page = pageIndex0,
-            size = resolvedSize,
-        )
-        val totalPages = maxOf(1, result.totalPages)
-        if (result.totalElements > 0 && pageIndex0 >= totalPages) {
-            pageIndex0 = totalPages - 1
-            result = userRepository.findAllByAdminSearch(
+        var result =
+            userRepository.findAllByAdminSearch(
                 keyword = keyword,
                 role = role,
                 accountStatus = accountStatus,
                 page = pageIndex0,
                 size = resolvedSize,
             )
+        val totalPages = maxOf(1, result.totalPages)
+        if (result.totalElements > 0 && pageIndex0 >= totalPages) {
+            pageIndex0 = totalPages - 1
+            result =
+                userRepository.findAllByAdminSearch(
+                    keyword = keyword,
+                    role = role,
+                    accountStatus = accountStatus,
+                    page = pageIndex0,
+                    size = resolvedSize,
+                )
         }
         val pageReturned = if (result.totalElements == 0L) 1 else pageIndex0 + 1
 
         return AdminUserPageResponse(
-            users = result.items.map { user ->
-                AdminUserSummaryResponse.from(user, userOAuthRepository.findAllByUserId(user.id))
-            },
+            users =
+                result.items.map { user ->
+                    AdminUserSummaryResponse.from(user, userOAuthRepository.findAllByUserId(user.id))
+                },
             page = pageReturned,
             size = resolvedSize,
             totalElements = result.totalElements,
@@ -65,7 +67,10 @@ class AdminUserService(
     }
 
     @Transactional
-    fun updateUserRole(userId: Long, role: UserRole): AdminUserSummaryResponse {
+    fun updateUserRole(
+        userId: Long,
+        role: UserRole,
+    ): AdminUserSummaryResponse {
         val user = findUser(userId)
         user.changeRole(role)
         val saved = userRepository.save(user)
@@ -74,7 +79,10 @@ class AdminUserService(
     }
 
     @Transactional
-    fun updateUserStatus(userId: Long, accountStatus: UserAccountStatus): AdminUserSummaryResponse {
+    fun updateUserStatus(
+        userId: Long,
+        accountStatus: UserAccountStatus,
+    ): AdminUserSummaryResponse {
         val user = findUser(userId)
         user.changeAccountStatus(accountStatus)
         val saved = userRepository.save(user)

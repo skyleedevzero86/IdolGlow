@@ -39,7 +39,7 @@ data class ReservationSummaryGraphQlResponse(
                 expiresAt = response.expiresAt.asGraphQlValue(),
                 confirmedAt = response.confirmedAt.asGraphQlValue(),
                 canceledAt = response.canceledAt.asGraphQlValue(),
-                cancelReason = response.cancelReason
+                cancelReason = response.cancelReason,
             )
     }
 }

@@ -2,8 +2,8 @@ package com.sleekydz86.idolglow.payment.ui
 
 import com.sleekydz86.idolglow.payment.application.AdminPaymentService
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
-import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentDetailResponse
 import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentChartsResponse
+import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentDetailResponse
 import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentOverviewResponse
 import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentSummaryResponse
 import com.sleekydz86.idolglow.payment.application.dto.PaymentRefundResponse
@@ -32,7 +32,6 @@ class AdminPaymentRefundController(
     private val adminPaymentService: AdminPaymentService,
     private val paymentRefundService: PaymentRefundService,
 ) {
-
     @GetMapping("/overview")
     fun overview(
         @RequestParam(required = false) status: PaymentStatus?,
@@ -44,7 +43,7 @@ class AdminPaymentRefundController(
                 status = status,
                 visitDate = visitDate,
                 productId = productId,
-            )
+            ),
         )
 
     @GetMapping
@@ -60,7 +59,7 @@ class AdminPaymentRefundController(
                 visitDate = visitDate,
                 productId = productId,
                 size = size.coerceIn(1, 200),
-            )
+            ),
         )
 
     @GetMapping("/charts")
@@ -74,27 +73,30 @@ class AdminPaymentRefundController(
                 status = status,
                 visitDate = visitDate,
                 productId = productId,
-            )
+            ),
         )
 
     @GetMapping("/{paymentId}")
-    fun detail(@PathVariable paymentId: Long): ResponseEntity<AdminPaymentDetailResponse> =
-        ResponseEntity.ok(adminPaymentService.findPaymentDetail(paymentId))
+    fun detail(
+        @PathVariable paymentId: Long,
+    ): ResponseEntity<AdminPaymentDetailResponse> = ResponseEntity.ok(adminPaymentService.findPaymentDetail(paymentId))
 
     @PostMapping("/{paymentId}/cancel")
     fun cancel(
         @PathVariable paymentId: Long,
         @RequestBody(required = false) request: CancelPaymentRequest?,
-    ): ResponseEntity<AdminPaymentDetailResponse> {
-        return ResponseEntity.ok(adminPaymentService.cancelPayment(paymentId, request?.reason))
-    }
+    ): ResponseEntity<AdminPaymentDetailResponse> = ResponseEntity.ok(adminPaymentService.cancelPayment(paymentId, request?.reason))
 
     @GetMapping("/{paymentId}/refunds")
-    fun listRefunds(@PathVariable paymentId: Long): ResponseEntity<List<PaymentRefundResponse>> =
+    fun listRefunds(
+        @PathVariable paymentId: Long,
+    ): ResponseEntity<List<PaymentRefundResponse>> =
         ResponseEntity.ok(paymentRefundService.findRefundsByPaymentId(paymentId).map(PaymentRefundResponse::from))
 
     @PostMapping("/{paymentId}/refunds/retry")
-    fun retry(@PathVariable paymentId: Long): ResponseEntity<PaymentRefundResponse> {
+    fun retry(
+        @PathVariable paymentId: Long,
+    ): ResponseEntity<PaymentRefundResponse> {
         val refund = paymentRefundService.adminRetryLastFailedRefund(paymentId)
         return ResponseEntity.ok(PaymentRefundResponse.from(refund))
     }
@@ -105,21 +107,26 @@ class AdminPaymentRefundController(
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) visitDate: LocalDate?,
         @RequestParam(required = false) productId: Long?,
     ): ResponseEntity<Resource> {
-        val bytes = adminPaymentService.exportPaymentsXlsx(
-            status = status,
-            visitDate = visitDate,
-            productId = productId,
-        )
-        return ResponseEntity.ok()
+        val bytes =
+            adminPaymentService.exportPaymentsXlsx(
+                status = status,
+                visitDate = visitDate,
+                productId = productId,
+            )
+        return ResponseEntity
+            .ok()
             .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payments.xlsx")
             .body(ByteArrayResource(bytes))
     }
 
     @GetMapping("/{paymentId}/receipt.pdf")
-    fun receipt(@PathVariable paymentId: Long): ResponseEntity<Resource> {
+    fun receipt(
+        @PathVariable paymentId: Long,
+    ): ResponseEntity<Resource> {
         val bytes = adminPaymentService.renderReceiptPdf(paymentId)
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .contentType(MediaType.APPLICATION_PDF)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payment-$paymentId-receipt.pdf")
             .body(ByteArrayResource(bytes))

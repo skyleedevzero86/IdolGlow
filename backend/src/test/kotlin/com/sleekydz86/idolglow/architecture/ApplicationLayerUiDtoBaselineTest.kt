@@ -7,7 +7,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class ApplicationLayerUiDtoBaselineTest {
-
     @Test
     fun `application_계층의_ui_dto_참조_건수가_기준값을_초과하지_않는다`() {
         // given

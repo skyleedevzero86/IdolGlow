@@ -27,7 +27,6 @@ class AdminProductReviewService(
     private val imageRepository: ImageRepository,
     private val adminAuditService: AdminAuditService,
 ) {
-
     fun findReviews(
         keyword: String?,
         visibility: AdminReviewVisibilityFilter,
@@ -37,27 +36,30 @@ class AdminProductReviewService(
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 50)
         val spec = buildSpec(keyword, visibility)
-        val pageable = PageRequest.of(
-            resolvedPage - 1,
-            resolvedSize,
-            Sort.by(Sort.Direction.DESC, "createdAt"),
-        )
+        val pageable =
+            PageRequest.of(
+                resolvedPage - 1,
+                resolvedSize,
+                Sort.by(Sort.Direction.DESC, "createdAt"),
+            )
         val result = productReviewJpaRepository.findAll(spec, pageable)
         val reviewIds = result.content.map { it.id }
         val images = imageRepository.findByAggregates(ImageAggregateType.PRODUCT_REVIEW, reviewIds)
         val imageMap = images.groupBy { it.aggregateId }
 
-        val items = result.content.map { review ->
-            toSummary(
-                review,
-                imageMap[review.id].orEmpty().map { ProductReviewImageResponse.from(it) },
-            )
-        }
+        val items =
+            result.content.map { review ->
+                toSummary(
+                    review,
+                    imageMap[review.id].orEmpty().map { ProductReviewImageResponse.from(it) },
+                )
+            }
 
-        val totalPages = when {
-            result.totalElements == 0L -> 1
-            else -> result.totalPages.coerceAtLeast(1)
-        }
+        val totalPages =
+            when {
+                result.totalElements == 0L -> 1
+                else -> result.totalPages.coerceAtLeast(1)
+            }
 
         return AdminProductReviewPageResponse(
             reviews = items,
@@ -70,9 +72,14 @@ class AdminProductReviewService(
     }
 
     @Transactional
-    fun hideReview(reviewId: Long, reason: String?): AdminProductReviewSummaryResponse {
-        val review = productReviewJpaRepository.findById(reviewId)
-            .orElseThrow { EntityNotFoundException("리뷰를 찾을 수 없습니다. reviewId=$reviewId") }
+    fun hideReview(
+        reviewId: Long,
+        reason: String?,
+    ): AdminProductReviewSummaryResponse {
+        val review =
+            productReviewJpaRepository
+                .findById(reviewId)
+                .orElseThrow { EntityNotFoundException("리뷰를 찾을 수 없습니다. reviewId=$reviewId") }
         val trimmed = reason?.trim().orEmpty()
         val resolved = trimmed.ifBlank { "관리자 비공개 처리" }
         review.hide(LocalDateTime.now(ZoneOffset.UTC), resolved)
@@ -83,8 +90,10 @@ class AdminProductReviewService(
 
     @Transactional
     fun unhideReview(reviewId: Long): AdminProductReviewSummaryResponse {
-        val review = productReviewJpaRepository.findById(reviewId)
-            .orElseThrow { EntityNotFoundException("리뷰를 찾을 수 없습니다. reviewId=$reviewId") }
+        val review =
+            productReviewJpaRepository
+                .findById(reviewId)
+                .orElseThrow { EntityNotFoundException("리뷰를 찾을 수 없습니다. reviewId=$reviewId") }
         review.unhide()
         val saved = productReviewJpaRepository.save(review)
         adminAuditService.log("REVIEW_UNHIDE", "PRODUCT_REVIEW", saved.id, null)
@@ -92,8 +101,10 @@ class AdminProductReviewService(
     }
 
     private fun toSummaryResponse(review: ProductReview): AdminProductReviewSummaryResponse {
-        val imgs = imageRepository.findByAggregate(ImageAggregateType.PRODUCT_REVIEW, review.id)
-            .map { ProductReviewImageResponse.from(it) }
+        val imgs =
+            imageRepository
+                .findByAggregate(ImageAggregateType.PRODUCT_REVIEW, review.id)
+                .map { ProductReviewImageResponse.from(it) }
         return toSummary(review, imgs)
     }
 

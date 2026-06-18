@@ -16,19 +16,17 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "product_option",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_product_option", columnNames = ["product_id", "option_id"])
-    ]
+        UniqueConstraint(name = "uk_product_option", columnNames = ["product_id", "option_id"]),
+    ],
 )
 class ProductOption(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
     val product: Product,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "option_id")
-    val option: Option
+    val option: Option,
 ) : BaseEntity()

@@ -15,21 +15,23 @@ import org.springframework.transaction.annotation.Transactional
 class PlatformCustomUserDetailsService(
     private val userAccountPort: PlatformUserAccountPort,
 ) : UserDetailsService {
-
     private val log = LoggerFactory.getLogger(PlatformCustomUserDetailsService::class.java)
 
     @Transactional(readOnly = true)
     override fun loadUserByUsername(email: String): UserDetails {
         log.debug("사용자 정보 로드: {}", email)
 
-        val user = userAccountPort.findByEmail(email)
-            .orElseThrow { UsernameNotFoundException("사용자를 찾을 수 없습니다: $email") }
+        val user =
+            userAccountPort
+                .findByEmail(email)
+                .orElseThrow { UsernameNotFoundException("사용자를 찾을 수 없습니다: $email") }
 
         if (!user.isActive()) {
             throw UsernameNotFoundException("비활성 사용자입니다: $email")
         }
 
-        return org.springframework.security.core.userdetails.User.builder()
+        return org.springframework.security.core.userdetails.User
+            .builder()
             .username(user.email)
             .password(user.password)
             .authorities(listOf(SimpleGrantedAuthority("ROLE_${user.role.name}")))

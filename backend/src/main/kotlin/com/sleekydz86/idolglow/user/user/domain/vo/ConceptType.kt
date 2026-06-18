@@ -6,5 +6,5 @@ enum class ConceptType {
     ELEGANT_GLAM,
     DREAMY,
     HIGHTEEN,
-    ETC
+    ETC,
 }

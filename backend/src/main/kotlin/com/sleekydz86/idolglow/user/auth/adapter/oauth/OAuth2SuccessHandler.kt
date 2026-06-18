@@ -18,28 +18,30 @@ class OAuth2SuccessHandler(
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
     private val loginFacade: LoginFacade,
 ) : AuthenticationSuccessHandler {
-
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        authentication: Authentication
+        authentication: Authentication,
     ) {
-        val oauthToken = authentication as? OAuth2AuthenticationToken
-            ?: throw IllegalStateException(
-                "OAuth2 인증 토큰 형식이 올바르지 않습니다. (실제 타입: ${authentication.javaClass.name})"
-            )
-        val principal = oauthToken.principal as? OAuth2User
-            ?: throw IllegalStateException(
-                "OAuth2 사용자 정보(principal) 형식이 올바르지 않습니다. (실제 타입: ${(oauthToken.principal as Any?)?.javaClass?.name})"
-            )
+        val oauthToken =
+            authentication as? OAuth2AuthenticationToken
+                ?: throw IllegalStateException(
+                    "OAuth2 인증 토큰 형식이 올바르지 않습니다. (실제 타입: ${authentication.javaClass.name})",
+                )
+        val principal =
+            oauthToken.principal as? OAuth2User
+                ?: throw IllegalStateException(
+                    "OAuth2 사용자 정보(principal) 형식이 올바르지 않습니다. (실제 타입: ${(oauthToken.principal as Any?)?.javaClass?.name})",
+                )
 
         val provider = AuthProvider.fromRegistrationId(oauthToken.authorizedClientRegistrationId)
         val attributes = oauthAttributes(principal)
 
-        val tokenResponse = loginFacade.login(
-            provider = provider,
-            request = LoginRequest(attributes = attributes)
-        )
+        val tokenResponse =
+            loginFacade.login(
+                provider = provider,
+                request = LoginRequest(attributes = attributes),
+            )
 
         refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
         response.sendRedirect(AUTH_CALLBACK_PATH)

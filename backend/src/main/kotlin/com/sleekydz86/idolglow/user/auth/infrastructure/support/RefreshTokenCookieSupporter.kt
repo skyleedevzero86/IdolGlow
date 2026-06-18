@@ -19,7 +19,6 @@ class RefreshTokenCookieSupporter(
     @Value("\${app.auth.refresh-cookie.domain:}")
     private val domain: String,
 ) {
-
     fun addAuthenticationCookies(
         response: HttpServletResponse,
         tokenResponse: TokenResponse,
@@ -36,40 +35,43 @@ class RefreshTokenCookieSupporter(
         val maxAge = ((expiresAtMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
         response.addHeader(
             HttpHeaders.SET_COOKIE,
-            buildCookie(ACCESS_TOKEN_COOKIE, accessToken, true, maxAge).toString()
+            buildCookie(ACCESS_TOKEN_COOKIE, accessToken, true, maxAge).toString(),
         )
     }
 
     fun addRefreshTokenCookie(
         response: HttpServletResponse,
-        refreshToken: String
+        refreshToken: String,
     ) {
         response.addHeader(
             HttpHeaders.SET_COOKIE,
-            buildCookie(REFRESH_TOKEN_COOKIE, refreshToken, true, 60L * 60 * 24 * 14).toString()
+            buildCookie(REFRESH_TOKEN_COOKIE, refreshToken, true, 60L * 60 * 24 * 14).toString(),
         )
         response.addHeader(
             HttpHeaders.SET_COOKIE,
-            buildCookie(REFRESH_CSRF_COOKIE, UUID.randomUUID().toString(), false, 60L * 60 * 24 * 14).toString()
+            buildCookie(REFRESH_CSRF_COOKIE, UUID.randomUUID().toString(), false, 60L * 60 * 24 * 14).toString(),
         )
     }
 
     fun expireAuthenticationCookies(response: HttpServletResponse) {
         response.addHeader(
             HttpHeaders.SET_COOKIE,
-            buildCookie(ACCESS_TOKEN_COOKIE, "", true, 0).toString()
+            buildCookie(ACCESS_TOKEN_COOKIE, "", true, 0).toString(),
         )
         response.addHeader(
             HttpHeaders.SET_COOKIE,
-            buildCookie(REFRESH_TOKEN_COOKIE, "", true, 0).toString()
+            buildCookie(REFRESH_TOKEN_COOKIE, "", true, 0).toString(),
         )
         response.addHeader(
             HttpHeaders.SET_COOKIE,
-            buildCookie(REFRESH_CSRF_COOKIE, "", false, 0).toString()
+            buildCookie(REFRESH_CSRF_COOKIE, "", false, 0).toString(),
         )
     }
 
-    fun validateCsrf(headerValue: String?, cookieValue: String?) {
+    fun validateCsrf(
+        headerValue: String?,
+        cookieValue: String?,
+    ) {
         if (headerValue.isNullOrBlank() || cookieValue.isNullOrBlank() || headerValue != cookieValue) {
             throw CustomException(AuthExceptionType.INVALID_REFRESH_CSRF)
         }
@@ -79,14 +81,16 @@ class RefreshTokenCookieSupporter(
         name: String,
         value: String,
         httpOnly: Boolean,
-        maxAge: Long
+        maxAge: Long,
     ): ResponseCookie {
-        val builder = ResponseCookie.from(name, value)
-            .httpOnly(httpOnly)
-            .secure(secure)
-            .path("/")
-            .sameSite(sameSite)
-            .maxAge(maxAge)
+        val builder =
+            ResponseCookie
+                .from(name, value)
+                .httpOnly(httpOnly)
+                .secure(secure)
+                .path("/")
+                .sameSite(sameSite)
+                .maxAge(maxAge)
 
         if (domain.isNotBlank()) {
             builder.domain(domain)

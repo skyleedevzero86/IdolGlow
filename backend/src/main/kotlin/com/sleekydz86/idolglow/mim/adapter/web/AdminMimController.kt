@@ -40,17 +40,19 @@ class AdminMimController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) searchType: String?,
         @RequestParam(required = false) keyword: String?,
-    ): ResponseEntity<MimAdminPageResponse> =
-        ResponseEntity.ok(mimAdminService.findPage(page, size, searchType, keyword))
+    ): ResponseEntity<MimAdminPageResponse> = ResponseEntity.ok(mimAdminService.findPage(page, size, searchType, keyword))
 
     @Operation(summary = "메인 이미지 단건 조회")
     @GetMapping("/{imageId}")
-    fun one(@PathVariable imageId: String) =
-        ResponseEntity.ok(mimAdminService.findOne(imageId))
+    fun one(
+        @PathVariable imageId: String,
+    ) = ResponseEntity.ok(mimAdminService.findOne(imageId))
 
     @Operation(summary = "메인 이미지 등록")
     @PostMapping
-    fun create(@Valid @RequestBody request: UpsertMimRequest): ResponseEntity<*> {
+    fun create(
+        @Valid @RequestBody request: UpsertMimRequest,
+    ): ResponseEntity<*> {
         val created = mimAdminService.create(request)
         return ResponseEntity
             .created(URI.create("/admin/mim/${created.imageId}"))
@@ -61,8 +63,7 @@ class AdminMimController(
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
-    ): ResponseEntity<AdminIssueImageUploadResponse> =
-        ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/main-slides"))
+    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/main-slides"))
 
     @Operation(summary = "메인 이미지 수정")
     @PutMapping("/{imageId}")
@@ -73,7 +74,9 @@ class AdminMimController(
 
     @Operation(summary = "메인 이미지 삭제")
     @DeleteMapping("/{imageId}")
-    fun delete(@PathVariable imageId: String): ResponseEntity<Void> {
+    fun delete(
+        @PathVariable imageId: String,
+    ): ResponseEntity<Void> {
         mimAdminService.delete(imageId)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }

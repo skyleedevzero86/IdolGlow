@@ -21,27 +21,20 @@ class SurveyQuestion(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_form_id", nullable = false)
     val form: SurveyForm,
-
     @Column(name = "display_order", nullable = false)
     var displayOrder: Int,
-
     @Column(nullable = false, length = 300)
     var title: String,
-
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "question_type", nullable = false, length = 30)
     var questionType: SurveyQuestionType,
-
     @Column(nullable = false)
     var required: Boolean = false,
-
     @OneToMany(
         mappedBy = "question",
         cascade = [CascadeType.ALL],

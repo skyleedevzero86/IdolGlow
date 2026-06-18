@@ -17,7 +17,6 @@ class OAuthCallbackController(
     @Value("\${app.oauth2.redirect-uri}")
     private val frontRedirectUri: String,
 ) {
-
     @GetMapping("/callback")
     fun callback(
         @CookieValue(value = RefreshTokenCookieSupporter.REFRESH_TOKEN_COOKIE, required = false) refreshToken: String?,

@@ -1,12 +1,12 @@
 package com.sleekydz86.idolglow.exchange.infrastructure
 
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.ObjectMapper
 import com.sleekydz86.idolglow.global.infrastructure.config.NaverDirectionsProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriComponentsBuilder
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import java.net.URI
 import java.time.Duration
 import kotlin.math.ceil
@@ -19,7 +19,12 @@ class NaverDirectionsClient(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun drivingDurationMinutes(startLng: Double, startLat: Double, goalLng: Double, goalLat: Double): Int? {
+    fun drivingDurationMinutes(
+        startLng: Double,
+        startLat: Double,
+        goalLng: Double,
+        goalLat: Double,
+    ): Int? {
         if (!properties.enabled) {
             return null
         }
@@ -30,26 +35,30 @@ class NaverDirectionsClient(
         }
         val base = properties.baseUrl.trim().trimEnd('/')
         val optionKey = properties.routeOption.trim().ifEmpty { "traoptimal" }
-        val uri: URI = UriComponentsBuilder.fromUriString("$base/map-direction/v1/driving")
-            .queryParam("start", "$startLng,$startLat")
-            .queryParam("goal", "$goalLng,$goalLat")
-            .queryParam("option", optionKey)
-            .build()
-            .encode()
-            .toUri()
+        val uri: URI =
+            UriComponentsBuilder
+                .fromUriString("$base/map-direction/v1/driving")
+                .queryParam("start", "$startLng,$startLat")
+                .queryParam("goal", "$goalLng,$goalLat")
+                .queryParam("option", optionKey)
+                .build()
+                .encode()
+                .toUri()
 
-        val body: String = try {
-            webClient.get()
-                .uri(uri)
-                .header("x-ncp-apigw-api-key-id", id)
-                .header("x-ncp-apigw-api-key", secret)
-                .retrieve()
-                .bodyToMono(String::class.java)
-                .block(Duration.ofSeconds(12))
-        } catch (e: Exception) {
-            log.warn("네이버 Directions 요청 실패: {}", e.message)
-            return null
-        } ?: return null
+        val body: String =
+            try {
+                webClient
+                    .get()
+                    .uri(uri)
+                    .header("x-ncp-apigw-api-key-id", id)
+                    .header("x-ncp-apigw-api-key", secret)
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .block(Duration.ofSeconds(12))
+            } catch (e: Exception) {
+                log.warn("네이버 Directions 요청 실패: {}", e.message)
+                return null
+            } ?: return null
 
         val ms = parseDurationMs(body, optionKey) ?: return null
         if (ms <= 0L) {
@@ -58,13 +67,17 @@ class NaverDirectionsClient(
         return ceil(ms / 60_000.0).toInt().coerceAtLeast(1)
     }
 
-    private fun parseDurationMs(json: String, optionKey: String): Long? {
-        val root: JsonNode = try {
-            objectMapper.readTree(json)
-        } catch (e: Exception) {
-            log.warn("네이버 Directions JSON 파싱 실패: {}", e.message)
-            return null
-        }
+    private fun parseDurationMs(
+        json: String,
+        optionKey: String,
+    ): Long? {
+        val root: JsonNode =
+            try {
+                objectMapper.readTree(json)
+            } catch (e: Exception) {
+                log.warn("네이버 Directions JSON 파싱 실패: {}", e.message)
+                return null
+            }
         val code = root["code"]?.asInt() ?: return null
         if (code != 0) {
             log.debug("네이버 Directions 응답 code={}, message={}", code, root["message"]?.asText())

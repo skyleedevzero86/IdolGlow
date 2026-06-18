@@ -23,9 +23,10 @@ class MbrdEditorBootstrapService(
     private val clock: Clock,
 ) {
     fun loadBootstrap(): MbrdEditorBootstrapPayload {
-        val document = repository.findLatestByStatus(MbrdDocumentPublicationStatus.PUBLISHED)
-            ?: repository.findLatest()
-            ?: repository.save(seedFactory.create(clock))
+        val document =
+            repository.findLatestByStatus(MbrdDocumentPublicationStatus.PUBLISHED)
+                ?: repository.findLatest()
+                ?: repository.save(seedFactory.create(clock))
         return MbrdEditorBootstrapPayload(
             draft = toDraftPayload(document),
             suggestedTags = SUGGESTED_TAGS,
@@ -36,16 +37,18 @@ class MbrdEditorBootstrapService(
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = ["mbrd-editor-document-by-id"], key = "#documentId")
     fun loadDocument(documentId: String): MbrdEditorDraftPayload {
-        val doc = repository.findById(MbrdDocumentId.from(documentId))
-            ?: throw IllegalArgumentException("존재하지 않는 문서입니다.")
+        val doc =
+            repository.findById(MbrdDocumentId.from(documentId))
+                ?: throw IllegalArgumentException("존재하지 않는 문서입니다.")
         return toDraftPayload(doc)
     }
 
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = ["mbrd-editor-document-by-slug"], key = "#urlSlug")
     fun loadPublishedDocumentByUrlSlug(urlSlug: String): MbrdEditorDraftPayload {
-        val doc = repository.findByUrlSlug(urlSlug)
-            ?: throw IllegalArgumentException("존재하지 않는 문서입니다.")
+        val doc =
+            repository.findByUrlSlug(urlSlug)
+                ?: throw IllegalArgumentException("존재하지 않는 문서입니다.")
         return toDraftPayload(doc)
     }
 
@@ -54,25 +57,33 @@ class MbrdEditorBootstrapService(
         cacheNames = ["mbrd-editor-document-pages"],
         key = "#status + ':' + #query + ':' + #page + ':' + #size",
     )
-    fun list(page: Int, size: Int, query: String, status: String): MbrdEditorDocumentPagePayload {
+    fun list(
+        page: Int,
+        size: Int,
+        query: String,
+        status: String,
+    ): MbrdEditorDocumentPagePayload {
         val normalizedPage = page.coerceAtLeast(0)
         val normalizedSize = size.coerceIn(1, 25)
         val normalizedQuery = normalizeQuery(query)
         val statusFilter = MbrdDocumentPublicationStatus.fromApiValue(status)
         val queryEmbedding = embeddingEncoder.encode(normalizedQuery)
         val totalElements = repository.count(normalizedQuery, statusFilter)
-        val totalPages = if (totalElements == 0L) {
-            1
-        } else {
-            ceil(totalElements.toDouble() / normalizedSize).toInt()
-        }
-        val content = repository.findPage(
-            normalizedPage,
-            normalizedSize,
-            normalizedQuery,
-            queryEmbedding,
-            statusFilter,
-        ).map { toSummaryPayload(it) }
+        val totalPages =
+            if (totalElements == 0L) {
+                1
+            } else {
+                ceil(totalElements.toDouble() / normalizedSize).toInt()
+            }
+        val content =
+            repository
+                .findPage(
+                    normalizedPage,
+                    normalizedSize,
+                    normalizedQuery,
+                    queryEmbedding,
+                    statusFilter,
+                ).map { toSummaryPayload(it) }
         return MbrdEditorDocumentPagePayload(
             content = content,
             page = normalizedPage,
@@ -92,50 +103,53 @@ class MbrdEditorBootstrapService(
         allEntries = true,
     )
     fun save(command: MbrdSaveEditorDraftCommand): MbrdEditorDraftPayload {
-        val documentId = if (command.documentId.isNullOrBlank()) {
-            MbrdDocumentId.newId()
-        } else {
-            MbrdDocumentId.from(command.documentId)
-        }
+        val documentId =
+            if (command.documentId.isNullOrBlank()) {
+                MbrdDocumentId.newId()
+            } else {
+                MbrdDocumentId.from(command.documentId)
+            }
         val existing = repository.findById(documentId)
         val publicationStatus = resolvePublicationStatus(command.status, existing)
-        val normalizedTags = (command.tags ?: emptyList())
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val normalizedTags =
+            (command.tags ?: emptyList())
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
         val urlSlug = resolveUrlSlug(command.urlSlug, command.title, documentId, publicationStatus)
         val introduction = normalizeOptional(command.introduction)
         val thumbnailImageUrl = normalizeOptional(command.thumbnailImageUrl)
-        val saved = if (existing == null) {
-            repository.save(
-                MbrdEditorDocument.create(
-                    id = documentId,
-                    title = command.title,
-                    author = command.author,
-                    markdown = command.markdown,
-                    tags = normalizedTags,
-                    urlSlug = urlSlug,
-                    introduction = introduction,
-                    thumbnailImageUrl = thumbnailImageUrl,
-                    publicationStatus = publicationStatus,
-                    clock = clock,
-                ),
-            )
-        } else {
-            repository.save(
-                existing.refresh(
-                    title = command.title,
-                    author = command.author,
-                    markdown = command.markdown,
-                    tags = normalizedTags,
-                    urlSlug = urlSlug,
-                    introduction = introduction,
-                    thumbnailImageUrl = thumbnailImageUrl,
-                    publicationStatus = publicationStatus,
-                    clock = clock,
-                ),
-            )
-        }
+        val saved =
+            if (existing == null) {
+                repository.save(
+                    MbrdEditorDocument.create(
+                        id = documentId,
+                        title = command.title,
+                        author = command.author,
+                        markdown = command.markdown,
+                        tags = normalizedTags,
+                        urlSlug = urlSlug,
+                        introduction = introduction,
+                        thumbnailImageUrl = thumbnailImageUrl,
+                        publicationStatus = publicationStatus,
+                        clock = clock,
+                    ),
+                )
+            } else {
+                repository.save(
+                    existing.refresh(
+                        title = command.title,
+                        author = command.author,
+                        markdown = command.markdown,
+                        tags = normalizedTags,
+                        urlSlug = urlSlug,
+                        introduction = introduction,
+                        thumbnailImageUrl = thumbnailImageUrl,
+                        publicationStatus = publicationStatus,
+                        clock = clock,
+                    ),
+                )
+            }
         return toDraftPayload(saved)
     }
 
@@ -162,10 +176,14 @@ class MbrdEditorBootstrapService(
     }
 
     private fun toDraftPayload(document: MbrdEditorDocument): MbrdEditorDraftPayload {
-        val previous = repository.findPrevious(document.id, document.updatedAt, document.publicationStatus)
-            ?.let { toSummaryPayload(it) }
-        val next = repository.findNext(document.id, document.updatedAt, document.publicationStatus)
-            ?.let { toSummaryPayload(it) }
+        val previous =
+            repository
+                .findPrevious(document.id, document.updatedAt, document.publicationStatus)
+                ?.let { toSummaryPayload(it) }
+        val next =
+            repository
+                .findNext(document.id, document.updatedAt, document.publicationStatus)
+                ?.let { toSummaryPayload(it) }
         return MbrdEditorDraftPayload(
             documentId = document.id.asString(),
             title = document.title,
@@ -229,11 +247,13 @@ class MbrdEditorBootstrapService(
 
     private fun normalizeSlug(value: String?): String? {
         val normalized = normalizeOptional(value) ?: return null
-        val slug = normalized.lowercase(Locale.ROOT)
-            .replace("[^\\p{L}\\p{N}\\s-]".toRegex(), " ")
-            .trim()
-            .replace("[-\\s]+".toRegex(), "-")
-            .replace("^-+|-+$".toRegex(), "")
+        val slug =
+            normalized
+                .lowercase(Locale.ROOT)
+                .replace("[^\\p{L}\\p{N}\\s-]".toRegex(), " ")
+                .trim()
+                .replace("[-\\s]+".toRegex(), "-")
+                .replace("^-+|-+$".toRegex(), "")
         return if (slug.isBlank()) null else slug
     }
 
@@ -252,13 +272,14 @@ class MbrdEditorBootstrapService(
     private fun normalizeQuery(query: String?): String = query?.trim() ?: ""
 
     companion object {
-        private val SUGGESTED_TAGS = listOf(
-            "위키스타일",
-            "다시읽기",
-            "마크다운",
-            "리액트",
-            "타입스크립트",
-            "Spring Boot 4",
-        )
+        private val SUGGESTED_TAGS =
+            listOf(
+                "위키스타일",
+                "다시읽기",
+                "마크다운",
+                "리액트",
+                "타입스크립트",
+                "Spring Boot 4",
+            )
     }
 }

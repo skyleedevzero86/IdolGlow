@@ -18,7 +18,7 @@ data class OptionGraphQlResponse(
                 name = response.name,
                 description = response.description,
                 price = response.price.asGraphQlNumber(),
-                location = response.location
+                location = response.location,
             )
     }
 }

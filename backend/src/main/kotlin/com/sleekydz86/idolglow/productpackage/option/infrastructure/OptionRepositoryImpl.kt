@@ -13,11 +13,10 @@ import org.springframework.stereotype.Repository
 class OptionRepositoryImpl(
     private val optionJpaRepository: OptionJpaRepository,
 ) : OptionRepository {
+    override fun findAllByIdIn(optionIds: List<Long>): List<Option> = optionJpaRepository.findAllByIdIn(optionIds)
 
-    override fun findAllByIdIn(optionIds: List<Long>): List<Option> {
-        return optionJpaRepository.findAllByIdIn(optionIds)
-    }
     override fun findAll(): List<Option> = optionJpaRepository.findAll()
+
     override fun findById(optionId: Long): Option? = optionJpaRepository.findByIdOrNull(optionId)
 
     override fun findWithSearch(
@@ -32,19 +31,21 @@ class OptionRepositoryImpl(
             return optionJpaRepository.findAll(pageable)
         }
         val like = "%" + clean.lowercase() + "%"
-        val spec: Specification<Option> = Specification { root, _, cb ->
-            val namePath: Path<String> = root.get("name")
-            val locationPath: Path<String> = root.get("location")
-            val descriptionPath: Path<String> = root.get("description")
-            cb.or(
-                cb.like(cb.lower(namePath), like),
-                cb.like(cb.lower(locationPath), like),
-                cb.like(cb.lower(descriptionPath), like),
-            )
-        }
+        val spec: Specification<Option> =
+            Specification { root, _, cb ->
+                val namePath: Path<String> = root.get("name")
+                val locationPath: Path<String> = root.get("location")
+                val descriptionPath: Path<String> = root.get("description")
+                cb.or(
+                    cb.like(cb.lower(namePath), like),
+                    cb.like(cb.lower(locationPath), like),
+                    cb.like(cb.lower(descriptionPath), like),
+                )
+            }
         return optionJpaRepository.findAll(spec, pageable)
     }
 
     override fun save(option: Option): Option = optionJpaRepository.save(option)
+
     override fun delete(option: Option) = optionJpaRepository.delete(option)
 }

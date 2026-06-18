@@ -15,19 +15,19 @@ class ScheduleExternalCalendarService(
     private val calendarProperties: AppCalendarProperties,
     private val publicUrlProperties: AppPublicUrlProperties,
 ) {
-
     private val eventZone: ZoneId by lazy { ZoneId.of(calendarProperties.eventZoneId) }
 
     private val googleUtcFmt: DateTimeFormatter =
         DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(java.time.ZoneOffset.UTC)
 
     fun buildIcsBytes(schedule: ScheduleResponse): ByteArray {
-        val ics = ScheduleIcsWriter.build(
-            schedule = schedule,
-            eventZone = eventZone,
-            uidDomain = calendarProperties.uidDomain.trim().ifBlank { "idolglow.app" },
-            productPageUrl = productPageUrl(schedule.productId),
-        )
+        val ics =
+            ScheduleIcsWriter.build(
+                schedule = schedule,
+                eventZone = eventZone,
+                uidDomain = calendarProperties.uidDomain.trim().ifBlank { "idolglow.app" },
+                productPageUrl = productPageUrl(schedule.productId),
+            )
         return ScheduleIcsWriter.toUtf8Bytes(ics)
     }
 
@@ -69,6 +69,5 @@ class ScheduleExternalCalendarService(
         }.trimEnd()
     }
 
-    private fun urlEncode(s: String): String =
-        URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20")
+    private fun urlEncode(s: String): String = URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20")
 }

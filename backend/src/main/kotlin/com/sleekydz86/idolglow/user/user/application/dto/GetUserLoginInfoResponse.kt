@@ -40,7 +40,7 @@ data class GetUserLoginInfoResponse(
                 oauthLinked = oauthLinked,
                 hasPassword = !user.passwordHash.isNullOrBlank(),
                 role = user.role.name,
-                lastLoginAt = user.lastLoginAt
+                lastLoginAt = user.lastLoginAt,
             )
     }
 }

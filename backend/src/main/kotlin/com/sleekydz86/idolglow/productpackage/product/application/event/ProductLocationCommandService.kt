@@ -14,8 +14,10 @@ class ProductLocationCommandService(
     private val productCommandRepository: ProductCommandRepository,
     private val productLocationRepository: ProductLocationRepository,
 ) {
-
-    fun upsertProductLocation(productId: Long, payload: ProductLocationPayload) {
+    fun upsertProductLocation(
+        productId: Long,
+        payload: ProductLocationPayload,
+    ) {
         val product = findProduct(productId)
         val location = productLocationRepository.findByProductId(productId)
 
@@ -32,8 +34,7 @@ class ProductLocationCommandService(
         productLocationRepository.save(newLocation)
     }
 
-    private fun findProduct(productId: Long): Product {
-        return productCommandRepository.findById(productId)
+    private fun findProduct(productId: Long): Product =
+        productCommandRepository.findById(productId)
             ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
-    }
 }

@@ -10,10 +10,8 @@ data class RegisterSubscriptionRequest(
     @field:Email
     @field:Size(max = 255)
     val email: String,
-
     @field:AssertTrue(message = "개인정보 수집 및 활용 동의가 필요합니다.")
     val agreedToPrivacy: Boolean,
-
     val subscribeNewsletters: Boolean = true,
     val subscribeIssues: Boolean = true,
 )

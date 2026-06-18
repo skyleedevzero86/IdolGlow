@@ -32,7 +32,6 @@ class SignupController(
     private val authVerificationAuditService: AuthVerificationAuditService,
     private val signupVerificationService: SignupVerificationService,
 ) {
-
     @SecurityRequirements
     @Operation(
         summary = "이메일 사용 가능 여부 확인",
@@ -115,11 +114,12 @@ class SignupController(
         @RequestParam(defaultValue = "confirm") decision: String,
         request: HttpServletRequest,
     ): ResponseEntity<String> {
-        val ok = signupVerificationService.confirmPostSignupAccount(
-            tokenValue = token,
-            decision = decision,
-            ipAddress = resolveClientIp(request),
-        )
+        val ok =
+            signupVerificationService.confirmPostSignupAccount(
+                tokenValue = token,
+                decision = decision,
+                ipAddress = resolveClientIp(request),
+            )
         return if (ok) {
             ResponseEntity.ok(
                 if (decision.equals("confirm", ignoreCase = true)) {
@@ -145,14 +145,16 @@ class SignupController(
         httpRequest: HttpServletRequest,
         response: HttpServletResponse,
     ): ResponseEntity<AccessTokenResponse> {
-        val tokenResponse = signupService.signup(
-            email = request.email,
-            rawNickname = request.nickname,
-            password = request.password,
-            subscribeToUpdates = request.subscribeToUpdates,
-        )
+        val tokenResponse =
+            signupService.signup(
+                email = request.email,
+                rawNickname = request.nickname,
+                password = request.password,
+                subscribeToUpdates = request.subscribeToUpdates,
+            )
         refreshTokenCookieSupporter.addAuthenticationCookies(response, tokenResponse)
-        val loginUser = signupService.loadByEmail(request.email.trim().lowercase()) ?: return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
+        val loginUser =
+            signupService.loadByEmail(request.email.trim().lowercase()) ?: return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
         signupVerificationService.sendPostSignupAccountConfirmMail(
             user = loginUser,
             ipAddress = resolveClientIp(httpRequest),
@@ -162,10 +164,12 @@ class SignupController(
     }
 
     private fun resolveClientIp(request: HttpServletRequest): String {
-        val forwarded = request.getHeader("X-Forwarded-For")
-            ?.split(",")
-            ?.firstOrNull()
-            ?.trim()
+        val forwarded =
+            request
+                .getHeader("X-Forwarded-For")
+                ?.split(",")
+                ?.firstOrNull()
+                ?.trim()
         if (!forwarded.isNullOrBlank()) return forwarded
         return request.remoteAddr ?: "unknown"
     }
@@ -174,11 +178,12 @@ class SignupController(
         val scheme = request.scheme ?: "http"
         val host = request.serverName ?: "localhost"
         val port = request.serverPort
-        val withPort = if ((scheme == "http" && port == 80) || (scheme == "https" && port == 443)) {
-            ""
-        } else {
-            ":$port"
-        }
+        val withPort =
+            if ((scheme == "http" && port == 80) || (scheme == "https" && port == 443)) {
+                ""
+            } else {
+                ":$port"
+            }
         return "$scheme://$host$withPort"
     }
 }

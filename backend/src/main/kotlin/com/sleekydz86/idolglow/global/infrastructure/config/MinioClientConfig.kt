@@ -12,7 +12,8 @@ class MinioClientConfig(
 ) {
     @Bean
     fun minioClient(): MinioClient =
-        MinioClient.builder()
+        MinioClient
+            .builder()
             .endpoint(minioStorageProperties.endpoint)
             .credentials(minioStorageProperties.accessKey, minioStorageProperties.secretKey)
             .build()

@@ -9,8 +9,21 @@ interface WebzineIssueJpaRepository : JpaRepository<WebzineIssue, Long> {
 
     @Query("SELECT DISTINCT i FROM WebzineIssue i LEFT JOIN FETCH i.articles WHERE i.slug = :slug")
     fun findBySlugWithArticles(slug: String): WebzineIssue?
-    fun existsByVolumeOrSlug(volume: Int, slug: String): Boolean
-    fun existsByVolumeAndIdNot(volume: Int, id: Long): Boolean
-    fun existsBySlugAndIdNot(slug: String, id: Long): Boolean
+
+    fun existsByVolumeOrSlug(
+        volume: Int,
+        slug: String,
+    ): Boolean
+
+    fun existsByVolumeAndIdNot(
+        volume: Int,
+        id: Long,
+    ): Boolean
+
+    fun existsBySlugAndIdNot(
+        slug: String,
+        id: Long,
+    ): Boolean
+
     fun findTopByOrderByVolumeDesc(): WebzineIssue?
 }

@@ -23,10 +23,11 @@ data class ProductSearchCriteria(
     val now: LocalDateTime,
     val today: LocalDate,
 ) {
-    val effectiveTagNames: List<String> = buildList {
-        tag?.trim()?.takeIf { it.isNotEmpty() }?.let { add(it) }
-        addAll(tags.map { it.trim() }.filter { it.isNotEmpty() }.distinct())
-    }.distinct()
+    val effectiveTagNames: List<String> =
+        buildList {
+            tag?.trim()?.takeIf { it.isNotEmpty() }?.let { add(it) }
+            addAll(tags.map { it.trim() }.filter { it.isNotEmpty() }.distinct())
+        }.distinct()
 
     val needsLocationJoin: Boolean =
         nearLatitude != null && nearLongitude != null

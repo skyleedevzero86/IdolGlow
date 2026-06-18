@@ -9,7 +9,6 @@ class JwtToken private constructor(
     val expiresAt: LocalDateTime,
     val tokenType: String,
 ) {
-
     fun isExpired(): Boolean = LocalDateTime.now().isAfter(expiresAt)
 
     override fun equals(other: Any?): Boolean {
@@ -33,15 +32,19 @@ class JwtToken private constructor(
         private var tokenType: String = "Bearer"
 
         fun accessToken(accessToken: String) = apply { this.accessToken = accessToken }
+
         fun refreshToken(refreshToken: String) = apply { this.refreshToken = refreshToken }
+
         fun expiresIn(expiresAt: LocalDateTime) = apply { this.expiresAt = expiresAt }
+
         fun tokenType(tokenType: String) = apply { this.tokenType = tokenType }
 
-        fun build(): JwtToken = JwtToken(
-            accessToken = accessToken ?: error("액세스 토큰이 필요합니다."),
-            refreshToken = refreshToken ?: error("리프레시 토큰이 필요합니다."),
-            expiresAt = expiresAt ?: error("만료 시각이 필요합니다."),
-            tokenType = tokenType,
-        )
+        fun build(): JwtToken =
+            JwtToken(
+                accessToken = accessToken ?: error("액세스 토큰이 필요합니다."),
+                refreshToken = refreshToken ?: error("리프레시 토큰이 필요합니다."),
+                expiresAt = expiresAt ?: error("만료 시각이 필요합니다."),
+                tokenType = tokenType,
+            )
     }
 }

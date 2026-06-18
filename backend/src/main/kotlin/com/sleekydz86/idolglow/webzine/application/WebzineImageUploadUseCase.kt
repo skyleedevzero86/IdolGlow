@@ -4,5 +4,8 @@ import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResp
 import org.springframework.web.multipart.MultipartFile
 
 interface WebzineImageUploadUseCase {
-    fun upload(file: MultipartFile, folder: String?): AdminIssueImageUploadResponse
+    fun upload(
+        file: MultipartFile,
+        folder: String?,
+    ): AdminIssueImageUploadResponse
 }

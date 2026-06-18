@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component
 class ReservationExpirationScheduler(
     private val reservationCommandService: ReservationCommandService,
 ) {
-
     @Scheduled(fixedDelayString = "\${reservation.expiration-interval-ms:30000}")
     fun expirePendingReservations() {
         reservationCommandService.expirePendingReservations()

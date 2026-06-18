@@ -20,28 +20,21 @@ class SurveyForm(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 200)
     var title: String,
-
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
-
     @Column(nullable = false)
     var active: Boolean = true,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     var status: SurveyFormStatus = SurveyFormStatus.SCHEDULED,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "primary_category", nullable = false, length = 40)
     var primaryCategory: SurveyFormPrimaryCategory = SurveyFormPrimaryCategory.ALL,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "secondary_category", length = 40)
     var secondaryCategory: SurveyFormSecondaryCategory? = null,
-
     @OneToMany(
         mappedBy = "form",
         cascade = [CascadeType.ALL],
@@ -49,7 +42,6 @@ class SurveyForm(
         fetch = FetchType.LAZY,
     )
     val questions: MutableList<SurveyQuestion> = mutableListOf(),
-
     @OneToOne(
         mappedBy = "form",
         cascade = [CascadeType.ALL],
@@ -63,12 +55,16 @@ class SurveyForm(
         questions.addAll(nextQuestions)
     }
 
-    fun replaceDescription(markdown: String?, tagNames: List<String>) {
+    fun replaceDescription(
+        markdown: String?,
+        tagNames: List<String>,
+    ) {
         val normalizedMarkdown = markdown?.trim()?.takeIf { it.isNotBlank() }
-        val normalizedTags = tagNames
-            .map { it.trim().removePrefix("#") }
-            .filter { it.isNotBlank() }
-            .distinct()
+        val normalizedTags =
+            tagNames
+                .map { it.trim().removePrefix("#") }
+                .filter { it.isNotBlank() }
+                .distinct()
 
         description = null
 
@@ -77,10 +73,11 @@ class SurveyForm(
             return
         }
 
-        val content = descriptionContent ?: SurveyFormDescription(
-            form = this,
-            markdown = normalizedMarkdown.orEmpty(),
-        ).also { descriptionContent = it }
+        val content =
+            descriptionContent ?: SurveyFormDescription(
+                form = this,
+                markdown = normalizedMarkdown.orEmpty(),
+            ).also { descriptionContent = it }
         content.markdown = normalizedMarkdown.orEmpty()
         content.replaceTags(normalizedTags)
     }

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController
 class GlowWeatherController(
     private val glowWeatherQueryService: GlowWeatherQueryService,
 ) {
-
     @Operation(summary = "Glow 날씨 대시보드 조회")
     @GetMapping("/dashboard")
     fun dashboard(

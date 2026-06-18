@@ -1,8 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.attraction.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionItemResponse
-import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
 
 data class ProductTourAttractionItemGraphQlResponse(
     val attractionCode: String,

@@ -14,21 +14,22 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 class ExchangeBranchQueryServiceTest {
-
     private val exchangeBranchJpaRepository = mockk<ExchangeBranchJpaRepository>()
     private val exchangeRateQueryPort = mockk<ExchangeRateQueryPort>()
     private val naverDirectionsClient = mockk<NaverDirectionsClient>()
-    private val exchangeAirportHubProperties = ExchangeAirportHubProperties(
-        longitude = 126.4407,
-        latitude = 37.4602,
-    )
+    private val exchangeAirportHubProperties =
+        ExchangeAirportHubProperties(
+            longitude = 126.4407,
+            latitude = 37.4602,
+        )
 
-    private val service = ExchangeBranchQueryService(
-        exchangeBranchJpaRepository = exchangeBranchJpaRepository,
-        exchangeRateQueryPort = exchangeRateQueryPort,
-        naverDirectionsClient = naverDirectionsClient,
-        exchangeAirportHubProperties = exchangeAirportHubProperties,
-    )
+    private val service =
+        ExchangeBranchQueryService(
+            exchangeBranchJpaRepository = exchangeBranchJpaRepository,
+            exchangeRateQueryPort = exchangeRateQueryPort,
+            naverDirectionsClient = naverDirectionsClient,
+            exchangeAirportHubProperties = exchangeAirportHubProperties,
+        )
 
     @Test
     fun `경로_조회_api_가_없으면_데모_이동_시간을_사용한다`() {
@@ -49,18 +50,19 @@ class ExchangeBranchQueryServiceTest {
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
-        every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("CNY") } returns listOf(
-            지점(
-                id = 11L,
-                name = "airport",
-                lat = 37.4602,
-                lng = 126.4407,
-                rate = "188.4",
-                currency = "CNY",
-                sortOrder = 0,
-                airportHub = true,
-            ),
-        )
+        every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("CNY") } returns
+            listOf(
+                지점(
+                    id = 11L,
+                    name = "airport",
+                    lat = 37.4602,
+                    lng = 126.4407,
+                    rate = "188.4",
+                    currency = "CNY",
+                    sortOrder = 0,
+                    airportHub = true,
+                ),
+            )
         every { naverDirectionsClient.drivingDurationMinutes(any(), any(), any(), any()) } returns null
 
         // when
@@ -110,9 +112,10 @@ class ExchangeBranchQueryServiceTest {
     @Test
     fun `경로_조회_api_결과가_있으면_해당_값을_사용한다`() {
         // given
-        every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns listOf(
-            지점(id = 2L, name = "branch", lat = 37.5635, lng = 126.9826, sortOrder = 1),
-        )
+        every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns
+            listOf(
+                지점(id = 2L, name = "branch", lat = 37.5635, lng = 126.9826, sortOrder = 1),
+            )
         every { exchangeRateQueryPort.fetchDailyRates(null) } returns emptyList()
         every { exchangeRateQueryPort.fetchDailyRates(any<LocalDate>()) } returns emptyList()
         every {
@@ -131,13 +134,22 @@ class ExchangeBranchQueryServiceTest {
         assertEquals(listOf(77), result.map { it.durationMinutesFromAirport })
     }
 
-    private fun 엔화_템플릿_지점목록(): List<ExchangeBranch> = listOf(
-        지점(id = 1L, name = "airport", lat = 37.4602, lng = 126.4407, rate = "9.33", sortOrder = 0, airportHub = true),
-        지점(id = 2L, name = "myeongdong-a", lat = 37.5635, lng = 126.9826, rate = "9.23", sortOrder = 1),
-        지점(id = 3L, name = "myeongdong-b", lat = 37.5640, lng = 126.9815, rate = "9.23", sortOrder = 2),
-        지점(id = 4L, name = "myeongdong-c", lat = 37.5632, lng = 126.9850, rate = "9.23", sortOrder = 3),
-        지점(id = 5L, name = "myeongdong-d", lat = 37.5628, lng = 126.9838, rate = "9.2283", sortOrder = 4),
-    )
+    private fun 엔화_템플릿_지점목록(): List<ExchangeBranch> =
+        listOf(
+            지점(
+                id = 1L,
+                name = "airport",
+                lat = 37.4602,
+                lng = 126.4407,
+                rate = "9.33",
+                sortOrder = 0,
+                airportHub = true,
+            ),
+            지점(id = 2L, name = "myeongdong-a", lat = 37.5635, lng = 126.9826, rate = "9.23", sortOrder = 1),
+            지점(id = 3L, name = "myeongdong-b", lat = 37.5640, lng = 126.9815, rate = "9.23", sortOrder = 2),
+            지점(id = 4L, name = "myeongdong-c", lat = 37.5632, lng = 126.9850, rate = "9.23", sortOrder = 3),
+            지점(id = 5L, name = "myeongdong-d", lat = 37.5628, lng = 126.9838, rate = "9.2283", sortOrder = 4),
+        )
 
     private fun 지점(
         id: Long,
@@ -148,14 +160,15 @@ class ExchangeBranchQueryServiceTest {
         currency: String = "JPY",
         sortOrder: Int,
         airportHub: Boolean = false,
-    ): ExchangeBranch = ExchangeBranch(
-        id = id,
-        name = name,
-        rate = BigDecimal(rate),
-        currency = currency,
-        lat = lat,
-        lng = lng,
-        sortOrder = sortOrder,
-        airportHub = airportHub,
-    )
+    ): ExchangeBranch =
+        ExchangeBranch(
+            id = id,
+            name = name,
+            rate = BigDecimal(rate),
+            currency = currency,
+            lat = lat,
+            lng = lng,
+            sortOrder = sortOrder,
+            airportHub = airportHub,
+        )
 }

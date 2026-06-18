@@ -8,7 +8,10 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface AuthVerificationAuditLogRepository : JpaRepository<AuthVerificationAuditLog, Long> {
-    fun findByVerificationTypeOrderByCreatedAtDesc(verificationType: String, pageable: Pageable): Page<AuthVerificationAuditLog>
+    fun findByVerificationTypeOrderByCreatedAtDesc(
+        verificationType: String,
+        pageable: Pageable,
+    ): Page<AuthVerificationAuditLog>
 
     @Query(
         """

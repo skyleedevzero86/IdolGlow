@@ -13,13 +13,14 @@ import org.springframework.transaction.annotation.Transactional
 class OptionQueryService(
     private val optionRepository: OptionRepository,
 ) {
-
     fun findOptions(): List<OptionResponse> =
-        optionRepository.findAll()
+        optionRepository
+            .findAll()
             .map { OptionResponse.from(it) }
 
     fun findOption(optionId: Long): OptionResponse =
-        optionRepository.findById(optionId)
+        optionRepository
+            .findById(optionId)
             ?.let { OptionResponse.from(it) }
             ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
 
@@ -28,11 +29,12 @@ class OptionQueryService(
         page: Int,
         size: Int,
     ): OptionPageResponse {
-        val pageable = PageRequest.of(
-            page.coerceAtLeast(0),
-            size.coerceIn(1, 50),
-            Sort.by(Sort.Direction.ASC, "id"),
-        )
+        val pageable =
+            PageRequest.of(
+                page.coerceAtLeast(0),
+                size.coerceIn(1, 50),
+                Sort.by(Sort.Direction.ASC, "id"),
+            )
         return OptionPageResponse.from(optionRepository.findWithSearch(q, pageable))
     }
 }

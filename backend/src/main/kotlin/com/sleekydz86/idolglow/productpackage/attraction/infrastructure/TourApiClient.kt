@@ -2,7 +2,6 @@ package com.sleekydz86.idolglow.productpackage.attraction.infrastructure
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import tools.jackson.databind.ObjectMapper
 import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.tour.TourAttractionExceptionType
@@ -11,8 +10,9 @@ import com.sleekydz86.idolglow.productpackage.attraction.domain.TourAttraction
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
-import org.springframework.web.util.UriUtils
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.util.UriUtils
+import tools.jackson.databind.ObjectMapper
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Duration
@@ -46,14 +46,15 @@ class TourApiClient(
             throw CustomException(TourAttractionExceptionType.TOUR_API_KEY_MISSING)
         }
 
-        val rawResponse = requestWithFallback(
-            encodedServiceKey = encodedServiceKey,
-            baseYm = baseYm,
-            areaCode = areaCode,
-            signguCode = signguCode,
-            requestedSize = size,
-            key = key,
-        )
+        val rawResponse =
+            requestWithFallback(
+                encodedServiceKey = encodedServiceKey,
+                baseYm = baseYm,
+                areaCode = areaCode,
+                signguCode = signguCode,
+                requestedSize = size,
+                key = key,
+            )
 
         if (!rawResponse.statusCode.is2xxSuccessful) {
             return staleOrThrow(key, TourAttractionExceptionType.TOUR_API_CALL_FAILED)
@@ -64,37 +65,37 @@ class TourApiClient(
             return staleOrThrow(key, TourAttractionExceptionType.TOUR_API_ERROR)
         }
 
-        val attractions = parsed.response?.body?.items?.item.orEmpty().mapNotNull { item ->
-            val name = item.hubTatsNm?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-            val attractionCode = item.hubTatsCd?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-            val rank = item.hubRank?.toIntOrNull() ?: Int.MAX_VALUE
-            TourAttraction(
-                attractionCode = attractionCode,
-                name = name,
-                areaCode = item.areaCd?.toIntOrNull() ?: areaCode,
-                areaName = item.areaNm,
-                signguCode = item.signguCd?.toIntOrNull() ?: signguCode,
-                signguName = item.signguNm,
-                categoryLarge = item.hubCtgryLclsNm,
-                categoryMiddle = item.hubCtgryMclsNm,
-                rank = rank,
-                mapX = item.mapX?.toDoubleOrNull(),
-                mapY = item.mapY?.toDoubleOrNull(),
-                baseYm = item.baseYm ?: baseYm,
-            )
-        }
+        val attractions =
+            parsed.response?.body?.items?.item.orEmpty().mapNotNull { item ->
+                val name = item.hubTatsNm?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val attractionCode = item.hubTatsCd?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val rank = item.hubRank?.toIntOrNull() ?: Int.MAX_VALUE
+                TourAttraction(
+                    attractionCode = attractionCode,
+                    name = name,
+                    areaCode = item.areaCd?.toIntOrNull() ?: areaCode,
+                    areaName = item.areaNm,
+                    signguCode = item.signguCd?.toIntOrNull() ?: signguCode,
+                    signguName = item.signguNm,
+                    categoryLarge = item.hubCtgryLclsNm,
+                    categoryMiddle = item.hubCtgryMclsNm,
+                    rank = rank,
+                    mapX = item.mapX?.toDoubleOrNull(),
+                    mapY = item.mapY?.toDoubleOrNull(),
+                    baseYm = item.baseYm ?: baseYm,
+                )
+            }
 
         putCache(key, attractions, now)
         return attractions
     }
 
-    private fun parseJsonResponse(body: String): TourApiResponseEnvelope {
-        return try {
+    private fun parseJsonResponse(body: String): TourApiResponseEnvelope =
+        try {
             objectMapper.readValue(body, TourApiResponseEnvelope::class.java)
         } catch (_: Exception) {
             throw CustomException(TourAttractionExceptionType.TOUR_API_BAD_RESPONSE)
         }
-    }
 
     private fun endpointUrl(): String = "${props.baseUrl.trimEnd('/')}/areaBasedList1"
 
@@ -111,13 +112,14 @@ class TourApiClient(
 
         var lastFailedResponse: RawTourApiResponse? = null
         for (size in sizes) {
-            val response = requestRawResponse(
-                encodedServiceKey = encodedServiceKey,
-                baseYm = baseYm,
-                areaCode = areaCode,
-                signguCode = signguCode,
-                numOfRows = size,
-            )
+            val response =
+                requestRawResponse(
+                    encodedServiceKey = encodedServiceKey,
+                    baseYm = baseYm,
+                    areaCode = areaCode,
+                    signguCode = signguCode,
+                    numOfRows = size,
+                )
             if (response.statusCode.is2xxSuccessful) {
                 if (size != primarySize) {
                     log.info("관광 API 재시도 성공. numOfRows={} -> {}", primarySize, size)
@@ -150,25 +152,27 @@ class TourApiClient(
         areaCode: Int,
         signguCode: Int,
         numOfRows: Int,
-    ): RawTourApiResponse {
-        return try {
-            val requestUri = URI.create(
-                buildRequestUri(
-                    encodedServiceKey = encodedServiceKey,
-                    baseYm = baseYm,
-                    areaCode = areaCode,
-                    signguCode = signguCode,
-                    numOfRows = numOfRows,
-                ),
-            )
-            webClient.get()
+    ): RawTourApiResponse =
+        try {
+            val requestUri =
+                URI.create(
+                    buildRequestUri(
+                        encodedServiceKey = encodedServiceKey,
+                        baseYm = baseYm,
+                        areaCode = areaCode,
+                        signguCode = signguCode,
+                        numOfRows = numOfRows,
+                    ),
+                )
+            webClient
+                .get()
                 .uri(requestUri)
                 .exchangeToMono { clientResponse ->
-                    clientResponse.bodyToMono(String::class.java)
+                    clientResponse
+                        .bodyToMono(String::class.java)
                         .defaultIfEmpty("")
                         .map { body -> RawTourApiResponse(clientResponse.statusCode(), body) }
-                }
-                .block()
+                }.block()
                 ?: RawTourApiResponse(HttpStatusCode.valueOf(502), "")
         } catch (exception: Exception) {
             log.warn(
@@ -177,11 +181,10 @@ class TourApiClient(
                 areaCode,
                 signguCode,
                 numOfRows,
-                exception.message
+                exception.message,
             )
             RawTourApiResponse(HttpStatusCode.valueOf(502), exception.message ?: "")
         }
-    }
 
     private fun buildRequestUri(
         encodedServiceKey: String,
@@ -209,7 +212,10 @@ class TourApiClient(
         return if (trimmed.contains('%')) trimmed else UriUtils.encodeQueryParam(trimmed, StandardCharsets.UTF_8)
     }
 
-    private fun staleOrThrow(key: TourApiCacheKey, causeType: TourAttractionExceptionType): List<TourAttraction> {
+    private fun staleOrThrow(
+        key: TourApiCacheKey,
+        causeType: TourAttractionExceptionType,
+    ): List<TourAttraction> {
         val stale = cache[key]
         if (stale != null) {
             log.warn("관광 API 호출 실패로 오래된 캐시를 사용합니다. key={}, cachedAt={}", key, stale.cachedAt)
@@ -218,13 +224,18 @@ class TourApiClient(
         throw CustomException(causeType)
     }
 
-    private fun putCache(key: TourApiCacheKey, attractions: List<TourAttraction>, now: Instant) {
+    private fun putCache(
+        key: TourApiCacheKey,
+        attractions: List<TourAttraction>,
+        now: Instant,
+    ) {
         val ttlMinutes = props.cacheTtlMinutes.coerceAtLeast(1)
-        cache[key] = TourApiCacheEntry(
-            attractions = attractions,
-            cachedAt = now,
-            expireAt = now.plusSeconds(Duration.ofMinutes(ttlMinutes).seconds),
-        )
+        cache[key] =
+            TourApiCacheEntry(
+                attractions = attractions,
+                cachedAt = now,
+                expireAt = now.plusSeconds(Duration.ofMinutes(ttlMinutes).seconds),
+            )
         cleanUpCache(now)
     }
 
@@ -233,19 +244,36 @@ class TourApiClient(
         val maxEntries = props.cacheMaxEntries.coerceAtLeast(50)
         if (cache.size <= maxEntries) return
         val overflow = cache.size - maxEntries
-        cache.entries.asSequence()
+        cache.entries
+            .asSequence()
             .sortedBy { (_, entry) -> entry.cachedAt }
             .take(overflow)
             .forEach { (key, _) -> cache.remove(key) }
     }
 
-    private data class RawTourApiResponse(val statusCode: HttpStatusCode, val body: String)
-    private data class TourApiCacheKey(val baseYm: String, val areaCode: Int, val signguCode: Int, val size: Int)
-    private data class TourApiCacheEntry(val attractions: List<TourAttraction>, val cachedAt: Instant, val expireAt: Instant)
+    private data class RawTourApiResponse(
+        val statusCode: HttpStatusCode,
+        val body: String,
+    )
+
+    private data class TourApiCacheKey(
+        val baseYm: String,
+        val areaCode: Int,
+        val signguCode: Int,
+        val size: Int,
+    )
+
+    private data class TourApiCacheEntry(
+        val attractions: List<TourAttraction>,
+        val cachedAt: Instant,
+        val expireAt: Instant,
+    )
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class TourApiResponseEnvelope(val response: TourApiResponse? = null)
+private data class TourApiResponseEnvelope(
+    val response: TourApiResponse? = null,
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class TourApiResponse(
@@ -260,7 +288,9 @@ private data class TourApiHeader(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class TourApiBody(val items: TourApiItems = TourApiItems())
+private data class TourApiBody(
+    val items: TourApiItems = TourApiItems(),
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class TourApiItems(

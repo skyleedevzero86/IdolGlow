@@ -9,34 +9,41 @@ import java.time.LocalDateTime
 
 @Repository
 class NotificationRepositoryImpl(
-    private val notificationJpaRepository: NotificationJpaRepository
+    private val notificationJpaRepository: NotificationJpaRepository,
 ) : NotificationRepository {
+    override fun save(notification: Notification): Notification = notificationJpaRepository.save(notification)
 
-    override fun save(notification: Notification): Notification =
-        notificationJpaRepository.save(notification)
+    override fun findById(id: Long): Notification? = notificationJpaRepository.findByIdOrNull(id)
 
-    override fun findById(id: Long): Notification? =
-        notificationJpaRepository.findByIdOrNull(id)
+    override fun findAllByUserId(userId: Long): List<Notification> = notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
 
-    override fun findAllByUserId(userId: Long): List<Notification> =
-        notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+    override fun findVisibleByUserId(
+        userId: Long,
+        createdAtFrom: LocalDateTime,
+    ): List<Notification> = notificationJpaRepository.findAllByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(userId, createdAtFrom)
 
-    override fun findVisibleByUserId(userId: Long, createdAtFrom: LocalDateTime): List<Notification> =
-        notificationJpaRepository.findAllByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(userId, createdAtFrom)
+    override fun findAllByUserIdAndType(
+        userId: Long,
+        type: NotificationType,
+    ): List<Notification> = notificationJpaRepository.findAllByUserIdAndTypeOrderByCreatedAtDesc(userId, type)
 
-    override fun findAllByUserIdAndType(userId: Long, type: NotificationType): List<Notification> =
-        notificationJpaRepository.findAllByUserIdAndTypeOrderByCreatedAtDesc(userId, type)
+    override fun countUnreadByUserId(userId: Long): Long = notificationJpaRepository.countByUserIdAndReadAtIsNull(userId)
 
-    override fun countUnreadByUserId(userId: Long): Long =
-        notificationJpaRepository.countByUserIdAndReadAtIsNull(userId)
+    override fun countUnreadVisibleByUserId(
+        userId: Long,
+        createdAtFrom: LocalDateTime,
+    ): Long = notificationJpaRepository.countByUserIdAndReadAtIsNullAndCreatedAtGreaterThanEqual(userId, createdAtFrom)
 
-    override fun countUnreadVisibleByUserId(userId: Long, createdAtFrom: LocalDateTime): Long =
-        notificationJpaRepository.countByUserIdAndReadAtIsNullAndCreatedAtGreaterThanEqual(userId, createdAtFrom)
-
-    override fun markAllReadByUserId(userId: Long, readAt: LocalDateTime) {
+    override fun markAllReadByUserId(
+        userId: Long,
+        readAt: LocalDateTime,
+    ) {
         notificationJpaRepository.markAllReadByUserId(userId, readAt)
     }
 
-    override fun existsByUserIdAndTypeAndLink(userId: Long, type: NotificationType, link: String): Boolean =
-        notificationJpaRepository.existsByUserIdAndTypeAndLink(userId, type, link)
+    override fun existsByUserIdAndTypeAndLink(
+        userId: Long,
+        type: NotificationType,
+        link: String,
+    ): Boolean = notificationJpaRepository.existsByUserIdAndTypeAndLink(userId, type, link)
 }

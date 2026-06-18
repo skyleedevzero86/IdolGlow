@@ -11,7 +11,6 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class GraphQlSchemaSmokeTest {
-
     @LocalServerPort
     private var port: Int = 0
 
@@ -19,9 +18,11 @@ class GraphQlSchemaSmokeTest {
 
     @BeforeEach
     fun 준비() {
-        webTestClient = WebTestClient.bindToServer()
-            .baseUrl("http://localhost:$port")
-            .build()
+        webTestClient =
+            WebTestClient
+                .bindToServer()
+                .baseUrl("http://localhost:$port")
+                .build()
     }
 
     @Test
@@ -30,15 +31,18 @@ class GraphQlSchemaSmokeTest {
         val query = """{"query":"{ health }"}"""
 
         // when
-        val exchange = webTestClient.post()
-            .uri("/graphql")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(query)
-            .exchange()
+        val exchange =
+            webTestClient
+                .post()
+                .uri("/graphql")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(query)
+                .exchange()
 
         // then
         exchange
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody()
             .jsonPath("$.data.health")
             .isEqualTo("정상")
@@ -47,22 +51,26 @@ class GraphQlSchemaSmokeTest {
     @Test
     fun `핵심_mutation_필드가_스키마에_등록되어_있다`() {
         // given
-        val query = """
+        val query =
+            """
             {
               "query": "{ __schema { mutationType { fields { name } } } }"
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // when
-        val exchange = webTestClient.post()
-            .uri("/graphql")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(query)
-            .exchange()
+        val exchange =
+            webTestClient
+                .post()
+                .uri("/graphql")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(query)
+                .exchange()
 
         // then
         exchange
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody()
             .jsonPath("$.data.__schema.mutationType.fields[?(@.name == 'createReservation')].name")
             .isEqualTo("createReservation")

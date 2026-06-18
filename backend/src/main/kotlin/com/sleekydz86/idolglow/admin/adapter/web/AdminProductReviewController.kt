@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminProductReviewController(
     private val adminProductReviewService: AdminProductReviewService,
 ) {
-
     @Operation(summary = "리뷰 목록 조회", description = "키워드(내용·상품명), 공개 여부 필터, 페이지네이션")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
@@ -53,6 +52,5 @@ class AdminProductReviewController(
     @PostMapping("/{reviewId}/unhide")
     fun unhideReview(
         @PathVariable reviewId: Long,
-    ): ResponseEntity<AdminProductReviewSummaryResponse> =
-        ResponseEntity.ok(adminProductReviewService.unhideReview(reviewId))
+    ): ResponseEntity<AdminProductReviewSummaryResponse> = ResponseEntity.ok(adminProductReviewService.unhideReview(reviewId))
 }

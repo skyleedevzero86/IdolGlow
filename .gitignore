@@ -14,6 +14,8 @@
 *.app
 #Rapid Application Development File
 rad.json
+*.sh
+*.ps1
 #Translation Base-file
 *.g.xlf
 #License-file
@@ -30,3 +32,6 @@ infra/jenkins-local/start-jenkins.ps1
 infra/up.ps1
 infra/up.sh
 .idea/
+infra/jenkins-local/
+*.ps1
+*.sh

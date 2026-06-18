@@ -20,9 +20,10 @@ class SubwayController(
     private val subwayQueryUseCase: SubwayQueryUseCase,
     private val subwayWebMapper: SubwayWebMapper,
 ) {
-
     @GetMapping("/lines")
-    fun lines(@LoginUser userId: Long): List<SubwayLineDto> {
+    fun lines(
+        @LoginUser userId: Long,
+    ): List<SubwayLineDto> {
         check(userId > 0L) { "로그인이 필요합니다." }
         return subwayQueryUseCase.listLines().map(subwayWebMapper::toLineDto)
     }

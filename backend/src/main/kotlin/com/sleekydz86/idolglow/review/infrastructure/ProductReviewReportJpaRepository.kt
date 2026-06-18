@@ -6,5 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface ProductReviewReportJpaRepository : JpaRepository<ProductReviewReport, Long> {
     fun countByReviewId(reviewId: Long): Long
 
-    fun existsByReview_IdAndReporterUserId(reviewId: Long, reporterUserId: Long): Boolean
+    fun existsByReview_IdAndReporterUserId(
+        reviewId: Long,
+        reporterUserId: Long,
+    ): Boolean
 }

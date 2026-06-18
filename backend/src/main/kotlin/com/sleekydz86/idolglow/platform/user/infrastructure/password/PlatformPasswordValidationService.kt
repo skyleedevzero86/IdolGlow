@@ -10,22 +10,23 @@ class PlatformPasswordValidationService(
     private val policyValidator: PasswordPolicyValidator,
     private val userAccountPort: PlatformUserAccountPort,
 ) {
-
-    fun validatePassword(password: String): PasswordPolicyValidator.PasswordValidationResult =
-        policyValidator.validate(password)
+    fun validatePassword(password: String): PasswordPolicyValidator.PasswordValidationResult = policyValidator.validate(password)
 
     fun isPasswordChangeRequired(userId: Long): Boolean =
-        userAccountPort.findById(userId)
+        userAccountPort
+            .findById(userId)
             .map { it.isPasswordChangeRequired() }
             .orElse(false)
 
     fun isPasswordChangeRecommended(userId: Long): Boolean =
-        userAccountPort.findById(userId)
+        userAccountPort
+            .findById(userId)
             .map { it.isPasswordChangeRecommended() }
             .orElse(false)
 
     fun getTodayPasswordChangeCount(userId: Long): Long =
-        userAccountPort.findById(userId)
+        userAccountPort
+            .findById(userId)
             .map { it.getTodayPasswordChangeCount().toLong() }
             .orElse(0L)
 }

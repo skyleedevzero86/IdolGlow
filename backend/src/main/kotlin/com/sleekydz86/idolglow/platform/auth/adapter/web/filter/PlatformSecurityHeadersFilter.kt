@@ -10,7 +10,6 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 @ConditionalOnProperty(prefix = "platform.auth", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class PlatformSecurityHeadersFilter : OncePerRequestFilter() {
-
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -33,24 +32,25 @@ class PlatformSecurityHeadersFilter : OncePerRequestFilter() {
             "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()",
         )
         val path = request.requestURI.lowercase()
-        val contentSecurityPolicy = if (path.startsWith("/graphiql")) {
-            "default-src 'self'; " +
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh; " +
-                "style-src 'self' 'unsafe-inline' https://esm.sh; " +
-                "img-src 'self' data: https:; " +
-                "font-src 'self' data: https://esm.sh; " +
-                "connect-src 'self' https: ws: wss:; " +
-                "worker-src 'self' blob: https://esm.sh; " +
-                "frame-ancestors 'none';"
-        } else {
-            "default-src 'self'; " +
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-                "style-src 'self' 'unsafe-inline'; " +
-                "img-src 'self' data: https:; " +
-                "font-src 'self' data:; " +
-                "connect-src 'self' https:; " +
-                "frame-ancestors 'none';"
-        }
+        val contentSecurityPolicy =
+            if (path.startsWith("/graphiql")) {
+                "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh; " +
+                    "style-src 'self' 'unsafe-inline' https://esm.sh; " +
+                    "img-src 'self' data: https:; " +
+                    "font-src 'self' data: https://esm.sh; " +
+                    "connect-src 'self' https: ws: wss:; " +
+                    "worker-src 'self' blob: https://esm.sh; " +
+                    "frame-ancestors 'none';"
+            } else {
+                "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data: https:; " +
+                    "font-src 'self' data:; " +
+                    "connect-src 'self' https:; " +
+                    "frame-ancestors 'none';"
+            }
         response.setHeader("Content-Security-Policy", contentSecurityPolicy)
         response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")

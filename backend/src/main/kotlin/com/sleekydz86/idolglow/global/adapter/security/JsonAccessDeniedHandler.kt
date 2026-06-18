@@ -1,6 +1,5 @@
 package com.sleekydz86.idolglow.global.adapter.security
 
-import tools.jackson.databind.ObjectMapper
 import com.sleekydz86.idolglow.global.infrastructure.exception.ExceptionResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -8,16 +7,16 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
 
 @Component
 class JsonAccessDeniedHandler(
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : AccessDeniedHandler {
-
     override fun handle(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        accessDeniedException: AccessDeniedException
+        accessDeniedException: AccessDeniedException,
     ) {
         response.status = HttpServletResponse.SC_FORBIDDEN
         response.contentType = MediaType.APPLICATION_JSON_VALUE
@@ -27,9 +26,9 @@ class JsonAccessDeniedHandler(
                 ExceptionResponse(
                     name = "ACCESS_DENIED",
                     errorCode = "ACCESS_DENIED",
-                    message = "접근 권한이 없습니다."
-                )
-            )
+                    message = "접근 권한이 없습니다.",
+                ),
+            ),
         )
     }
 }

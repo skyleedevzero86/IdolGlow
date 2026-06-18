@@ -1,9 +1,6 @@
 package com.sleekydz86.idolglow.event.ui.dto
 
-import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDocumentPagePayload
-import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDocumentSummaryPayload
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDraftPayload
-import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
 import java.time.Instant
 
 data class AdminEventDetailResponse(

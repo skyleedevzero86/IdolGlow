@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets
 class ClasspathSubwayPageEnrichmentAdapter(
     private val objectMapper: ObjectMapper,
 ) {
-
     private val fileRoot: EnrichmentFileRoot by lazy(::readFile)
 
     fun loadClasspathEnrichment(
@@ -34,23 +33,30 @@ class ClasspathSubwayPageEnrichmentAdapter(
         return res.inputStream.use { stream -> objectMapper.readValue(stream, EnrichmentFileRoot::class.java) }
     }
 
-    private fun build(def: DefaultBlockDto, ov: OverrideBlockDto?, stationName: String): SubwayPageEnrichment {
-        val titleRaw = when {
-            ov?.summaryTitle != null -> ov.summaryTitle
-            ov?.summaryTitleTemplate != null -> ov.summaryTitleTemplate
-            def.summaryTitle != null -> def.summaryTitle
-            else -> def.summaryTitleTemplate ?: "{stationName}"
-        }
-        val bulletsRaw = when {
-            ov?.summaryBullets != null && ov.summaryBullets.isNotEmpty() -> ov.summaryBullets
-            else -> def.summaryBullets
-        }
-        val learnRaw = when {
-            ov?.learnMoreLabel != null -> ov.learnMoreLabel
-            ov?.learnMoreLabelTemplate != null -> ov.learnMoreLabelTemplate
-            def.learnMoreLabel != null -> def.learnMoreLabel
-            else -> def.learnMoreLabelTemplate ?: "{stationName} 에 대해 더 알아보세요"
-        }
+    private fun build(
+        def: DefaultBlockDto,
+        ov: OverrideBlockDto?,
+        stationName: String,
+    ): SubwayPageEnrichment {
+        val titleRaw =
+            when {
+                ov?.summaryTitle != null -> ov.summaryTitle
+                ov?.summaryTitleTemplate != null -> ov.summaryTitleTemplate
+                def.summaryTitle != null -> def.summaryTitle
+                else -> def.summaryTitleTemplate ?: "{stationName}"
+            }
+        val bulletsRaw =
+            when {
+                ov?.summaryBullets != null && ov.summaryBullets.isNotEmpty() -> ov.summaryBullets
+                else -> def.summaryBullets
+            }
+        val learnRaw =
+            when {
+                ov?.learnMoreLabel != null -> ov.learnMoreLabel
+                ov?.learnMoreLabelTemplate != null -> ov.learnMoreLabelTemplate
+                def.learnMoreLabel != null -> def.learnMoreLabel
+                else -> def.learnMoreLabelTemplate ?: "{stationName} 에 대해 더 알아보세요"
+            }
         val learnUrlRaw = ov?.learnMoreUrl ?: def.learnMoreUrl
         val learnUrl = learnUrlRaw?.trim()?.takeIf { it.isNotEmpty() }?.let { tpl(it, stationName) }
         val radius = ov?.nearbyRadiusMeters ?: def.nearbyRadiusMeters
@@ -67,9 +73,13 @@ class ClasspathSubwayPageEnrichmentAdapter(
         )
     }
 
-    private fun tpl(s: String, stationName: String): String {
+    private fun tpl(
+        s: String,
+        stationName: String,
+    ): String {
         val mapsQuery = URLEncoder.encode("${stationName}역", StandardCharsets.UTF_8)
-        return s.replace("{stationName}", stationName)
+        return s
+            .replace("{stationName}", stationName)
             .replace("{stationNameForMaps}", mapsQuery)
     }
 

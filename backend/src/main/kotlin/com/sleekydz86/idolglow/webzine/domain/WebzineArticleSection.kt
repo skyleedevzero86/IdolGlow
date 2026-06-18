@@ -16,27 +16,22 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "webzine_article_sections",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_section_order", columnNames = ["article_id", "display_order"])
-    ]
+        UniqueConstraint(name = "uk_webzine_article_section_order", columnNames = ["article_id", "display_order"]),
+    ],
 )
 class WebzineArticleSection(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "article_id", nullable = false)
     val article: WebzineArticle,
-
     @Column(name = "display_order", nullable = false)
     val displayOrder: Int,
-
     @Column(length = 200)
     val heading: String? = null,
-
     @Column(nullable = false, columnDefinition = "TEXT")
     val body: String,
-
     @Column(length = 1000)
     val note: String? = null,
 ) : BaseEntity()

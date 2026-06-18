@@ -32,8 +32,7 @@ class AdminSurveyFormController(
         @RequestParam(required = false) status: SurveyFormStatus?,
         @RequestParam(required = false) primaryCategory: SurveyFormPrimaryCategory?,
         @RequestParam(required = false) secondaryCategory: SurveyFormSecondaryCategory?,
-    ): List<SurveyFormSummaryResponse> =
-        adminSurveyFormService.list(keyword, status, primaryCategory, secondaryCategory)
+    ): List<SurveyFormSummaryResponse> = adminSurveyFormService.list(keyword, status, primaryCategory, secondaryCategory)
 
     @GetMapping("/page")
     fun listPage(
@@ -43,35 +42,33 @@ class AdminSurveyFormController(
         @RequestParam(required = false) secondaryCategory: SurveyFormSecondaryCategory?,
         @RequestParam(required = false) page: Int?,
         @RequestParam(required = false) size: Int?,
-    ): SurveyFormPageResponse =
-        adminSurveyFormService.listPage(keyword, status, primaryCategory, secondaryCategory, page, size)
+    ): SurveyFormPageResponse = adminSurveyFormService.listPage(keyword, status, primaryCategory, secondaryCategory, page, size)
 
     @GetMapping("/current")
     fun findCurrent(): ResponseEntity<SurveyFormResponse> =
-        adminSurveyFormService.findCurrent()
+        adminSurveyFormService
+            .findCurrent()
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
 
     @GetMapping("/{id}")
-    fun find(@PathVariable id: Long): SurveyFormResponse =
-        adminSurveyFormService.find(id)
+    fun find(
+        @PathVariable id: Long,
+    ): SurveyFormResponse = adminSurveyFormService.find(id)
 
     @PostMapping
     fun create(
         @Valid @RequestBody request: AdminUpsertSurveyFormRequest,
-    ): ResponseEntity<SurveyFormResponse> =
-        ResponseEntity.ok(adminSurveyFormService.create(request))
+    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.create(request))
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody request: AdminUpsertSurveyFormRequest,
-    ): ResponseEntity<SurveyFormResponse> =
-        ResponseEntity.ok(adminSurveyFormService.update(id, request))
+    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.update(id, request))
 
     @PutMapping("/current")
     fun upsertCurrent(
         @Valid @RequestBody request: AdminUpsertSurveyFormRequest,
-    ): ResponseEntity<SurveyFormResponse> =
-        ResponseEntity.ok(adminSurveyFormService.upsertCurrent(request))
+    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.upsertCurrent(request))
 }

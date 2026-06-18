@@ -9,9 +9,8 @@ import org.springframework.core.env.Environment
 
 @Configuration
 class JasyptConfig(
-    private val environment: Environment
+    private val environment: Environment,
 ) {
-
     @Bean("jasyptStringEncryptor")
     fun encrypt(): StringEncryptor {
         val encryptKey =
@@ -22,7 +21,7 @@ class JasyptConfig(
                     "Jasypt 비밀번호가 없습니다. " +
                         "환경변수 JASYPT_ENCRYPTOR_PASSWORD를 설정하거나, " +
                         "JVM 옵션 -Djasypt.encryptor.password=... 를 전달하거나, " +
-                        "로컬 시크릿 설정 파일에 jasypt.encryptor.password 값을 넣어주세요."
+                        "로컬 시크릿 설정 파일에 jasypt.encryptor.password 값을 넣어주세요.",
                 )
 
         return PooledPBEStringEncryptor().apply {
@@ -48,9 +47,7 @@ class JasyptConfig(
         return System.getProperty(name)?.takeUnless { it.isBlank() || isPlaceholder(it) }
     }
 
-    private fun readSpringProperty(name: String): String? =
-        environment.getProperty(name)?.takeUnless { it.isBlank() || isPlaceholder(it) }
+    private fun readSpringProperty(name: String): String? = environment.getProperty(name)?.takeUnless { it.isBlank() || isPlaceholder(it) }
 
-    private fun isPlaceholder(value: String): Boolean =
-        value.startsWith("\${") && value.endsWith("}")
+    private fun isPlaceholder(value: String): Boolean = value.startsWith("\${") && value.endsWith("}")
 }

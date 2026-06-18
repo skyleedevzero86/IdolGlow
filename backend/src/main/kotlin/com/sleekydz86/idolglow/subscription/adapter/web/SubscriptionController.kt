@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.subscription.ui
 
-import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistrationResponse
+import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
 import com.sleekydz86.idolglow.subscription.ui.request.RegisterSubscriptionRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -20,20 +20,20 @@ import java.net.URI
 class SubscriptionController(
     private val subscriptionPublicUseCase: SubscriptionPublicUseCase,
 ) {
-
     @Operation(summary = "이메일 구독 신청")
     @PostMapping
     fun subscribe(
         @Valid @RequestBody request: RegisterSubscriptionRequest,
     ): ResponseEntity<SubscriptionRegistrationResponse> {
-        val created = subscriptionPublicUseCase.subscribe(
-            RegisterSubscriptionCommand(
-                email = request.email,
-                subscribeNewsletters = request.subscribeNewsletters,
-                subscribeIssues = request.subscribeIssues,
-                source = "WEB_MODAL",
+        val created =
+            subscriptionPublicUseCase.subscribe(
+                RegisterSubscriptionCommand(
+                    email = request.email,
+                    subscribeNewsletters = request.subscribeNewsletters,
+                    subscribeIssues = request.subscribeIssues,
+                    source = "WEB_MODAL",
+                ),
             )
-        )
 
         return ResponseEntity
             .created(URI.create("/subscriptions/${created.id}"))

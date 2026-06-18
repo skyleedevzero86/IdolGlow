@@ -16,5 +16,9 @@ data class AdminSurveyQuestionRequest(
     @field:NotNull
     val type: SurveyQuestionType,
     val required: Boolean = false,
-    val options: List<@NotBlank @Size(max = 300) String> = emptyList(),
+    val options: List<
+        @NotBlank
+        @Size(max = 300)
+        String,
+    > = emptyList(),
 )

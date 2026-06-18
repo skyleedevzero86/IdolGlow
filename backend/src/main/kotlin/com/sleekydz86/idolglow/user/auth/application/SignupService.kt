@@ -1,8 +1,8 @@
 ﻿package com.sleekydz86.idolglow.user.auth.application
 
+import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.UserExceptionType
-import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
@@ -22,7 +22,6 @@ class SignupService(
     private val subscriptionPublicUseCase: SubscriptionPublicUseCase,
     private val signupVerificationService: SignupVerificationService,
 ) {
-
     fun checkEmailField(raw: String): SignupFieldCheckResult {
         val t = raw.trim()
         if (t.isBlank()) return SignupFieldCheckResult(false, "BLANK")
@@ -36,11 +35,12 @@ class SignupService(
     fun checkNicknameField(raw: String): SignupFieldCheckResult {
         val t = raw.trim()
         if (t.isBlank()) return SignupFieldCheckResult(false, "BLANK")
-        val nickname = try {
-            Nickname.of(t)
-        } catch (_: CustomException) {
-            return SignupFieldCheckResult(false, "INVALID_FORMAT")
-        }
+        val nickname =
+            try {
+                Nickname.of(t)
+            } catch (_: CustomException) {
+                return SignupFieldCheckResult(false, "INVALID_FORMAT")
+            }
         if (userRepository.findByNicknameValue(nickname.value) != null) {
             return SignupFieldCheckResult(false, "TAKEN")
         }
@@ -54,8 +54,9 @@ class SignupService(
         password: String,
         subscribeToUpdates: Boolean = false,
     ): TokenResponse {
-        val normalizedEmail = normalizeEmail(email)
-            ?: throw CustomException(UserExceptionType.INVALID_EMAIL)
+        val normalizedEmail =
+            normalizeEmail(email)
+                ?: throw CustomException(UserExceptionType.INVALID_EMAIL)
         signupVerificationService.consumeVerifiedSignupToken(normalizedEmail)
 
         val trimmedPassword = password.trim()
@@ -64,11 +65,12 @@ class SignupService(
         }
         validatePasswordStrength(trimmedPassword)
 
-        val nickname = try {
-            Nickname.of(rawNickname)
-        } catch (e: CustomException) {
-            throw e
-        }
+        val nickname =
+            try {
+                Nickname.of(rawNickname)
+            } catch (e: CustomException) {
+                throw e
+            }
 
         if (userRepository.findByEmail(normalizedEmail) != null) {
             throw CustomException(UserExceptionType.EMAIL_ALREADY_REGISTERED)
@@ -78,13 +80,14 @@ class SignupService(
         }
 
         val encoded = passwordEncoder.encode(trimmedPassword)
-        val user = User(
-            email = normalizedEmail,
-            nickname = nickname,
-            profileImageUrl = null,
-            passwordHash = encoded,
-            role = UserRole.USER,
-        )
+        val user =
+            User(
+                email = normalizedEmail,
+                nickname = nickname,
+                profileImageUrl = null,
+                passwordHash = encoded,
+                role = UserRole.USER,
+            )
         val saved = userRepository.save(user)
 
         if (subscribeToUpdates) {
@@ -94,7 +97,7 @@ class SignupService(
                     subscribeNewsletters = true,
                     subscribeIssues = true,
                     source = "SIGNUP",
-                )
+                ),
             )
         }
 

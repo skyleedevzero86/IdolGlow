@@ -15,15 +15,17 @@ data class SurveySubmissionResponse(
                 id = submission.id,
                 formId = submission.form.id,
                 submittedAt = submission.createdAt,
-                answers = submission.answers.map { answer ->
-                    SurveySubmittedAnswerResponse(
-                        questionId = answer.question.id,
-                        answerText = answer.answerText,
-                        selectedOptions = answer.selectedOptions
-                            .sortedBy { it.displayOrder }
-                            .map { it.optionText },
-                    )
-                },
+                answers =
+                    submission.answers.map { answer ->
+                        SurveySubmittedAnswerResponse(
+                            questionId = answer.question.id,
+                            answerText = answer.answerText,
+                            selectedOptions =
+                                answer.selectedOptions
+                                    .sortedBy { it.displayOrder }
+                                    .map { it.optionText },
+                        )
+                    },
             )
     }
 }

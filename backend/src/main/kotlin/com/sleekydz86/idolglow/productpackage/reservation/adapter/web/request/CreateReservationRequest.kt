@@ -14,13 +14,16 @@ data class CreateReservationRequest(
     @field:Schema(description = "결제 총액", example = "300000.00")
     @field:NotNull
     @field:Positive
-    var totalPrice: BigDecimal
+    var totalPrice: BigDecimal,
 )
 
-fun CreateReservationRequest.toCommand(userId: Long, productId: Long): CreateReservationCommand =
+fun CreateReservationRequest.toCommand(
+    userId: Long,
+    productId: Long,
+): CreateReservationCommand =
     CreateReservationCommand(
         productId = productId,
         reservationSlotId = reservationSlotId,
         userId = userId,
-        totalPrice = totalPrice
+        totalPrice = totalPrice,
     )

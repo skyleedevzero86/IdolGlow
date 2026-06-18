@@ -16,17 +16,17 @@ class OptionCommandService(
     private val optionRepository: OptionRepository,
     private val imageEventPublisher: ImageEventPublisher,
 ) {
-
     fun createOption(
         command: CreateOptionCommand,
         imageFiles: List<OptionImageFile> = emptyList(),
     ): OptionResponse {
-        val option = Option(
-            name = command.name,
-            description = command.description,
-            price = command.price,
-            location = command.location
-        )
+        val option =
+            Option(
+                name = command.name,
+                description = command.description,
+                price = command.price,
+                location = command.location,
+            )
         val saved = optionRepository.save(option)
 
         imageFiles
@@ -37,7 +37,7 @@ class OptionCommandService(
                     aggregateId = saved.id,
                     originalFilename = image.originalFilename,
                     content = image.content,
-                    sortOrder = image.sortOrder
+                    sortOrder = image.sortOrder,
                 )
             }
 
@@ -48,8 +48,9 @@ class OptionCommandService(
         optionId: Long,
         command: CreateOptionCommand,
     ): OptionResponse {
-        val option = optionRepository.findById(optionId)
-            ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
+        val option =
+            optionRepository.findById(optionId)
+                ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
         option.update(
             name = command.name,
             description = command.description,

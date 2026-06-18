@@ -6,9 +6,8 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class ProductCommandRepository(
-    private val productJpaRepository: ProductJpaRepository
+    private val productJpaRepository: ProductJpaRepository,
 ) {
-
     fun findById(productId: Long): Product? = productJpaRepository.findByIdOrNull(productId)
 
     fun save(product: Product): Product = productJpaRepository.save(product)

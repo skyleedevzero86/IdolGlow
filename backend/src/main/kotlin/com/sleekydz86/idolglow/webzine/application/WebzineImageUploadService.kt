@@ -11,31 +11,39 @@ class WebzineImageUploadService(
     private val webzineImageStoragePort: WebzineImageStoragePort,
     private val adminAuditService: AdminAuditService,
 ) : WebzineImageUploadUseCase {
-
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override fun upload(file: MultipartFile, folder: String?): AdminIssueImageUploadResponse {
+    override fun upload(
+        file: MultipartFile,
+        folder: String?,
+    ): AdminIssueImageUploadResponse {
         require(!file.isEmpty) { "업로드할 이미지 파일을 선택해 주세요." }
 
         val bytes = file.bytes
         require(bytes.isNotEmpty()) { "업로드할 이미지 파일을 선택해 주세요." }
         require(bytes.size <= MAX_BYTES) { "이미지 업로드는 최대 15MB까지 가능합니다." }
 
-        val contentType = file.contentType?.lowercase()?.trim().orEmpty()
-        val ext = extensionFor(contentType, file.originalFilename)
-            ?: throw IllegalArgumentException("JPG, PNG, WebP, GIF 형식만 업로드할 수 있습니다.")
+        val contentType =
+            file.contentType
+                ?.lowercase()
+                ?.trim()
+                .orEmpty()
+        val ext =
+            extensionFor(contentType, file.originalFilename)
+                ?: throw IllegalArgumentException("JPG, PNG, WebP, GIF 형식만 업로드할 수 있습니다.")
 
         val safeFolder = sanitizeFolder(folder)
         val resolvedContentType = resolvedContentType(contentType, ext)
-        val storedImage = webzineImageStoragePort.store(
-            StoreWebzineImageCommand(
-                bytes = bytes,
-                originalFilename = file.originalFilename,
-                contentType = resolvedContentType,
-                extension = ext,
-                folder = safeFolder,
+        val storedImage =
+            webzineImageStoragePort.store(
+                StoreWebzineImageCommand(
+                    bytes = bytes,
+                    originalFilename = file.originalFilename,
+                    contentType = resolvedContentType,
+                    extension = ext,
+                    folder = safeFolder,
+                ),
             )
-        )
 
         runCatching {
             adminAuditService.log(
@@ -67,29 +75,34 @@ class WebzineImageUploadService(
             return "common"
         }
 
-        val normalized = raw
-            .replace("\\", "/")
-            .split("/")
-            .map { part ->
-                part.lowercase()
-                    .replace(Regex("[^a-z0-9_-]"), "-")
-                    .replace(Regex("-+"), "-")
-                    .trim('-')
-            }
-            .filter { it.isNotBlank() }
-            .joinToString("/")
+        val normalized =
+            raw
+                .replace("\\", "/")
+                .split("/")
+                .map { part ->
+                    part
+                        .lowercase()
+                        .replace(Regex("[^a-z0-9_-]"), "-")
+                        .replace(Regex("-+"), "-")
+                        .trim('-')
+                }.filter { it.isNotBlank() }
+                .joinToString("/")
 
         return normalized.ifBlank { "common" }
     }
 
-    private fun extensionFor(contentType: String, originalFilename: String?): String? {
-        val fromContentType = when (contentType) {
-            "image/jpeg", "image/jpg" -> ".jpg"
-            "image/png" -> ".png"
-            "image/webp" -> ".webp"
-            "image/gif" -> ".gif"
-            else -> null
-        }
+    private fun extensionFor(
+        contentType: String,
+        originalFilename: String?,
+    ): String? {
+        val fromContentType =
+            when (contentType) {
+                "image/jpeg", "image/jpg" -> ".jpg"
+                "image/png" -> ".png"
+                "image/webp" -> ".webp"
+                "image/gif" -> ".gif"
+                else -> null
+            }
         if (fromContentType != null) {
             return fromContentType
         }
@@ -103,7 +116,10 @@ class WebzineImageUploadService(
         }
     }
 
-    private fun resolvedContentType(contentType: String, ext: String): String =
+    private fun resolvedContentType(
+        contentType: String,
+        ext: String,
+    ): String =
         contentType.ifBlank {
             when (ext) {
                 ".jpg" -> "image/jpeg"

@@ -15,23 +15,23 @@ import org.springframework.transaction.event.TransactionalEventListener
 @Component
 class ImageEventListener(
     private val imageRepository: ImageRepository,
-    private val imageStorage: ImageStorage
+    private val imageStorage: ImageStorage,
 ) {
-
     @Async("imageStorageExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleImageCreate(event: ImageCreateEvent) {
         require(event.content.isNotEmpty()) { "이미지 내용은 비어 있을 수 없습니다." }
 
-        val image = Image.createAndStore(
-            aggregateType = event.aggregateType,
-            aggregateId = event.aggregateId,
-            originalFilename = event.originalFilename,
-            content = event.content,
-            sortOrder = event.sortOrder,
-            imageStorage = imageStorage,
-        )
+        val image =
+            Image.createAndStore(
+                aggregateType = event.aggregateType,
+                aggregateId = event.aggregateId,
+                originalFilename = event.originalFilename,
+                content = event.content,
+                sortOrder = event.sortOrder,
+                imageStorage = imageStorage,
+            )
         imageRepository.save(image)
     }
 

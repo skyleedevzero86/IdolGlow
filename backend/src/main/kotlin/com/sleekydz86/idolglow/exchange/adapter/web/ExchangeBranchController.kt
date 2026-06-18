@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController
 class ExchangeBranchController(
     private val exchangeBranchQueryService: ExchangeBranchQueryService,
 ) {
-
     @GetMapping("/branches")
     fun branches(
         @LoginUser userId: Long,

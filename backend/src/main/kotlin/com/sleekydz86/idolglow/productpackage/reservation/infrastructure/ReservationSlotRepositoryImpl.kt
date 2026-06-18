@@ -7,20 +7,15 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class ReservationSlotRepositoryImpl(
-    private val reservationSlotJpaRepository: ReservationSlotJpaRepository
+    private val reservationSlotJpaRepository: ReservationSlotJpaRepository,
 ) : ReservationSlotRepository {
+    override fun findById(slotId: Long): ReservationSlot? = reservationSlotJpaRepository.findByIdOrNull(slotId)
 
-    override fun findById(slotId: Long): ReservationSlot? =
-        reservationSlotJpaRepository.findByIdOrNull(slotId)
+    override fun findByIdForUpdate(slotId: Long): ReservationSlot? = reservationSlotJpaRepository.findByIdForUpdate(slotId)
 
-    override fun findByIdForUpdate(slotId: Long): ReservationSlot? =
-        reservationSlotJpaRepository.findByIdForUpdate(slotId)
+    override fun save(slot: ReservationSlot): ReservationSlot = reservationSlotJpaRepository.save(slot)
 
-    override fun save(slot: ReservationSlot): ReservationSlot =
-        reservationSlotJpaRepository.save(slot)
-
-    override fun delete(slot: ReservationSlot) =
-        reservationSlotJpaRepository.delete(slot)
+    override fun delete(slot: ReservationSlot) = reservationSlotJpaRepository.delete(slot)
 
     override fun findAllByProductId(productId: Long): List<ReservationSlot> =
         reservationSlotJpaRepository.findAllByProductIdOrderByReservationDateAscStartTimeAsc(productId)

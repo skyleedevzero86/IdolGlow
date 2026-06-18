@@ -24,7 +24,6 @@ import java.time.LocalDate
 class AdminReservationController(
     private val adminReservationService: AdminReservationService,
 ) {
-
     @GetMapping("/dashboard")
     fun findDashboard(
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) fromDate: LocalDate?,
@@ -56,8 +55,9 @@ class AdminReservationController(
         )
 
     @PostMapping("/{reservationId}/cancel")
-    fun cancelReservation(@PathVariable reservationId: Long): ResponseEntity<AdminReservationSummaryResponse> =
-        ResponseEntity.ok(adminReservationService.cancelReservation(reservationId))
+    fun cancelReservation(
+        @PathVariable reservationId: Long,
+    ): ResponseEntity<AdminReservationSummaryResponse> = ResponseEntity.ok(adminReservationService.cancelReservation(reservationId))
 
     @PatchMapping("/{reservationId}/memo")
     fun updateAdminMemo(

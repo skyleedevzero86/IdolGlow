@@ -1,8 +1,6 @@
 package com.sleekydz86.idolglow.mypage.graphql
 
 import com.sleekydz86.idolglow.mypage.application.dto.MypagePrimaryPromoResponse
-import com.sleekydz86.idolglow.mypage.application.dto.MypagePromoStripResponse
-import com.sleekydz86.idolglow.mypage.application.dto.MypageSecondaryPromoResponse
 
 data class MypagePrimaryPromoGraphQlResponse(
     val variant: String,
@@ -20,7 +18,7 @@ data class MypagePrimaryPromoGraphQlResponse(
                 highlight = response.highlight,
                 textAfterHighlight = response.textAfterHighlight,
                 href = response.href,
-                ctaLabel = response.ctaLabel
+                ctaLabel = response.ctaLabel,
             )
     }
 }

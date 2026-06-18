@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
-import io.swagger.v3.oas.annotations.parameters.RequestBody as OasRequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirements
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.parameters.RequestBody as OasRequestBody
 
 @Tag(
     name = "Toss webhook",
@@ -33,26 +33,26 @@ class TossWebhookController(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val tossWebhookService: TossWebhookService,
 ) {
-
     @SecurityRequirements
     @Operation(
         summary = "토스 웹훅 수신",
         description = "토스가 PAYMENT_STATUS_CHANGED 등 이벤트를 POST합니다. 본문은 JSON 원문 문자열이며, tosspayments-webhook-signature·tosspayments-webhook-transmission-time 헤더로 서명을 검증합니다. 검증 실패 시 401, 성공 시 200이며 결제·예약 반영은 검증 후 수행됩니다.",
-        requestBody = OasRequestBody(
-            description = "토스 웹훅 원문 JSON (문자열 그대로 전달)",
-            required = true,
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    examples = [
-                        ExampleObject(
-                            name = "PAYMENT_STATUS_CHANGED",
-                            value = """{"eventType":"PAYMENT_STATUS_CHANGED","createdAt":"2022-01-01T00:00:00.000000","data":{"paymentKey":"...","orderId":"...","status":"DONE"}}""",
-                        ),
-                    ],
-                ),
-            ],
-        ),
+        requestBody =
+            OasRequestBody(
+                description = "토스 웹훅 원문 JSON (문자열 그대로 전달)",
+                required = true,
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        examples = [
+                            ExampleObject(
+                                name = "PAYMENT_STATUS_CHANGED",
+                                value = """{"eventType":"PAYMENT_STATUS_CHANGED","createdAt":"2022-01-01T00:00:00.000000","data":{"paymentKey":"...","orderId":"...","status":"DONE"}}""",
+                            ),
+                        ],
+                    ),
+                ],
+            ),
     )
     @ApiResponses(
         value = [

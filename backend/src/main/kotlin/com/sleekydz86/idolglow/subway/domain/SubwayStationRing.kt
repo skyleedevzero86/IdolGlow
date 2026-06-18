@@ -13,11 +13,9 @@ class SubwayStationRing(
 
     fun at(index: Int): SubwayStationStop = ordered[index]
 
-    fun previous(index: Int): SubwayStationStop =
-        if (index == 0) ordered.last() else ordered[index - 1]
+    fun previous(index: Int): SubwayStationStop = if (index == 0) ordered.last() else ordered[index - 1]
 
-    fun next(index: Int): SubwayStationStop =
-        if (index == ordered.lastIndex) ordered.first() else ordered[index + 1]
+    fun next(index: Int): SubwayStationStop = if (index == ordered.lastIndex) ordered.first() else ordered[index + 1]
 
     val size: Int get() = ordered.size
 }

@@ -37,21 +37,26 @@ class AdminCatalogService(
     private val imageEventPublisher: ImageEventPublisher,
     private val adminAuditService: AdminAuditService,
 ) {
-
     fun findSlots(productId: Long): List<AdminReservationSlotResponse> =
-        reservationSlotRepository.findAllByProductId(productId)
+        reservationSlotRepository
+            .findAllByProductId(productId)
             .map(AdminReservationSlotResponse::from)
 
-    fun createSlots(productId: Long, request: CreateReservationSlotsRequest): List<AdminReservationSlotResponse> {
+    fun createSlots(
+        productId: Long,
+        request: CreateReservationSlotsRequest,
+    ): List<AdminReservationSlotResponse> {
         require(!request.endDate.isBefore(request.startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
         require(request.startHour < request.endHour) { "시작 시간은 종료 시간보다 빨라야 합니다." }
 
-        val product = productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
+        val product =
+            productCommandRepository.findById(productId)
+                ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
 
-        val existingKeys = product.reservationSlots
-            .map { slotKey(it.reservationDate, it.startTime) }
-            .toMutableSet()
+        val existingKeys =
+            product.reservationSlots
+                .map { slotKey(it.reservationDate, it.startTime) }
+                .toMutableSet()
 
         var currentDate = request.startDate
         val adminNote = request.adminNote?.trim()?.takeIf { it.isNotEmpty() }
@@ -73,7 +78,7 @@ class AdminCatalogService(
                             startTime = startTime,
                             endTime = startTime.plusHours(1),
                             adminNote = adminNote,
-                        )
+                        ),
                     )
                     existingKeys += key
                 }
@@ -115,8 +120,9 @@ class AdminCatalogService(
         slotId: Long,
         markdown: String?,
     ): AdminReservationSlotResponse {
-        val slot = reservationSlotRepository.findByIdForUpdate(slotId)
-            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
+        val slot =
+            reservationSlotRepository.findByIdForUpdate(slotId)
+                ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
         slot.updateAdminNote(markdown)
         adminAuditService.log(
             actionCode = "SLOT_NOTE_UPDATE",
@@ -128,8 +134,9 @@ class AdminCatalogService(
     }
 
     fun deleteSlot(slotId: Long) {
-        val slot = reservationSlotRepository.findByIdForUpdate(slotId)
-            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
+        val slot =
+            reservationSlotRepository.findByIdForUpdate(slotId)
+                ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
         val now = LocalDateTime.now()
         slot.validateAvailability(slot.product.id, now)
         require(!reservationRepository.existsByReservationSlotId(slotId)) {
@@ -155,8 +162,9 @@ class AdminCatalogService(
         require(!productOptionAdminRepository.existsByOptionId(optionId)) {
             "상품에 연결된 옵션은 삭제할 수 없습니다."
         }
-        val option = optionRepository.findById(optionId)
-            ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
+        val option =
+            optionRepository.findById(optionId)
+                ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
         imageEventPublisher.publishDelete(ImageAggregateType.OPTION, optionId)
         optionRepository.delete(option)
         adminAuditService.log(
@@ -167,6 +175,8 @@ class AdminCatalogService(
         )
     }
 
-    private fun slotKey(date: LocalDate, startTime: LocalTime): String =
-        "$date|$startTime"
+    private fun slotKey(
+        date: LocalDate,
+        startTime: LocalTime,
+    ): String = "$date|$startTime"
 }

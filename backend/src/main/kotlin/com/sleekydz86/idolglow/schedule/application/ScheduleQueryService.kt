@@ -10,16 +10,23 @@ import kotlin.collections.map
 @Transactional(readOnly = true)
 @Service
 class ScheduleQueryService(
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
 ) {
-
-    fun findSchedule(scheduleId: Long, userId: Long): ScheduleResponse {
-        val schedule = scheduleRepository.findByIdAndUserId(scheduleId, userId)
-            ?: throw IllegalArgumentException("일정을 찾을 수 없습니다: $scheduleId")
+    fun findSchedule(
+        scheduleId: Long,
+        userId: Long,
+    ): ScheduleResponse {
+        val schedule =
+            scheduleRepository.findByIdAndUserId(scheduleId, userId)
+                ?: throw IllegalArgumentException("일정을 찾을 수 없습니다: $scheduleId")
         return ScheduleResponse.from(schedule)
     }
 
-    fun findSchedules(userId: Long, cursorId: Long?, size: Int): ScheduleSliceResponse {
+    fun findSchedules(
+        userId: Long,
+        cursorId: Long?,
+        size: Int,
+    ): ScheduleSliceResponse {
         val schedules = scheduleRepository.findByUserId(userId, cursorId, size)
         val hasNext = schedules.size > size
         val content = if (hasNext) schedules.subList(0, size) else schedules
@@ -28,7 +35,7 @@ class ScheduleQueryService(
         return ScheduleSliceResponse(
             schedules = content.map { ScheduleResponse.from(it) },
             hasNext = hasNext,
-            nextCursorId = nextCursorId
+            nextCursorId = nextCursorId,
         )
     }
 }

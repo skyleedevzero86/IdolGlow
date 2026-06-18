@@ -17,14 +17,11 @@ class SurveyAnswerOption(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_answer_id", nullable = false)
     val answer: SurveyAnswer,
-
     @Column(name = "display_order", nullable = false)
     var displayOrder: Int,
-
     @Column(name = "option_text", nullable = false, length = 300)
     var optionText: String,
 ) : BaseEntity()

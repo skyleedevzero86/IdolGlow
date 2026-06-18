@@ -10,14 +10,16 @@ import java.time.Duration
 
 @Configuration
 class WebClientConfig {
-
     @Bean
     fun webClient(): WebClient {
-        val httpClient = HttpClient.create()
-            .responseTimeout(Duration.ofSeconds(TIMEOUT_SECOND))
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECTION_TIMEOUT_TIME_MILLIS)
+        val httpClient =
+            HttpClient
+                .create()
+                .responseTimeout(Duration.ofSeconds(TIMEOUT_SECOND))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECTION_TIMEOUT_TIME_MILLIS)
 
-        return WebClient.builder()
+        return WebClient
+            .builder()
             .clientConnector(ReactorClientHttpConnector(httpClient))
             .build()
     }

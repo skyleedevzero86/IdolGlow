@@ -19,41 +19,35 @@ import java.time.LocalDate
     name = "newsletters",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_newsletter_slug", columnNames = ["slug"]),
-    ]
+    ],
 )
 class Newsletter(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 160)
     var slug: String,
-
     @Column(nullable = false, length = 200)
     var title: String,
-
     @Column(name = "category_label", nullable = false, length = 80)
     var categoryLabel: String,
-
     @Column(name = "published_at", nullable = false)
     var publishedAt: LocalDate,
-
     @Column(name = "image_url", nullable = false, length = 500)
     var imageUrl: String,
-
     @Column(nullable = false, columnDefinition = "TEXT")
     var summary: String,
-
     @OrderBy("displayOrder ASC")
     @OneToMany(mappedBy = "newsletter", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val tags: MutableList<NewsletterTag> = mutableListOf(),
-
     @OrderBy("displayOrder ASC")
     @OneToMany(mappedBy = "newsletter", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val paragraphs: MutableList<NewsletterParagraph> = mutableListOf(),
 ) : BaseEntity() {
-
-    fun update(slug: String, draft: NewsletterDraft) {
+    fun update(
+        slug: String,
+        draft: NewsletterDraft,
+    ) {
         validateDraft(draft)
 
         this.slug = slug.trim()
@@ -70,27 +64,32 @@ class Newsletter(
     private fun replaceTags(tagNames: List<String>) {
         tags.clear()
         tagNames.forEachIndexed { index, tag ->
-            tags += NewsletterTag(
-                newsletter = this,
-                displayOrder = index,
-                tagName = tag.trim(),
-            )
+            tags +=
+                NewsletterTag(
+                    newsletter = this,
+                    displayOrder = index,
+                    tagName = tag.trim(),
+                )
         }
     }
 
     private fun replaceParagraphs(items: List<String>) {
         paragraphs.clear()
         items.forEachIndexed { index, body ->
-            paragraphs += NewsletterParagraph(
-                newsletter = this,
-                displayOrder = index,
-                body = body.trim(),
-            )
+            paragraphs +=
+                NewsletterParagraph(
+                    newsletter = this,
+                    displayOrder = index,
+                    body = body.trim(),
+                )
         }
     }
 
     companion object {
-        fun create(slug: String, draft: NewsletterDraft): Newsletter {
+        fun create(
+            slug: String,
+            draft: NewsletterDraft,
+        ): Newsletter {
             validateDraft(draft)
 
             return Newsletter(

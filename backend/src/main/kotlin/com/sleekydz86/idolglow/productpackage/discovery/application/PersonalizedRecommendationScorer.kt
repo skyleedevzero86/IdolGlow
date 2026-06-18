@@ -5,7 +5,6 @@ import com.sleekydz86.idolglow.user.user.domain.UserSurvey
 import kotlin.math.ln
 
 object PersonalizedRecommendationScorer {
-
     private const val WEIGHT_CONCEPT_TAG = 4.0
     private const val WEIGHT_BEHAVIOR_TAG = 2.5
     private const val WEIGHT_PLACE = 2.0
@@ -39,10 +38,11 @@ object PersonalizedRecommendationScorer {
 
         val blob = productSearchBlob(product)
         if (placeKeywords.isNotEmpty()) {
-            val hits = placeKeywords.count { kw ->
-                val k = kw.trim().lowercase()
-                k.isNotEmpty() && blob.contains(k)
-            }
+            val hits =
+                placeKeywords.count { kw ->
+                    val k = kw.trim().lowercase()
+                    k.isNotEmpty() && blob.contains(k)
+                }
             score += WEIGHT_PLACE * hits
         }
 
@@ -71,10 +71,11 @@ object PersonalizedRecommendationScorer {
         behaviorTags: Set<String>,
         conceptTag: String?,
     ): List<String> {
-        val signals = buildSet {
-            addAll(behaviorTags)
-            if (conceptTag != null) add(conceptTag)
-        }
+        val signals =
+            buildSet {
+                addAll(behaviorTags)
+                if (conceptTag != null) add(conceptTag)
+            }
         return productTags.filter { it in signals }.distinct()
     }
 
@@ -96,7 +97,8 @@ object PersonalizedRecommendationScorer {
     }
 
     private fun idolTokens(idolName: String): List<String> =
-        idolName.split(Regex("[\\s,]+"))
+        idolName
+            .split(Regex("[\\s,]+"))
             .map { it.trim().lowercase() }
             .filter { it.length >= 2 }
             .distinct()

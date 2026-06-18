@@ -27,39 +27,45 @@ class ProductReviewCommandService(
     private val reservationRepository: ReservationRepository,
     private val imageEventPublisher: ImageEventPublisher,
 ) {
-
     fun createReview(
         command: CreateProductReviewCommand,
-        images: List<ReviewImageFile> = emptyList()
+        images: List<ReviewImageFile> = emptyList(),
     ): ProductReview {
         val product = loadProduct(command.productId)
         ensureNotReviewed(product.id, command.userId)
 
-        val reservation = loadReservationForReview(
-            reservationId = command.reservationId,
-            productId = command.productId,
-            userId = command.userId,
-        )
+        val reservation =
+            loadReservationForReview(
+                reservationId = command.reservationId,
+                productId = command.productId,
+                userId = command.userId,
+            )
         require(!productReviewRepository.existsByReservationId(reservation.id)) {
             "이 예약으로 이미 리뷰가 등록되었습니다."
         }
 
-        val review = ProductReview(
-            product = product,
-            userId = command.userId,
-            rating = ReviewRating.of(command.rating),
-            content = command.content,
-            reservationId = reservation.id,
-        )
+        val review =
+            ProductReview(
+                product = product,
+                userId = command.userId,
+                rating = ReviewRating.of(command.rating),
+                content = command.content,
+                reservationId = reservation.id,
+            )
 
         val productReview = productReviewRepository.save(review)
         storeImages(productReview.id, images)
         return productReview
     }
 
-    private fun loadReservationForReview(reservationId: Long, productId: Long, userId: Long): Reservation {
-        val r = reservationRepository.findByIdWithSlotAndProduct(reservationId)
-            ?: throw EntityNotFoundException("예약을 찾을 수 없습니다: $reservationId")
+    private fun loadReservationForReview(
+        reservationId: Long,
+        productId: Long,
+        userId: Long,
+    ): Reservation {
+        val r =
+            reservationRepository.findByIdWithSlotAndProduct(reservationId)
+                ?: throw EntityNotFoundException("예약을 찾을 수 없습니다: $reservationId")
         val today = LocalDate.now(ZoneOffset.UTC)
         r.validateOwner(userId)
         require(r.reservationSlot.product.id == productId) { "예약이 해당 상품과 일치하지 않습니다." }
@@ -68,25 +74,27 @@ class ProductReviewCommandService(
         return r
     }
 
-    private fun loadProduct(productId: Long): Product {
-        return productRepository.findById(productId)
+    private fun loadProduct(productId: Long): Product =
+        productRepository.findById(productId)
             ?: throw EntityNotFoundException("상품을 찾을 수 없습니다: $productId")
-    }
 
-    private fun ensureNotReviewed(productId: Long, userId: Long) {
+    private fun ensureNotReviewed(
+        productId: Long,
+        userId: Long,
+    ) {
         val existing = productReviewRepository.findByProductIdAndUserId(productId, userId)
         require(existing == null) { "이 상품에는 이미 리뷰를 작성했습니다." }
     }
 
     fun updateReview(
         command: UpdateProductReviewCommand,
-        images: List<ReviewImageFile>? = null
+        images: List<ReviewImageFile>? = null,
     ): ProductReview {
         val review = findProductByReviewId(command.reviewId)
         review.validateOwner(userId = command.userId, productId = command.productId)
         review.changeReview(
             rating = ReviewRating.of(command.rating),
-            content = command.content
+            content = command.content,
         )
 
         images?.let {
@@ -100,21 +108,28 @@ class ProductReviewCommandService(
         productReviewRepository.findById(reviewId)
             ?: throw IllegalArgumentException("리뷰를 찾을 수 없습니다: $reviewId")
 
-    fun deleteReview(productId: Long, reviewId: Long, userId: Long) {
+    fun deleteReview(
+        productId: Long,
+        reviewId: Long,
+        userId: Long,
+    ) {
         val review = findProductByReviewId(reviewId)
         review.validateOwner(userId = userId, productId = productId)
         deleteImages(reviewId)
         productReviewRepository.delete(review)
     }
 
-    private fun storeImages(reviewId: Long, images: List<ReviewImageFile>) {
+    private fun storeImages(
+        reviewId: Long,
+        images: List<ReviewImageFile>,
+    ) {
         images.forEach { image ->
             imageEventPublisher.publishCreate(
                 aggregateType = ImageAggregateType.PRODUCT_REVIEW,
                 aggregateId = reviewId,
                 originalFilename = image.originalFilename,
                 content = image.content,
-                sortOrder = image.sortOrder
+                sortOrder = image.sortOrder,
             )
         }
     }

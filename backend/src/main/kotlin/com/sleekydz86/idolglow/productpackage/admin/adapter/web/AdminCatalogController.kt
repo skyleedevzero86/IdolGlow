@@ -29,7 +29,6 @@ class AdminCatalogController(
     private val adminCatalogService: AdminCatalogService,
     private val optionQueryService: OptionQueryService,
 ) {
-
     @GetMapping("/options")
     fun searchOptions(
         @RequestParam(required = false) q: String?,
@@ -47,15 +46,15 @@ class AdminCatalogController(
     }
 
     @GetMapping("/products/{productId}/slots")
-    fun findSlots(@PathVariable productId: Long): ResponseEntity<List<AdminReservationSlotResponse>> =
-        ResponseEntity.ok(adminCatalogService.findSlots(productId))
+    fun findSlots(
+        @PathVariable productId: Long,
+    ): ResponseEntity<List<AdminReservationSlotResponse>> = ResponseEntity.ok(adminCatalogService.findSlots(productId))
 
     @PostMapping("/products/{productId}/slots")
     fun createSlots(
         @PathVariable productId: Long,
         @Valid @RequestBody request: CreateReservationSlotsRequest,
-    ): ResponseEntity<List<AdminReservationSlotResponse>> =
-        ResponseEntity.ok(adminCatalogService.createSlots(productId, request))
+    ): ResponseEntity<List<AdminReservationSlotResponse>> = ResponseEntity.ok(adminCatalogService.createSlots(productId, request))
 
     @PutMapping("/products/{productId}")
     fun updateProduct(
@@ -79,23 +78,28 @@ class AdminCatalogController(
     fun updateSlotNote(
         @PathVariable slotId: Long,
         @RequestBody request: UpdateAdminMarkdownRequest,
-    ): ResponseEntity<AdminReservationSlotResponse> =
-        ResponseEntity.ok(adminCatalogService.updateSlotNote(slotId, request.markdown))
+    ): ResponseEntity<AdminReservationSlotResponse> = ResponseEntity.ok(adminCatalogService.updateSlotNote(slotId, request.markdown))
 
     @DeleteMapping("/slots/{slotId}")
-    fun deleteSlot(@PathVariable slotId: Long): ResponseEntity<Void> {
+    fun deleteSlot(
+        @PathVariable slotId: Long,
+    ): ResponseEntity<Void> {
         adminCatalogService.deleteSlot(slotId)
         return ResponseEntity.noContent().build()
     }
 
     @DeleteMapping("/products/{productId}")
-    fun deleteProduct(@PathVariable productId: Long): ResponseEntity<Void> {
+    fun deleteProduct(
+        @PathVariable productId: Long,
+    ): ResponseEntity<Void> {
         adminCatalogService.deleteProduct(productId)
         return ResponseEntity.noContent().build()
     }
 
     @DeleteMapping("/options/{optionId}")
-    fun deleteOption(@PathVariable optionId: Long): ResponseEntity<Void> {
+    fun deleteOption(
+        @PathVariable optionId: Long,
+    ): ResponseEntity<Void> {
         adminCatalogService.deleteOption(optionId)
         return ResponseEntity.noContent().build()
     }

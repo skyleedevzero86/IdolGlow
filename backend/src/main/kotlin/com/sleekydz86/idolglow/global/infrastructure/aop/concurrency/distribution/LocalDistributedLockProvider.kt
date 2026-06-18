@@ -1,26 +1,26 @@
 package com.sleekydz86.idolglow.global.infrastructure.aop.concurrency.distribution
 
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 class LocalDistributedLockProvider : DistributedLockProvider {
-
     private val locks = ConcurrentHashMap<String, ReentrantLock>()
 
     override fun tryLock(
         key: String,
         waitTimeMillis: Long,
-        leaseTimeMillis: Long
+        leaseTimeMillis: Long,
     ): LockHandle? {
         val lock = locks.computeIfAbsent(key) { ReentrantLock() }
         return try {
-            val acquired = if (waitTimeMillis <= 0) {
-                lock.tryLock()
-            } else {
-                lock.tryLock(waitTimeMillis, TimeUnit.MILLISECONDS)
-            }
+            val acquired =
+                if (waitTimeMillis <= 0) {
+                    lock.tryLock()
+                } else {
+                    lock.tryLock(waitTimeMillis, TimeUnit.MILLISECONDS)
+                }
 
             if (acquired) {
                 LockHandle(key, UUID.randomUUID().toString())

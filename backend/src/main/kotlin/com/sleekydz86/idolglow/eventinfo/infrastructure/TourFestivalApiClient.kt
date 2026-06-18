@@ -39,13 +39,14 @@ class TourFestivalApiClient(
         return fetchList<FestivalItem>(
             endpoint = "searchFestival2",
             encodedServiceKey = encodedKey,
-            params = mapOf(
-                "arrange" to "Q",
-                "eventStartDate" to eventStartDate,
-                "eventEndDate" to eventEndDate,
-                "pageNo" to pageNo.toString(),
-                "numOfRows" to numOfRows.toString(),
-            ),
+            params =
+                mapOf(
+                    "arrange" to "Q",
+                    "eventStartDate" to eventStartDate,
+                    "eventEndDate" to eventEndDate,
+                    "pageNo" to pageNo.toString(),
+                    "numOfRows" to numOfRows.toString(),
+                ),
         ).mapNotNull { it.toDomain() }
     }
 
@@ -55,26 +56,31 @@ class TourFestivalApiClient(
         return fetchList<DetailCommonItem>(
             endpoint = "detailCommon2",
             encodedServiceKey = encodedKey,
-            params = mapOf(
-                "contentId" to contentId,
-                "pageNo" to "1",
-                "numOfRows" to "10",
-            ),
+            params =
+                mapOf(
+                    "contentId" to contentId,
+                    "pageNo" to "1",
+                    "numOfRows" to "10",
+                ),
         ).firstOrNull()?.toDomain()
     }
 
-    override fun detailImage(contentId: String, imageYn: String): List<FestivalImage> {
+    override fun detailImage(
+        contentId: String,
+        imageYn: String,
+    ): List<FestivalImage> {
         val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
         if (encodedKey.isEmpty()) return emptyList()
         return fetchList<DetailImageItem>(
             endpoint = "detailImage2",
             encodedServiceKey = encodedKey,
-            params = mapOf(
-                "contentId" to contentId,
-                "imageYN" to imageYn,
-                "pageNo" to "1",
-                "numOfRows" to "30",
-            ),
+            params =
+                mapOf(
+                    "contentId" to contentId,
+                    "imageYN" to imageYn,
+                    "pageNo" to "1",
+                    "numOfRows" to "30",
+                ),
         ).mapNotNull { it.toDomain() }
     }
 
@@ -93,17 +99,18 @@ class TourFestivalApiClient(
         return fetchList<FestivalItem>(
             endpoint = "searchKeyword2",
             encodedServiceKey = encodedKey,
-            params = buildMap {
-                put("arrange", "Q")
-                put("keyword", keyword)
-                put("pageNo", pageNo.toString())
-                put("numOfRows", numOfRows.toString())
-                lDongRegnCd?.let { put("lDongRegnCd", it) }
-                lDongSignguCd?.let { put("lDongSignguCd", it) }
-                lclsSystm1?.let { put("lclsSystm1", it) }
-                lclsSystm2?.let { put("lclsSystm2", it) }
-                lclsSystm3?.let { put("lclsSystm3", it) }
-            },
+            params =
+                buildMap {
+                    put("arrange", "Q")
+                    put("keyword", keyword)
+                    put("pageNo", pageNo.toString())
+                    put("numOfRows", numOfRows.toString())
+                    lDongRegnCd?.let { put("lDongRegnCd", it) }
+                    lDongSignguCd?.let { put("lDongSignguCd", it) }
+                    lclsSystm1?.let { put("lclsSystm1", it) }
+                    lclsSystm2?.let { put("lclsSystm2", it) }
+                    lclsSystm3?.let { put("lclsSystm3", it) }
+                },
         ).mapNotNull { it.toDomain() }
     }
 
@@ -121,32 +128,37 @@ class TourFestivalApiClient(
         return fetchList<FestivalItem>(
             endpoint = "areaBasedList2",
             encodedServiceKey = encodedKey,
-            params = buildMap {
-                put("arrange", "Q")
-                put("pageNo", pageNo.toString())
-                put("numOfRows", numOfRows.toString())
-                lDongRegnCd?.let { put("lDongRegnCd", it) }
-                lDongSignguCd?.let { put("lDongSignguCd", it) }
-                lclsSystm1?.let { put("lclsSystm1", it) }
-                lclsSystm2?.let { put("lclsSystm2", it) }
-                lclsSystm3?.let { put("lclsSystm3", it) }
-            },
+            params =
+                buildMap {
+                    put("arrange", "Q")
+                    put("pageNo", pageNo.toString())
+                    put("numOfRows", numOfRows.toString())
+                    lDongRegnCd?.let { put("lDongRegnCd", it) }
+                    lDongSignguCd?.let { put("lDongSignguCd", it) }
+                    lclsSystm1?.let { put("lclsSystm1", it) }
+                    lclsSystm2?.let { put("lclsSystm2", it) }
+                    lclsSystm3?.let { put("lclsSystm3", it) }
+                },
         ).mapNotNull { it.toDomain() }
     }
 
-    override fun lDongCodes(lDongRegnCd: String?, lDongListYn: String): List<CodeEntry> {
+    override fun lDongCodes(
+        lDongRegnCd: String?,
+        lDongListYn: String,
+    ): List<CodeEntry> {
         val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
         if (encodedKey.isEmpty()) return emptyList()
         val parentRegnCd = lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() }
         return fetchList<CodeItem>(
             endpoint = "ldongCode2",
             encodedServiceKey = encodedKey,
-            params = buildMap {
-                put("lDongListYn", lDongListYn)
-                put("pageNo", "1")
-                put("numOfRows", "1000")
-                parentRegnCd?.let { put("lDongRegnCd", it) }
-            },
+            params =
+                buildMap {
+                    put("lDongListYn", lDongListYn)
+                    put("pageNo", "1")
+                    put("numOfRows", "1000")
+                    parentRegnCd?.let { put("lDongRegnCd", it) }
+                },
         ).map { it.toDomain(parentRegnCd = parentRegnCd) }
     }
 
@@ -161,14 +173,15 @@ class TourFestivalApiClient(
         return fetchList<CodeItem>(
             endpoint = "lclsSystmCode2",
             encodedServiceKey = encodedKey,
-            params = buildMap {
-                put("lclsSystmListYn", lclsSystmListYn)
-                put("pageNo", "1")
-                put("numOfRows", "1000")
-                lclsSystm1?.let { put("lclsSystm1", it) }
-                lclsSystm2?.let { put("lclsSystm2", it) }
-                lclsSystm3?.let { put("lclsSystm3", it) }
-            },
+            params =
+                buildMap {
+                    put("lclsSystmListYn", lclsSystmListYn)
+                    put("pageNo", "1")
+                    put("numOfRows", "1000")
+                    lclsSystm1?.let { put("lclsSystm1", it) }
+                    lclsSystm2?.let { put("lclsSystm2", it) }
+                    lclsSystm3?.let { put("lclsSystm3", it) }
+                },
         ).map { it.toDomain() }
     }
 
@@ -186,12 +199,13 @@ class TourFestivalApiClient(
             log.warn("관광(축제) API XML 오류 응답. endpoint={}, body={}", endpoint, response.body.take(300))
             return emptyList()
         }
-        val root = runCatching {
-            objectMapper.readTree(response.body)
-        }.getOrElse { e ->
-            log.warn("관광(축제) API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
-            return emptyList()
-        }
+        val root =
+            runCatching {
+                objectMapper.readTree(response.body)
+            }.getOrElse { e ->
+                log.warn("관광(축제) API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
+                return emptyList()
+            }
         val responseNode = root.path("response")
         val headerNode = responseNode.path("header")
         val resultCode = headerNode.path("resultCode").asText("")
@@ -221,18 +235,20 @@ class TourFestivalApiClient(
         encodedServiceKey: String,
         params: Map<String, String>,
     ): RawFestivalResponse {
-        val requestUri = URI.create(
-            buildUri(endpoint, encodedServiceKey, params),
-        )
+        val requestUri =
+            URI.create(
+                buildUri(endpoint, encodedServiceKey, params),
+            )
         return runCatching {
-            webClient.get()
+            webClient
+                .get()
                 .uri(requestUri)
                 .exchangeToMono { clientResponse ->
-                    clientResponse.bodyToMono(String::class.java)
+                    clientResponse
+                        .bodyToMono(String::class.java)
                         .defaultIfEmpty("")
                         .map { body -> RawFestivalResponse(clientResponse.statusCode(), body) }
-                }
-                .block()
+                }.block()
                 ?: RawFestivalResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
             log.warn("관광 축제 API 호출 실패: {}", e.message)
@@ -240,12 +256,17 @@ class TourFestivalApiClient(
         }
     }
 
-    private fun buildUri(endpoint: String, encodedServiceKey: String, params: Map<String, String>): String {
+    private fun buildUri(
+        endpoint: String,
+        encodedServiceKey: String,
+        params: Map<String, String>,
+    ): String {
         val encodedMobileOs = UriUtils.encodeQueryParam(tourKorApiProperties.mobileOs, StandardCharsets.UTF_8)
         val encodedMobileApp = UriUtils.encodeQueryParam(tourKorApiProperties.mobileApp, StandardCharsets.UTF_8)
-        val query = params.entries.joinToString("&") { (k, v) ->
-            "$k=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
-        }
+        val query =
+            params.entries.joinToString("&") { (k, v) ->
+                "$k=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
+            }
         return "${koreanServiceBaseUrl()}/$endpoint" +
             "?serviceKey=$encodedServiceKey" +
             "&MobileOS=$encodedMobileOs" +
@@ -266,7 +287,10 @@ class TourFestivalApiClient(
     }
 }
 
-private data class RawFestivalResponse(val statusCode: HttpStatusCode, val body: String)
+private data class RawFestivalResponse(
+    val statusCode: HttpStatusCode,
+    val body: String,
+)
 
 private val HREF_ATTR_REGEX = Regex("""href\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
 private val HTML_TAG_REGEX = Regex("<[^>]+>")
@@ -409,7 +433,7 @@ private data class CodeItem(
         val trimmedCode = code?.trim()?.takeIf { it.isNotEmpty() }
         val regnFromCode =
             parentRegnCd == null &&
-            rawRegn == null &&
+                rawRegn == null &&
                 rawSigngu == null &&
                 noLcls &&
                 trimmedCode != null
@@ -421,9 +445,9 @@ private data class CodeItem(
             rawSigngu
                 ?: if (
                     noLcls &&
-                        effectiveRegnCd != null &&
-                        trimmedCode != null &&
-                        trimmedCode != effectiveRegnCd
+                    effectiveRegnCd != null &&
+                    trimmedCode != null &&
+                    trimmedCode != effectiveRegnCd
                 ) {
                     trimmedCode
                 } else {

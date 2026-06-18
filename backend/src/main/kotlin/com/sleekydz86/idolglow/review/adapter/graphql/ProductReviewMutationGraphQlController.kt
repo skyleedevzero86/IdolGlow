@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.review.graphql
 
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.review.application.ProductReviewCommandService
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
 import com.sleekydz86.idolglow.review.application.ProductReviewTrustCommandService
@@ -21,22 +21,22 @@ class ProductReviewMutationGraphQlController(
     private val productReviewTrustCommandService: ProductReviewTrustCommandService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @MutationMapping
     fun updateProductReview(
         @Argument productId: String,
         @Argument reviewId: String,
         @Argument @Valid input: UpdateProductReviewRequest,
     ): ProductReviewGraphQlResponse {
-        val review = productReviewCommandService.updateReview(
-            UpdateProductReviewCommand(
-                productId = productId.toGraphQlIdLong("productId"),
-                reviewId = reviewId.toGraphQlIdLong("reviewId"),
-                userId = authenticatedUserIdResolver.resolveRequired(),
-                rating = input.rating,
-                content = input.content
+        val review =
+            productReviewCommandService.updateReview(
+                UpdateProductReviewCommand(
+                    productId = productId.toGraphQlIdLong("productId"),
+                    reviewId = reviewId.toGraphQlIdLong("reviewId"),
+                    userId = authenticatedUserIdResolver.resolveRequired(),
+                    rating = input.rating,
+                    content = input.content,
+                ),
             )
-        )
         return ProductReviewGraphQlResponse.from(productReviewQueryService.toResponse(review))
     }
 
@@ -48,7 +48,7 @@ class ProductReviewMutationGraphQlController(
         productReviewCommandService.deleteReview(
             productId = productId.toGraphQlIdLong("productId"),
             reviewId = reviewId.toGraphQlIdLong("reviewId"),
-            userId = authenticatedUserIdResolver.resolveRequired()
+            userId = authenticatedUserIdResolver.resolveRequired(),
         )
         return true
     }
@@ -58,11 +58,12 @@ class ProductReviewMutationGraphQlController(
         @Argument productId: String,
         @Argument reviewId: String,
     ): Int {
-        val count = productReviewTrustCommandService.toggleHelpful(
-            productId = productId.toGraphQlIdLong("productId"),
-            reviewId = reviewId.toGraphQlIdLong("reviewId"),
-            userId = authenticatedUserIdResolver.resolveRequired(),
-        )
+        val count =
+            productReviewTrustCommandService.toggleHelpful(
+                productId = productId.toGraphQlIdLong("productId"),
+                reviewId = reviewId.toGraphQlIdLong("reviewId"),
+                userId = authenticatedUserIdResolver.resolveRequired(),
+            )
         return count.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 

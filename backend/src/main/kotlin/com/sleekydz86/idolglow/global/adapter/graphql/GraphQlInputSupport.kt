@@ -4,8 +4,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-fun String.toGraphQlIdLong(fieldName: String): Long =
-    toLongOrNull() ?: throw IllegalArgumentException("$fieldName 값은 숫자여야 합니다.")
+fun String.toGraphQlIdLong(fieldName: String): Long = toLongOrNull() ?: throw IllegalArgumentException("$fieldName 값은 숫자여야 합니다.")
 
 fun String.toGraphQlBigDecimal(fieldName: String): BigDecimal =
     toBigDecimalOrNull() ?: throw IllegalArgumentException("$fieldName 값은 숫자 형식이어야 합니다.")

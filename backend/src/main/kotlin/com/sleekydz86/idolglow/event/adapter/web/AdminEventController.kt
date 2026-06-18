@@ -40,15 +40,13 @@ class AdminEventController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(defaultValue = "") query: String,
         @RequestParam(defaultValue = "published") status: String,
-    ): ResponseEntity<AdminEventPageResponse> =
-        ResponseEntity.ok(adminEventService.findEvents(page, size, query, status))
+    ): ResponseEntity<AdminEventPageResponse> = ResponseEntity.ok(adminEventService.findEvents(page, size, query, status))
 
     @Operation(summary = "이벤트 상세 조회")
     @GetMapping("/{documentId}")
     fun findEvent(
         @PathVariable documentId: String,
-    ): ResponseEntity<AdminEventDetailResponse> =
-        ResponseEntity.ok(adminEventService.findEvent(documentId))
+    ): ResponseEntity<AdminEventDetailResponse> = ResponseEntity.ok(adminEventService.findEvent(documentId))
 
     @Operation(summary = "이벤트 등록/수정")
     @PostMapping
