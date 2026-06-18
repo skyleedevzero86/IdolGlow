@@ -1,5 +1,7 @@
-package com.sleekydz86.idolglow.webzine.ui
+package com.sleekydz86.idolglow.webzine.adapter.web
 
+import com.sleekydz86.idolglow.webzine.adapter.web.request.CreateWebzineIssueRequest
+import com.sleekydz86.idolglow.webzine.adapter.web.request.UpsertWebzineArticleRequest
 import com.sleekydz86.idolglow.webzine.application.WebzineAdminUseCase
 import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueArticleResponse
@@ -9,8 +11,6 @@ import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueVolumeResponse
 import com.sleekydz86.idolglow.webzine.application.dto.CreateWebzineIssueCommand
 import com.sleekydz86.idolglow.webzine.application.dto.UpsertWebzineArticleCommand
 import com.sleekydz86.idolglow.webzine.application.dto.UpsertWebzineArticleSectionCommand
-import com.sleekydz86.idolglow.webzine.ui.request.CreateWebzineIssueRequest
-import com.sleekydz86.idolglow.webzine.ui.request.UpsertWebzineArticleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid

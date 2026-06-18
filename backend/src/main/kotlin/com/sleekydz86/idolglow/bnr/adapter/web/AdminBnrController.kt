@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.bnr.ui
+package com.sleekydz86.idolglow.bnr.adapter.web
 
 import com.sleekydz86.idolglow.bnr.application.BnrAdminService
 import com.sleekydz86.idolglow.bnr.application.dto.BnrAdminPageResponse

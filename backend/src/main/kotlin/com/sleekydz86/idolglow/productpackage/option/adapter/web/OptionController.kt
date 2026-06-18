@@ -1,11 +1,11 @@
-package com.sleekydz86.idolglow.productpackage.option.ui
+package com.sleekydz86.idolglow.productpackage.option.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.CreateOptionRequest
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
 import com.sleekydz86.idolglow.productpackage.option.application.OptionQueryService
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionImageFile
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionResponse
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
-import com.sleekydz86.idolglow.productpackage.option.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

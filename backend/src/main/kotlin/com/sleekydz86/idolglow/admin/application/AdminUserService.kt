@@ -1,7 +1,8 @@
 package com.sleekydz86.idolglow.admin.application
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminUserPageResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminUserSummaryResponse
+import com.sleekydz86.idolglow.admin.application.dto.AdminUserPageResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminUserSummaryResult
+import com.sleekydz86.idolglow.admin.application.mapper.AdminUserResultMapper
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuthRepository
 import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
@@ -24,7 +25,7 @@ class AdminUserService(
         accountStatus: UserAccountStatus?,
         page: Int,
         size: Int,
-    ): AdminUserPageResponse {
+    ): AdminUserPageResult {
         val resolvedSize = size.coerceIn(1, 20)
         var pageIndex0 = page.coerceAtLeast(1) - 1
         var result =
@@ -49,10 +50,10 @@ class AdminUserService(
         }
         val pageReturned = if (result.totalElements == 0L) 1 else pageIndex0 + 1
 
-        return AdminUserPageResponse(
+        return AdminUserPageResult(
             users =
                 result.items.map { user ->
-                    AdminUserSummaryResponse.from(user, userOAuthRepository.findAllByUserId(user.id))
+                    AdminUserResultMapper.toSummary(user, userOAuthRepository.findAllByUserId(user.id))
                 },
             page = pageReturned,
             size = resolvedSize,
@@ -70,19 +71,19 @@ class AdminUserService(
     fun updateUserRole(
         userId: Long,
         role: UserRole,
-    ): AdminUserSummaryResponse {
+    ): AdminUserSummaryResult {
         val user = findUser(userId)
         user.changeRole(role)
         val saved = userRepository.save(user)
         adminAuditService.log("USER_ROLE_UPDATE", "USER", saved.id, "role=${saved.role.name}")
-        return AdminUserSummaryResponse.from(saved, userOAuthRepository.findAllByUserId(saved.id))
+        return AdminUserResultMapper.toSummary(saved, userOAuthRepository.findAllByUserId(saved.id))
     }
 
     @Transactional
     fun updateUserStatus(
         userId: Long,
         accountStatus: UserAccountStatus,
-    ): AdminUserSummaryResponse {
+    ): AdminUserSummaryResult {
         val user = findUser(userId)
         user.changeAccountStatus(accountStatus)
         val saved = userRepository.save(user)
@@ -92,16 +93,16 @@ class AdminUserService(
             saved.id,
             "accountStatus=${saved.accountStatus.name}",
         )
-        return AdminUserSummaryResponse.from(saved, userOAuthRepository.findAllByUserId(saved.id))
+        return AdminUserResultMapper.toSummary(saved, userOAuthRepository.findAllByUserId(saved.id))
     }
 
     @Transactional
-    fun unlockUser(userId: Long): AdminUserSummaryResponse {
+    fun unlockUser(userId: Long): AdminUserSummaryResult {
         val user = findUser(userId)
         user.unlockAccount()
         val saved = userRepository.save(user)
         adminAuditService.log("USER_UNLOCK", "USER", saved.id, "loginFailCount=${saved.loginFailCount}")
-        return AdminUserSummaryResponse.from(saved, userOAuthRepository.findAllByUserId(saved.id))
+        return AdminUserResultMapper.toSummary(saved, userOAuthRepository.findAllByUserId(saved.id))
     }
 
     private fun findUser(userId: Long) =

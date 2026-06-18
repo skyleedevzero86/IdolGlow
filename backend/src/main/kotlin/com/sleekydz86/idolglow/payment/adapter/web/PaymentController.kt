@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.payment.ui
+package com.sleekydz86.idolglow.payment.adapter.web
 
+import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookRequest
+import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookStatus
 import com.sleekydz86.idolglow.payment.application.ReservationPaymentService
 import com.sleekydz86.idolglow.payment.application.dto.PaymentResponse
-import com.sleekydz86.idolglow.payment.ui.request.MockPaymentWebhookRequest
-import com.sleekydz86.idolglow.payment.ui.request.MockPaymentWebhookStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

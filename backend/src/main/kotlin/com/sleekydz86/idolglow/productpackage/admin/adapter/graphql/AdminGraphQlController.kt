@@ -1,20 +1,21 @@
-package com.sleekydz86.idolglow.productpackage.admin.graphql
+package com.sleekydz86.idolglow.productpackage.admin.adapter.graphql
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
-import com.sleekydz86.idolglow.global.graphql.ProductCreatedGraphQlResponse
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
-import com.sleekydz86.idolglow.global.graphql.toGraphQlLocalDate
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminSubscriptionOverviewResponse
+import com.sleekydz86.idolglow.global.adapter.graphql.ProductCreatedGraphQlResponse
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlLocalDate
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.CreateReservationSlotsRequest
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminCatalogService
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminOperationsAnalyticsService
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminReservationService
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
+import com.sleekydz86.idolglow.productpackage.option.adapter.graphql.OptionGraphQlResponse
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.CreateOptionRequest
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
-import com.sleekydz86.idolglow.productpackage.option.graphql.OptionGraphQlResponse
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
-import com.sleekydz86.idolglow.productpackage.option.ui.request.toCommand
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
-import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import jakarta.validation.Valid
 import org.springframework.graphql.data.method.annotation.Argument
@@ -96,7 +97,7 @@ class AdminGraphQlController(
         @Argument @Valid input: CreateReservationSlotsRequest,
     ): List<AdminReservationSlotGraphQlResponse> =
         adminCatalogService
-            .createSlots(productId.toGraphQlIdLong("productId"), input)
+            .createSlots(productId.toGraphQlIdLong("productId"), input.toCommand())
             .map(AdminReservationSlotGraphQlResponse::from)
 
     @MutationMapping

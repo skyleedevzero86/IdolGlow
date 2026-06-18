@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.option.ui.request
+package com.sleekydz86.idolglow.productpackage.option.adapter.web.request
 
 import com.sleekydz86.idolglow.productpackage.option.application.dto.CreateOptionCommand
 import io.swagger.v3.oas.annotations.media.Schema

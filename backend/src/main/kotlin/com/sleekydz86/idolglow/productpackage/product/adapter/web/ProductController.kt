@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.productpackage.product.ui
+package com.sleekydz86.idolglow.productpackage.product.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
-import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

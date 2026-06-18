@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.admin.application
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminProductReviewPageResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminProductReviewSummaryResponse
+import com.sleekydz86.idolglow.admin.application.dto.AdminProductReviewPageResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminProductReviewSummaryResult
 import com.sleekydz86.idolglow.image.domain.ImageRepository
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
@@ -32,7 +32,7 @@ class AdminProductReviewService(
         visibility: AdminReviewVisibilityFilter,
         page: Int,
         size: Int,
-    ): AdminProductReviewPageResponse {
+    ): AdminProductReviewPageResult {
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 50)
         val spec = buildSpec(keyword, visibility)
@@ -61,7 +61,7 @@ class AdminProductReviewService(
                 else -> result.totalPages.coerceAtLeast(1)
             }
 
-        return AdminProductReviewPageResponse(
+        return AdminProductReviewPageResult(
             reviews = items,
             page = resolvedPage,
             size = resolvedSize,
@@ -75,7 +75,7 @@ class AdminProductReviewService(
     fun hideReview(
         reviewId: Long,
         reason: String?,
-    ): AdminProductReviewSummaryResponse {
+    ): AdminProductReviewSummaryResult {
         val review =
             productReviewJpaRepository
                 .findById(reviewId)
@@ -89,7 +89,7 @@ class AdminProductReviewService(
     }
 
     @Transactional
-    fun unhideReview(reviewId: Long): AdminProductReviewSummaryResponse {
+    fun unhideReview(reviewId: Long): AdminProductReviewSummaryResult {
         val review =
             productReviewJpaRepository
                 .findById(reviewId)
@@ -100,7 +100,7 @@ class AdminProductReviewService(
         return toSummaryResponse(saved)
     }
 
-    private fun toSummaryResponse(review: ProductReview): AdminProductReviewSummaryResponse {
+    private fun toSummaryResponse(review: ProductReview): AdminProductReviewSummaryResult {
         val imgs =
             imageRepository
                 .findByAggregate(ImageAggregateType.PRODUCT_REVIEW, review.id)
@@ -111,9 +111,9 @@ class AdminProductReviewService(
     private fun toSummary(
         review: ProductReview,
         images: List<ProductReviewImageResponse>,
-    ): AdminProductReviewSummaryResponse {
+    ): AdminProductReviewSummaryResult {
         val createdAt = review.createdAt ?: LocalDateTime.now()
-        return AdminProductReviewSummaryResponse(
+        return AdminProductReviewSummaryResult(
             reviewId = review.id,
             productId = review.product.id,
             productName = review.product.name,

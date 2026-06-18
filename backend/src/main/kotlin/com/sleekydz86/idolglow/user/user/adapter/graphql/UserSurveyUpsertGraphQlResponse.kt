@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.user.user.graphql
+package com.sleekydz86.idolglow.user.user.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyUpsertResponse
 
 data class UserSurveyUpsertGraphQlResponse(

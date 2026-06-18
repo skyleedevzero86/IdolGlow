@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.user.user.ui
+package com.sleekydz86.idolglow.user.user.adapter.web
 
+import com.sleekydz86.idolglow.user.user.adapter.web.request.CreateUserSurveyRequest
 import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyResponse
 import com.sleekydz86.idolglow.user.user.domain.dto.UserSurveyUpsertResponse
-import com.sleekydz86.idolglow.user.user.ui.request.CreateUserSurveyRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse

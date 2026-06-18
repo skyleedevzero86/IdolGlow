@@ -1,16 +1,17 @@
-package com.sleekydz86.idolglow.schedule.ui
+package com.sleekydz86.idolglow.schedule.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.ScheduleCalendarExportResponse
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.ScheduleCommandResponse
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.toWebResponse
+import com.sleekydz86.idolglow.schedule.adapter.web.request.CreateScheduleRequest
+import com.sleekydz86.idolglow.schedule.adapter.web.request.UpdateScheduleRequest
+import com.sleekydz86.idolglow.schedule.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.schedule.application.ScheduleCommandService
 import com.sleekydz86.idolglow.schedule.application.ScheduleExternalCalendarService
 import com.sleekydz86.idolglow.schedule.application.ScheduleQueryService
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
-import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
-import com.sleekydz86.idolglow.schedule.ui.request.UpdateScheduleRequest
-import com.sleekydz86.idolglow.schedule.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.core.io.Resource
@@ -86,7 +87,7 @@ class ScheduleController(
         @PathVariable scheduleId: Long,
     ): ResponseEntity<ScheduleCalendarExportResponse> {
         val schedule = scheduleQueryService.findSchedule(scheduleId, userId)
-        return ResponseEntity.ok(scheduleExternalCalendarService.buildExportResponse(schedule))
+        return ResponseEntity.ok(scheduleExternalCalendarService.buildExportResponse(schedule).toWebResponse())
     }
 
     @GetMapping("/{scheduleId}/calendar.ics", produces = ["text/calendar"])

@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.payment.graphql
+package com.sleekydz86.idolglow.payment.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.PaymentGraphQlResponse
+import com.sleekydz86.idolglow.payment.adapter.graphql.PaymentGraphQlResponse
+import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookRequest
+import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookStatus
 import com.sleekydz86.idolglow.payment.application.ReservationPaymentService
-import com.sleekydz86.idolglow.payment.ui.request.MockPaymentWebhookRequest
-import com.sleekydz86.idolglow.payment.ui.request.MockPaymentWebhookStatus
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.graphql.data.method.annotation.Argument

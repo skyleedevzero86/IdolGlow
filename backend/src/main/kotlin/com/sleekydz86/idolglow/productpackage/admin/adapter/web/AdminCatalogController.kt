@@ -1,13 +1,16 @@
-package com.sleekydz86.idolglow.productpackage.admin.ui
+package com.sleekydz86.idolglow.productpackage.admin.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.CreateReservationSlotsRequest
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.UpdateAdminMarkdownRequest
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminCatalogService
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.UpdateAdminMarkdownRequest
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.CreateOptionRequest
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.option.application.OptionQueryService
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionPageResponse
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -54,14 +57,14 @@ class AdminCatalogController(
     fun createSlots(
         @PathVariable productId: Long,
         @Valid @RequestBody request: CreateReservationSlotsRequest,
-    ): ResponseEntity<List<AdminReservationSlotResponse>> = ResponseEntity.ok(adminCatalogService.createSlots(productId, request))
+    ): ResponseEntity<List<AdminReservationSlotResponse>> = ResponseEntity.ok(adminCatalogService.createSlots(productId, request.toCommand()))
 
     @PutMapping("/products/{productId}")
     fun updateProduct(
         @PathVariable productId: Long,
         @Valid @RequestBody request: CreateProductRequest,
     ): ResponseEntity<Void> {
-        adminCatalogService.updateProduct(productId, request)
+        adminCatalogService.updateProduct(productId, request.toCommand())
         return ResponseEntity.noContent().build()
     }
 
@@ -70,7 +73,7 @@ class AdminCatalogController(
         @PathVariable optionId: Long,
         @Valid @RequestBody request: CreateOptionRequest,
     ): ResponseEntity<Void> {
-        adminCatalogService.updateOption(optionId, request)
+        adminCatalogService.updateOption(optionId, request.toCommand())
         return ResponseEntity.noContent().build()
     }
 

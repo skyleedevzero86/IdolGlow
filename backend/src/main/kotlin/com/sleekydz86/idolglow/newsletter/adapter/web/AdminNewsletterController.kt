@@ -1,11 +1,11 @@
-package com.sleekydz86.idolglow.newsletter.ui
+package com.sleekydz86.idolglow.newsletter.adapter.web
 
+import com.sleekydz86.idolglow.newsletter.adapter.web.request.UpsertNewsletterRequest
 import com.sleekydz86.idolglow.newsletter.application.NewsletterAdminUseCase
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterDetailResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterImageUploadResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterPageResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.UpsertNewsletterCommand
-import com.sleekydz86.idolglow.newsletter.ui.request.UpsertNewsletterRequest
 import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag

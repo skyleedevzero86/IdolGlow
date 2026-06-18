@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mim.ui
+package com.sleekydz86.idolglow.mim.adapter.web
 
 import com.sleekydz86.idolglow.mim.application.MimAdminService
 import com.sleekydz86.idolglow.mim.application.dto.MimAdminPageResponse

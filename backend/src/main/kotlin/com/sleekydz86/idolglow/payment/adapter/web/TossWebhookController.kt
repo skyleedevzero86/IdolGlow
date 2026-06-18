@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.payment.ui
+package com.sleekydz86.idolglow.payment.adapter.web
 
 import com.sleekydz86.idolglow.payment.application.PaymentLogCommandService
 import com.sleekydz86.idolglow.payment.application.TossWebhookService

@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request.CreateReservationRequest
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
-import com.sleekydz86.idolglow.productpackage.reservation.ui.request.CreateReservationRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header

@@ -1,14 +1,15 @@
-package com.sleekydz86.idolglow.schedule.graphql
+package com.sleekydz86.idolglow.schedule.adapter.graphql
 
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.ScheduleCommandResponse
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.toWebResponse
+import com.sleekydz86.idolglow.schedule.adapter.web.request.CreateScheduleRequest
+import com.sleekydz86.idolglow.schedule.adapter.web.request.UpdateScheduleRequest
+import com.sleekydz86.idolglow.schedule.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.schedule.application.ScheduleCommandService
 import com.sleekydz86.idolglow.schedule.application.ScheduleExternalCalendarService
 import com.sleekydz86.idolglow.schedule.application.ScheduleQueryService
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
-import com.sleekydz86.idolglow.schedule.ui.request.CreateScheduleRequest
-import com.sleekydz86.idolglow.schedule.ui.request.UpdateScheduleRequest
-import com.sleekydz86.idolglow.schedule.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -59,7 +60,7 @@ class ScheduleGraphQlController(
                 userId = userId,
             )
         return ScheduleCalendarExportGraphQlResponse.from(
-            scheduleExternalCalendarService.buildExportResponse(schedule),
+            scheduleExternalCalendarService.buildExportResponse(schedule).toWebResponse(),
         )
     }
 

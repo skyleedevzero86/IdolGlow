@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.exchange.adapter.web
 
 import com.sleekydz86.idolglow.exchange.adapter.web.dto.CreateExchangeAlertRequest
 import com.sleekydz86.idolglow.exchange.adapter.web.dto.ExchangeAlertCreatedResponse
+import com.sleekydz86.idolglow.exchange.adapter.web.dto.toCommand
 import com.sleekydz86.idolglow.exchange.application.ExchangeAlertCommandService
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -23,7 +24,7 @@ class ExchangeAlertController(
         @Valid @RequestBody body: CreateExchangeAlertRequest,
     ): ExchangeAlertCreatedResponse {
         check(userId > 0L)
-        val id = exchangeAlertCommandService.create(userId, body)
+        val id = exchangeAlertCommandService.create(userId, body.toCommand())
         return ExchangeAlertCreatedResponse(id)
     }
 }

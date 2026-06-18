@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.productpackage.attraction.infrastructure
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.sleekydz86.idolglow.global.infrastructure.config.TourApiProperties
+import com.sleekydz86.idolglow.global.config.TourApiProperties
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.tour.TourAttractionExceptionType
 import com.sleekydz86.idolglow.productpackage.attraction.application.port.out.TourAttractionQueryPort

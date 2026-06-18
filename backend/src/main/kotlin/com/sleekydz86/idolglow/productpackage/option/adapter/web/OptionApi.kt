@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.productpackage.option.ui
+package com.sleekydz86.idolglow.productpackage.option.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.CreateOptionRequest
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionResponse
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema

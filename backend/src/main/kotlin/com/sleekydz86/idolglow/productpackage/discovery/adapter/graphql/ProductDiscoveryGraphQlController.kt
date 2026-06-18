@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.discovery.graphql
+package com.sleekydz86.idolglow.productpackage.discovery.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.productpackage.discovery.application.ProductDiscoveryService

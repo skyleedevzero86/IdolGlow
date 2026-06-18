@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.global.graphql
+package com.sleekydz86.idolglow.global.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 
 data class ProductCreatedGraphQlResponse(
     val id: String,

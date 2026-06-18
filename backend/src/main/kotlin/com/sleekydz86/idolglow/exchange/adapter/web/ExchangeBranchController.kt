@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.exchange.adapter.web
 
 import com.sleekydz86.idolglow.exchange.adapter.web.dto.ExchangeBranchResponse
+import com.sleekydz86.idolglow.exchange.adapter.web.dto.toWebResponse
 import com.sleekydz86.idolglow.exchange.application.ExchangeBranchQueryService
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,6 +22,6 @@ class ExchangeBranchController(
         @RequestParam currency: String,
     ): List<ExchangeBranchResponse> {
         check(userId > 0L)
-        return exchangeBranchQueryService.listBranchesWithDrivingMinutes(currency)
+        return exchangeBranchQueryService.listBranchesWithDrivingMinutes(currency).map { it.toWebResponse() }
     }
 }

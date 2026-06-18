@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.global.graphql
+package com.sleekydz86.idolglow.global.adapter.graphql
 
 import java.math.BigDecimal
 import java.time.LocalDate

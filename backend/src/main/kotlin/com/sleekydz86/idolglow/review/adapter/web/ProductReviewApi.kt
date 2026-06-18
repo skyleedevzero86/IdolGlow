@@ -1,10 +1,10 @@
-package com.sleekydz86.idolglow.review.ui
+package com.sleekydz86.idolglow.review.adapter.web
 
+import com.sleekydz86.idolglow.review.adapter.web.request.CreateProductReviewRequest
+import com.sleekydz86.idolglow.review.adapter.web.request.ReportProductReviewRequest
+import com.sleekydz86.idolglow.review.adapter.web.request.UpdateProductReviewRequest
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
 import com.sleekydz86.idolglow.review.application.dto.ReviewHelpfulCountResponse
-import com.sleekydz86.idolglow.review.ui.request.CreateProductReviewRequest
-import com.sleekydz86.idolglow.review.ui.request.ReportProductReviewRequest
-import com.sleekydz86.idolglow.review.ui.request.UpdateProductReviewRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema

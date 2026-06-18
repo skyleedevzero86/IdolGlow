@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.productpackage.attraction.graphql
+package com.sleekydz86.idolglow.productpackage.attraction.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
 
 data class ProductTourAttractionGraphQlResponse(

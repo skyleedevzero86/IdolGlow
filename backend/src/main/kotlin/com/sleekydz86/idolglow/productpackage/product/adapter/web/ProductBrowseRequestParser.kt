@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.product.ui
+package com.sleekydz86.idolglow.productpackage.product.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductBrowseParams
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort

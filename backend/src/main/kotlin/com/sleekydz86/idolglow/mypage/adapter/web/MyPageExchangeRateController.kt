@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mypage.ui
+package com.sleekydz86.idolglow.mypage.adapter.web
 
 import com.sleekydz86.idolglow.exchangerate.adapter.web.dto.ExchangeRateItemResponse
 import com.sleekydz86.idolglow.exchangerate.application.ExchangeRateQueryService

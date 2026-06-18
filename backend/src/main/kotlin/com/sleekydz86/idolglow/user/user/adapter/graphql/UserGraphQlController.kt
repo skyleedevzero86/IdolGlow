@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.user.user.graphql
+package com.sleekydz86.idolglow.user.user.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.user.user.adapter.web.request.CreateUserSurveyRequest
+import com.sleekydz86.idolglow.user.user.adapter.web.request.UpdateProfileRequest
+import com.sleekydz86.idolglow.user.user.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.user.user.application.UserService
 import com.sleekydz86.idolglow.user.user.application.UserSurveyCommandService
 import com.sleekydz86.idolglow.user.user.application.UserSurveyQueryService
-import com.sleekydz86.idolglow.user.user.ui.request.CreateUserSurveyRequest
-import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
-import com.sleekydz86.idolglow.user.user.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping

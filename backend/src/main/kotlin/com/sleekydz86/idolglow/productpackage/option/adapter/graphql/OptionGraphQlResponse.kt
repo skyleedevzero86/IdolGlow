@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.productpackage.option.graphql
+package com.sleekydz86.idolglow.productpackage.option.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionResponse
 
 data class OptionGraphQlResponse(

@@ -17,10 +17,10 @@ class PackagePathAlignmentBaselineTest {
 
         // then
         assertTrue(
-            불일치목록.size <= 기준_불일치_건수,
+            불일치목록.size <= BASELINE_MISMATCH_COUNT,
             buildString {
                 appendLine(
-                    "package/path 불일치 건수는 기준값을 초과할 수 없습니다 (기준=$기준_불일치_건수, 실제=${불일치목록.size})",
+                    "package/path 불일치 건수는 기준값을 초과할 수 없습니다 (기준=$BASELINE_MISMATCH_COUNT, 실제=${불일치목록.size})",
                 )
                 appendLine("docs/architecture/package-rule.md 참고")
                 불일치목록.take(30).forEach { appendLine(" - $it") }
@@ -32,9 +32,7 @@ class PackagePathAlignmentBaselineTest {
     }
 
     companion object {
-        private val 기준_불일치_건수: Int by lazy {
-            ArchitectureSourceScanner.패키지경로불일치목록(메인코틀린소스루트()).size
-        }
+        private const val BASELINE_MISMATCH_COUNT = 0
 
         private fun 메인코틀린소스루트(): Path {
             val cwd = Paths.get("").toAbsolutePath()

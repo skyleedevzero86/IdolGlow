@@ -1,6 +1,9 @@
-package com.sleekydz86.idolglow.review.ui
+package com.sleekydz86.idolglow.review.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.review.adapter.web.request.CreateProductReviewRequest
+import com.sleekydz86.idolglow.review.adapter.web.request.ReportProductReviewRequest
+import com.sleekydz86.idolglow.review.adapter.web.request.UpdateProductReviewRequest
 import com.sleekydz86.idolglow.review.application.ProductReviewCommandService
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
 import com.sleekydz86.idolglow.review.application.ProductReviewTrustCommandService
@@ -9,9 +12,6 @@ import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
 import com.sleekydz86.idolglow.review.application.dto.ReviewHelpfulCountResponse
 import com.sleekydz86.idolglow.review.application.dto.ReviewImageFile
 import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
-import com.sleekydz86.idolglow.review.ui.request.CreateProductReviewRequest
-import com.sleekydz86.idolglow.review.ui.request.ReportProductReviewRequest
-import com.sleekydz86.idolglow.review.ui.request.UpdateProductReviewRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

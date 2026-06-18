@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.event.ui.dto
+package com.sleekydz86.idolglow.event.adapter.web.dto
 
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDocumentSummaryPayload
 import java.time.Instant

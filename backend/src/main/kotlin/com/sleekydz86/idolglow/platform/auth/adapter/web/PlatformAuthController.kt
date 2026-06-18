@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.platform.auth.adapter.web
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
+import com.sleekydz86.idolglow.platform.auth.adapter.web.http.ApiResponse
 import com.sleekydz86.idolglow.platform.auth.application.AccountRecoveryService
 import com.sleekydz86.idolglow.platform.auth.application.AuthenticationService
 import com.sleekydz86.idolglow.platform.auth.application.dto.AccountRecoveryRequest
@@ -10,7 +11,6 @@ import com.sleekydz86.idolglow.platform.auth.application.dto.PasswordResetReques
 import com.sleekydz86.idolglow.platform.auth.application.dto.RefreshTokenRequest
 import com.sleekydz86.idolglow.platform.auth.application.dto.UserRegistrationRequest
 import com.sleekydz86.idolglow.platform.auth.domain.JwtToken
-import com.sleekydz86.idolglow.platform.auth.http.ApiResponse
 import com.sleekydz86.idolglow.platform.user.domain.PlatformUser
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag

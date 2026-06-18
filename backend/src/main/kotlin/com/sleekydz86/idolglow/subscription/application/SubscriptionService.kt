@@ -1,14 +1,13 @@
 package com.sleekydz86.idolglow.subscription.application
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionLatestContentResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionScheduleResponse
+import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionLatestContentResult
+import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionOverviewResult
+import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionScheduleResult
 import com.sleekydz86.idolglow.newsletter.domain.Newsletter
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistrationResponse
 import com.sleekydz86.idolglow.subscription.application.dto.UpsertSubscriptionDispatchScheduleCommand
-import com.sleekydz86.idolglow.subscription.application.dto.create
 import com.sleekydz86.idolglow.subscription.application.dto.toRegistrationResponse
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
@@ -84,7 +83,7 @@ class SubscriptionService(
         subscriberSize: Int,
         dispatchPage: Int,
         dispatchSize: Int,
-    ): AdminSubscriptionOverviewResponse {
+    ): SubscriptionOverviewResult {
         val resolvedSubscriberPage = subscriberPage.coerceAtLeast(1)
         val resolvedSubscriberSize = subscriberSize.coerceIn(1, 20)
         val resolvedDispatchPage = dispatchPage.coerceAtLeast(1)
@@ -97,7 +96,7 @@ class SubscriptionService(
         val subscriberSlice = allSubscribers.slicePage(resolvedSubscriberPage, resolvedSubscriberSize)
         val dispatchSlice = allDispatches.slicePage(resolvedDispatchPage, resolvedDispatchSize)
 
-        return AdminSubscriptionOverviewResponse.create(
+        return SubscriptionOverviewResult.create(
             totalActive = emailSubscriptionPort.countActive(),
             newsletterSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
             issueSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
@@ -120,7 +119,7 @@ class SubscriptionService(
     }
 
     @Transactional
-    override fun upsertDispatchSchedule(command: UpsertSubscriptionDispatchScheduleCommand): AdminSubscriptionScheduleResponse {
+    override fun upsertDispatchSchedule(command: UpsertSubscriptionDispatchScheduleCommand): SubscriptionScheduleResult {
         val dispatchTime = LocalTime.parse(command.dispatchTime.trim())
         val existing = subscriptionDispatchSchedulePort.findByContentType(command.contentType)
 
@@ -147,7 +146,7 @@ class SubscriptionService(
                 subscriptionDispatchSchedulePort.save(existing)
             }
 
-        return AdminSubscriptionScheduleResponse.from(saved)
+        return SubscriptionScheduleResult.from(saved)
     }
 
     @Transactional
@@ -185,11 +184,11 @@ class SubscriptionService(
         )
     }
 
-    private fun latestContents(): List<AdminSubscriptionLatestContentResponse> =
+    private fun latestContents(): List<SubscriptionLatestContentResult> =
         buildList {
             newsletterRepository.findAllByLatest().firstOrNull()?.let { newsletter ->
                 add(
-                    AdminSubscriptionLatestContentResponse(
+                    SubscriptionLatestContentResult(
                         contentType = "NEWSLETTER",
                         contentTypeLabel = "뉴스레터",
                         title = newsletter.title,
@@ -202,7 +201,7 @@ class SubscriptionService(
 
             webzineIssueRepository.findAllByLatest().firstOrNull()?.let { issue ->
                 add(
-                    AdminSubscriptionLatestContentResponse(
+                    SubscriptionLatestContentResult(
                         contentType = "WEBZINE_ISSUE",
                         contentTypeLabel = "호별보기",
                         title = "Vol.${issue.volume} 호별보기",

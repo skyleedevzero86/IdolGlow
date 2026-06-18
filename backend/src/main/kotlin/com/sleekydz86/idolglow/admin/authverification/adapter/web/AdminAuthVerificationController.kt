@@ -1,7 +1,8 @@
-package com.sleekydz86.idolglow.admin.authverification.ui
+package com.sleekydz86.idolglow.admin.authverification.adapter.web
 
+import com.sleekydz86.idolglow.admin.authverification.adapter.web.dto.AuthVerificationAuditLogPageResponse
+import com.sleekydz86.idolglow.admin.authverification.adapter.web.dto.toWebResponse
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
-import com.sleekydz86.idolglow.admin.authverification.ui.dto.AuthVerificationAuditLogPageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -32,6 +33,6 @@ class AdminAuthVerificationController(
                 size = size,
                 verificationType = verificationType,
                 keyword = keyword,
-            ),
+            ).toWebResponse(),
         )
 }

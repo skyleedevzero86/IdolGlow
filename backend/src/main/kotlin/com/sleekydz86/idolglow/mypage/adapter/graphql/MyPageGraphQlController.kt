@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mypage.graphql
+package com.sleekydz86.idolglow.mypage.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.mypage.application.MypagePromoService

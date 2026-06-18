@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.sitecontent.ui
+package com.sleekydz86.idolglow.sitecontent.adapter.web
 
 import com.sleekydz86.idolglow.sitecontent.application.dto.SiteHomeContentResponse
 import io.swagger.v3.oas.annotations.Operation

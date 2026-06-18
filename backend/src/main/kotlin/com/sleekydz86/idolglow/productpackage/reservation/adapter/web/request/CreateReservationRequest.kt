@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui.request
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request
 
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
 import io.swagger.v3.oas.annotations.media.Schema

@@ -1,7 +1,8 @@
-package com.sleekydz86.idolglow.admin.ui
+package com.sleekydz86.idolglow.admin.adapter.web
 
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminServerStatusResponse
+import com.sleekydz86.idolglow.admin.adapter.web.mapper.toWebResponse
 import com.sleekydz86.idolglow.admin.application.AdminServerStatusService
-import com.sleekydz86.idolglow.admin.ui.dto.AdminServerStatusResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,5 +22,5 @@ class AdminServerStatusController(
     @Operation(summary = "서버 상태 조회")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
-    fun getStatus(): ResponseEntity<AdminServerStatusResponse> = ResponseEntity.ok(adminServerStatusService.getServerStatus())
+    fun getStatus(): ResponseEntity<AdminServerStatusResponse> = ResponseEntity.ok(adminServerStatusService.getServerStatus().toWebResponse())
 }

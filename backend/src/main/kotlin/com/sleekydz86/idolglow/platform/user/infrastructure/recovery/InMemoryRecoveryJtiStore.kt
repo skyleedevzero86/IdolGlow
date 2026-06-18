@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.user.recovery
+package com.sleekydz86.idolglow.platform.user.infrastructure.recovery
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component

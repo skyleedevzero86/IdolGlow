@@ -1,5 +1,6 @@
-package com.sleekydz86.idolglow.payment.ui
+package com.sleekydz86.idolglow.payment.adapter.web
 
+import com.sleekydz86.idolglow.payment.adapter.web.request.CancelPaymentRequest
 import com.sleekydz86.idolglow.payment.application.AdminPaymentService
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
 import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentChartsResponse
@@ -8,7 +9,6 @@ import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentOverviewRespo
 import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentSummaryResponse
 import com.sleekydz86.idolglow.payment.application.dto.PaymentRefundResponse
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
-import com.sleekydz86.idolglow.payment.ui.request.CancelPaymentRequest
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.core.io.Resource
 import org.springframework.format.annotation.DateTimeFormat

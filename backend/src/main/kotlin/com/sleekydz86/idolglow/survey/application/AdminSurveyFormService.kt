@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.survey.application
 
+import com.sleekydz86.idolglow.survey.application.dto.UpsertSurveyFormCommand
 import com.sleekydz86.idolglow.survey.domain.SurveyForm
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
@@ -11,7 +12,6 @@ import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormPageResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormSummaryResponse
 import com.sleekydz86.idolglow.survey.infrastructure.SurveyFormJpaRepository
-import com.sleekydz86.idolglow.survey.ui.request.AdminUpsertSurveyFormRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
@@ -94,58 +94,58 @@ class AdminSurveyFormService(
     @Transactional(readOnly = true)
     fun find(id: Long): SurveyFormResponse = SurveyFormResponse.from(findForm(id))
 
-    fun create(request: AdminUpsertSurveyFormRequest): SurveyFormResponse =
+    fun create(command: UpsertSurveyFormCommand): SurveyFormResponse =
         saveForm(
             form =
                 SurveyForm(
-                    title = request.title.trim(),
+                    title = command.title.trim(),
                     active = true,
                 ),
-            request = request,
+            command = command,
         )
 
     fun update(
         id: Long,
-        request: AdminUpsertSurveyFormRequest,
+        command: UpsertSurveyFormCommand,
     ): SurveyFormResponse =
         saveForm(
             form =
                 findForm(id).apply {
-                    title = request.title.trim()
+                    title = command.title.trim()
                 },
-            request = request,
+            command = command,
         )
 
-    fun upsertCurrent(request: AdminUpsertSurveyFormRequest): SurveyFormResponse {
+    fun upsertCurrent(command: UpsertSurveyFormCommand): SurveyFormResponse {
         val form =
             surveyFormJpaRepository
                 .findFirstByActiveTrueOrderByIdDesc()
                 ?.apply {
-                    title = request.title.trim()
+                    title = command.title.trim()
                 }
                 ?: SurveyForm(
-                    title = request.title.trim(),
+                    title = command.title.trim(),
                     active = true,
                 )
-        return saveForm(form, request)
+        return saveForm(form, command)
     }
 
     private fun saveForm(
         form: SurveyForm,
-        request: AdminUpsertSurveyFormRequest,
+        command: UpsertSurveyFormCommand,
     ): SurveyFormResponse {
-        require(request.questions.isNotEmpty()) { "문항이 없으면 저장할 수 없습니다." }
-        require(request.questions.size <= MAX_SURVEY_QUESTIONS) {
+        require(command.questions.isNotEmpty()) { "문항이 없으면 저장할 수 없습니다." }
+        require(command.questions.size <= MAX_SURVEY_QUESTIONS) {
             "문항은 최대 ${MAX_SURVEY_QUESTIONS}개까지 등록할 수 있습니다."
         }
-        val secondaryCategory = validateCategory(request.primaryCategory, request.secondaryCategory)
-        form.status = request.status
-        form.primaryCategory = request.primaryCategory
+        val secondaryCategory = validateCategory(command.primaryCategory, command.secondaryCategory)
+        form.status = command.status
+        form.primaryCategory = command.primaryCategory
         form.secondaryCategory = secondaryCategory
-        form.replaceDescription(request.description, request.descriptionTags)
+        form.replaceDescription(command.description, command.descriptionTags)
 
         val nextQuestions =
-            request.questions
+            command.questions
                 .sortedBy { it.order }
                 .map { q ->
                     validateQuestion(q.type, q.options)

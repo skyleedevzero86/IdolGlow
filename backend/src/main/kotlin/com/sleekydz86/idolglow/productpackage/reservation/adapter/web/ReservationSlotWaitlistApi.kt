@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.SlotWaitlistEntryResponse
 import io.swagger.v3.oas.annotations.Operation

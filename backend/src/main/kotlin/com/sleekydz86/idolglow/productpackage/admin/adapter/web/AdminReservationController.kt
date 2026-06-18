@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.productpackage.admin.ui
+package com.sleekydz86.idolglow.productpackage.admin.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.UpdateAdminMarkdownRequest
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminReservationService
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSummaryResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.ReservationDashboardResponse
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.UpdateAdminMarkdownRequest
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity

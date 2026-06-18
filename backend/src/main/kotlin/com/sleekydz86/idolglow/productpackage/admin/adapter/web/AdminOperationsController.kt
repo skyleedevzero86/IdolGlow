@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.admin.ui
+package com.sleekydz86.idolglow.productpackage.admin.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminExportService

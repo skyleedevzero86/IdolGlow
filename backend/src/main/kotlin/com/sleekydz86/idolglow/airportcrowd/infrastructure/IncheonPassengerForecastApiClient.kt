@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.airportcrowd.infrastructure
 
 import com.sleekydz86.idolglow.airportcrowd.application.port.out.PassengerForecastQueryPort
 import com.sleekydz86.idolglow.airportcrowd.domain.PassengerForecast
-import com.sleekydz86.idolglow.global.infrastructure.config.IncheonAirportPassengerForecastProperties
+import com.sleekydz86.idolglow.global.config.IncheonAirportPassengerForecastProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component

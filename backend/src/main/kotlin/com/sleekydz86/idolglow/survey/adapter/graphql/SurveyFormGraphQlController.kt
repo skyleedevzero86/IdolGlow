@@ -1,6 +1,11 @@
-package com.sleekydz86.idolglow.survey.graphql
+package com.sleekydz86.idolglow.survey.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.survey.adapter.web.request.AdminSurveyQuestionRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.AdminUpsertSurveyFormRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.SubmitSurveyResponseRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
+import com.sleekydz86.idolglow.survey.adapter.web.request.SurveyAnswerRequest
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
@@ -9,10 +14,6 @@ import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
-import com.sleekydz86.idolglow.survey.ui.request.AdminSurveyQuestionRequest
-import com.sleekydz86.idolglow.survey.ui.request.AdminUpsertSurveyFormRequest
-import com.sleekydz86.idolglow.survey.ui.request.SubmitSurveyResponseRequest
-import com.sleekydz86.idolglow.survey.ui.request.SurveyAnswerRequest
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
@@ -64,7 +65,7 @@ class SurveyFormGraphQlController(
                                 options = it.options,
                             )
                         },
-                ),
+                ).toCommand(),
             )
         return SurveyFormGraphQlResponse.from(response)
     }
@@ -86,7 +87,7 @@ class SurveyFormGraphQlController(
                                 selectedOptions = it.selectedOptions,
                             )
                         },
-                ),
+                ).toCommand(),
             )
         return SurveySubmissionGraphQlResponse.from(response)
     }

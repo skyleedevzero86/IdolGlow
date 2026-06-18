@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.productpackage.reservation.graphql
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlNumber
-import com.sleekydz86.idolglow.global.graphql.asGraphQlValue
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlValue
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus

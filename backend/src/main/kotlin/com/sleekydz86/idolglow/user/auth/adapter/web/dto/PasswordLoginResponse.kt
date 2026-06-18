@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.auth.ui.dto
+package com.sleekydz86.idolglow.user.auth.adapter.web.dto
 
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 

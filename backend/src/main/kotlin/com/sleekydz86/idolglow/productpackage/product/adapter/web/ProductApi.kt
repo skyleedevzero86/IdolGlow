@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.productpackage.product.ui
+package com.sleekydz86.idolglow.productpackage.product.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

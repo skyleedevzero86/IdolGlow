@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.user.password
+package com.sleekydz86.idolglow.platform.user.infrastructure.password
 
 import com.sleekydz86.idolglow.platform.user.port.PlatformUserAccountPort
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

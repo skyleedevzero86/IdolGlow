@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.survey.ui.request
+package com.sleekydz86.idolglow.survey.adapter.web.request
 
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size

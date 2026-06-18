@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.KopisAreaStat
-import com.sleekydz86.idolglow.global.infrastructure.config.KopisApiProperties
+import com.sleekydz86.idolglow.global.config.KopisApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient

@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.subway.infrastructure.seoul
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.sleekydz86.idolglow.global.infrastructure.config.SubwayProperties
+import com.sleekydz86.idolglow.global.config.SubwayProperties
 import com.sleekydz86.idolglow.subway.application.port.out.SubwayExternalStationSearchPort
 import com.sleekydz86.idolglow.subway.domain.SubwayExternalSearchHit
 import org.slf4j.LoggerFactory

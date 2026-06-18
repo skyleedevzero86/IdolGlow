@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.platform.auth.handler
+package com.sleekydz86.idolglow.platform.auth.adapter.web.handler
 
-import com.sleekydz86.idolglow.platform.auth.http.ApiResponse
-import com.sleekydz86.idolglow.platform.auth.http.ErrorResponse
+import com.sleekydz86.idolglow.platform.auth.adapter.web.http.ApiResponse
+import com.sleekydz86.idolglow.platform.auth.adapter.web.http.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory

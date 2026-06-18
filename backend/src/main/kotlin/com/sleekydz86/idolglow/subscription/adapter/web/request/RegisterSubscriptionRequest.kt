@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.subscription.ui.request
+package com.sleekydz86.idolglow.subscription.adapter.web.request
 
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email

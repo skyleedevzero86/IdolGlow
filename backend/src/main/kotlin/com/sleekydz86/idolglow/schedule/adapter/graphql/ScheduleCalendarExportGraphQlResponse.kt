@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.schedule.graphql
+package com.sleekydz86.idolglow.schedule.adapter.graphql
 
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.ScheduleCalendarExportResponse
 
 data class ScheduleCalendarExportGraphQlResponse(
     val googleCalendarUrl: String,

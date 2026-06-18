@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.admin.graphql
+package com.sleekydz86.idolglow.productpackage.admin.adapter.graphql
 
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.ReservationDashboardResponse
 

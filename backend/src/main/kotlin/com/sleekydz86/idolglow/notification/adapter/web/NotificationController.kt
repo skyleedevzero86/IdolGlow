@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.notification.ui
+package com.sleekydz86.idolglow.notification.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService

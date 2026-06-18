@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mypage.ui
+package com.sleekydz86.idolglow.mypage.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import com.sleekydz86.idolglow.mypage.application.MypagePromoService

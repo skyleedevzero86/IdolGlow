@@ -5,7 +5,7 @@ import com.sleekydz86.idolglow.exchange.infrastructure.ExchangeBranchJpaReposito
 import com.sleekydz86.idolglow.exchange.infrastructure.NaverDirectionsClient
 import com.sleekydz86.idolglow.exchangerate.application.port.out.ExchangeRateQueryPort
 import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
-import com.sleekydz86.idolglow.global.infrastructure.config.ExchangeAirportHubProperties
+import com.sleekydz86.idolglow.global.config.ExchangeAirportHubProperties
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals

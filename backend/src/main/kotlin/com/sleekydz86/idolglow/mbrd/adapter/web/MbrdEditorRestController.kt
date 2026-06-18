@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.mbrd.ui
+package com.sleekydz86.idolglow.mbrd.adapter.web
 
+import com.sleekydz86.idolglow.mbrd.adapter.web.dto.MbrdSaveDraftRequest
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorBootstrapService
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDocumentViewCountPayload
-import com.sleekydz86.idolglow.mbrd.ui.dto.MbrdSaveDraftRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid

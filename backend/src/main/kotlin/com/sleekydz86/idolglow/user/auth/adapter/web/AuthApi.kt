@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.auth.ui
+package com.sleekydz86.idolglow.user.auth.adapter.web
 
 import com.sleekydz86.idolglow.user.auth.domain.dto.AccessTokenResponse
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter

@@ -1,5 +1,7 @@
-package com.sleekydz86.idolglow.survey.ui
+package com.sleekydz86.idolglow.survey.adapter.web
 
+import com.sleekydz86.idolglow.survey.adapter.web.request.AdminUpsertSurveyFormRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
@@ -7,7 +9,6 @@ import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormPageResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormSummaryResponse
-import com.sleekydz86.idolglow.survey.ui.request.AdminUpsertSurveyFormRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -59,16 +60,16 @@ class AdminSurveyFormController(
     @PostMapping
     fun create(
         @Valid @RequestBody request: AdminUpsertSurveyFormRequest,
-    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.create(request))
+    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.create(request.toCommand()))
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody request: AdminUpsertSurveyFormRequest,
-    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.update(id, request))
+    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.update(id, request.toCommand()))
 
     @PutMapping("/current")
     fun upsertCurrent(
         @Valid @RequestBody request: AdminUpsertSurveyFormRequest,
-    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.upsertCurrent(request))
+    ): ResponseEntity<SurveyFormResponse> = ResponseEntity.ok(adminSurveyFormService.upsertCurrent(request.toCommand()))
 }

@@ -1,12 +1,13 @@
-package com.sleekydz86.idolglow.survey.ui
+package com.sleekydz86.idolglow.survey.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.survey.adapter.web.request.SubmitSurveyResponseRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.survey.application.SurveyRecommendationService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendationResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
-import com.sleekydz86.idolglow.survey.ui.request.SubmitSurveyResponseRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -38,7 +39,7 @@ class SurveyFormController(
         @LoginUser userId: Long,
         @Valid @RequestBody request: SubmitSurveyResponseRequest,
     ): ResponseEntity<SurveySubmissionResponse> =
-        ResponseEntity.status(HttpStatus.CREATED).body(userSurveyFormService.submitCurrentForm(userId, request))
+        ResponseEntity.status(HttpStatus.CREATED).body(userSurveyFormService.submitCurrentForm(userId, request.toCommand()))
 
     @GetMapping("/current/submissions/me/latest")
     fun findMyLatest(

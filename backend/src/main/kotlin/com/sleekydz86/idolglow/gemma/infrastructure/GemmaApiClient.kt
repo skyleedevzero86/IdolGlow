@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.gemma.infrastructure
 
-import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
+import com.sleekydz86.idolglow.global.config.GemmaProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component

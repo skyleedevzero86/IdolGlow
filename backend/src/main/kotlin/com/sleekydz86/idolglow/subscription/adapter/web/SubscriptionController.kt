@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.subscription.ui
+package com.sleekydz86.idolglow.subscription.adapter.web
 
+import com.sleekydz86.idolglow.subscription.adapter.web.request.RegisterSubscriptionRequest
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistrationResponse
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
-import com.sleekydz86.idolglow.subscription.ui.request.RegisterSubscriptionRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid

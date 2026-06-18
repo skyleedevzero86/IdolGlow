@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.subscription.application.port.`in`
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionScheduleResponse
+import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionOverviewResult
+import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionScheduleResult
 import com.sleekydz86.idolglow.subscription.application.dto.UpsertSubscriptionDispatchScheduleCommand
 
 interface SubscriptionAdminUseCase {
@@ -10,7 +10,7 @@ interface SubscriptionAdminUseCase {
         subscriberSize: Int,
         dispatchPage: Int,
         dispatchSize: Int,
-    ): AdminSubscriptionOverviewResponse
+    ): SubscriptionOverviewResult
 
-    fun upsertDispatchSchedule(command: UpsertSubscriptionDispatchScheduleCommand): AdminSubscriptionScheduleResponse
+    fun upsertDispatchSchedule(command: UpsertSubscriptionDispatchScheduleCommand): SubscriptionScheduleResult
 }

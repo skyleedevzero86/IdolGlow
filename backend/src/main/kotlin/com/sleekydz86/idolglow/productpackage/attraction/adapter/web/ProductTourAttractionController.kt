@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.attraction.ui
+package com.sleekydz86.idolglow.productpackage.attraction.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.attraction.application.ProductTourAttractionQueryService
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse

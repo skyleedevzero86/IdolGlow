@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.platform.auth.util
 
+import com.sleekydz86.idolglow.global.adapter.security.AuthChannel
+import com.sleekydz86.idolglow.global.adapter.security.JwtClaimNames
 import com.sleekydz86.idolglow.global.adapter.security.JwtSigningKeyFactory
 import com.sleekydz86.idolglow.platform.auth.application.dto.AuthenticatedUser
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
@@ -42,9 +44,10 @@ class JwtTokenUtil(
         expirationMillis: Long,
     ): String {
         val claims = HashMap<String, Any>()
-        claims["tokenType"] = tokenType
+        claims[JwtClaimNames.PLATFORM_TOKEN_TYPE] = tokenType
+        claims[JwtClaimNames.CHANNEL] = AuthChannel.PLATFORM.name
         if (role != null) {
-            claims["role"] = role.name
+            claims[JwtClaimNames.PLATFORM_ROLE] = role.name
         }
         val now = Date()
         return Jwts

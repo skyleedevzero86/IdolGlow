@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.user.recovery
+package com.sleekydz86.idolglow.platform.user.infrastructure.recovery
 
 import java.time.Duration
 

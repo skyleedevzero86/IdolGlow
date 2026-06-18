@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.glowweather.infrastructure
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.sleekydz86.idolglow.global.infrastructure.config.KmaWeatherProperties
+import com.sleekydz86.idolglow.global.config.KmaWeatherProperties
 import com.sleekydz86.idolglow.glowweather.application.port.out.AsosDailySnapshot
 import com.sleekydz86.idolglow.glowweather.application.port.out.CurrentObservationSnapshot
 import com.sleekydz86.idolglow.glowweather.application.port.out.GlowWeatherDataPort

@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.admin.ui.dto
+package com.sleekydz86.idolglow.admin.adapter.web.dto
 
 data class AdminServerSummaryResponse(
     val cpuUsagePercent: Double?,

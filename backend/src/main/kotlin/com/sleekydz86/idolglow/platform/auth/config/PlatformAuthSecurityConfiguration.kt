@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.platform.auth.config
 
-import com.sleekydz86.idolglow.platform.auth.filter.PlatformJwtAuthenticationFilter
-import com.sleekydz86.idolglow.platform.auth.filter.PlatformSecurityHeadersFilter
-import com.sleekydz86.idolglow.platform.auth.handler.PlatformJwtAccessDeniedHandler
-import com.sleekydz86.idolglow.platform.auth.handler.PlatformJwtAuthenticationEntryPoint
+import com.sleekydz86.idolglow.platform.auth.adapter.web.filter.PlatformJwtAuthenticationFilter
+import com.sleekydz86.idolglow.platform.auth.adapter.web.filter.PlatformSecurityHeadersFilter
+import com.sleekydz86.idolglow.platform.auth.adapter.web.handler.PlatformJwtAccessDeniedHandler
+import com.sleekydz86.idolglow.platform.auth.adapter.web.handler.PlatformJwtAuthenticationEntryPoint
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
