@@ -91,9 +91,10 @@ dependencies {
     implementation("io.minio:minio:8.5.17")
 
     // JWT
-    compileOnly("io.jsonwebtoken:jjwt-api:0.11.2")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2")
+    val jjwtVersion = "0.11.2"
+    compileOnly("io.jsonwebtoken:jjwt-api:$jjwtVersion")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
 
     // swagger
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")

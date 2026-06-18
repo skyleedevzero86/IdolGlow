@@ -1,6 +1,3 @@
-config/detekt/
-.editorconfig
-
 ./.run/
 ../.run/
 .run/
