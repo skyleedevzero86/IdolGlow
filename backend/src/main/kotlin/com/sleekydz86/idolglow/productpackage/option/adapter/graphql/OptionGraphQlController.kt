@@ -10,15 +10,17 @@ import org.springframework.stereotype.Controller
 class OptionGraphQlController(
     private val optionQueryService: OptionQueryService,
 ) {
-
     @QueryMapping
     fun options(): List<OptionGraphQlResponse> =
-        optionQueryService.findOptions()
+        optionQueryService
+            .findOptions()
             .map(OptionGraphQlResponse::from)
 
     @QueryMapping
-    fun option(@Argument id: String): OptionGraphQlResponse =
+    fun option(
+        @Argument id: String,
+    ): OptionGraphQlResponse =
         OptionGraphQlResponse.from(
-            optionQueryService.findOption(id.toGraphQlIdLong("id"))
+            optionQueryService.findOption(id.toGraphQlIdLong("id")),
         )
 }

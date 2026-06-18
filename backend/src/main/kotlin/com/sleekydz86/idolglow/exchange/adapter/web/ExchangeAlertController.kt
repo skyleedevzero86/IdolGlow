@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController
 class ExchangeAlertController(
     private val exchangeAlertCommandService: ExchangeAlertCommandService,
 ) {
-
     @PostMapping("/exchange-alerts", "/mypage/exchange-alerts", "/api/exchange-alerts")
     fun create(
         @LoginUser userId: Long,

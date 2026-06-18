@@ -19,7 +19,6 @@ class PlatformUser(
     var passwordChangeCount: Int = 0,
     var lastPasswordChangeDate: LocalDate? = null,
 ) {
-
     fun changePassword(encodedPassword: String) {
         password = encodedPassword
         passwordChangedAt = LocalDateTime.now()
@@ -69,8 +68,7 @@ class PlatformUser(
         return statusOk && notLocked
     }
 
-    fun isLocked(): Boolean =
-        loginFailCount >= 5 || status == PlatformUserStatus.SUSPENDED
+    fun isLocked(): Boolean = loginFailCount >= 5 || status == PlatformUserStatus.SUSPENDED
 
     fun increaseLoginFailCount() {
         loginFailCount += 1
@@ -118,35 +116,47 @@ class PlatformUser(
             private var lastPasswordChangeDate: LocalDate? = null
 
             fun id(id: Long?) = apply { this.id = id }
-            fun username(username: String) = apply { this.username = username }
-            fun password(password: String) = apply { this.password = password }
-            fun nickname(nickname: String) = apply { this.nickname = nickname }
-            fun email(email: String) = apply { this.email = email }
-            fun status(status: PlatformUserStatus) = apply { this.status = status }
-            fun role(role: PlatformUserRole) = apply { this.role = role }
-            fun lastLoginAt(lastLoginAt: LocalDateTime?) = apply { this.lastLoginAt = lastLoginAt }
-            fun loginFailCount(loginFailCount: Int) = apply { this.loginFailCount = loginFailCount }
-            fun accountLockedAt(accountLockedAt: LocalDateTime?) = apply { this.accountLockedAt = accountLockedAt }
-            fun passwordChangedAt(passwordChangedAt: LocalDateTime?) = apply { this.passwordChangedAt = passwordChangedAt }
-            fun passwordChangeCount(passwordChangeCount: Int) = apply { this.passwordChangeCount = passwordChangeCount }
-            fun lastPasswordChangeDate(lastPasswordChangeDate: LocalDate?) =
-                apply { this.lastPasswordChangeDate = lastPasswordChangeDate }
 
-            fun build(): PlatformUser = PlatformUser(
-                id = id,
-                username = username ?: error("사용자명(로그인 ID)이 필요합니다."),
-                password = password ?: error("비밀번호가 필요합니다."),
-                nickname = nickname ?: error("닉네임이 필요합니다."),
-                email = email ?: error("이메일이 필요합니다."),
-                status = status,
-                role = role,
-                lastLoginAt = lastLoginAt,
-                loginFailCount = loginFailCount,
-                accountLockedAt = accountLockedAt,
-                passwordChangedAt = passwordChangedAt,
-                passwordChangeCount = passwordChangeCount,
-                lastPasswordChangeDate = lastPasswordChangeDate,
-            )
+            fun username(username: String) = apply { this.username = username }
+
+            fun password(password: String) = apply { this.password = password }
+
+            fun nickname(nickname: String) = apply { this.nickname = nickname }
+
+            fun email(email: String) = apply { this.email = email }
+
+            fun status(status: PlatformUserStatus) = apply { this.status = status }
+
+            fun role(role: PlatformUserRole) = apply { this.role = role }
+
+            fun lastLoginAt(lastLoginAt: LocalDateTime?) = apply { this.lastLoginAt = lastLoginAt }
+
+            fun loginFailCount(loginFailCount: Int) = apply { this.loginFailCount = loginFailCount }
+
+            fun accountLockedAt(accountLockedAt: LocalDateTime?) = apply { this.accountLockedAt = accountLockedAt }
+
+            fun passwordChangedAt(passwordChangedAt: LocalDateTime?) = apply { this.passwordChangedAt = passwordChangedAt }
+
+            fun passwordChangeCount(passwordChangeCount: Int) = apply { this.passwordChangeCount = passwordChangeCount }
+
+            fun lastPasswordChangeDate(lastPasswordChangeDate: LocalDate?) = apply { this.lastPasswordChangeDate = lastPasswordChangeDate }
+
+            fun build(): PlatformUser =
+                PlatformUser(
+                    id = id,
+                    username = username ?: error("사용자명(로그인 ID)이 필요합니다."),
+                    password = password ?: error("비밀번호가 필요합니다."),
+                    nickname = nickname ?: error("닉네임이 필요합니다."),
+                    email = email ?: error("이메일이 필요합니다."),
+                    status = status,
+                    role = role,
+                    lastLoginAt = lastLoginAt,
+                    loginFailCount = loginFailCount,
+                    accountLockedAt = accountLockedAt,
+                    passwordChangedAt = passwordChangedAt,
+                    passwordChangeCount = passwordChangeCount,
+                    lastPasswordChangeDate = lastPasswordChangeDate,
+                )
         }
     }
 }

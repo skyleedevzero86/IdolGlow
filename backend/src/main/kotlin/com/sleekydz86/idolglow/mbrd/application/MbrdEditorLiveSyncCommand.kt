@@ -1,7 +1,5 @@
 package com.sleekydz86.idolglow.mbrd.application
 
-import java.time.Instant
-
 data class MbrdEditorLiveSyncCommand(
     val sessionId: String?,
     val documentId: String?,

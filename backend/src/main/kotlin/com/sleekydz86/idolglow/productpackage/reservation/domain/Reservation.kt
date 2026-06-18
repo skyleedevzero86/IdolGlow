@@ -23,47 +23,34 @@ class Reservation(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "reservation_slot_id", nullable = false)
     var reservationSlot: ReservationSlot,
-
     @Column(name = "user_id", nullable = false)
     val userId: Long,
-
     @Column(name = "visit_date", nullable = false)
     var visitDate: LocalDate,
-
     @Column(name = "visit_start_time", nullable = false)
     var visitStartTime: LocalTime,
-
     @Column(name = "visit_end_time", nullable = false)
     var visitEndTime: LocalTime,
-
     @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
     var totalPrice: BigDecimal,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: ReservationStatus = ReservationStatus.PREBOOK,
-
     @Column(name = "expires_at")
     var expiresAt: LocalDateTime? = null,
-
     @Column(name = "confirmed_at")
     var confirmedAt: LocalDateTime? = null,
-
     @Column(name = "canceled_at")
     var canceledAt: LocalDateTime? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "cancel_reason", length = 40)
     var cancelReason: ReservationCancelReason? = null,
-
     @Column(name = "admin_memo", columnDefinition = "TEXT")
     var adminMemo: String? = null,
 ) : BaseEntity() {
-
     init {
         alignWithSlot(reservationSlot)
     }
@@ -95,7 +82,7 @@ class Reservation(
 
     fun cancel(
         reason: ReservationCancelReason,
-        canceledAt: LocalDateTime = LocalDateTime.now()
+        canceledAt: LocalDateTime = LocalDateTime.now(),
     ): Reservation {
         changeStatus(ReservationStatus.CANCELED) {
             when (status) {
@@ -133,27 +120,30 @@ class Reservation(
         }
     }
 
-    fun resolveStatus(today: LocalDate = LocalDate.now()): ReservationStatus {
-        return if (status == ReservationStatus.BOOKED && visitDate.isBefore(today)) {
+    fun resolveStatus(today: LocalDate = LocalDate.now()): ReservationStatus =
+        if (status == ReservationStatus.BOOKED && visitDate.isBefore(today)) {
             ReservationStatus.COMPLETED
         } else {
             status
         }
-    }
 
     fun updateAdminMemo(memo: String?) {
         adminMemo = memo?.trim()?.takeIf { it.isNotEmpty() }
     }
 
-    private fun changeStatus(targetStatus: ReservationStatus, beforeChange: (() -> Unit)? = null) {
-        val allowed = when (status to targetStatus) {
-            ReservationStatus.PREBOOK to ReservationStatus.PENDING -> true
-            ReservationStatus.PENDING to ReservationStatus.BOOKED -> true
-            ReservationStatus.PREBOOK to ReservationStatus.CANCELED -> true
-            ReservationStatus.PENDING to ReservationStatus.CANCELED -> true
-            ReservationStatus.BOOKED to ReservationStatus.CANCELED -> true
-            else -> false
-        }
+    private fun changeStatus(
+        targetStatus: ReservationStatus,
+        beforeChange: (() -> Unit)? = null,
+    ) {
+        val allowed =
+            when (status to targetStatus) {
+                ReservationStatus.PREBOOK to ReservationStatus.PENDING -> true
+                ReservationStatus.PENDING to ReservationStatus.BOOKED -> true
+                ReservationStatus.PREBOOK to ReservationStatus.CANCELED -> true
+                ReservationStatus.PENDING to ReservationStatus.CANCELED -> true
+                ReservationStatus.BOOKED to ReservationStatus.CANCELED -> true
+                else -> false
+            }
 
         if (!allowed) {
             throw IllegalStateException("$status 상태에서 $targetStatus 상태로 변경할 수 없습니다.")

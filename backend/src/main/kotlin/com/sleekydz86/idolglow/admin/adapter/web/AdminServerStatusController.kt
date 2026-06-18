@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController
 class AdminServerStatusController(
     private val adminServerStatusService: AdminServerStatusService,
 ) {
-
     @Operation(summary = "서버 상태 조회")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
-    fun getStatus(): ResponseEntity<AdminServerStatusResponse> =
-        ResponseEntity.ok(adminServerStatusService.getServerStatus())
+    fun getStatus(): ResponseEntity<AdminServerStatusResponse> = ResponseEntity.ok(adminServerStatusService.getServerStatus())
 }

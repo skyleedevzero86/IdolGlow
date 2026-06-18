@@ -17,7 +17,6 @@ import java.time.LocalDate
 class MyPageExchangeRateController(
     private val exchangeRateQueryService: ExchangeRateQueryService,
 ) {
-
     @GetMapping("/exchange-rates/daily")
     fun daily(
         @LoginUser userId: Long,

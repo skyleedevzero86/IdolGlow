@@ -16,7 +16,7 @@ data class ReservationCreatedGraphQlResponse(
                 id = response.id.asGraphQlId(),
                 status = response.status.name,
                 expiresAt = response.expiresAt.asGraphQlValue(),
-                payment = PaymentGraphQlResponse.from(response)
+                payment = PaymentGraphQlResponse.from(response),
             )
     }
 }

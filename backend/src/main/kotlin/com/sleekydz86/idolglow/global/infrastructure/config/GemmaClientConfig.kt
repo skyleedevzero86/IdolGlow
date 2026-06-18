@@ -9,14 +9,14 @@ import org.springframework.web.client.RestClient
 class GemmaClientConfig(
     private val gemmaProperties: GemmaProperties,
 ) {
-
     @Bean(name = ["gemmaRestClient"])
     fun gemmaRestClient(): RestClient {
         val factory = SimpleClientHttpRequestFactory()
         factory.setConnectTimeout(gemmaProperties.connectTimeoutMs)
         factory.setReadTimeout(gemmaProperties.readTimeoutMs)
 
-        return RestClient.builder()
+        return RestClient
+            .builder()
             .baseUrl(gemmaProperties.baseUrl.trim().ifBlank { "http://localhost:8080/v1" })
             .requestFactory(factory)
             .build()

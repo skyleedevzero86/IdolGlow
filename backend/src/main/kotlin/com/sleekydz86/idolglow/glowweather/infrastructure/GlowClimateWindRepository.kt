@@ -20,7 +20,10 @@ class GlowClimateWindRepository(
         @JsonProperty("mps") val mps: Double,
     )
 
-    fun month(regionId: String, month: Int): ClimateWindCell? {
+    fun month(
+        regionId: String,
+        month: Int,
+    ): ClimateWindCell? {
         if (month !in 1..12) return null
         return byRegion[regionId.trim().lowercase()]?.get(month)
     }
@@ -36,9 +39,10 @@ class GlowClimateWindRepository(
                 val type = object : TypeReference<Map<String, Map<String, ClimateWindCell>>>() {}
                 val raw: Map<String, Map<String, ClimateWindCell>> = objectMapper.readValue(stream, type)
                 raw.mapValues { (_, months) ->
-                    months.mapNotNull { (k, v) ->
-                        k.toIntOrNull()?.let { m -> m to v }
-                    }.toMap()
+                    months
+                        .mapNotNull { (k, v) ->
+                            k.toIntOrNull()?.let { m -> m to v }
+                        }.toMap()
                 }
             }
         }.getOrElse { e ->

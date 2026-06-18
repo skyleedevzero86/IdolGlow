@@ -43,18 +43,20 @@ class AuthVerificationAuditService(
         verificationType: String?,
         keyword: String?,
     ): AuthVerificationAuditLogPageResponse {
-        val pageable = PageRequest.of(
-            page.coerceAtLeast(1) - 1,
-            size.coerceIn(1, 100),
-            Sort.by(Sort.Direction.DESC, "createdAt"),
-        )
+        val pageable =
+            PageRequest.of(
+                page.coerceAtLeast(1) - 1,
+                size.coerceIn(1, 100),
+                Sort.by(Sort.Direction.DESC, "createdAt"),
+            )
         val queryType = verificationType?.trim().orEmpty()
         val queryKeyword = keyword?.trim()
-        val data = if (queryType.isBlank()) {
-            authVerificationAuditLogRepository.searchByKeyword(queryKeyword, pageable)
-        } else {
-            authVerificationAuditLogRepository.searchByTypeAndKeyword(queryType, queryKeyword, pageable)
-        }
+        val data =
+            if (queryType.isBlank()) {
+                authVerificationAuditLogRepository.searchByKeyword(queryKeyword, pageable)
+            } else {
+                authVerificationAuditLogRepository.searchByTypeAndKeyword(queryType, queryKeyword, pageable)
+            }
         return AuthVerificationAuditLogPageResponse(
             logs = data.content.map(AuthVerificationAuditLogResponse::from),
             page = data.number + 1,

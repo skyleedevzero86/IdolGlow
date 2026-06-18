@@ -1,7 +1,5 @@
 package com.sleekydz86.idolglow.user.auth.graphql
 
-import com.sleekydz86.idolglow.user.auth.application.SignupFieldCheckResult
-import com.sleekydz86.idolglow.user.auth.application.dto.SignupCheckResponse
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 
 data class AuthTokenGraphQlResponse(
@@ -18,7 +16,7 @@ data class AuthTokenGraphQlResponse(
                 accessToken = response.accessToken,
                 accessTokenExpiresIn = response.accessTokenExpiresIn.toString(),
                 refreshToken = response.refreshToken,
-                refreshTokenExpiresIn = response.refreshTokenExpiresIn.toString()
+                refreshTokenExpiresIn = response.refreshTokenExpiresIn.toString(),
             )
     }
 }

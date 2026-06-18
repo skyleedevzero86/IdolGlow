@@ -11,7 +11,7 @@ data class WishToggleGraphQlResponse(
         fun from(response: WishToggleResponse): WishToggleGraphQlResponse =
             WishToggleGraphQlResponse(
                 id = response.id.asGraphQlId(),
-                wished = response.wished
+                wished = response.wished,
             )
     }
 }

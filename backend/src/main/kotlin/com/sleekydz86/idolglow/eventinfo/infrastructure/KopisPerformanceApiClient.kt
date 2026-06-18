@@ -30,18 +30,20 @@ class KopisPerformanceApiClient(
     ): List<FestivalEvent> {
         val key = kopisApiProperties.serviceKey.trim()
         if (key.isEmpty()) return emptyList()
-        val xml = callEndpoint(
-            path = "pblprfr",
-            query = buildMap {
-                put("service", key)
-                put("stdate", stDate)
-                put("eddate", edDate)
-                put("cpage", page.coerceAtLeast(1).toString())
-                put("rows", rows.coerceIn(1, 100).toString())
-                signguCode?.takeIf { it.isNotBlank() }?.let { put("signgucode", it) }
-                prfState?.takeIf { it.isNotBlank() }?.let { put("prfstate", it) }
-            },
-        ) ?: return emptyList()
+        val xml =
+            callEndpoint(
+                path = "pblprfr",
+                query =
+                    buildMap {
+                        put("service", key)
+                        put("stdate", stDate)
+                        put("eddate", edDate)
+                        put("cpage", page.coerceAtLeast(1).toString())
+                        put("rows", rows.coerceIn(1, 100).toString())
+                        signguCode?.takeIf { it.isNotBlank() }?.let { put("signgucode", it) }
+                        prfState?.takeIf { it.isNotBlank() }?.let { put("prfstate", it) }
+                    },
+            ) ?: return emptyList()
         return parseRows(xml, "db").mapNotNull { row ->
             val id = row.text("mt20id") ?: return@mapNotNull null
             val title = row.text("prfnm") ?: return@mapNotNull null
@@ -67,10 +69,11 @@ class KopisPerformanceApiClient(
     fun detailPerformance(mt20id: String): FestivalEvent? {
         val key = kopisApiProperties.serviceKey.trim()
         if (key.isEmpty()) return null
-        val xml = callEndpoint(
-            path = "pblprfr/${UriUtils.encodePath(mt20id.trim(), StandardCharsets.UTF_8)}",
-            query = mapOf("service" to key),
-        ) ?: return null
+        val xml =
+            callEndpoint(
+                path = "pblprfr/${UriUtils.encodePath(mt20id.trim(), StandardCharsets.UTF_8)}",
+                query = mapOf("service" to key),
+            ) ?: return null
         val row = parseRows(xml, "db").firstOrNull() ?: return null
         val id = row.text("mt20id") ?: return null
         val title = row.text("prfnm") ?: return null
@@ -105,16 +108,18 @@ class KopisPerformanceApiClient(
     ): List<FestivalEvent> {
         val key = kopisApiProperties.serviceKey.trim()
         if (key.isEmpty()) return emptyList()
-        val xml = callEndpoint(
-            path = "prffest",
-            query = mapOf(
-                "service" to key,
-                "stdate" to stDate,
-                "eddate" to edDate,
-                "cpage" to page.coerceAtLeast(1).toString(),
-                "rows" to rows.coerceIn(1, 100).toString(),
-            ),
-        ) ?: return emptyList()
+        val xml =
+            callEndpoint(
+                path = "prffest",
+                query =
+                    mapOf(
+                        "service" to key,
+                        "stdate" to stDate,
+                        "eddate" to edDate,
+                        "cpage" to page.coerceAtLeast(1).toString(),
+                        "rows" to rows.coerceIn(1, 100).toString(),
+                    ),
+            ) ?: return emptyList()
         return parseRows(xml, "db").mapNotNull { row ->
             val id = row.text("mt20id") ?: return@mapNotNull null
             val title = row.text("prfnm") ?: return@mapNotNull null
@@ -137,13 +142,17 @@ class KopisPerformanceApiClient(
         }
     }
 
-    fun areaStats(stDate: String, edDate: String): List<KopisAreaStat> {
+    fun areaStats(
+        stDate: String,
+        edDate: String,
+    ): List<KopisAreaStat> {
         val key = kopisApiProperties.serviceKey.trim()
         if (key.isEmpty()) return emptyList()
-        val xml = callEndpoint(
-            path = "prfstsArea",
-            query = mapOf("service" to key, "stdate" to stDate, "eddate" to edDate),
-        ) ?: return emptyList()
+        val xml =
+            callEndpoint(
+                path = "prfstsArea",
+                query = mapOf("service" to key, "stdate" to stDate, "eddate" to edDate),
+            ) ?: return emptyList()
         return parseRows(xml, "prfst").mapNotNull { row ->
             val area = row.text("area") ?: return@mapNotNull null
             KopisAreaStat(
@@ -162,20 +171,32 @@ class KopisPerformanceApiClient(
         }
     }
 
-    private fun callEndpoint(path: String, query: Map<String, String>): String? {
-        val queryString = query.entries.joinToString("&") { (k, v) ->
-            "${UriUtils.encodeQueryParam(k, StandardCharsets.UTF_8)}=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
-        }
+    private fun callEndpoint(
+        path: String,
+        query: Map<String, String>,
+    ): String? {
+        val queryString =
+            query.entries.joinToString("&") { (k, v) ->
+                "${UriUtils.encodeQueryParam(k, StandardCharsets.UTF_8)}=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
+            }
         val url = "${kopisApiProperties.baseUrl.trimEnd('/')}/$path?$queryString"
         return runCatching {
-            webClient.get().uri(url).retrieve().bodyToMono(String::class.java).block()
+            webClient
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(String::class.java)
+                .block()
         }.onFailure {
             log.warn("KOPIS(공연) 호출 실패. path={}, message={}", path, it.message)
         }.getOrNull()
     }
 
-    private fun parseRows(xml: String, rowTag: String): List<Element> {
-        return runCatching {
+    private fun parseRows(
+        xml: String,
+        rowTag: String,
+    ): List<Element> =
+        runCatching {
             val factory = DocumentBuilderFactory.newInstance()
             factory.isNamespaceAware = false
             val builder = factory.newDocumentBuilder()
@@ -186,7 +207,6 @@ class KopisPerformanceApiClient(
             log.warn("KOPIS(공연) XML 파싱 실패: {}", it.message)
             emptyList()
         }
-    }
 
     private fun normalizeDate(raw: String?): String? {
         val value = raw?.trim().orEmpty()
@@ -199,7 +219,11 @@ class KopisPerformanceApiClient(
 private fun Element.text(tagName: String): String? {
     val nodes = this.getElementsByTagName(tagName)
     if (nodes.length == 0) return null
-    return nodes.item(0)?.textContent?.trim()?.takeIf { it.isNotEmpty() }
+    return nodes
+        .item(0)
+        ?.textContent
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
 }
 
 private fun Element.firstText(tagName: String): String? = text(tagName)
@@ -208,6 +232,11 @@ private fun Element.texts(tagName: String): List<String> {
     val nodes = this.getElementsByTagName(tagName)
     if (nodes.length == 0) return emptyList()
     return (0 until nodes.length)
-        .mapNotNull { idx -> nodes.item(idx)?.textContent?.trim()?.takeIf { it.isNotEmpty() } }
-        .distinct()
+        .mapNotNull { idx ->
+            nodes
+                .item(idx)
+                ?.textContent
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+        }.distinct()
 }

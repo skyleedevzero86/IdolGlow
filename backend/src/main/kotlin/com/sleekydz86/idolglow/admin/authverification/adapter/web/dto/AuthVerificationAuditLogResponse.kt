@@ -14,15 +14,16 @@ data class AuthVerificationAuditLogResponse(
     val createdAt: LocalDateTime,
 ) {
     companion object {
-        fun from(log: AuthVerificationAuditLog) = AuthVerificationAuditLogResponse(
-            id = requireNotNull(log.id),
-            verificationType = log.verificationType,
-            email = log.email,
-            username = log.username,
-            ipAddress = log.ipAddress,
-            success = log.success,
-            detail = log.detail,
-            createdAt = log.createdAt,
-        )
+        fun from(log: AuthVerificationAuditLog) =
+            AuthVerificationAuditLogResponse(
+                id = requireNotNull(log.id),
+                verificationType = log.verificationType,
+                email = log.email,
+                username = log.username,
+                ipAddress = log.ipAddress,
+                success = log.success,
+                detail = log.detail,
+                createdAt = log.createdAt,
+            )
     }
 }

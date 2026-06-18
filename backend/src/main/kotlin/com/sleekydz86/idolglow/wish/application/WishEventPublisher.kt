@@ -7,9 +7,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class WishEventPublisher(
-    private val applicationEventPublisher: ApplicationEventPublisher
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
-
     fun publishDelete(
         aggregateType: WishAggregateType,
         aggregateId: Long,
@@ -17,8 +16,8 @@ class WishEventPublisher(
         publishDelete(
             WishDeleteEvent(
                 aggregateType = aggregateType,
-                aggregateId = aggregateId
-            )
+                aggregateId = aggregateId,
+            ),
         )
     }
 

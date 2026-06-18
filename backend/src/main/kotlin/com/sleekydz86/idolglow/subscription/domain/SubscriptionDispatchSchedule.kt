@@ -18,35 +18,28 @@ import java.time.LocalDateTime
     name = "subscription_dispatch_schedules",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_subscription_dispatch_schedule_content_type", columnNames = ["content_type"]),
-    ]
+    ],
 )
 class SubscriptionDispatchSchedule(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "content_type", nullable = false, length = 40)
     val contentType: SubscriptionContentType,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "frequency_type", nullable = false, length = 20)
     var frequencyType: SubscriptionDispatchFrequency,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", length = 20)
     var dayOfWeek: DayOfWeek? = null,
-
     @Column(name = "dispatch_hour", nullable = false)
     var dispatchHour: Int,
-
     @Column(name = "dispatch_minute", nullable = false)
     var dispatchMinute: Int,
-
     @Column(nullable = false)
     var active: Boolean,
 ) : BaseEntity() {
-
     fun update(
         frequencyType: SubscriptionDispatchFrequency,
         dayOfWeek: DayOfWeek?,

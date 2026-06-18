@@ -13,9 +13,13 @@ class AdminAuditService(
     private val adminAuditLogRepository: AdminAuditLogRepository,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @Transactional
-    fun log(actionCode: String, targetType: String, targetId: Long?, detail: String?) {
+    fun log(
+        actionCode: String,
+        targetType: String,
+        targetId: Long?,
+        detail: String?,
+    ) {
         val adminUserId = authenticatedUserIdResolver.resolveRequired()
         adminAuditLogRepository.save(
             AdminAuditLog(
@@ -25,7 +29,7 @@ class AdminAuditService(
                 targetId = targetId,
                 detail = detail?.take(2000),
                 createdAt = LocalDateTime.now(),
-            )
+            ),
         )
     }
 

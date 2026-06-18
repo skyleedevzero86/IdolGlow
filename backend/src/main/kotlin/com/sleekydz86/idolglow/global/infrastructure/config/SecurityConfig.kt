@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -40,7 +40,6 @@ class SecurityConfig(
     @Value("#{'\${app.security.allowed-origins:http://localhost:3000}'.split(',')}")
     private val allowedOrigins: List<String>,
 ) {
-
     @Bean
     @Order(0)
     fun h2ConsoleSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -65,11 +64,9 @@ class SecurityConfig(
             .exceptionHandling {
                 it.authenticationEntryPoint(authenticationEntryPoint)
                 it.accessDeniedHandler(accessDeniedHandler)
-            }
-            .sessionManagement {
+            }.sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            }
-            .authorizeHttpRequests { auth ->
+            }.authorizeHttpRequests { auth ->
                 auth.requestMatchers("/", "/favicon.ico").permitAll()
                 auth.requestMatchers("/health/check").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
@@ -89,21 +86,24 @@ class SecurityConfig(
                     permitList.add("/auth/test/**")
                 }
 
-                auth.requestMatchers(*permitList.toTypedArray()).permitAll()
-                    .requestMatchers(HttpMethod.POST, "/subscriptions").permitAll()
-                    .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook").permitAll()
-                    .anyRequest().authenticated()
-            }
-            .oauth2Login { oauth ->
+                auth
+                    .requestMatchers(*permitList.toTypedArray())
+                    .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/subscriptions")
+                    .permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated()
+            }.oauth2Login { oauth ->
                 oauth.userInfoEndpoint { endpoint ->
                     endpoint.userService(customOAuth2UserService)
                 }
                 oauth.successHandler(oAuth2SuccessHandler)
                 oauth.failureHandler(oAuth2LoginFailureHandler)
-            }
-            .addFilterBefore(
+            }.addFilterBefore(
                 JwtFilter(jwtProvider),
-                UsernamePasswordAuthenticationFilter::class.java
+                UsernamePasswordAuthenticationFilter::class.java,
             )
 
         return http.build()
@@ -127,30 +127,32 @@ class SecurityConfig(
     }
 
     companion object {
-        private val SWAGGER_WHITE_LIST = arrayOf(
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/v3/api-docs.yaml",
-            "/swagger-ui.html"
-        )
+        private val SWAGGER_WHITE_LIST =
+            arrayOf(
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/v3/api-docs.yaml",
+                "/swagger-ui.html",
+            )
 
-        private val PERMIT_LIST = arrayOf(
-            "/platform/auth/**",
-            "/auth/login/**",
-            "/auth/signup",
-            "/auth/signup/check-email",
-            "/auth/signup/check-nickname",
-            "/auth/reissue",
-            "/auth/logout",
-            "/oauth2/**",
-            "/login/oauth2/**",
-            "/login",
-            "/login/**",
-            "/auth/callback",
-            "/payments/mock/webhook",
-            "/graphql",
-            "/graphiql",
-            "/graphiql/**",
-        )
+        private val PERMIT_LIST =
+            arrayOf(
+                "/platform/auth/**",
+                "/auth/login/**",
+                "/auth/signup",
+                "/auth/signup/check-email",
+                "/auth/signup/check-nickname",
+                "/auth/reissue",
+                "/auth/logout",
+                "/oauth2/**",
+                "/login/oauth2/**",
+                "/login",
+                "/login/**",
+                "/auth/callback",
+                "/payments/mock/webhook",
+                "/graphql",
+                "/graphiql",
+                "/graphiql/**",
+            )
     }
 }

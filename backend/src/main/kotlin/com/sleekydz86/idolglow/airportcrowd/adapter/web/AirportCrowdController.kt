@@ -1,20 +1,9 @@
 package com.sleekydz86.idolglow.airportcrowd.adapter.web
 
 import com.sleekydz86.idolglow.airportcrowd.application.AirportCrowdQueryService
-import com.sleekydz86.idolglow.airportcrowd.application.ArrivalCongestionView
-import com.sleekydz86.idolglow.airportcrowd.application.CrowdCriteriaView
-import com.sleekydz86.idolglow.airportcrowd.application.DepartureCongestionView
-import com.sleekydz86.idolglow.airportcrowd.application.ParkingCongestionView
-import com.sleekydz86.idolglow.airportcrowd.application.PassengerForecastBundleView
-import com.sleekydz86.idolglow.airportcrowd.application.PassengerForecastView
-import com.sleekydz86.idolglow.airportcrowd.domain.DepartureCrowdLevel
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
-import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import java.time.format.DateTimeFormatter
 
 class AirportCrowdController(
     private val airportCrowdQueryService: AirportCrowdQueryService,
@@ -26,7 +15,8 @@ class AirportCrowdController(
         @RequestParam(required = false) gateId: String?,
     ): List<DepartureCongestionResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
-        return airportCrowdQueryService.listDepartureCongestion(terminalId = terminalId, gateId = gateId)
+        return airportCrowdQueryService
+            .listDepartureCongestion(terminalId = terminalId, gateId = gateId)
             .map { DepartureCongestionResponse.from(it) }
     }
 

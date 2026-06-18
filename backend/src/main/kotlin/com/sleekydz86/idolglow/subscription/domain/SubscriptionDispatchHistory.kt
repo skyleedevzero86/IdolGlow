@@ -20,44 +20,34 @@ import java.time.LocalDateTime
             name = "uk_subscription_dispatch_content",
             columnNames = ["content_type", "content_slug", "dispatch_channel"],
         ),
-    ]
+    ],
 )
 class SubscriptionDispatchHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "content_type", nullable = false, length = 40)
     val contentType: SubscriptionContentType,
-
     @Column(name = "content_slug", nullable = false, length = 160)
     val contentSlug: String,
-
     @Column(name = "content_title", nullable = false, length = 255)
     val contentTitle: String,
-
     @Column(name = "content_summary", length = 1000)
     val contentSummary: String? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "dispatch_channel", nullable = false, length = 20)
     val dispatchChannel: SubscriptionDispatchChannel,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "dispatch_status", nullable = false, length = 20)
     val dispatchStatus: SubscriptionDispatchStatus,
-
     @Column(name = "recipient_count", nullable = false)
     val recipientCount: Long,
-
     @Column(name = "content_created_at")
     val contentCreatedAt: LocalDateTime? = null,
-
     @Column(name = "dispatched_at", nullable = false)
     val dispatchedAt: LocalDateTime,
 ) : BaseEntity() {
-
     companion object {
         fun record(
             contentType: SubscriptionContentType,

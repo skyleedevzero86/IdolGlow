@@ -23,7 +23,7 @@ data class NotificationGraphQlResponse(
                 message = response.message,
                 link = response.link,
                 readAt = response.readAt.asGraphQlValue(),
-                createdAt = response.createdAt.asGraphQlValue()
+                createdAt = response.createdAt.asGraphQlValue(),
             )
 
         fun from(notification: Notification): NotificationGraphQlResponse =
@@ -34,7 +34,7 @@ data class NotificationGraphQlResponse(
                 message = notification.message,
                 link = notification.link,
                 readAt = notification.readAt.asGraphQlValue(),
-                createdAt = notification.createdAt.asGraphQlValue()
+                createdAt = notification.createdAt.asGraphQlValue(),
             )
     }
 }

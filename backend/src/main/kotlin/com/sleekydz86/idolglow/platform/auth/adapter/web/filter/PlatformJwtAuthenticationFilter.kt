@@ -22,7 +22,6 @@ class PlatformJwtAuthenticationFilter(
     private val userDetailsService: UserDetailsService,
     private val properties: PlatformAuthProperties,
 ) : OncePerRequestFilter() {
-
     private val log = LoggerFactory.getLogger(PlatformJwtAuthenticationFilter::class.java)
     private val pathMatcher = AntPathMatcher()
 

@@ -9,7 +9,10 @@ data class PasswordLoginResponse(
     val requirePasswordChange: Boolean,
 ) {
     companion object {
-        fun from(token: TokenResponse, requirePasswordChange: Boolean): PasswordLoginResponse =
+        fun from(
+            token: TokenResponse,
+            requirePasswordChange: Boolean,
+        ): PasswordLoginResponse =
             PasswordLoginResponse(
                 grantType = token.grantType,
                 accessToken = token.accessToken,

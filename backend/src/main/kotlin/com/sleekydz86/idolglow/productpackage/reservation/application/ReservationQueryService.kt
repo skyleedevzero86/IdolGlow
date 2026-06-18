@@ -10,10 +10,12 @@ import java.time.LocalDate
 @Transactional(readOnly = true)
 @Service
 class ReservationQueryService(
-    private val reservationQueryRepository: ReservationQueryRepository
+    private val reservationQueryRepository: ReservationQueryRepository,
 ) {
-
-    fun findReservationsByUser(userId: Long, today: LocalDate = LocalDate.now()): List<ReservationSummaryResponse> {
+    fun findReservationsByUser(
+        userId: Long,
+        today: LocalDate = LocalDate.now(),
+    ): List<ReservationSummaryResponse> {
         val reservations = reservationQueryRepository.findByUserId(userId)
         return reservations.map { reservation ->
             val status = reservation.resolveStatus(today)
@@ -21,7 +23,10 @@ class ReservationQueryService(
         }
     }
 
-    fun findUpcomingReservationsByUser(userId: Long, today: LocalDate = LocalDate.now()): List<ReservationSummaryResponse> {
+    fun findUpcomingReservationsByUser(
+        userId: Long,
+        today: LocalDate = LocalDate.now(),
+    ): List<ReservationSummaryResponse> {
         val reservations = reservationQueryRepository.findByUserId(userId)
         return reservations
             .filter { it.visitDate.isEqual(today) || it.visitDate.isAfter(today) }
@@ -35,9 +40,14 @@ class ReservationQueryService(
             }
     }
 
-    fun findReservationDetail(reservationId: Long, userId: Long, today: LocalDate = LocalDate.now()): ReservationSummaryResponse {
-        val reservation = reservationQueryRepository.findByIdAndUserId(reservationId, userId)
-            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
+    fun findReservationDetail(
+        reservationId: Long,
+        userId: Long,
+        today: LocalDate = LocalDate.now(),
+    ): ReservationSummaryResponse {
+        val reservation =
+            reservationQueryRepository.findByIdAndUserId(reservationId, userId)
+                ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
         return ReservationSummaryResponse.from(reservation, reservation.resolveStatus(today))
     }
 }

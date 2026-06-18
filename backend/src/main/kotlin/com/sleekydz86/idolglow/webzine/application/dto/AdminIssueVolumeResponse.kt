@@ -1,11 +1,7 @@
 package com.sleekydz86.idolglow.webzine.application.dto
 
-import com.sleekydz86.idolglow.webzine.domain.WebzineArticle
-import com.sleekydz86.idolglow.webzine.domain.WebzineArticleSection
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 data class AdminIssueVolumeResponse(
     val id: Long,
@@ -31,9 +27,10 @@ data class AdminIssueVolumeResponse(
                 coverImageUrl = issue.coverImageUrl,
                 teaser = issue.teaser,
                 articleCount = issue.articles.size,
-                articles = issue.articles
-                    .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
-                    .map(AdminIssueArticleCardResponse::from)
+                articles =
+                    issue.articles
+                        .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
+                        .map(AdminIssueArticleCardResponse::from),
             )
     }
 }

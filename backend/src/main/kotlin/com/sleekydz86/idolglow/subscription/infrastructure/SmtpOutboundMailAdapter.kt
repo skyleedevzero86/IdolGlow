@@ -13,7 +13,6 @@ class SmtpOutboundMailAdapter(
     private val javaMailSender: JavaMailSender,
     private val appMailProperties: AppMailProperties,
 ) : OutboundMailPort {
-
     override fun send(message: OutboundMailMessage) {
         val mimeMessage = javaMailSender.createMimeMessage()
         val helper = MimeMessageHelper(mimeMessage, "UTF-8")
@@ -22,7 +21,10 @@ class SmtpOutboundMailAdapter(
         helper.setSubject(message.subject)
         helper.setText(message.plainTextBody, message.htmlBody)
         helper.setFrom(InternetAddress(appMailProperties.fromAddress, appMailProperties.fromName))
-        appMailProperties.replyTo.trim().takeIf { it.isNotEmpty() }?.let(helper::setReplyTo)
+        appMailProperties.replyTo
+            .trim()
+            .takeIf { it.isNotEmpty() }
+            ?.let(helper::setReplyTo)
 
         javaMailSender.send(mimeMessage)
     }

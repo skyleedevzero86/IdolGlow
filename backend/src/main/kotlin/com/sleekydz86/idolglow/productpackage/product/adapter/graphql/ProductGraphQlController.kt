@@ -11,7 +11,6 @@ import org.springframework.stereotype.Controller
 class ProductGraphQlController(
     private val productQueryService: ProductQueryService,
 ) {
-
     @QueryMapping
     fun health(): String = "정상"
 
@@ -33,22 +32,23 @@ class ProductGraphQlController(
         @Argument radiusMeters: Int?,
     ): ProductSliceGraphQlResponse {
         val pageSize = (size ?: DEFAULT_PAGE_SIZE).coerceIn(1, MAX_PAGE_SIZE)
-        val params = ProductBrowseRequestParser.fromGraphQl(
-            lastId = lastId,
-            offset = offset,
-            size = pageSize,
-            tag = tag,
-            tags = tags,
-            keyword = keyword,
-            minPrice = minPrice,
-            maxPrice = maxPrice,
-            visitDate = visitDate,
-            reservableOnly = reservableOnly,
-            sort = sort,
-            nearLatitude = nearLatitude,
-            nearLongitude = nearLongitude,
-            radiusMeters = radiusMeters,
-        )
+        val params =
+            ProductBrowseRequestParser.fromGraphQl(
+                lastId = lastId,
+                offset = offset,
+                size = pageSize,
+                tag = tag,
+                tags = tags,
+                keyword = keyword,
+                minPrice = minPrice,
+                maxPrice = maxPrice,
+                visitDate = visitDate,
+                reservableOnly = reservableOnly,
+                sort = sort,
+                nearLatitude = nearLatitude,
+                nearLongitude = nearLongitude,
+                radiusMeters = radiusMeters,
+            )
         val slice = productQueryService.browseProducts(params)
         val items = slice.items.map(ProductSummaryGraphQlResponse::from)
         val nextCursor = slice.nextCursor?.toString()
@@ -60,12 +60,15 @@ class ProductGraphQlController(
     }
 
     @QueryMapping
-    fun product(@Argument id: String): ProductDetailGraphQlResponse {
-        val productId = id.toLongOrNull()
-            ?: throw IllegalArgumentException("id는 숫자여야 합니다.")
+    fun product(
+        @Argument id: String,
+    ): ProductDetailGraphQlResponse {
+        val productId =
+            id.toLongOrNull()
+                ?: throw IllegalArgumentException("id는 숫자여야 합니다.")
 
         return ProductDetailGraphQlResponse.from(
-            productQueryService.findProductSpecificById(productId)
+            productQueryService.findProductSpecificById(productId),
         )
     }
 

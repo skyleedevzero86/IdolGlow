@@ -14,27 +14,31 @@ class AuthGraphQlController(
     private val signupService: SignupService,
     private val authService: AuthService,
 ) {
+    @QueryMapping
+    fun checkSignupEmail(
+        @Argument email: String?,
+    ): SignupCheckGraphQlResponse = SignupCheckGraphQlResponse.from(signupService.checkEmailField(email.orEmpty()))
 
     @QueryMapping
-    fun checkSignupEmail(@Argument email: String?): SignupCheckGraphQlResponse =
-        SignupCheckGraphQlResponse.from(signupService.checkEmailField(email.orEmpty()))
-
-    @QueryMapping
-    fun checkSignupNickname(@Argument nickname: String?): SignupCheckGraphQlResponse =
-        SignupCheckGraphQlResponse.from(signupService.checkNicknameField(nickname.orEmpty()))
+    fun checkSignupNickname(
+        @Argument nickname: String?,
+    ): SignupCheckGraphQlResponse = SignupCheckGraphQlResponse.from(signupService.checkNicknameField(nickname.orEmpty()))
 
     @MutationMapping
-    fun signup(@Argument @Valid input: SignupRequest): AuthTokenGraphQlResponse =
+    fun signup(
+        @Argument @Valid input: SignupRequest,
+    ): AuthTokenGraphQlResponse =
         AuthTokenGraphQlResponse.from(
             signupService.signup(
                 email = input.email,
                 rawNickname = input.nickname,
                 password = input.password,
                 subscribeToUpdates = input.subscribeToUpdates,
-            )
+            ),
         )
 
     @MutationMapping
-    fun reissueToken(@Argument refreshToken: String): AuthTokenGraphQlResponse =
-        AuthTokenGraphQlResponse.from(authService.reissue(refreshToken))
+    fun reissueToken(
+        @Argument refreshToken: String,
+    ): AuthTokenGraphQlResponse = AuthTokenGraphQlResponse.from(authService.reissue(refreshToken))
 }

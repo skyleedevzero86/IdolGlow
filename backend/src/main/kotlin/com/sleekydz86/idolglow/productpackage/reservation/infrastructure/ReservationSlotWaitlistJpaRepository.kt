@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ReservationSlotWaitlistJpaRepository : JpaRepository<ReservationSlotWaitlistEntry, Long> {
-
     @EntityGraph(attributePaths = ["reservationSlot.product"])
     fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<ReservationSlotWaitlistEntry>
 
@@ -13,7 +12,13 @@ interface ReservationSlotWaitlistJpaRepository : JpaRepository<ReservationSlotWa
 
     fun deleteByReservationSlotId(reservationSlotId: Long): Long
 
-    fun deleteByUserIdAndReservationSlotId(userId: Long, reservationSlotId: Long): Long
+    fun deleteByUserIdAndReservationSlotId(
+        userId: Long,
+        reservationSlotId: Long,
+    ): Long
 
-    fun existsByUserIdAndReservationSlotId(userId: Long, reservationSlotId: Long): Boolean
+    fun existsByUserIdAndReservationSlotId(
+        userId: Long,
+        reservationSlotId: Long,
+    ): Boolean
 }

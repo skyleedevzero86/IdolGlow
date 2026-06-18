@@ -24,8 +24,7 @@ data class PaymentGraphQlResponse(
     val cancelAmount: String,
 ) {
     companion object {
-        fun from(response: ReservationCreatedResponse): PaymentGraphQlResponse =
-            from(response.payment)
+        fun from(response: ReservationCreatedResponse): PaymentGraphQlResponse = from(response.payment)
 
         fun from(response: com.sleekydz86.idolglow.payment.application.dto.PaymentResponse): PaymentGraphQlResponse =
             PaymentGraphQlResponse(

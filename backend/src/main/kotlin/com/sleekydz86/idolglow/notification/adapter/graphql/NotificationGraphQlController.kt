@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.notification.graphql
 
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.application.NotificationQueryService
 import com.sleekydz86.idolglow.notification.domain.NotificationType
@@ -18,26 +18,29 @@ class NotificationGraphQlController(
     private val notificationCommandService: NotificationCommandService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
-    fun notifications(@Argument type: String?): List<NotificationGraphQlResponse> {
+    fun notifications(
+        @Argument type: String?,
+    ): List<NotificationGraphQlResponse> {
         val userId = authenticatedUserIdResolver.resolveRequired()
         val notificationType = type?.let { NotificationType.valueOf(it) }
-        return notificationQueryService.findNotifications(userId, notificationType)
+        return notificationQueryService
+            .findNotifications(userId, notificationType)
             .map(NotificationGraphQlResponse::from)
     }
 
     @QueryMapping
-    fun notificationUnreadCount(): Long =
-        notificationQueryService.countUnread(authenticatedUserIdResolver.resolveRequired()).count
+    fun notificationUnreadCount(): Long = notificationQueryService.countUnread(authenticatedUserIdResolver.resolveRequired()).count
 
     @MutationMapping
-    fun markNotificationRead(@Argument notificationId: String): NotificationGraphQlResponse =
+    fun markNotificationRead(
+        @Argument notificationId: String,
+    ): NotificationGraphQlResponse =
         NotificationGraphQlResponse.from(
             notificationCommandService.markRead(
                 notificationId = notificationId.toGraphQlIdLong("notificationId"),
-                userId = authenticatedUserIdResolver.resolveRequired()
-            )
+                userId = authenticatedUserIdResolver.resolveRequired(),
+            ),
         )
 
     @MutationMapping

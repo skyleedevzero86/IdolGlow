@@ -6,7 +6,6 @@ data class ProductCreatedGraphQlResponse(
     val id: String,
 ) {
     companion object {
-        fun from(productId: Long): ProductCreatedGraphQlResponse =
-            ProductCreatedGraphQlResponse(id = productId.asGraphQlId())
+        fun from(productId: Long): ProductCreatedGraphQlResponse = ProductCreatedGraphQlResponse(id = productId.asGraphQlId())
     }
 }

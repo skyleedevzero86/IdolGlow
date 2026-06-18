@@ -15,14 +15,17 @@ data class UpdateScheduleRequest(
     val startAt: LocalDateTime,
     @field:NotNull
     @field:Schema(description = "수정할 일정 종료 일시", example = "2025-05-01T11:00:00")
-    val endAt: LocalDateTime
+    val endAt: LocalDateTime,
 )
 
-fun UpdateScheduleRequest.toCommand(userId: Long, scheduleId: Long): UpdateScheduleCommand =
+fun UpdateScheduleRequest.toCommand(
+    userId: Long,
+    scheduleId: Long,
+): UpdateScheduleCommand =
     UpdateScheduleCommand(
         scheduleId = scheduleId,
         userId = userId,
         title = title,
         startAt = startAt,
-        endAt = endAt
+        endAt = endAt,
     )

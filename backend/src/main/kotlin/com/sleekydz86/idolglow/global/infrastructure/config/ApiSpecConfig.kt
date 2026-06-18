@@ -10,32 +10,26 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ApiSpecConfig {
-
     @Bean
-    fun openAPI(): OpenAPI {
-        return OpenAPI()
+    fun openAPI(): OpenAPI =
+        OpenAPI()
             .info(
                 Info()
                     .title(API_TITLE)
                     .version(API_VERSION)
-                    .description(API_DESCRIPTION)
-            )
-            .addSecurityItem(
-                SecurityRequirement().addList(SECURITY_SCHEME_NAME)
-            )
-
-            .components(
+                    .description(API_DESCRIPTION),
+            ).addSecurityItem(
+                SecurityRequirement().addList(SECURITY_SCHEME_NAME),
+            ).components(
                 Components().addSecuritySchemes(
                     SECURITY_SCHEME_NAME,
                     SecurityScheme()
                         .name("Authorization")
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
-                        .bearerFormat("JWT")
-                )
+                        .bearerFormat("JWT"),
+                ),
             )
-
-    }
 
     companion object {
         private const val API_TITLE = "IdolGlow API"

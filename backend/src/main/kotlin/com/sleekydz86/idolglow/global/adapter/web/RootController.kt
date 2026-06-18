@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController
 )
 @RestController
 class RootController {
-
     @SecurityRequirements
     @Operation(
         summary = "API 안내",
@@ -38,6 +37,5 @@ class RootController {
     )
     @ApiResponse(responseCode = "204", description = "콘텐츠 없음")
     @GetMapping("/favicon.ico")
-    fun favicon(): ResponseEntity<Void> =
-        ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+    fun favicon(): ResponseEntity<Void> = ResponseEntity.status(HttpStatus.NO_CONTENT).build()
 }

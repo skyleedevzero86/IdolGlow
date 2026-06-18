@@ -3,7 +3,6 @@ package com.sleekydz86.idolglow.survey.ui.request
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
-import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -17,7 +16,10 @@ data class AdminUpsertSurveyFormRequest(
     @field:Size(max = 10000)
     val description: String? = null,
     @field:Size(max = 30)
-    val descriptionTags: List<@Size(max = 100) String> = emptyList(),
+    val descriptionTags: List<
+        @Size(max = 100)
+        String,
+    > = emptyList(),
     @field:NotNull
     val status: SurveyFormStatus = SurveyFormStatus.SCHEDULED,
     @field:NotNull

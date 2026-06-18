@@ -33,24 +33,26 @@ class IncheonDepartureCongestionApiClient(
         if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
-        val uri = buildUrl(
-            encodedServiceKey = encodedKey,
-            terminalId = terminalId,
-            gateId = gateId,
-            pageNo = pageNo.coerceAtLeast(1),
-            numOfRows = numOfRows.coerceIn(1, 1000),
-        )
+        val uri =
+            buildUrl(
+                encodedServiceKey = encodedKey,
+                terminalId = terminalId,
+                gateId = gateId,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = numOfRows.coerceIn(1, 1000),
+            )
         val rows = fetchByUrl(uri)
         if (rows.isNotEmpty()) return rows
 
         if (!terminalId.isNullOrBlank() || !gateId.isNullOrBlank()) {
-            val fallbackUri = buildUrl(
-                encodedServiceKey = encodedKey,
-                terminalId = null,
-                gateId = null,
-                pageNo = pageNo.coerceAtLeast(1),
-                numOfRows = numOfRows.coerceIn(1, 1000),
-            )
+            val fallbackUri =
+                buildUrl(
+                    encodedServiceKey = encodedKey,
+                    terminalId = null,
+                    gateId = null,
+                    pageNo = pageNo.coerceAtLeast(1),
+                    numOfRows = numOfRows.coerceIn(1, 1000),
+                )
             return fetchByUrl(fallbackUri).filter { item ->
                 val terminalMatch = terminalId.isNullOrBlank() || item.terminalId.equals(terminalId, ignoreCase = true)
                 val gateMatch = gateId.isNullOrBlank() || item.gateId.equals(gateId, ignoreCase = true)
@@ -76,10 +78,11 @@ class IncheonDepartureCongestionApiClient(
             log.warn("출국장 혼잡도 공공데이터 에러 XML 응답. body={}", response.body.take(300))
             return emptyList()
         }
-        val root = runCatching { objectMapper.readTree(response.body) }.getOrElse {
-            log.warn("출국장 혼잡도 JSON 파싱 실패: {}", it.message)
-            return emptyList()
-        }
+        val root =
+            runCatching { objectMapper.readTree(response.body) }.getOrElse {
+                log.warn("출국장 혼잡도 JSON 파싱 실패: {}", it.message)
+                return emptyList()
+            }
         val header = root.path("response").path("header")
         val resultCode = header.path("resultCode").asText("")
         if (resultCode.isNotBlank() && resultCode != "00") {
@@ -99,10 +102,25 @@ class IncheonDepartureCongestionApiClient(
             DepartureCongestion(
                 gateId = gate,
                 terminalId = terminal,
-                waitTimeMinutes = node.path("waitTime").asText("").trim().toIntOrNull(),
-                waitLength = node.path("waitLength").asText("").trim().toIntOrNull(),
+                waitTimeMinutes =
+                    node
+                        .path("waitTime")
+                        .asText("")
+                        .trim()
+                        .toIntOrNull(),
+                waitLength =
+                    node
+                        .path("waitLength")
+                        .asText("")
+                        .trim()
+                        .toIntOrNull(),
                 occurredAt = parseOccurTime(node.path("occurtime").asText("").trim()),
-                operatingTime = node.path("operatingTime").asText("").trim().takeIf { it.isNotEmpty() },
+                operatingTime =
+                    node
+                        .path("operatingTime")
+                        .asText("")
+                        .trim()
+                        .takeIf { it.isNotEmpty() },
             )
         }
     }
@@ -113,8 +131,7 @@ class IncheonDepartureCongestionApiClient(
             .recoverCatching {
                 val normalized = if (raw.length >= 14) raw.take(14) else raw
                 LocalDateTime.parse(normalized, OCCUR_TIME_FORMATTER)
-            }
-            .getOrElse {
+            }.getOrElse {
                 if (it is DateTimeParseException) {
                     log.debug("출국장 혼잡도 occurtime 파싱 실패. value={}", raw)
                 }
@@ -129,37 +146,38 @@ class IncheonDepartureCongestionApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): String {
-        val query = buildList {
-            add("serviceKey=$encodedServiceKey")
-            add("type=json")
-            add("pageNo=$pageNo")
-            add("numOfRows=$numOfRows")
-            terminalId?.takeIf { it.isNotBlank() }?.let {
-                add("terminalId=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
-            }
-            gateId?.takeIf { it.isNotBlank() }?.let {
-                add("gateId=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
-            }
-        }.joinToString("&")
+        val query =
+            buildList {
+                add("serviceKey=$encodedServiceKey")
+                add("type=json")
+                add("pageNo=$pageNo")
+                add("numOfRows=$numOfRows")
+                terminalId?.takeIf { it.isNotBlank() }?.let {
+                    add("terminalId=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
+                }
+                gateId?.takeIf { it.isNotBlank() }?.let {
+                    add("gateId=${UriUtils.encodeQueryParam(it, StandardCharsets.UTF_8)}")
+                }
+            }.joinToString("&")
         return "${properties.baseUrl.trimEnd('/')}?$query"
     }
 
-    private fun requestRaw(url: String): RawHttpResponse {
-        return runCatching {
-            webClient.get()
+    private fun requestRaw(url: String): RawHttpResponse =
+        runCatching {
+            webClient
+                .get()
                 .uri(url)
                 .exchangeToMono { response ->
-                    response.bodyToMono(String::class.java)
+                    response
+                        .bodyToMono(String::class.java)
                         .defaultIfEmpty("")
                         .map { body -> RawHttpResponse(response.statusCode(), body) }
-                }
-                .block()
+                }.block()
                 ?: RawHttpResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
             log.warn("출국장 혼잡도 API 호출 실패: {}", e.message)
             RawHttpResponse(HttpStatusCode.valueOf(502), e.message ?: "")
         }
-    }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("AIRPORT_CONGESTION_SERVICE_KEY=")

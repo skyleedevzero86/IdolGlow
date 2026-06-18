@@ -30,7 +30,6 @@ class WebzineAdminService(
     private val webzineArticleRepository: WebzineArticleRepository,
     private val adminAuditService: AdminAuditService,
 ) : WebzineAdminUseCase {
-
     override fun findIssues(
         page: Int,
         size: Int,
@@ -41,11 +40,12 @@ class WebzineAdminService(
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 20)
         val allIssues = webzineIssueRepository.findAllByLatest()
-        val filteredIssues = allIssues.filter { issue ->
-            (year == null || issue.issueDate.year == year) &&
-                (month == null || issue.issueDate.monthValue == month) &&
-                (volume == null || issue.volume == volume)
-        }
+        val filteredIssues =
+            allIssues.filter { issue ->
+                (year == null || issue.issueDate.year == year) &&
+                    (month == null || issue.issueDate.monthValue == month) &&
+                    (volume == null || issue.volume == volume)
+            }
 
         val fromIndex = ((resolvedPage - 1) * resolvedSize).coerceAtMost(filteredIssues.size)
         val toIndex = (fromIndex + resolvedSize).coerceAtMost(filteredIssues.size)
@@ -67,10 +67,12 @@ class WebzineAdminService(
         )
     }
 
-    override fun findIssue(issueSlug: String): AdminIssueVolumeResponse =
-        AdminIssueVolumeResponse.from(getIssueEntity(issueSlug))
+    override fun findIssue(issueSlug: String): AdminIssueVolumeResponse = AdminIssueVolumeResponse.from(getIssueEntity(issueSlug))
 
-    override fun findArticle(issueSlug: String, articleSlug: String): AdminIssueArticleResponse {
+    override fun findArticle(
+        issueSlug: String,
+        articleSlug: String,
+    ): AdminIssueArticleResponse {
         val issue = getIssueEntity(issueSlug)
         val article = getArticleEntity(issue, articleSlug)
         return AdminIssueArticleResponse.from(article, buildRelatedContents(issue, article))
@@ -83,15 +85,16 @@ class WebzineAdminService(
             "호 번호 ${command.volume}은(는) 이미 등록되어 있습니다."
         }
 
-        val savedIssue = webzineIssueRepository.save(
-            WebzineIssue.create(
-                slug = issueSlug,
-                volume = command.volume,
-                issueDate = parseIssueDate(command.issueDate),
-                coverImageUrl = command.coverImageUrl,
-                teaser = command.teaser,
+        val savedIssue =
+            webzineIssueRepository.save(
+                WebzineIssue.create(
+                    slug = issueSlug,
+                    volume = command.volume,
+                    issueDate = parseIssueDate(command.issueDate),
+                    coverImageUrl = command.coverImageUrl,
+                    teaser = command.teaser,
+                ),
             )
-        )
 
         adminAuditService.log(
             actionCode = "WEBZINE_ISSUE_CREATE",
@@ -104,7 +107,10 @@ class WebzineAdminService(
     }
 
     @Transactional
-    override fun updateIssue(issueSlug: String, command: CreateWebzineIssueCommand): AdminIssueVolumeResponse {
+    override fun updateIssue(
+        issueSlug: String,
+        command: CreateWebzineIssueCommand,
+    ): AdminIssueVolumeResponse {
         val issue = getIssueEntity(issueSlug)
         val nextSlug = "vol-${command.volume}"
 
@@ -149,13 +155,17 @@ class WebzineAdminService(
     }
 
     @Transactional
-    override fun createArticle(issueSlug: String, command: UpsertWebzineArticleCommand): AdminIssueArticleResponse {
+    override fun createArticle(
+        issueSlug: String,
+        command: UpsertWebzineArticleCommand,
+    ): AdminIssueArticleResponse {
         val issue = getIssueEntity(issueSlug)
-        val article = WebzineArticle.create(
-            issue = issue,
-            slug = generateArticleSlug(issue, command.title),
-            draft = command.toDraft(issue),
-        )
+        val article =
+            WebzineArticle.create(
+                issue = issue,
+                slug = generateArticleSlug(issue, command.title),
+                draft = command.toDraft(issue),
+            )
 
         issue.addArticle(article)
         val savedArticle = webzineArticleRepository.save(article)
@@ -196,7 +206,10 @@ class WebzineAdminService(
     }
 
     @Transactional
-    override fun deleteArticle(issueSlug: String, articleSlug: String) {
+    override fun deleteArticle(
+        issueSlug: String,
+        articleSlug: String,
+    ) {
         val issue = getIssueEntity(issueSlug)
         val article = getArticleEntity(issue, articleSlug)
         webzineArticleRepository.delete(article)
@@ -213,10 +226,13 @@ class WebzineAdminService(
         webzineIssueRepository.findBySlug(issueSlug)
             ?: throw EntityNotFoundException("웹진 호를 찾을 수 없습니다. issueSlug=$issueSlug")
 
-    private fun getArticleEntity(issue: WebzineIssue, articleSlug: String): WebzineArticle =
+    private fun getArticleEntity(
+        issue: WebzineIssue,
+        articleSlug: String,
+    ): WebzineArticle =
         webzineArticleRepository.findByIssueIdAndSlug(issue.id, articleSlug)
             ?: throw EntityNotFoundException(
-                "웹진 기사를 찾을 수 없습니다. issueSlug=${issue.slug}, articleSlug=$articleSlug"
+                "웹진 기사를 찾을 수 없습니다. issueSlug=${issue.slug}, articleSlug=$articleSlug",
             )
 
     private fun buildRelatedContents(
@@ -267,48 +283,52 @@ class WebzineAdminService(
     }
 
     private fun slugify(value: String): String {
-        val normalized = Normalizer.normalize(value, Normalizer.Form.NFKD)
-            .replace(Regex("[^\\p{ASCII}]"), " ")
-            .lowercase()
-            .replace(Regex("[^a-z0-9\\s-]"), " ")
-            .trim()
-            .replace(Regex("\\s+"), "-")
-            .replace(Regex("-+"), "-")
+        val normalized =
+            Normalizer
+                .normalize(value, Normalizer.Form.NFKD)
+                .replace(Regex("[^\\p{ASCII}]"), " ")
+                .lowercase()
+                .replace(Regex("[^a-z0-9\\s-]"), " ")
+                .trim()
+                .replace(Regex("\\s+"), "-")
+                .replace(Regex("-+"), "-")
 
         return normalized.ifBlank { "article-${System.currentTimeMillis()}" }
     }
 
     private fun UpsertWebzineArticleCommand.toDraft(issue: WebzineIssue): WebzineArticleDraft {
-        val normalizedSections = sections
-            .map {
-                WebzineArticleSectionDraft(
-                    heading = it.heading?.trim()?.takeIf { heading -> heading.isNotEmpty() },
-                    body = it.body.trim(),
-                    note = it.note?.trim()?.takeIf { note -> note.isNotEmpty() },
-                )
-            }
-            .ifEmpty {
-                listOf(
+        val normalizedSections =
+            sections
+                .map {
                     WebzineArticleSectionDraft(
-                        heading = null,
-                        body = "기사 본문을 입력해 주세요.",
-                        note = null,
+                        heading = it.heading?.trim()?.takeIf { heading -> heading.isNotEmpty() },
+                        body = it.body.trim(),
+                        note = it.note?.trim()?.takeIf { note -> note.isNotEmpty() },
                     )
-                )
-            }
+                }.ifEmpty {
+                    listOf(
+                        WebzineArticleSectionDraft(
+                            heading = null,
+                            body = "기사 본문을 입력해 주세요.",
+                            note = null,
+                        ),
+                    )
+                }
 
-        val normalizedGallery = buildList {
-            add(heroImageUrl.trim())
-            add(cardImageUrl.trim())
-            addAll(galleryImageUrls.map { it.trim() }.filter { it.isNotEmpty() })
-            add(issue.coverImageUrl)
-        }.distinct()
+        val normalizedGallery =
+            buildList {
+                add(heroImageUrl.trim())
+                add(cardImageUrl.trim())
+                addAll(galleryImageUrls.map { it.trim() }.filter { it.isNotEmpty() })
+                add(issue.coverImageUrl)
+            }.distinct()
 
-        val normalizedTags = tags
-            .flatMap { it.split(',') }
-            .map { it.trim().removePrefix("#") }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val normalizedTags =
+            tags
+                .flatMap { it.split(',') }
+                .map { it.trim().removePrefix("#") }
+                .filter { it.isNotEmpty() }
+                .distinct()
 
         return WebzineArticleDraft(
             title = title.trim(),

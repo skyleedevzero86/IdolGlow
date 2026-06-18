@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.glowalert.adapter.web
 
+import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.glowalert.application.GlowAlertQueryService
 import com.sleekydz86.idolglow.glowalert.application.dto.GlowAlertPageResponse
 import com.sleekydz86.idolglow.glowalert.application.dto.GlowAlertUnreadCountResponse
-import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -21,7 +21,6 @@ class GlowAlertController(
     private val glowAlertQueryService: GlowAlertQueryService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @Operation(summary = "Glow 알림 목록 조회")
     @GetMapping("/api/glow-alerts", "/glow-alerts", "/mypage/glow-alerts")
     fun findAlerts(
@@ -39,7 +38,7 @@ class GlowAlertController(
                 category = category,
                 keyword = q,
                 userId = authenticatedUserIdResolver.resolveOrNull(),
-            )
+            ),
         )
 
     @Operation(summary = "읽지 않은 Glow 알림 수 조회")

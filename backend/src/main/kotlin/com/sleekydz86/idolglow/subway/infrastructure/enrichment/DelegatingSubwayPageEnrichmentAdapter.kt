@@ -11,7 +11,6 @@ class DelegatingSubwayPageEnrichmentAdapter(
     private val classpath: ClasspathSubwayPageEnrichmentAdapter,
     private val subwayStationSummaryLlmRouter: SubwayStationSummaryLlmRouter,
 ) : SubwayPageEnrichmentPort {
-
     override fun loadFor(
         lineId: String,
         lineName: String,
@@ -19,27 +18,29 @@ class DelegatingSubwayPageEnrichmentAdapter(
         stationDisplayName: String,
     ): SubwayPageEnrichment {
         val base = classpath.loadClasspathEnrichment(lineId, lineName, stationCd, stationDisplayName)
-        val llm = subwayStationSummaryLlmRouter.generateSummary(
-            lineId = lineId,
-            lineName = lineName,
-            stationCd = stationCd,
-            stationDisplayName = stationDisplayName,
-        ) ?: return base
+        val llm =
+            subwayStationSummaryLlmRouter.generateSummary(
+                lineId = lineId,
+                lineName = lineName,
+                stationCd = stationCd,
+                stationDisplayName = stationDisplayName,
+            ) ?: return base
 
         val title = llm.title?.takeIf { it.isNotEmpty() } ?: base.summaryTitle
         val llmBullets = llm.bullets ?: emptyList()
-        val bullets = when {
-            llmBullets.size >= 3 -> llmBullets.take(3)
-            llmBullets.isEmpty() -> base.summaryBullets
-            else -> {
-                val merged = llmBullets.toMutableList()
-                for (b in base.summaryBullets) {
-                    if (merged.size >= 3) break
-                    if (b !in merged) merged.add(b)
+        val bullets =
+            when {
+                llmBullets.size >= 3 -> llmBullets.take(3)
+                llmBullets.isEmpty() -> base.summaryBullets
+                else -> {
+                    val merged = llmBullets.toMutableList()
+                    for (b in base.summaryBullets) {
+                        if (merged.size >= 3) break
+                        if (b !in merged) merged.add(b)
+                    }
+                    merged.take(3)
                 }
-                merged.take(3)
             }
-        }
 
         val learnLabel = llm.learnMoreLabel?.takeIf { it.isNotEmpty() } ?: base.learnMoreLabel
         val mapsUrl = googleMapsStationUrl(stationDisplayName)

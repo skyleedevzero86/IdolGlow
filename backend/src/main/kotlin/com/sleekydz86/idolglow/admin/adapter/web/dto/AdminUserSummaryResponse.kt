@@ -1,10 +1,7 @@
 package com.sleekydz86.idolglow.admin.ui.dto
 
-import com.sleekydz86.idolglow.user.user.domain.User
-import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuth
-import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
-import java.time.format.DateTimeFormatter
+import com.sleekydz86.idolglow.user.user.domain.User
 
 data class AdminUserSummaryResponse(
     val id: Long,
@@ -23,7 +20,10 @@ data class AdminUserSummaryResponse(
     val oauthProviders: List<String>,
 ) {
     companion object {
-        fun from(user: User, oauths: List<UserOAuth> = emptyList()): AdminUserSummaryResponse =
+        fun from(
+            user: User,
+            oauths: List<UserOAuth> = emptyList(),
+        ): AdminUserSummaryResponse =
             AdminUserSummaryResponse(
                 id = user.id,
                 email = user.email,
@@ -41,7 +41,10 @@ data class AdminUserSummaryResponse(
                 oauthProviders = oauths.map { it.provider.name }.distinct(),
             )
 
-        private fun resolveProfileImageUrl(user: User, oauths: List<UserOAuth>): String? {
+        private fun resolveProfileImageUrl(
+            user: User,
+            oauths: List<UserOAuth>,
+        ): String? {
             val primary = user.profileImageUrl?.trim()?.takeIf { it.isNotEmpty() }
             if (primary != null) {
                 return primary

@@ -27,14 +27,13 @@ class OptionController(
     private val optionQueryService: OptionQueryService,
     private val optionCommandService: OptionCommandService,
 ) : OptionApi {
-
     @GetMapping
-    override fun findOptions(): List<OptionResponse> =
-        optionQueryService.findOptions()
+    override fun findOptions(): List<OptionResponse> = optionQueryService.findOptions()
 
     @GetMapping("/{optionId}")
-    override fun findOption(@PathVariable optionId: Long): OptionResponse =
-        optionQueryService.findOption(optionId)
+    override fun findOption(
+        @PathVariable optionId: Long,
+    ): OptionResponse = optionQueryService.findOption(optionId)
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @ResponseStatus(HttpStatus.CREATED)
@@ -50,14 +49,14 @@ class OptionController(
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    fun createOptionJson(@Valid @RequestBody request: CreateOptionRequest): OptionResponse =
-        optionCommandService.createOption(request.toCommand())
+    fun createOptionJson(
+        @Valid @RequestBody request: CreateOptionRequest,
+    ): OptionResponse = optionCommandService.createOption(request.toCommand())
 
     @PutMapping("/{optionId}")
     @PreAuthorize("hasRole('ADMIN')")
     fun updateOption(
         @PathVariable optionId: Long,
         @Valid @RequestBody request: CreateOptionRequest,
-    ): OptionResponse =
-        optionCommandService.updateOption(optionId, request.toCommand())
+    ): OptionResponse = optionCommandService.updateOption(optionId, request.toCommand())
 }

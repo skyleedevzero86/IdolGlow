@@ -26,20 +26,20 @@ import org.springframework.web.bind.annotation.RestController
 class NotificationPreferenceController(
     private val notificationPreferenceService: NotificationPreferenceService,
 ) {
-
     @Operation(summary = "알림 설정 전체 조회", description = "모든 알림 타입의 수신 설정을 조회합니다.")
     @ApiResponse(
         responseCode = "200",
-        content = [Content(array = ArraySchema(schema = Schema(implementation = NotificationPreferenceResponse::class)))]
+        content = [Content(array = ArraySchema(schema = Schema(implementation = NotificationPreferenceResponse::class)))],
     )
     @GetMapping
-    fun findAll(@Parameter(hidden = true) @LoginUser userId: Long): ResponseEntity<List<NotificationPreferenceResponse>> =
-        ResponseEntity.ok(notificationPreferenceService.findAll(userId))
+    fun findAll(
+        @Parameter(hidden = true) @LoginUser userId: Long,
+    ): ResponseEntity<List<NotificationPreferenceResponse>> = ResponseEntity.ok(notificationPreferenceService.findAll(userId))
 
     @Operation(summary = "알림 설정 변경", description = "특정 알림 타입의 수신 여부를 변경합니다.")
     @ApiResponse(
         responseCode = "200",
-        content = [Content(schema = Schema(implementation = NotificationPreferenceResponse::class))]
+        content = [Content(schema = Schema(implementation = NotificationPreferenceResponse::class))],
     )
     @PutMapping("/{type}")
     fun update(

@@ -10,34 +10,33 @@ import java.time.LocalDateTime
 
 @Repository
 class ReservationRepositoryImpl(
-    private val reservationJpaRepository: ReservationJpaRepository
+    private val reservationJpaRepository: ReservationJpaRepository,
 ) : ReservationRepository {
+    override fun save(reservation: Reservation): Reservation = reservationJpaRepository.save(reservation)
 
-    override fun save(reservation: Reservation): Reservation =
-        reservationJpaRepository.save(reservation)
+    override fun findById(id: Long): Reservation? = reservationJpaRepository.findByIdOrNull(id)
 
-    override fun findById(id: Long): Reservation? =
-        reservationJpaRepository.findByIdOrNull(id)
+    override fun findByIdWithSlotAndProduct(id: Long): Reservation? = reservationJpaRepository.findByIdWithSlotAndProduct(id)
 
-    override fun findByIdWithSlotAndProduct(id: Long): Reservation? =
-        reservationJpaRepository.findByIdWithSlotAndProduct(id)
+    override fun findByIdForUpdate(id: Long): Reservation? = reservationJpaRepository.findByIdForUpdate(id)
 
-    override fun findByIdForUpdate(id: Long): Reservation? =
-        reservationJpaRepository.findByIdForUpdate(id)
-
-    override fun findExpiredPendingIds(limit: Int, now: LocalDateTime): List<Long> =
+    override fun findExpiredPendingIds(
+        limit: Int,
+        now: LocalDateTime,
+    ): List<Long> =
         reservationJpaRepository.findExpiredPendingIds(
             status = ReservationStatus.PENDING,
             now = now,
-            pageable = PageRequest.of(0, limit)
+            pageable = PageRequest.of(0, limit),
         )
 
-    override fun findExpiringSoonPendingIds(threshold: LocalDateTime, now: LocalDateTime): List<Long> =
-        reservationJpaRepository.findExpiringSoonPendingIds(threshold = threshold, now = now)
+    override fun findExpiringSoonPendingIds(
+        threshold: LocalDateTime,
+        now: LocalDateTime,
+    ): List<Long> = reservationJpaRepository.findExpiringSoonPendingIds(threshold = threshold, now = now)
 
     override fun existsByReservationSlotId(reservationSlotId: Long): Boolean =
         reservationJpaRepository.existsByReservationSlotId(reservationSlotId)
 
-    override fun existsByProductId(productId: Long): Boolean =
-        reservationJpaRepository.existsByProductId(productId)
+    override fun existsByProductId(productId: Long): Boolean = reservationJpaRepository.existsByProductId(productId)
 }

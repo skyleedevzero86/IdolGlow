@@ -2,11 +2,6 @@ package com.sleekydz86.idolglow.admin.ui.dto
 
 import com.sleekydz86.idolglow.subscription.application.dto.asSubscriptionDateTime
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
-import io.swagger.v3.oas.annotations.media.Schema
-import java.time.DayOfWeek
-import java.time.LocalDateTime
 
 data class AdminSubscriptionSubscriberResponse(
     val id: Long,

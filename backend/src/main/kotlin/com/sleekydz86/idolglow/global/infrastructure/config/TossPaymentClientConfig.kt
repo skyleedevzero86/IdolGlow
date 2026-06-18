@@ -9,13 +9,13 @@ import org.springframework.web.client.RestClient
 class TossPaymentClientConfig(
     private val tossPaymentProperties: TossPaymentProperties,
 ) {
-
     @Bean(name = ["tossRestClient"])
     fun tossRestClient(): RestClient {
         val factory = SimpleClientHttpRequestFactory()
         factory.setConnectTimeout(tossPaymentProperties.connectTimeoutMs)
         factory.setReadTimeout(tossPaymentProperties.readTimeoutMs)
-        return RestClient.builder()
+        return RestClient
+            .builder()
             .baseUrl(tossPaymentProperties.baseUrl.trim().ifBlank { "https://api.tosspayments.com" })
             .requestFactory(factory)
             .build()

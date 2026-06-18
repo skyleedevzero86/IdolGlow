@@ -19,7 +19,6 @@ import java.time.LocalDateTime
 class PlatformJwtAccessDeniedHandler(
     private val objectMapper: ObjectMapper,
 ) : AccessDeniedHandler {
-
     private val log = LoggerFactory.getLogger(PlatformJwtAccessDeniedHandler::class.java)
 
     override fun handle(
@@ -33,13 +32,15 @@ class PlatformJwtAccessDeniedHandler(
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = Charsets.UTF_8.name()
 
-        val errorResponse = ErrorResponse.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.FORBIDDEN.value())
-            .errorCode("FORBIDDEN")
-            .message("접근 권한이 없습니다")
-            .path(request.requestURI)
-            .build()
+        val errorResponse =
+            ErrorResponse
+                .builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .errorCode("FORBIDDEN")
+                .message("접근 권한이 없습니다")
+                .path(request.requestURI)
+                .build()
 
         val jsonResponse = objectMapper.writeValueAsString(ApiResponse.error<Any>(errorResponse))
         response.writer.write(jsonResponse)

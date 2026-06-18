@@ -1,7 +1,5 @@
 package com.sleekydz86.idolglow.mbrd.application
 
-import java.time.Instant
-
 data class MbrdSaveEditorDraftCommand(
     val documentId: String?,
     val title: String,

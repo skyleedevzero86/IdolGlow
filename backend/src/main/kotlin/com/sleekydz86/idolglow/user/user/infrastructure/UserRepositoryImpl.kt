@@ -14,15 +14,11 @@ import org.springframework.stereotype.Repository
 class UserRepositoryImpl(
     private val userJpaRepository: UserJpaRepository,
 ) : UserRepository {
+    override fun findById(userId: Long): User? = userJpaRepository.findByIdOrNull(userId)
 
-    override fun findById(userId: Long): User? =
-        userJpaRepository.findByIdOrNull(userId)
+    override fun findByEmail(email: String): User? = userJpaRepository.findByEmail(email)
 
-    override fun findByEmail(email: String): User? =
-        userJpaRepository.findByEmail(email)
-
-    override fun findByNicknameValue(nickname: String): User? =
-        userJpaRepository.findByNicknameValue(nickname)
+    override fun findByNicknameValue(nickname: String): User? = userJpaRepository.findByNicknameValue(nickname)
 
     override fun findAllByAdminSearch(
         keyword: String?,
@@ -31,20 +27,22 @@ class UserRepositoryImpl(
         page: Int,
         size: Int,
     ): UserAdminPage {
-        val pageable = PageRequest.of(
-            page.coerceAtLeast(0),
-            size.coerceIn(1, 50),
-            Sort.by(
-                Sort.Order.desc("lastLoginAt"),
-                Sort.Order.desc("id"),
-            ),
-        )
-        val result = userJpaRepository.searchAdminUsers(
-            keyword = keyword?.trim()?.takeIf { it.isNotEmpty() },
-            role = role,
-            accountStatus = accountStatus,
-            pageable = pageable,
-        )
+        val pageable =
+            PageRequest.of(
+                page.coerceAtLeast(0),
+                size.coerceIn(1, 50),
+                Sort.by(
+                    Sort.Order.desc("lastLoginAt"),
+                    Sort.Order.desc("id"),
+                ),
+            )
+        val result =
+            userJpaRepository.searchAdminUsers(
+                keyword = keyword?.trim()?.takeIf { it.isNotEmpty() },
+                role = role,
+                accountStatus = accountStatus,
+                pageable = pageable,
+            )
         return UserAdminPage(
             items = result.content,
             totalElements = result.totalElements,
@@ -53,18 +51,13 @@ class UserRepositoryImpl(
         )
     }
 
-    override fun count(): Long =
-        userJpaRepository.count()
+    override fun count(): Long = userJpaRepository.count()
 
-    override fun countByRole(role: UserRole): Long =
-        userJpaRepository.countByRole(role)
+    override fun countByRole(role: UserRole): Long = userJpaRepository.countByRole(role)
 
-    override fun countByAccountStatus(status: UserAccountStatus): Long =
-        userJpaRepository.countByAccountStatus(status)
+    override fun countByAccountStatus(status: UserAccountStatus): Long = userJpaRepository.countByAccountStatus(status)
 
-    override fun save(user: User): User =
-        userJpaRepository.save(user)
+    override fun save(user: User): User = userJpaRepository.save(user)
 
-    override fun saveAndFlush(user: User): User =
-        userJpaRepository.saveAndFlush(user)
+    override fun saveAndFlush(user: User): User = userJpaRepository.saveAndFlush(user)
 }

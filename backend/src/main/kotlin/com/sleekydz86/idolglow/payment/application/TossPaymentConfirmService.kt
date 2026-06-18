@@ -23,7 +23,6 @@ class TossPaymentConfirmService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val tossPaymentProperties: TossPaymentProperties,
 ) {
-
     fun confirm(
         userId: Long,
         paymentKey: String,
@@ -40,8 +39,9 @@ class TossPaymentConfirmService(
             return existingByIdem
         }
 
-        val payment = paymentRepository.findByOrderIdForUpdate(orderId)
-            ?: throw IllegalArgumentException("주문을 찾을 수 없습니다: $orderId")
+        val payment =
+            paymentRepository.findByOrderIdForUpdate(orderId)
+                ?: throw IllegalArgumentException("주문을 찾을 수 없습니다: $orderId")
 
         require(payment.reservation.userId == userId) { "본인 예약 결제만 승인할 수 있습니다." }
 
@@ -73,12 +73,13 @@ class TossPaymentConfirmService(
             traceId = traceId,
         )
 
-        val response = tossPaymentsApiClient.confirm(
-            paymentKey = paymentKey,
-            orderId = orderId,
-            amount = amountLong,
-            idempotencyKey = idempotencyKey ?: "idem-confirm-${payment.id}-${UUID.randomUUID()}",
-        )
+        val response =
+            tossPaymentsApiClient.confirm(
+                paymentKey = paymentKey,
+                orderId = orderId,
+                amount = amountLong,
+                idempotencyKey = idempotencyKey ?: "idem-confirm-${payment.id}-${UUID.randomUUID()}",
+            )
 
         paymentLogCommandService.append(
             payment = payment,

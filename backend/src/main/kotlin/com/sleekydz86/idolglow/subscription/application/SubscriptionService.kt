@@ -40,8 +40,9 @@ class SubscriptionService(
     private val newsletterRepository: NewsletterRepository,
     private val webzineIssueRepository: WebzineIssueRepository,
     private val applicationEventPublisher: ApplicationEventPublisher,
-) : SubscriptionPublicUseCase, SubscriptionAdminUseCase, SubscriptionDispatchRecorder {
-
+) : SubscriptionPublicUseCase,
+    SubscriptionAdminUseCase,
+    SubscriptionDispatchRecorder {
     @Transactional
     override fun subscribe(command: RegisterSubscriptionCommand): SubscriptionRegistrationResponse {
         val normalizedEmail = command.email.trim().lowercase()
@@ -52,27 +53,28 @@ class SubscriptionService(
 
         val now = LocalDateTime.now()
         val existing = emailSubscriptionPort.findByEmail(normalizedEmail)
-        val saved = if (existing == null) {
-            emailSubscriptionPort.save(
-                EmailSubscription.create(
-                    email = normalizedEmail,
+        val saved =
+            if (existing == null) {
+                emailSubscriptionPort.save(
+                    EmailSubscription.create(
+                        email = normalizedEmail,
+                        subscribedNewsletters = command.subscribeNewsletters,
+                        subscribedIssues = command.subscribeIssues,
+                        consentedAt = now,
+                        subscribedAt = now,
+                        subscriptionSource = command.source,
+                    ),
+                )
+            } else {
+                existing.resubscribe(
                     subscribedNewsletters = command.subscribeNewsletters,
                     subscribedIssues = command.subscribeIssues,
                     consentedAt = now,
                     subscribedAt = now,
                     subscriptionSource = command.source,
                 )
-            )
-        } else {
-            existing.resubscribe(
-                subscribedNewsletters = command.subscribeNewsletters,
-                subscribedIssues = command.subscribeIssues,
-                consentedAt = now,
-                subscribedAt = now,
-                subscriptionSource = command.source,
-            )
-            emailSubscriptionPort.save(existing)
-        }
+                emailSubscriptionPort.save(existing)
+            }
 
         return saved.toRegistrationResponse()
     }
@@ -122,27 +124,28 @@ class SubscriptionService(
         val dispatchTime = LocalTime.parse(command.dispatchTime.trim())
         val existing = subscriptionDispatchSchedulePort.findByContentType(command.contentType)
 
-        val saved = if (existing == null) {
-            subscriptionDispatchSchedulePort.save(
-                SubscriptionDispatchSchedule.create(
-                    contentType = command.contentType,
+        val saved =
+            if (existing == null) {
+                subscriptionDispatchSchedulePort.save(
+                    SubscriptionDispatchSchedule.create(
+                        contentType = command.contentType,
+                        frequencyType = command.frequencyType,
+                        dayOfWeek = command.dayOfWeek,
+                        dispatchHour = dispatchTime.hour,
+                        dispatchMinute = dispatchTime.minute,
+                        active = command.active,
+                    ),
+                )
+            } else {
+                existing.update(
                     frequencyType = command.frequencyType,
                     dayOfWeek = command.dayOfWeek,
                     dispatchHour = dispatchTime.hour,
                     dispatchMinute = dispatchTime.minute,
                     active = command.active,
                 )
-            )
-        } else {
-            existing.update(
-                frequencyType = command.frequencyType,
-                dayOfWeek = command.dayOfWeek,
-                dispatchHour = dispatchTime.hour,
-                dispatchMinute = dispatchTime.minute,
-                active = command.active,
-            )
-            subscriptionDispatchSchedulePort.save(existing)
-        }
+                subscriptionDispatchSchedulePort.save(existing)
+            }
 
         return AdminSubscriptionScheduleResponse.from(saved)
     }
@@ -159,7 +162,7 @@ class SubscriptionService(
                 tags = newsletter.tags.map { it.tagName },
                 paragraphs = newsletter.paragraphs.map { it.body },
                 contentCreatedAt = newsletter.createdAt,
-            )
+            ),
         )
     }
 
@@ -173,11 +176,12 @@ class SubscriptionService(
                 issueDate = loadedIssue.issueDate,
                 teaser = loadedIssue.teaser,
                 coverImageUrl = loadedIssue.coverImageUrl,
-                articleTitles = loadedIssue.articles
-                    .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
-                    .map { it.title },
+                articleTitles =
+                    loadedIssue.articles
+                        .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
+                        .map { it.title },
                 contentCreatedAt = loadedIssue.createdAt,
-            )
+            ),
         )
     }
 
@@ -192,7 +196,7 @@ class SubscriptionService(
                         slug = newsletter.slug,
                         summary = newsletter.summary,
                         publishedAt = newsletter.publishedAt.asDisplayDate(),
-                    )
+                    ),
                 )
             }
 
@@ -205,12 +209,15 @@ class SubscriptionService(
                         slug = issue.slug,
                         summary = issue.teaser,
                         publishedAt = issue.issueDate.asDisplayDate(),
-                    )
+                    ),
                 )
             }
         }
 
-    private fun <T> List<T>.slicePage(page: Int, size: Int): PageSlice<T> {
+    private fun <T> List<T>.slicePage(
+        page: Int,
+        size: Int,
+    ): PageSlice<T> {
         val fromIndex = ((page - 1) * size).coerceAtMost(this.size)
         val toIndex = (fromIndex + size).coerceAtMost(this.size)
         val totalElements = this.size.toLong()
@@ -228,7 +235,6 @@ class SubscriptionService(
         val totalPages: Int,
         val hasNext: Boolean,
     )
-
 }
 
 private val subscriptionDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")

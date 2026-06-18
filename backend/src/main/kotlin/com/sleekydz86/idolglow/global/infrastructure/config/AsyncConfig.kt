@@ -9,7 +9,6 @@ import java.util.concurrent.Executor
 @Configuration
 @EnableAsync
 class AsyncConfig {
-
     @Bean(name = ["imageStorageExecutor"])
     fun imageStorageExecutor(): Executor {
         val executor = ThreadPoolTaskExecutor()

@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional
 class PaymentLogCommandService(
     private val paymentLogJpaRepository: PaymentLogJpaRepository,
 ) {
-
     fun append(
         payment: Payment?,
         orderId: String?,
@@ -47,6 +46,6 @@ class PaymentLogCommandService(
                 errorMessage = errorMessage,
                 stackTrace = stackTrace,
                 traceId = traceId,
-            )
+            ),
         )
 }

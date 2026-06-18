@@ -29,20 +29,22 @@ class PupAdminService(
         val resolvedSize = size.coerceIn(1, 100)
         val resolvedSearchType = searchType?.trim()?.lowercase().orEmpty()
         val resolvedKeyword = keyword?.trim().orEmpty()
-        val criteria = PupListCriteria(
-            pageIndex = resolvedPage,
-            pageSize = resolvedSize,
-            domainId = "kr",
-            searchType = resolvedSearchType,
-            keyword = resolvedKeyword,
-        )
+        val criteria =
+            PupListCriteria(
+                pageIndex = resolvedPage,
+                pageSize = resolvedSize,
+                domainId = "kr",
+                searchType = resolvedSearchType,
+                keyword = resolvedKeyword,
+            )
         val totalCount = pupRepository.count(criteria)
         val items = pupRepository.findList(criteria)
-        val totalPages = if (totalCount == 0) {
-            0
-        } else {
-            ceil(totalCount.toDouble() / resolvedSize).toInt()
-        }
+        val totalPages =
+            if (totalCount == 0) {
+                0
+            } else {
+                ceil(totalCount.toDouble() / resolvedSize).toInt()
+            }
         return PupAdminPageResponse(
             items = items.map(PupAdminItemResponse::from),
             page = resolvedPage,
@@ -53,8 +55,9 @@ class PupAdminService(
     }
 
     fun findOne(popupId: String): PupAdminItemResponse {
-        val item = pupRepository.findById(popupId)
-            ?: throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
+        val item =
+            pupRepository.findById(popupId)
+                ?: throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
         return PupAdminItemResponse.from(item)
     }
 
@@ -65,50 +68,56 @@ class PupAdminService(
         validateNoticePeriod(request.noticeStartDate, request.noticeEndDate)
 
         val id = "POP_${System.currentTimeMillis()}"
-        val toSave = PupItem(
-            popupId = id,
-            domainId = resolvedDomainId,
-            title = request.title,
-            fileUrl = request.fileUrl,
-            linkTarget = request.linkTarget ?: "_blank",
-            imagePath = request.imagePath,
-            imageFileName = request.imageFileName,
-            noticeStartDate = request.noticeStartDate,
-            noticeEndDate = request.noticeEndDate,
-            stopViewYn = request.stopViewYn ?: "Y",
-            noticeYn = request.noticeYn ?: "Y",
-            createdBy = request.createdBy,
-            createdAtFormatted = null,
-            updatedBy = null,
-            updatedAtFormatted = null,
-            domainName = null,
-        )
+        val toSave =
+            PupItem(
+                popupId = id,
+                domainId = resolvedDomainId,
+                title = request.title,
+                fileUrl = request.fileUrl,
+                linkTarget = request.linkTarget ?: "_blank",
+                imagePath = request.imagePath,
+                imageFileName = request.imageFileName,
+                noticeStartDate = request.noticeStartDate,
+                noticeEndDate = request.noticeEndDate,
+                stopViewYn = request.stopViewYn ?: "Y",
+                noticeYn = request.noticeYn ?: "Y",
+                createdBy = request.createdBy,
+                createdAtFormatted = null,
+                updatedBy = null,
+                updatedAtFormatted = null,
+                domainName = null,
+            )
         pupRepository.insert(toSave)
         return findOne(id)
     }
 
     @Transactional
-    fun update(popupId: String, request: UpsertPupRequest): PupAdminItemResponse {
-        val existing = pupRepository.findById(popupId)
-            ?: throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
+    fun update(
+        popupId: String,
+        request: UpsertPupRequest,
+    ): PupAdminItemResponse {
+        val existing =
+            pupRepository.findById(popupId)
+                ?: throw EntityNotFoundException("팝업을 찾을 수 없습니다. popupId=$popupId")
 
         val nextNoticeStartDate = request.noticeStartDate ?: existing.noticeStartDate
         val nextNoticeEndDate = request.noticeEndDate ?: existing.noticeEndDate
         validateNoticePeriod(nextNoticeStartDate, nextNoticeEndDate)
 
-        val merged = existing.copy(
-            domainId = existing.domainId ?: "kr",
-            title = request.title,
-            fileUrl = request.fileUrl,
-            linkTarget = request.linkTarget ?: existing.linkTarget,
-            imagePath = request.imagePath,
-            imageFileName = request.imageFileName,
-            noticeStartDate = nextNoticeStartDate,
-            noticeEndDate = nextNoticeEndDate,
-            stopViewYn = request.stopViewYn ?: existing.stopViewYn,
-            noticeYn = request.noticeYn ?: existing.noticeYn,
-            updatedBy = request.updatedBy ?: request.createdBy ?: existing.updatedBy,
-        )
+        val merged =
+            existing.copy(
+                domainId = existing.domainId ?: "kr",
+                title = request.title,
+                fileUrl = request.fileUrl,
+                linkTarget = request.linkTarget ?: existing.linkTarget,
+                imagePath = request.imagePath,
+                imageFileName = request.imageFileName,
+                noticeStartDate = nextNoticeStartDate,
+                noticeEndDate = nextNoticeEndDate,
+                stopViewYn = request.stopViewYn ?: existing.stopViewYn,
+                noticeYn = request.noticeYn ?: existing.noticeYn,
+                updatedBy = request.updatedBy ?: request.createdBy ?: existing.updatedBy,
+            )
         pupRepository.update(merged)
         return findOne(popupId)
     }
@@ -122,15 +131,16 @@ class PupAdminService(
     }
 
     private fun ensurePopupLimitNotExceeded(domainId: String) {
-        val totalCount = pupRepository.count(
-            PupListCriteria(
-                pageIndex = 1,
-                pageSize = 1,
-                domainId = domainId,
-                searchType = "",
-                keyword = "",
-            ),
-        )
+        val totalCount =
+            pupRepository.count(
+                PupListCriteria(
+                    pageIndex = 1,
+                    pageSize = 1,
+                    domainId = domainId,
+                    searchType = "",
+                    keyword = "",
+                ),
+            )
 
         if (totalCount >= maxPopupCountPerDomain) {
             throw IllegalStateException("팝업은 도메인당 최대 5개까지 등록할 수 있습니다.")
@@ -148,5 +158,4 @@ class PupAdminService(
             throw IllegalArgumentException("게시 종료일은 게시 시작일보다 빠를 수 없습니다.")
         }
     }
-
 }

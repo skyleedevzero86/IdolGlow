@@ -15,35 +15,27 @@ import java.time.LocalDateTime
     name = "email_subscriptions",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_email_subscriptions_email", columnNames = ["email"]),
-    ]
+    ],
 )
 class EmailSubscription(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 255)
     var email: String,
-
     @Column(name = "subscribed_newsletters", nullable = false)
     var subscribedNewsletters: Boolean,
-
     @Column(name = "subscribed_issues", nullable = false)
     var subscribedIssues: Boolean,
-
     @Column(name = "consented_at", nullable = false)
     var consentedAt: LocalDateTime,
-
     @Column(name = "subscribed_at", nullable = false)
     var subscribedAt: LocalDateTime,
-
     @Column(name = "subscription_source", nullable = false, length = 50)
     var subscriptionSource: String,
-
     @Column(nullable = false)
     var active: Boolean,
 ) : BaseEntity() {
-
     fun resubscribe(
         subscribedNewsletters: Boolean,
         subscribedIssues: Boolean,
@@ -63,10 +55,11 @@ class EmailSubscription(
         this.active = true
     }
 
-    fun subscribedTargets(): List<SubscriptionAudience> = buildList {
-        if (subscribedNewsletters) add(SubscriptionAudience.NEWSLETTER)
-        if (subscribedIssues) add(SubscriptionAudience.WEBZINE_ISSUE)
-    }
+    fun subscribedTargets(): List<SubscriptionAudience> =
+        buildList {
+            if (subscribedNewsletters) add(SubscriptionAudience.NEWSLETTER)
+            if (subscribedIssues) add(SubscriptionAudience.WEBZINE_ISSUE)
+        }
 
     companion object {
         fun create(

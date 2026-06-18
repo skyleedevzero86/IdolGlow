@@ -26,11 +26,10 @@ class UserController(
     private val userProfileImageService: UserProfileImageService,
     private val authVerificationAuditService: AuthVerificationAuditService,
 ) : UserApi {
-
     @PatchMapping
     override fun updateProfile(
         @LoginUser userId: Long,
-        @Valid @RequestBody request: UpdateProfileRequest
+        @Valid @RequestBody request: UpdateProfileRequest,
     ): ResponseEntity<GetUserLoginInfoResponse> =
         ResponseEntity.ok(userService.updateProfile(userId, request.nickname, request.profileImageUrl))
 

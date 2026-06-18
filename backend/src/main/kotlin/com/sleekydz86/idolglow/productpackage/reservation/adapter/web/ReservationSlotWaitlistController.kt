@@ -17,15 +17,13 @@ import org.springframework.web.bind.annotation.RestController
 class ReservationSlotWaitlistController(
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
 ) : ReservationSlotWaitlistApi {
-
     @PostMapping("/products/{productId}/reservation-slots/{reservationSlotId}/waitlist")
     @ResponseStatus(HttpStatus.CREATED)
     override fun register(
         @LoginUser userId: Long,
         @PathVariable productId: Long,
         @PathVariable reservationSlotId: Long,
-    ): SlotWaitlistEntryResponse =
-        reservationSlotWaitlistService.register(userId, productId, reservationSlotId)
+    ): SlotWaitlistEntryResponse = reservationSlotWaitlistService.register(userId, productId, reservationSlotId)
 
     @DeleteMapping("/products/{productId}/reservation-slots/{reservationSlotId}/waitlist")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -38,6 +36,7 @@ class ReservationSlotWaitlistController(
     }
 
     @GetMapping("/reservation-slot-waitlist")
-    override fun findMine(@LoginUser userId: Long): List<SlotWaitlistEntryResponse> =
-        reservationSlotWaitlistService.findMine(userId)
+    override fun findMine(
+        @LoginUser userId: Long,
+    ): List<SlotWaitlistEntryResponse> = reservationSlotWaitlistService.findMine(userId)
 }

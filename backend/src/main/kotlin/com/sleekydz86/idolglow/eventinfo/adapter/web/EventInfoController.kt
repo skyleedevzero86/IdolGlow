@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.eventinfo.adapter.web
 
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.CodeEntryResponse
-import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.FestivalEventResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.FestivalCommonDetailResponse
+import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.FestivalEventResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.FestivalImageResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.KopisAreaStatResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.SpecialDayInfoResponse
@@ -31,7 +31,6 @@ class EventInfoController(
     private val spcdeInfoApiClient: SpcdeInfoApiClient,
     private val cultureInfoApiClient: CultureInfoApiClient,
 ) {
-
     @GetMapping("/festivals")
     fun festivals(
         @LoginUser userId: Long,
@@ -41,23 +40,26 @@ class EventInfoController(
     ): List<FestivalEventResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
         val yyyyMMdd = normalizeDate(date)
-        val tourEvents = festivalEventQueryUseCase.listByDate(
-            eventStartDate = yyyyMMdd,
-            eventEndDate = yyyyMMdd,
-            pageNo = pageNo,
-            numOfRows = numOfRows,
-        )
-        val sjwEvents = seoulSjwPerformApiClient
-            .list(pageNo = pageNo, numOfRows = numOfRows)
-            .filter { seoulSjwPerformApiClient.isEventActiveOnDate(it, yyyyMMdd) }
-        val kopisEvents = kopisPerformanceApiClient.listPerformances(
-            stDate = yyyyMMdd,
-            edDate = yyyyMMdd,
-            page = pageNo,
-            rows = numOfRows,
-            signguCode = "11",
-            prfState = "02",
-        )
+        val tourEvents =
+            festivalEventQueryUseCase.listByDate(
+                eventStartDate = yyyyMMdd,
+                eventEndDate = yyyyMMdd,
+                pageNo = pageNo,
+                numOfRows = numOfRows,
+            )
+        val sjwEvents =
+            seoulSjwPerformApiClient
+                .list(pageNo = pageNo, numOfRows = numOfRows)
+                .filter { seoulSjwPerformApiClient.isEventActiveOnDate(it, yyyyMMdd) }
+        val kopisEvents =
+            kopisPerformanceApiClient.listPerformances(
+                stDate = yyyyMMdd,
+                edDate = yyyyMMdd,
+                page = pageNo,
+                rows = numOfRows,
+                signguCode = "11",
+                prfState = "02",
+            )
         val cultureCalendarEvents =
             if (pageNo == 1) {
                 cultureInfoApiClient.listEventsForCalendarDay(yyyyMMdd, pageNo = 1, numOfRows = numOfRows)
@@ -100,14 +102,15 @@ class EventInfoController(
     ): List<FestivalEventResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
         val yyyymmdd = normalizeDate(date)
-        return kopisPerformanceApiClient.listPerformances(
-            stDate = yyyymmdd,
-            edDate = yyyymmdd,
-            page = pageNo,
-            rows = numOfRows,
-            signguCode = signgucode,
-            prfState = prfstate,
-        ).map(::toFestivalResponse)
+        return kopisPerformanceApiClient
+            .listPerformances(
+                stDate = yyyymmdd,
+                edDate = yyyymmdd,
+                page = pageNo,
+                rows = numOfRows,
+                signguCode = signgucode,
+                prfState = prfstate,
+            ).map(::toFestivalResponse)
     }
 
     @GetMapping("/kopis/performances/{mt20id}")
@@ -128,12 +131,13 @@ class EventInfoController(
     ): List<FestivalEventResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
         val yyyymmdd = normalizeDate(date)
-        return kopisPerformanceApiClient.listFestivals(
-            stDate = yyyymmdd,
-            edDate = yyyymmdd,
-            page = pageNo,
-            rows = numOfRows,
-        ).map(::toFestivalResponse)
+        return kopisPerformanceApiClient
+            .listFestivals(
+                stDate = yyyymmdd,
+                edDate = yyyymmdd,
+                page = pageNo,
+                rows = numOfRows,
+            ).map(::toFestivalResponse)
     }
 
     @GetMapping("/kopis/area-stats")
@@ -314,38 +318,39 @@ class EventInfoController(
         @RequestParam(name = "lclsSystm3", required = false) lclsSystm3: String?,
     ): List<FestivalEventResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
-        return festivalEventQueryUseCase.searchKeyword(
-            keyword = keyword,
-            pageNo = pageNo,
-            numOfRows = numOfRows,
-            lDongRegnCd = lDongRegnCd,
-            lDongSignguCd = lDongSignguCd,
-            lclsSystm1 = lclsSystm1,
-            lclsSystm2 = lclsSystm2,
-            lclsSystm3 = lclsSystm3,
-        ).map { event ->
-            FestivalEventResponse(
-                contentId = event.contentId,
-                title = event.title,
-                address = event.address,
-                eventStartDate = event.eventStartDate,
-                eventEndDate = event.eventEndDate,
-                thumbnailImageUrl = event.thumbnailImageUrl,
-                imageUrl = event.imageUrl,
-                mapX = event.mapX,
-                mapY = event.mapY,
-                phone = event.phone,
-                detailUrl = event.detailUrl,
-                category = event.category,
-                synopsis = event.synopsis,
-                source = event.source,
-                cast = event.cast,
-                runningTime = event.runningTime,
-                age = event.age,
-                bookingPlaces = event.bookingPlaces,
-                introImageUrls = event.introImageUrls,
-            )
-        }
+        return festivalEventQueryUseCase
+            .searchKeyword(
+                keyword = keyword,
+                pageNo = pageNo,
+                numOfRows = numOfRows,
+                lDongRegnCd = lDongRegnCd,
+                lDongSignguCd = lDongSignguCd,
+                lclsSystm1 = lclsSystm1,
+                lclsSystm2 = lclsSystm2,
+                lclsSystm3 = lclsSystm3,
+            ).map { event ->
+                FestivalEventResponse(
+                    contentId = event.contentId,
+                    title = event.title,
+                    address = event.address,
+                    eventStartDate = event.eventStartDate,
+                    eventEndDate = event.eventEndDate,
+                    thumbnailImageUrl = event.thumbnailImageUrl,
+                    imageUrl = event.imageUrl,
+                    mapX = event.mapX,
+                    mapY = event.mapY,
+                    phone = event.phone,
+                    detailUrl = event.detailUrl,
+                    category = event.category,
+                    synopsis = event.synopsis,
+                    source = event.source,
+                    cast = event.cast,
+                    runningTime = event.runningTime,
+                    age = event.age,
+                    bookingPlaces = event.bookingPlaces,
+                    introImageUrls = event.introImageUrls,
+                )
+            }
     }
 
     @GetMapping("/ldong-codes")
@@ -383,28 +388,29 @@ class EventInfoController(
         @RequestParam(name = "lclsSystmListYn", required = false, defaultValue = "N") lclsSystmListYn: String,
     ): List<CodeEntryResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
-        return festivalEventQueryUseCase.lclsCodes(
-            lclsSystm1 = lclsSystm1,
-            lclsSystm2 = lclsSystm2,
-            lclsSystm3 = lclsSystm3,
-            lclsSystmListYn = lclsSystmListYn,
-        ).map {
-            CodeEntryResponse(
-                code = it.code,
-                name = it.name,
-                rnum = it.rnum,
-                lDongRegnCd = it.lDongRegnCd,
-                lDongRegnNm = it.lDongRegnNm,
-                lDongSignguCd = it.lDongSignguCd,
-                lDongSignguNm = it.lDongSignguNm,
-                lclsSystm1Cd = it.lclsSystm1Cd,
-                lclsSystm1Nm = it.lclsSystm1Nm,
-                lclsSystm2Cd = it.lclsSystm2Cd,
-                lclsSystm2Nm = it.lclsSystm2Nm,
-                lclsSystm3Cd = it.lclsSystm3Cd,
-                lclsSystm3Nm = it.lclsSystm3Nm,
-            )
-        }
+        return festivalEventQueryUseCase
+            .lclsCodes(
+                lclsSystm1 = lclsSystm1,
+                lclsSystm2 = lclsSystm2,
+                lclsSystm3 = lclsSystm3,
+                lclsSystmListYn = lclsSystmListYn,
+            ).map {
+                CodeEntryResponse(
+                    code = it.code,
+                    name = it.name,
+                    rnum = it.rnum,
+                    lDongRegnCd = it.lDongRegnCd,
+                    lDongRegnNm = it.lDongRegnNm,
+                    lDongSignguCd = it.lDongSignguCd,
+                    lDongSignguNm = it.lDongSignguNm,
+                    lclsSystm1Cd = it.lclsSystm1Cd,
+                    lclsSystm1Nm = it.lclsSystm1Nm,
+                    lclsSystm2Cd = it.lclsSystm2Cd,
+                    lclsSystm2Nm = it.lclsSystm2Nm,
+                    lclsSystm3Cd = it.lclsSystm3Cd,
+                    lclsSystm3Nm = it.lclsSystm3Nm,
+                )
+            }
     }
 
     @GetMapping("/culture-calendar/detail")
@@ -432,7 +438,9 @@ class EventInfoController(
     }
 
     @GetMapping("/culture-calendar/areas")
-    fun cultureCalendarAreas(@LoginUser userId: Long): List<CodeEntryResponse> {
+    fun cultureCalendarAreas(
+        @LoginUser userId: Long,
+    ): List<CodeEntryResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
         return KOREAN_SIDO_REFERENCE.mapIndexed { idx, name ->
             toCultureCodeEntry(idx + 1, name, name)
@@ -456,15 +464,16 @@ class EventInfoController(
         require(fromN <= toN) { "from은 to 이하여야 합니다." }
         val tp = serviceTp.trim().uppercase()
         require(tp in setOf("A", "B", "C")) { "serviceTp는 A, B, C 중 하나여야 합니다." }
-        return cultureInfoApiClient.listRealm2Events(
-            fromYyyyMMdd = fromN,
-            toYyyyMMdd = toN,
-            serviceTp = tp,
-            realmCode = realmCode?.trim()?.takeIf { it.isNotEmpty() },
-            sortStdr = sortStdr,
-            pageNo = pageNo,
-            numOfrows = numOfrows,
-        ).map(::toFestivalResponse)
+        return cultureInfoApiClient
+            .listRealm2Events(
+                fromYyyyMMdd = fromN,
+                toYyyyMMdd = toN,
+                serviceTp = tp,
+                realmCode = realmCode?.trim()?.takeIf { it.isNotEmpty() },
+                sortStdr = sortStdr,
+                pageNo = pageNo,
+                numOfrows = numOfrows,
+            ).map(::toFestivalResponse)
     }
 
     @GetMapping("/culture-calendar/area2")
@@ -483,25 +492,32 @@ class EventInfoController(
         require(fromN <= toN) { "from은 to 이하여야 합니다." }
         val tp = serviceTp.trim().uppercase()
         require(tp in setOf("A", "B", "C")) { "serviceTp는 A, B, C 중 하나여야 합니다." }
-        return cultureInfoApiClient.listArea2Events(
-            fromYyyyMMdd = fromN,
-            toYyyyMMdd = toN,
-            serviceTp = tp,
-            sortStdr = sortStdr,
-            pageNo = pageNo,
-            numOfrows = numOfrows,
-        ).map(::toFestivalResponse)
+        return cultureInfoApiClient
+            .listArea2Events(
+                fromYyyyMMdd = fromN,
+                toYyyyMMdd = toN,
+                serviceTp = tp,
+                sortStdr = sortStdr,
+                pageNo = pageNo,
+                numOfrows = numOfrows,
+            ).map(::toFestivalResponse)
     }
 
     @GetMapping("/culture-calendar/realm-code-reference")
-    fun cultureCalendarRealmCodeReference(@LoginUser userId: Long): List<CodeEntryResponse> {
+    fun cultureCalendarRealmCodeReference(
+        @LoginUser userId: Long,
+    ): List<CodeEntryResponse> {
         check(userId > 0L) { "로그인이 필요합니다." }
         return REALM_CODE_REFERENCE.mapIndexed { idx, (code, name) ->
             toCultureCodeEntry(idx + 1, code, name)
         }
     }
 
-    private fun toCultureCodeEntry(rnum: Int, code: String?, name: String?): CodeEntryResponse =
+    private fun toCultureCodeEntry(
+        rnum: Int,
+        code: String?,
+        name: String?,
+    ): CodeEntryResponse =
         CodeEntryResponse(
             code = code,
             name = name,
@@ -533,7 +549,10 @@ class EventInfoController(
         return normalized
     }
 
-    private fun normalizeYearMonth(solYear: String?, solMonth: String?): Pair<String, String> {
+    private fun normalizeYearMonth(
+        solYear: String?,
+        solMonth: String?,
+    ): Pair<String, String> {
         val year = solYear?.trim().orEmpty()
         val month = solMonth?.trim().orEmpty()
         if (year.isNotEmpty() || month.isNotEmpty()) {
@@ -546,39 +565,41 @@ class EventInfoController(
     }
 
     companion object {
-        private val KOREAN_SIDO_REFERENCE: List<String> = listOf(
-            "서울",
-            "부산",
-            "대구",
-            "인천",
-            "광주",
-            "대전",
-            "울산",
-            "세종",
-            "경기",
-            "강원",
-            "충북",
-            "충남",
-            "전북",
-            "전남",
-            "경북",
-            "경남",
-            "제주",
-        )
-        private val REALM_CODE_REFERENCE: List<Pair<String, String>> = listOf(
-            "A000" to "연극",
-            "B000" to "음악/콘서트",
-            "B002" to "국악",
-            "C000" to "무용/발레",
-            "D000" to "전시",
-            "B003" to "뮤지컬/오페라",
-            "E000" to "아동/가족",
-            "F000" to "행사/축제",
-            "G000" to "교육/체험",
-            "H000" to "도서",
-            "I000" to "체육",
-            "L000" to "기타",
-        )
+        private val KOREAN_SIDO_REFERENCE: List<String> =
+            listOf(
+                "서울",
+                "부산",
+                "대구",
+                "인천",
+                "광주",
+                "대전",
+                "울산",
+                "세종",
+                "경기",
+                "강원",
+                "충북",
+                "충남",
+                "전북",
+                "전남",
+                "경북",
+                "경남",
+                "제주",
+            )
+        private val REALM_CODE_REFERENCE: List<Pair<String, String>> =
+            listOf(
+                "A000" to "연극",
+                "B000" to "음악/콘서트",
+                "B002" to "국악",
+                "C000" to "무용/발레",
+                "D000" to "전시",
+                "B003" to "뮤지컬/오페라",
+                "E000" to "아동/가족",
+                "F000" to "행사/축제",
+                "G000" to "교육/체험",
+                "H000" to "도서",
+                "I000" to "체육",
+                "L000" to "기타",
+            )
         private val DATE_FMT: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE
         private val YYYYMMDD = Regex("^\\d{8}$")
         private val YYYY = Regex("^\\d{4}$")
@@ -608,11 +629,15 @@ class EventInfoController(
             introImageUrls = event.introImageUrls,
         )
 
-    private fun daysBetween(start: String, end: String): Long {
+    private fun daysBetween(
+        start: String,
+        end: String,
+    ): Long {
         val s = LocalDate.parse(start, DATE_FMT)
         val e = LocalDate.parse(end, DATE_FMT)
         require(!e.isBefore(s)) { "edDate는 stDate 이후여야 합니다." }
-        return java.time.temporal.ChronoUnit.DAYS.between(s, e) + 1
+        return java.time.temporal.ChronoUnit.DAYS
+            .between(s, e) + 1
     }
 
     private fun toSpecialDayResponse(day: com.sleekydz86.idolglow.eventinfo.domain.SpecialDayInfo): SpecialDayInfoResponse =

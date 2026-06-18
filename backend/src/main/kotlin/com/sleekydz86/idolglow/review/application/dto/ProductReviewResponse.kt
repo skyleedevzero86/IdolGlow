@@ -21,19 +21,18 @@ data class ProductReviewResponse(
     val createdAt: LocalDateTime,
     @Schema(description = "리뷰 이미지 목록")
     val images: List<ProductReviewImageResponse> = emptyList(),
-
     @Schema(description = "방문 완료 예약 기반 인증 리뷰 여부")
     val verifiedPurchase: Boolean = false,
-
     @Schema(description = "도움돼요 수")
     val helpfulCount: Long = 0L,
-
     @Schema(description = "비공개(신고 누적 등) 여부 — 본인 마이페이지에서만 true일 수 있음")
     val hidden: Boolean = false,
 ) {
-
     companion object {
-        fun from(productReview: ProductReview, images: List<Image> = emptyList()): ProductReviewResponse {
+        fun from(
+            productReview: ProductReview,
+            images: List<Image> = emptyList(),
+        ): ProductReviewResponse {
             val createdAt = productReview.createdAt ?: LocalDateTime.now()
             return ProductReviewResponse(
                 reviewId = productReview.id,

@@ -1,12 +1,7 @@
 package com.sleekydz86.idolglow.survey.domain.dto
 
 import com.sleekydz86.idolglow.survey.domain.SurveyForm
-import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
-import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
-import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
-import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import org.springframework.data.domain.Page
-import java.time.LocalDateTime
 
 data class SurveyFormPageResponse(
     val content: List<SurveyFormSummaryResponse>,

@@ -8,5 +8,8 @@ data class SurveyAnswerRequest(
     val questionId: Long,
     @field:Size(max = 4000)
     val answerText: String? = null,
-    val selectedOptions: List<@Size(max = 300) String> = emptyList(),
+    val selectedOptions: List<
+        @Size(max = 300)
+        String,
+    > = emptyList(),
 )

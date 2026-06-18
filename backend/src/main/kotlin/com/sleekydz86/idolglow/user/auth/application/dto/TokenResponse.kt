@@ -5,5 +5,5 @@ data class TokenResponse(
     val accessToken: String,
     val accessTokenExpiresIn: Long,
     val refreshToken: String,
-    val refreshTokenExpiresIn: Long
-) {}
+    val refreshTokenExpiresIn: Long,
+)

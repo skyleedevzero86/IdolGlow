@@ -11,20 +11,18 @@ import org.springframework.stereotype.Repository
 class SubscriptionDispatchHistoryRepositoryImpl(
     private val subscriptionDispatchHistoryJpaRepository: SubscriptionDispatchHistoryJpaRepository,
 ) : SubscriptionDispatchHistoryPort {
-
     override fun findAllByLatest(): List<SubscriptionDispatchHistory> =
         subscriptionDispatchHistoryJpaRepository.findAll(
             Sort.by(
                 Sort.Order.desc("dispatchedAt"),
                 Sort.Order.desc("createdAt"),
-            )
+            ),
         )
 
     override fun save(history: SubscriptionDispatchHistory): SubscriptionDispatchHistory =
         subscriptionDispatchHistoryJpaRepository.save(history)
 
-    override fun count(): Long =
-        subscriptionDispatchHistoryJpaRepository.count()
+    override fun count(): Long = subscriptionDispatchHistoryJpaRepository.count()
 
     override fun existsByContentTypeAndContentSlug(
         contentType: SubscriptionContentType,

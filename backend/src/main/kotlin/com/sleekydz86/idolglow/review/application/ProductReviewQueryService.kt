@@ -13,23 +13,25 @@ import java.time.LocalDateTime
 @Service
 class ProductReviewQueryService(
     private val productReviewRepository: ProductReviewRepository,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
 ) {
-
     fun findReviewsByProduct(productId: Long): List<ProductReviewResponse> {
-        val reviews = productReviewRepository.findByProductId(productId)
-            .filter { !it.isHidden() }
+        val reviews =
+            productReviewRepository
+                .findByProductId(productId)
+                .filter { !it.isHidden() }
         val reviewIds = reviews.map { it.id }
         val images = imageRepository.findByAggregates(ImageAggregateType.PRODUCT_REVIEW, reviewIds)
         val imageMap = images.groupBy { it.aggregateId }
 
-        return reviews.map { review ->
-            ProductReviewResponse.from(review, imageMap[review.id].orEmpty())
-        }.sortedWith(
-            compareByDescending<ProductReviewResponse> { it.images.isNotEmpty() }
-                .thenByDescending { it.helpfulCount }
-                .thenByDescending { it.createdAt }
-        )
+        return reviews
+            .map { review ->
+                ProductReviewResponse.from(review, imageMap[review.id].orEmpty())
+            }.sortedWith(
+                compareByDescending<ProductReviewResponse> { it.images.isNotEmpty() }
+                    .thenByDescending { it.helpfulCount }
+                    .thenByDescending { it.createdAt },
+            )
     }
 
     fun toResponse(review: ProductReview): ProductReviewResponse {
@@ -38,8 +40,10 @@ class ProductReviewQueryService(
     }
 
     fun findReviewsByUser(userId: Long): List<ProductReviewResponse> {
-        val reviews = productReviewRepository.findByUserId(userId)
-            .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
+        val reviews =
+            productReviewRepository
+                .findByUserId(userId)
+                .sortedByDescending { it.createdAt ?: LocalDateTime.MIN }
         val reviewIds = reviews.map { it.id }
         val images = imageRepository.findByAggregates(ImageAggregateType.PRODUCT_REVIEW, reviewIds)
         val imageMap = images.groupBy { it.aggregateId }

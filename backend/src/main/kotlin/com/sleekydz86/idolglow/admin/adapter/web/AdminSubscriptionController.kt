@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminSubscriptionController(
     private val subscriptionAdminUseCase: SubscriptionAdminUseCase,
 ) {
-
     @Operation(
         summary = "구독·발송 개요 조회",
         description = "구독자 통계와 최근 발송 이력을 관리자 구독 화면용으로 반환합니다.",
@@ -50,7 +49,7 @@ class AdminSubscriptionController(
                 subscriberSize = subscriberSize,
                 dispatchPage = dispatchPage,
                 dispatchSize = dispatchSize,
-            )
+            ),
         )
 
     @Operation(summary = "예약 발송 스케줄 저장")

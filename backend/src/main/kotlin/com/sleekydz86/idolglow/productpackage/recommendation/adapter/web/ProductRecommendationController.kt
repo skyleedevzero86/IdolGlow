@@ -40,8 +40,7 @@ class ProductRecommendationController(
     fun findLatestInKorea(
         @RequestParam(required = false, defaultValue = "20") size: Int?,
         @RequestParam(required = false) tag: String?,
-    ): ResponseEntity<List<ProductPagingQueryResponse>> =
-        ResponseEntity.ok(productRecommendationService.findLatestInKorea(size ?: 20, tag))
+    ): ResponseEntity<List<ProductPagingQueryResponse>> = ResponseEntity.ok(productRecommendationService.findLatestInKorea(size ?: 20, tag))
 
     @PutMapping("/admin/products/{productId}/recommendation")
     @PreAuthorize("hasRole('ADMIN')")
@@ -53,7 +52,7 @@ class ProductRecommendationController(
             productRecommendationService.updateAdminRecommendation(
                 productId = productId,
                 recommended = request.recommended,
-            )
+            ),
         )
 
     @PutMapping("/admin/products/{productId}/recommendation-score")
@@ -66,7 +65,7 @@ class ProductRecommendationController(
             productRecommendationService.updateRecommendationScore(
                 productId = productId,
                 score = request.score,
-            )
+            ),
         )
 
     @GetMapping("/products/recommendations/admin-picked")
@@ -80,6 +79,6 @@ class ProductRecommendationController(
                 size = size ?: 20,
                 tagName = tag,
                 searchKeyword = query,
-            )
+            ),
         )
 }

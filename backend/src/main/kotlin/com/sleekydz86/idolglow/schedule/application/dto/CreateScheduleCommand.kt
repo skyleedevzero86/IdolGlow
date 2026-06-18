@@ -7,5 +7,5 @@ data class CreateScheduleCommand(
     val productId: Long,
     val title: String,
     val startAt: LocalDateTime,
-    val endAt: LocalDateTime
+    val endAt: LocalDateTime,
 )

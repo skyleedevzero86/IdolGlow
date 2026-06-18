@@ -16,7 +16,6 @@ class PaymentGraphQlController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
-
     @MutationMapping
     fun mockPaymentWebhook(
         @Argument secret: String,
@@ -24,22 +23,23 @@ class PaymentGraphQlController(
     ): PaymentGraphQlResponse {
         require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
 
-        val payment = when (input.status) {
-            MockPaymentWebhookStatus.SUCCEEDED ->
-                reservationPaymentService.handlePaymentSucceeded(input.paymentReference)
+        val payment =
+            when (input.status) {
+                MockPaymentWebhookStatus.SUCCEEDED ->
+                    reservationPaymentService.handlePaymentSucceeded(input.paymentReference)
 
-            MockPaymentWebhookStatus.FAILED ->
-                reservationPaymentService.handlePaymentFailed(
-                    paymentReference = input.paymentReference,
-                    reason = input.failureReason ?: "모의 결제가 실패했습니다."
-                )
+                MockPaymentWebhookStatus.FAILED ->
+                    reservationPaymentService.handlePaymentFailed(
+                        paymentReference = input.paymentReference,
+                        reason = input.failureReason ?: "모의 결제가 실패했습니다.",
+                    )
 
-            MockPaymentWebhookStatus.CANCELED ->
-                reservationPaymentService.handlePaymentCanceled(
-                    paymentReference = input.paymentReference,
-                    reason = input.failureReason ?: "모의 결제가 취소되었습니다."
-                )
-        }
+                MockPaymentWebhookStatus.CANCELED ->
+                    reservationPaymentService.handlePaymentCanceled(
+                        paymentReference = input.paymentReference,
+                        reason = input.failureReason ?: "모의 결제가 취소되었습니다.",
+                    )
+            }
 
         return PaymentGraphQlResponse.from(payment)
     }

@@ -16,21 +16,18 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "webzine_article_gallery_images",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_webzine_article_gallery_order", columnNames = ["article_id", "display_order"])
-    ]
+        UniqueConstraint(name = "uk_webzine_article_gallery_order", columnNames = ["article_id", "display_order"]),
+    ],
 )
 class WebzineArticleGalleryImage(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "article_id", nullable = false)
     val article: WebzineArticle,
-
     @Column(name = "display_order", nullable = false)
     val displayOrder: Int,
-
     @Column(name = "image_url", nullable = false, length = 500)
     val imageUrl: String,
 ) : BaseEntity()

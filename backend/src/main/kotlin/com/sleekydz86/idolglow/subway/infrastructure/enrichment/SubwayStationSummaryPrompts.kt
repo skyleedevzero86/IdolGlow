@@ -3,7 +3,6 @@ package com.sleekydz86.idolglow.subway.infrastructure.enrichment
 import tools.jackson.databind.ObjectMapper
 
 object SubwayStationSummaryPrompts {
-
     val system: String =
         """
         당신은 서울 수도권 전철 안내 카피라이터입니다.

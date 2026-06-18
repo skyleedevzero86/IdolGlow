@@ -19,7 +19,6 @@ import java.time.LocalDateTime
 class PlatformJwtAuthenticationEntryPoint(
     private val objectMapper: ObjectMapper,
 ) : AuthenticationEntryPoint {
-
     private val log = LoggerFactory.getLogger(PlatformJwtAuthenticationEntryPoint::class.java)
 
     override fun commence(
@@ -33,13 +32,15 @@ class PlatformJwtAuthenticationEntryPoint(
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = Charsets.UTF_8.name()
 
-        val errorResponse = ErrorResponse.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.UNAUTHORIZED.value())
-            .errorCode("UNAUTHORIZED")
-            .message("인증이 필요합니다")
-            .path(request.requestURI)
-            .build()
+        val errorResponse =
+            ErrorResponse
+                .builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .errorCode("UNAUTHORIZED")
+                .message("인증이 필요합니다")
+                .path(request.requestURI)
+                .build()
 
         val jsonResponse = objectMapper.writeValueAsString(ApiResponse.error<Any>(errorResponse))
         response.writer.write(jsonResponse)

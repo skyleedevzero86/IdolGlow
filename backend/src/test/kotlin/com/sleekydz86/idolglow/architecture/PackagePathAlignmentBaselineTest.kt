@@ -7,7 +7,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class PackagePathAlignmentBaselineTest {
-
     @Test
     fun `패키지_선언과_폴더_경로_불일치_건수가_기준값을_초과하지_않는다`() {
         // given

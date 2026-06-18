@@ -25,12 +25,13 @@ class AdminAuthVerificationController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) verificationType: String?,
         @RequestParam(required = false) keyword: String?,
-    ): ResponseEntity<AuthVerificationAuditLogPageResponse> = ResponseEntity.ok(
-        authVerificationAuditService.findPage(
-            page = page,
-            size = size,
-            verificationType = verificationType,
-            keyword = keyword,
-        ),
-    )
+    ): ResponseEntity<AuthVerificationAuditLogPageResponse> =
+        ResponseEntity.ok(
+            authVerificationAuditService.findPage(
+                page = page,
+                size = size,
+                verificationType = verificationType,
+                keyword = keyword,
+            ),
+        )
 }

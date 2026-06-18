@@ -13,29 +13,32 @@ class MinioHealthIndicator(
     private val minioClient: MinioClient,
     private val minioStorageProperties: MinioStorageProperties,
 ) : HealthIndicator {
-
     override fun health(): Health {
         val bucket = minioStorageProperties.bucket
 
         return runCatching {
-            val exists = minioClient.bucketExists(
-                BucketExistsArgs.builder().bucket(bucket).build()
-            )
+            val exists =
+                minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket(bucket).build(),
+                )
             if (exists) {
-                Health.up()
+                Health
+                    .up()
                     .withDetail("endpoint", minioStorageProperties.endpoint)
                     .withDetail("bucket", bucket)
                     .withDetail("publicBaseUrl", minioStorageProperties.publicBaseUrl)
                     .build()
             } else {
-                Health.down()
+                Health
+                    .down()
                     .withDetail("endpoint", minioStorageProperties.endpoint)
                     .withDetail("bucket", bucket)
                     .withDetail("message", "설정한 버킷을 찾을 수 없습니다.")
                     .build()
             }
         }.getOrElse { error ->
-            Health.down(error)
+            Health
+                .down(error)
                 .withDetail("endpoint", minioStorageProperties.endpoint)
                 .withDetail("bucket", bucket)
                 .build()

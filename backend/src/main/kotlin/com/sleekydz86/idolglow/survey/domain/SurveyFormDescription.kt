@@ -19,14 +19,11 @@ class SurveyFormDescription(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_form_id", nullable = false, unique = true)
     val form: SurveyForm,
-
     @Column(columnDefinition = "TEXT", nullable = false)
     var markdown: String,
-
     @OneToMany(
         mappedBy = "description",
         cascade = [CascadeType.ALL],

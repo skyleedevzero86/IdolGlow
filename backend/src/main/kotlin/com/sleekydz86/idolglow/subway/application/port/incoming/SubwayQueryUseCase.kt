@@ -4,7 +4,13 @@ import com.sleekydz86.idolglow.subway.domain.SubwayLine
 
 interface SubwayQueryUseCase {
     fun listLines(): List<SubwayLine>
+
     fun listStations(lineId: String): List<SubwayStationOnLine>
+
     fun searchStations(query: String): List<SubwayStationOnLine>
-    fun getStationPage(lineId: String, stationCd: String): SubwayStationPageResult
+
+    fun getStationPage(
+        lineId: String,
+        stationCd: String,
+    ): SubwayStationPageResult
 }

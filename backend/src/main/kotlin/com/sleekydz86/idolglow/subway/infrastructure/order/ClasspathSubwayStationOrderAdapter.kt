@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap
 class ClasspathSubwayStationOrderAdapter(
     private val objectMapper: ObjectMapper,
 ) : SubwayStationOrderPort {
-
     private val manifest: Map<String, String> by lazy(::readManifest)
     private val cache = ConcurrentHashMap<String, List<SubwayStationStop>>()
 
@@ -38,9 +37,10 @@ class ClasspathSubwayStationOrderAdapter(
         if (!res.exists()) {
             return emptyList()
         }
-        val rows: List<StopJson> = res.inputStream.use { stream ->
-            objectMapper.readValue(stream, object : TypeReference<List<StopJson>>() {})
-        }
+        val rows: List<StopJson> =
+            res.inputStream.use { stream ->
+                objectMapper.readValue(stream, object : TypeReference<List<StopJson>>() {})
+            }
         return rows.map { SubwayStationStop(code = it.cd, name = it.nm, frCode = it.fr) }
     }
 

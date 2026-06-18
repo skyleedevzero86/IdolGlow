@@ -1,11 +1,8 @@
 package com.sleekydz86.idolglow.subway.infrastructure.enrichment
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import tools.jackson.databind.ObjectMapper
@@ -39,60 +36,72 @@ class OpenAiSubwayStationSummaryClient(
             return null
         }
 
-        val request = SubwayChatCompletionRequest(
-            model = model,
-            temperature = 0.45,
-            responseFormat = SubwayResponseFormat(type = "json_object"),
-            messages = listOf(
-                SubwayChatMessage(
-                    role = "system",
-                    content = SubwayStationSummaryPrompts.system,
-                ),
-                SubwayChatMessage(
-                    role = "user",
-                    content = SubwayStationSummaryPrompts.userJson(
-                        objectMapper,
-                        lineId,
-                        lineName,
-                        stationCd,
-                        stationDisplayName,
+        val request =
+            SubwayChatCompletionRequest(
+                model = model,
+                temperature = 0.45,
+                responseFormat = SubwayResponseFormat(type = "json_object"),
+                messages =
+                    listOf(
+                        SubwayChatMessage(
+                            role = "system",
+                            content = SubwayStationSummaryPrompts.system,
+                        ),
+                        SubwayChatMessage(
+                            role = "user",
+                            content =
+                                SubwayStationSummaryPrompts.userJson(
+                                    objectMapper,
+                                    lineId,
+                                    lineName,
+                                    stationCd,
+                                    stationDisplayName,
+                                ),
+                        ),
                     ),
-                ),
-            ),
-        )
+            )
 
-        val raw = try {
-            webClient.post()
-                .uri("${baseUrl.trimEnd('/')}/v1/chat/completions")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer $normalizedApiKey")
-                .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .bodyValue(request)
-                .exchangeToMono { response ->
-                    response.bodyToMono(String::class.java)
-                        .defaultIfEmpty("")
-                        .map { body -> RawSubwayOpenAiResponse(response.statusCode(), body) }
-                }
-                .block()
-        } catch (e: Exception) {
-            log.warn("지하철 역 요약 OpenAI 호출 실패: {}", e.message)
-            null
-        } ?: return null
+        val raw =
+            try {
+                webClient
+                    .post()
+                    .uri("${baseUrl.trimEnd('/')}/v1/chat/completions")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer $normalizedApiKey")
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .bodyValue(request)
+                    .exchangeToMono { response ->
+                        response
+                            .bodyToMono(String::class.java)
+                            .defaultIfEmpty("")
+                            .map { body -> RawSubwayOpenAiResponse(response.statusCode(), body) }
+                    }.block()
+            } catch (e: Exception) {
+                log.warn("지하철 역 요약 OpenAI 호출 실패: {}", e.message)
+                null
+            } ?: return null
 
         if (!raw.statusCode.is2xxSuccessful) {
             log.warn("지하철 역 요약 OpenAI 비정상 응답: status={} body={}", raw.statusCode, raw.body.take(500))
             return null
         }
 
-        val content = runCatching {
-            objectMapper.readValue(raw.body, SubwayChatCompletionResponse::class.java)
-                .choices.firstOrNull()?.message?.content
-        }.getOrNull() ?: return null
+        val content =
+            runCatching {
+                objectMapper
+                    .readValue(raw.body, SubwayChatCompletionResponse::class.java)
+                    .choices
+                    .firstOrNull()
+                    ?.message
+                    ?.content
+            }.getOrNull() ?: return null
 
-        val json = content.trim()
-            .removePrefix("```json")
-            .removePrefix("```")
-            .removeSuffix("```")
-            .trim()
+        val json =
+            content
+                .trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
 
         return runCatching {
             objectMapper.readValue(json, LlmSubwayStationSummary::class.java).normalize(stationDisplayName)

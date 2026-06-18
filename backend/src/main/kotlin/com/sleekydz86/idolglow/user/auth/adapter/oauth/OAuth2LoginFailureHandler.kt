@@ -11,11 +11,10 @@ import org.springframework.stereotype.Component
 class OAuth2LoginFailureHandler(
     @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
 ) : AuthenticationFailureHandler {
-
     override fun onAuthenticationFailure(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        exception: AuthenticationException
+        exception: AuthenticationException,
     ) {
         val base = redirectUri.trim()
         val sep = if (base.contains("?")) "&" else "?"

@@ -11,7 +11,6 @@ class SurveyRecommendationLlmRouter(
     @Value("\${app.llm.survey.provider:auto}")
     private val providerRaw: String,
 ) {
-
     fun generate(
         titleFallback: String,
         subtitleFallback: String,

@@ -16,7 +16,10 @@ class IncheonAirportApiAuthCooldown {
         return false
     }
 
-    fun markUnauthorized(apiName: String, cooldown: Duration = DEFAULT_COOLDOWN): Boolean {
+    fun markUnauthorized(
+        apiName: String,
+        cooldown: Duration = DEFAULT_COOLDOWN,
+    ): Boolean {
         val now = System.currentTimeMillis()
         val until = now + cooldown.toMillis()
         val previous = blockedUntilMillis.put(apiName, until)

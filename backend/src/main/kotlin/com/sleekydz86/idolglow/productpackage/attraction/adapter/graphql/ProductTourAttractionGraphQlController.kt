@@ -18,8 +18,9 @@ class ProductTourAttractionGraphQlController(
         @Argument signguCode: Int?,
         @Argument category: String?,
     ): ProductTourAttractionGraphQlResponse {
-        val resolvedProductId = productId.toLongOrNull()
-            ?: throw IllegalArgumentException("productId는 숫자여야 합니다.")
+        val resolvedProductId =
+            productId.toLongOrNull()
+                ?: throw IllegalArgumentException("productId는 숫자여야 합니다.")
 
         return ProductTourAttractionGraphQlResponse.from(
             productTourAttractionQueryService.findAttractionsByProduct(
@@ -29,7 +30,7 @@ class ProductTourAttractionGraphQlController(
                 category = category,
                 areaCode = areaCode,
                 signguCode = signguCode,
-            )
+            ),
         )
     }
 }

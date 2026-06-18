@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity
 
 @Tag(name = "사이트 콘텐츠", description = "공개 사이트 홈·에셋 조회 API")
 interface SiteContentApi {
-
     @Operation(
         summary = "홈 콘텐츠 조회",
         description = "홈 히어로 슬라이드, 배너, 팝업 등 구성 데이터를 반환합니다.",

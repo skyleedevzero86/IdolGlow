@@ -4,5 +4,5 @@ import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLoc
 
 data class ProductCreateEvent(
     val productId: Long,
-    val location: ProductLocationPayload? = null
+    val location: ProductLocationPayload? = null,
 )

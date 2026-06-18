@@ -4,7 +4,6 @@ import com.sleekydz86.idolglow.survey.domain.SurveyForm
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
-import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 
 data class SurveyFormResponse(
     val id: Long,
@@ -32,19 +31,20 @@ data class SurveyFormResponse(
                 primaryCategoryLabel = form.primaryCategory.label,
                 secondaryCategory = form.secondaryCategory,
                 secondaryCategoryLabel = form.secondaryCategory?.label,
-                questions = form.questions
-                    .sortedBy { it.displayOrder }
-                    .map { q ->
-                        SurveyQuestionResponse(
-                            id = q.id,
-                            order = q.displayOrder,
-                            title = q.title,
-                            description = q.description,
-                            type = q.questionType,
-                            required = q.required,
-                            options = q.options.sortedBy { it.displayOrder }.map { it.optionText },
-                        )
-                    },
+                questions =
+                    form.questions
+                        .sortedBy { it.displayOrder }
+                        .map { q ->
+                            SurveyQuestionResponse(
+                                id = q.id,
+                                order = q.displayOrder,
+                                title = q.title,
+                                description = q.description,
+                                type = q.questionType,
+                                required = q.required,
+                                options = q.options.sortedBy { it.displayOrder }.map { it.optionText },
+                            )
+                        },
             )
     }
 }

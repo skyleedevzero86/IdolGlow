@@ -18,26 +18,25 @@ import org.springframework.web.multipart.MultipartFile
 
 @Tag(name = "상품 리뷰", description = "상품 리뷰 관리 API")
 interface ProductReviewApi {
-
     @Operation(
         summary = "상품 리뷰 목록 조회",
-        description = "비공개(신고 누적 등) 리뷰는 제외합니다. 사진이 있는 리뷰·도움돼요 순으로 정렬됩니다."
+        description = "비공개(신고 누적 등) 리뷰는 제외합니다. 사진이 있는 리뷰·도움돼요 순으로 정렬됩니다.",
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     fun findReviews(
         @Parameter(description = "상품 ID", example = "1")
-        productId: Long
+        productId: Long,
     ): List<ProductReviewResponse>
 
     @Operation(
         summary = "상품 리뷰 생성",
-        description = "해당 상품에 대해 방문이 완료된 예약(확정·과거 방문일)이 있을 때만 작성할 수 있습니다."
+        description = "해당 상품에 대해 방문이 완료된 예약(확정·과거 방문일)이 있을 때만 작성할 수 있습니다.",
     )
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "201", description = "생성 성공"),
-            ApiResponse(responseCode = "400", description = "잘못된 요청")
-        ]
+            ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        ],
     )
     fun createReview(
         @Parameter(hidden = true)
@@ -51,11 +50,11 @@ interface ProductReviewApi {
             content = [
                 Content(
                     mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    array = ArraySchema(schema = Schema(type = "string", format = "binary"))
-                )
-            ]
+                    array = ArraySchema(schema = Schema(type = "string", format = "binary")),
+                ),
+            ],
         )
-        images: List<MultipartFile>?
+        images: List<MultipartFile>?,
     ): ProductReviewResponse
 
     @Operation(summary = "상품 리뷰 수정", description = "로그인한 사용자가 자신의 리뷰를 수정합니다.")
@@ -63,8 +62,8 @@ interface ProductReviewApi {
         value = [
             ApiResponse(responseCode = "200", description = "수정 성공"),
             ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
-        ]
+            ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음"),
+        ],
     )
     fun updateReview(
         @Parameter(hidden = true)
@@ -80,19 +79,19 @@ interface ProductReviewApi {
             content = [
                 Content(
                     mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    array = ArraySchema(schema = Schema(type = "string", format = "binary"))
-                )
-            ]
+                    array = ArraySchema(schema = Schema(type = "string", format = "binary")),
+                ),
+            ],
         )
-        images: List<MultipartFile>?
+        images: List<MultipartFile>?,
     ): ProductReviewResponse
 
     @Operation(summary = "상품 리뷰 삭제", description = "로그인한 사용자가 자신의 리뷰를 삭제합니다.")
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "204", description = "삭제 성공"),
-            ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
-        ]
+            ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음"),
+        ],
     )
     fun deleteReview(
         @Parameter(hidden = true)
@@ -100,7 +99,7 @@ interface ProductReviewApi {
         @Parameter(description = "상품 ID", example = "1")
         productId: Long,
         @Parameter(description = "리뷰 ID", example = "10")
-        reviewId: Long
+        reviewId: Long,
     )
 
     @Operation(summary = "리뷰 도움돼요 토글", description = "같은 사용자가 반복 호출 시 취소됩니다. 본인 리뷰에는 불가합니다.")

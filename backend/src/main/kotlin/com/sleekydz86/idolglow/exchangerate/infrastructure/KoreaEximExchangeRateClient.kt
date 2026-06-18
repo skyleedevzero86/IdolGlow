@@ -6,8 +6,8 @@ import com.sleekydz86.idolglow.exchangerate.application.port.out.ExchangeRateQue
 import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
 import com.sleekydz86.idolglow.global.infrastructure.config.KoreaEximExchangeProperties
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Component
 import org.springframework.core.ParameterizedTypeReference
+import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
@@ -29,24 +29,28 @@ class KoreaEximExchangeRateClient(
         }
         val base = properties.baseUrl.trim().trimEnd('/')
         val urlBase = "$base/exchangeJSON"
-        val builder = UriComponentsBuilder.fromUriString(urlBase)
-            .queryParam("authkey", key)
-            .queryParam("data", "AP01")
+        val builder =
+            UriComponentsBuilder
+                .fromUriString(urlBase)
+                .queryParam("authkey", key)
+                .queryParam("data", "AP01")
         if (searchDate != null) {
             builder.queryParam("searchdate", searchDate.format(DATE_PARAM))
         }
         val requestUri: URI = builder.build().encode().toUri()
 
-        val raw: List<KoreaEximRowJson> = try {
-            webClient.get()
-                .uri(requestUri)
-                .retrieve()
-                .bodyToMono(object : ParameterizedTypeReference<List<KoreaEximRowJson>>() {})
-                .block()
-        } catch (e: Exception) {
-            log.warn("한국수출입은행 환율 API 호출 실패: {}", e.message)
-            return emptyList()
-        } ?: emptyList()
+        val raw: List<KoreaEximRowJson> =
+            try {
+                webClient
+                    .get()
+                    .uri(requestUri)
+                    .retrieve()
+                    .bodyToMono(object : ParameterizedTypeReference<List<KoreaEximRowJson>>() {})
+                    .block()
+            } catch (e: Exception) {
+                log.warn("한국수출입은행 환율 API 호출 실패: {}", e.message)
+                return emptyList()
+            } ?: emptyList()
 
         if (raw.isNotEmpty() && raw.first().result != null && raw.first().result != 1) {
             val code = raw.first().result

@@ -22,15 +22,15 @@ class MyPaymentController(
     private val myPagePaymentService: MyPagePaymentService,
 ) {
     @GetMapping
-    fun list(@LoginUser userId: Long): ResponseEntity<List<MyPagePaymentSummaryResponse>> =
-        ResponseEntity.ok(myPagePaymentService.findPayments(userId))
+    fun list(
+        @LoginUser userId: Long,
+    ): ResponseEntity<List<MyPagePaymentSummaryResponse>> = ResponseEntity.ok(myPagePaymentService.findPayments(userId))
 
     @GetMapping("/{paymentId}")
     fun detail(
         @LoginUser userId: Long,
         @PathVariable paymentId: Long,
-    ): ResponseEntity<MyPagePaymentSummaryResponse> =
-        ResponseEntity.ok(myPagePaymentService.findPayment(userId, paymentId))
+    ): ResponseEntity<MyPagePaymentSummaryResponse> = ResponseEntity.ok(myPagePaymentService.findPayment(userId, paymentId))
 
     @PostMapping("/{paymentId}/cancel")
     fun cancel(
@@ -46,7 +46,8 @@ class MyPaymentController(
         @PathVariable paymentId: Long,
     ): ResponseEntity<Resource> {
         val bytes = myPagePaymentService.renderReceiptPdf(userId, paymentId)
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .contentType(MediaType.APPLICATION_PDF)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-payment-$paymentId-receipt.pdf")
             .body(ByteArrayResource(bytes))

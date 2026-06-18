@@ -43,7 +43,7 @@ data class ReservationSummaryResponse(
     companion object {
         fun from(
             reservation: Reservation,
-            status: ReservationStatus
+            status: ReservationStatus,
         ): ReservationSummaryResponse {
             val product = reservation.reservationSlot.product
             val attractions = product.productOptions.map { it.option.name }.distinct()
@@ -61,7 +61,7 @@ data class ReservationSummaryResponse(
                 expiresAt = reservation.expiresAt,
                 confirmedAt = reservation.confirmedAt,
                 canceledAt = reservation.canceledAt,
-                cancelReason = reservation.cancelReason
+                cancelReason = reservation.cancelReason,
             )
         }
     }

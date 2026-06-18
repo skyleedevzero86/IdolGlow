@@ -9,31 +9,28 @@ import org.springframework.stereotype.Repository
 class NewsletterRepositoryImpl(
     private val newsletterJpaRepository: NewsletterJpaRepository,
 ) : NewsletterRepository {
-
     override fun findAllByLatest(): List<Newsletter> =
         newsletterJpaRepository.findAll(
             Sort.by(
                 Sort.Order.desc("publishedAt"),
                 Sort.Order.desc("createdAt"),
-            )
+            ),
         )
 
-    override fun findBySlug(slug: String): Newsletter? =
-        newsletterJpaRepository.findBySlug(slug)
+    override fun findBySlug(slug: String): Newsletter? = newsletterJpaRepository.findBySlug(slug)
 
-    override fun existsBySlug(slug: String): Boolean =
-        newsletterJpaRepository.existsBySlug(slug)
+    override fun existsBySlug(slug: String): Boolean = newsletterJpaRepository.existsBySlug(slug)
 
-    override fun existsBySlugAndIdNot(slug: String, id: Long): Boolean =
-        newsletterJpaRepository.existsBySlugAndIdNot(slug, id)
+    override fun existsBySlugAndIdNot(
+        slug: String,
+        id: Long,
+    ): Boolean = newsletterJpaRepository.existsBySlugAndIdNot(slug, id)
 
-    override fun save(newsletter: Newsletter): Newsletter =
-        newsletterJpaRepository.save(newsletter)
+    override fun save(newsletter: Newsletter): Newsletter = newsletterJpaRepository.save(newsletter)
 
     override fun delete(newsletter: Newsletter) {
         newsletterJpaRepository.delete(newsletter)
     }
 
-    override fun count(): Long =
-        newsletterJpaRepository.count()
+    override fun count(): Long = newsletterJpaRepository.count()
 }

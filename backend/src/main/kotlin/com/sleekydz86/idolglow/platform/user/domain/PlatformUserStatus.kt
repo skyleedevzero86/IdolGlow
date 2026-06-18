@@ -5,5 +5,5 @@ enum class PlatformUserStatus {
     APPROVED,
     REJECTED,
     SUSPENDED,
-    WITHDRAWN
+    WITHDRAWN,
 }

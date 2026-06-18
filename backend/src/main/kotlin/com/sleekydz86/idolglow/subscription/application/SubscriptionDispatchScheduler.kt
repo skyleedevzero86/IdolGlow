@@ -18,14 +18,14 @@ class SubscriptionDispatchScheduler(
     private val newsletterRepository: NewsletterRepository,
     private val webzineIssueRepository: WebzineIssueRepository,
 ) {
-
     private val lastTriggeredMinutes = ConcurrentHashMap<Long, LocalDateTime>()
 
     @Scheduled(fixedDelayString = "\${subscription.dispatch.scheduler-interval-ms:30000}")
     fun dispatchScheduledContents() {
         val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
 
-        subscriptionDispatchSchedulePort.findAllActive()
+        subscriptionDispatchSchedulePort
+            .findAllActive()
             .filter { schedule -> schedule.shouldTriggerAt(now) }
             .filterNot { schedule -> lastTriggeredMinutes[schedule.id] == now }
             .forEach { schedule ->

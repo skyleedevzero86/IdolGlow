@@ -19,12 +19,15 @@ data class ReservationCreatedResponse(
     val payment: PaymentResponse,
 ) {
     companion object {
-        fun from(reservation: Reservation, payment: Payment): ReservationCreatedResponse =
+        fun from(
+            reservation: Reservation,
+            payment: Payment,
+        ): ReservationCreatedResponse =
             ReservationCreatedResponse(
                 id = reservation.id,
                 status = reservation.status,
                 expiresAt = reservation.expiresAt,
-                payment = PaymentResponse.from(payment)
+                payment = PaymentResponse.from(payment),
             )
     }
 }

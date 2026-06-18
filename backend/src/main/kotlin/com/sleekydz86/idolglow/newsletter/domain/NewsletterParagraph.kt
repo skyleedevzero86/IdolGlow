@@ -17,20 +17,17 @@ import jakarta.persistence.UniqueConstraint
     name = "newsletter_paragraphs",
     uniqueConstraints = [
         UniqueConstraint(name = "uk_newsletter_paragraph_order", columnNames = ["newsletter_id", "display_order"]),
-    ]
+    ],
 )
 class NewsletterParagraph(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "newsletter_id", nullable = false)
     val newsletter: Newsletter,
-
     @Column(name = "display_order", nullable = false)
     val displayOrder: Int,
-
     @Column(nullable = false, columnDefinition = "TEXT")
     val body: String,
 ) : BaseEntity()

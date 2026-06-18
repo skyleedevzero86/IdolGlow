@@ -7,16 +7,16 @@ data class OptionImageFile(
     val content: ByteArray,
     val sortOrder: Int = 0,
 ) {
-
     companion object {
         fun from(images: List<MultipartFile>?): List<OptionImageFile> =
-            images.orEmpty()
+            images
+                .orEmpty()
                 .filterNot { it.isEmpty }
                 .mapIndexed { index, file ->
                     OptionImageFile(
                         originalFilename = file.originalFilename ?: "option-image-$index",
                         content = file.bytes,
-                        sortOrder = index
+                        sortOrder = index,
                     )
                 }
     }

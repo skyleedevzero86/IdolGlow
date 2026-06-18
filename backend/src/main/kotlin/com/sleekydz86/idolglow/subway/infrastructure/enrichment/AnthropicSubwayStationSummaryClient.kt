@@ -38,47 +38,57 @@ class AnthropicSubwayStationSummaryClient(
             return null
         }
 
-        val userContent = SubwayStationSummaryPrompts.userJson(
-            objectMapper,
-            lineId,
-            lineName,
-            stationCd,
-            stationDisplayName,
-        )
+        val userContent =
+            SubwayStationSummaryPrompts.userJson(
+                objectMapper,
+                lineId,
+                lineName,
+                stationCd,
+                stationDisplayName,
+            )
 
-        val request = AnthropicMessagesRequest(
-            model = model,
-            maxTokens = 1024,
-            temperature = 0.45,
-            system = SubwayStationSummaryPrompts.system,
-            messages = listOf(AnthropicMessage(role = "user", content = userContent)),
-        )
+        val request =
+            AnthropicMessagesRequest(
+                model = model,
+                maxTokens = 1024,
+                temperature = 0.45,
+                system = SubwayStationSummaryPrompts.system,
+                messages = listOf(AnthropicMessage(role = "user", content = userContent)),
+            )
 
-        val body = try {
-            webClient.post()
-                .uri("${baseUrl.trimEnd('/')}/v1/messages")
-                .header("x-api-key", normalizedApiKey)
-                .header("anthropic-version", ANTHROPIC_VERSION)
-                .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(String::class.java)
-                .block()
-        } catch (e: Exception) {
-            log.warn("지하철 역 요약 Anthropic 호출 실패: {}", e.message)
-            return null
-        } ?: return null
+        val body =
+            try {
+                webClient
+                    .post()
+                    .uri("${baseUrl.trimEnd('/')}/v1/messages")
+                    .header("x-api-key", normalizedApiKey)
+                    .header("anthropic-version", ANTHROPIC_VERSION)
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .block()
+            } catch (e: Exception) {
+                log.warn("지하철 역 요약 Anthropic 호출 실패: {}", e.message)
+                return null
+            } ?: return null
 
-        val text = runCatching {
-            objectMapper.readValue(body, AnthropicMessagesResponse::class.java)
-                .content.firstOrNull { it.type == "text" }?.text
-        }.getOrNull() ?: return null
+        val text =
+            runCatching {
+                objectMapper
+                    .readValue(body, AnthropicMessagesResponse::class.java)
+                    .content
+                    .firstOrNull { it.type == "text" }
+                    ?.text
+            }.getOrNull() ?: return null
 
-        val json = text.trim()
-            .removePrefix("```json")
-            .removePrefix("```")
-            .removeSuffix("```")
-            .trim()
+        val json =
+            text
+                .trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
 
         return runCatching {
             objectMapper.readValue(json, LlmSubwayStationSummary::class.java).normalize(stationDisplayName)

@@ -1,7 +1,6 @@
 package com.sleekydz86.idolglow.glowweather.domain
 
 import kotlin.math.PI
-import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.ln
@@ -19,7 +18,10 @@ object KmaGridConverter {
     private const val XO = 43.0
     private const val YO = 136.0
 
-    fun toGrid(latitude: Double, longitude: Double): KmaGridPoint {
+    fun toGrid(
+        latitude: Double,
+        longitude: Double,
+    ): KmaGridPoint {
         val degrad = PI / 180.0
         val re = RE / GRID
         val slat1 = SLAT1 * degrad

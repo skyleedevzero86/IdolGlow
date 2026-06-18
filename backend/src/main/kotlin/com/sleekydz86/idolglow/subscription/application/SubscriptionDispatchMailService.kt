@@ -24,7 +24,6 @@ class SubscriptionDispatchMailService(
     private val outboundMailPort: OutboundMailPort,
     private val subscriptionEmailComposer: SubscriptionEmailComposer,
 ) {
-
     private val log = LoggerFactory.getLogger(SubscriptionDispatchMailService::class.java)
 
     @Transactional
@@ -70,11 +69,12 @@ class SubscriptionDispatchMailService(
 
         val recipients = emailSubscriptionPort.findActiveEmailsByAudience(audience)
         val now = LocalDateTime.now()
-        val dispatchStatus = if (!appMailProperties.enabled) {
-            SubscriptionDispatchStatus.RECORDED
-        } else {
-            sendEmails(emailFactory(), recipients)
-        }
+        val dispatchStatus =
+            if (!appMailProperties.enabled) {
+                SubscriptionDispatchStatus.RECORDED
+            } else {
+                sendEmails(emailFactory(), recipients)
+            }
 
         subscriptionDispatchHistoryPort.save(
             SubscriptionDispatchHistory.record(
@@ -86,7 +86,7 @@ class SubscriptionDispatchMailService(
                 contentCreatedAt = contentCreatedAt,
                 dispatchedAt = now,
                 dispatchStatus = dispatchStatus,
-            )
+            ),
         )
     }
 
@@ -107,7 +107,7 @@ class SubscriptionDispatchMailService(
                         subject = email.subject,
                         plainTextBody = email.plainText,
                         htmlBody = email.htmlBody,
-                    )
+                    ),
                 )
             } catch (ex: Exception) {
                 failedCount += 1

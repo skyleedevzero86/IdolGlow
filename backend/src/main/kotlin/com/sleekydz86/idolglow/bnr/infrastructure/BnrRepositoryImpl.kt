@@ -21,15 +21,15 @@ class BnrRepositoryImpl(
     private val jpaRepository: BnrJpaRepository,
     private val entityManager: EntityManager,
 ) : BnrRepository {
-
     private val fmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
     override fun findList(criteria: BnrListCriteria): List<BnrItem> {
-        val pageable = PageRequest.of(
-            criteria.pageIndex - 1,
-            criteria.pageSize,
-            Sort.by(Sort.Direction.DESC, "frstRegistPnttm"),
-        )
+        val pageable =
+            PageRequest.of(
+                criteria.pageIndex - 1,
+                criteria.pageSize,
+                Sort.by(Sort.Direction.DESC, "frstRegistPnttm"),
+            )
         val cb = entityManager.criteriaBuilder
         val cq = cb.createQuery(BnrEntity::class.java)
         val root = cq.from(BnrEntity::class.java)
@@ -43,40 +43,40 @@ class BnrRepositoryImpl(
         return q.resultList.map(::toItem)
     }
 
-    override fun count(criteria: BnrListCriteria): Int =
-        jpaRepository.count(countSpec(criteria)).toInt()
+    override fun count(criteria: BnrListCriteria): Int = jpaRepository.count(countSpec(criteria)).toInt()
 
-    override fun findById(bannerId: String): BnrItem? =
-        jpaRepository.findById(bannerId).map { toItem(it) }.orElse(null)
+    override fun findById(bannerId: String): BnrItem? = jpaRepository.findById(bannerId).map { toItem(it) }.orElse(null)
 
     override fun findActiveByDomain(domainId: String): List<BnrItem> =
-        jpaRepository.findAll(
-            Specification
-                .where(domainIdEquals(domainId))
-                .and(activeEquals()),
-            Sort.by(
-                Sort.Order.asc("sortOrdr"),
-                Sort.Order.desc("frstRegistPnttm"),
-            ),
-        ).map(::toItem)
+        jpaRepository
+            .findAll(
+                Specification
+                    .where(domainIdEquals(domainId))
+                    .and(activeEquals()),
+                Sort.by(
+                    Sort.Order.asc("sortOrdr"),
+                    Sort.Order.desc("frstRegistPnttm"),
+                ),
+            ).map(::toItem)
 
     override fun insert(item: BnrItem) {
-        val e = BnrEntity(
-            bannerId = item.bannerId,
-            domainId = item.domainId?.ifBlank { null } ?: "kr",
-            domain = null,
-            bannerNm = item.bannerName,
-            linkUrl = item.linkUrl,
-            bannerImage = item.imagePath,
-            bannerImageFile = item.imageFileName,
-            bannerDc = item.description,
-            sortOrdr = item.sortOrder,
-            reflctAt = item.activeYn ?: "Y",
-            frstRegisterId = item.createdBy,
-            frstRegistPnttm = java.time.LocalDateTime.now(),
-            lastUpdusrId = null,
-            lastUpdtPnttm = null,
-        )
+        val e =
+            BnrEntity(
+                bannerId = item.bannerId,
+                domainId = item.domainId?.ifBlank { null } ?: "kr",
+                domain = null,
+                bannerNm = item.bannerName,
+                linkUrl = item.linkUrl,
+                bannerImage = item.imagePath,
+                bannerImageFile = item.imageFileName,
+                bannerDc = item.description,
+                sortOrdr = item.sortOrder,
+                reflctAt = item.activeYn ?: "Y",
+                frstRegisterId = item.createdBy,
+                frstRegistPnttm = java.time.LocalDateTime.now(),
+                lastUpdusrId = null,
+                lastUpdtPnttm = null,
+            )
         jpaRepository.save(e)
     }
 
@@ -99,7 +99,11 @@ class BnrRepositoryImpl(
         jpaRepository.deleteById(bannerId)
     }
 
-    private fun adminListPredicate(c: BnrListCriteria, root: Root<BnrEntity>, cb: CriteriaBuilder): Predicate {
+    private fun adminListPredicate(
+        c: BnrListCriteria,
+        root: Root<BnrEntity>,
+        cb: CriteriaBuilder,
+    ): Predicate {
         val domainId = c.domainId.ifBlank { "kr" }
         val domainPred = cb.equal(root.get<String>("domainId"), domainId)
         val keyword = c.keyword.trim().lowercase()
@@ -108,18 +112,20 @@ class BnrRepositoryImpl(
         }
 
         val pattern = "%$keyword%"
-        val conditions = when (c.searchType) {
-            "name" -> listOf(cb.like(cb.lower(root.get("bannerNm")), pattern))
-            "link" -> listOf(cb.like(cb.lower(root.get("linkUrl")), pattern))
-            "description" -> listOf(cb.like(cb.lower(root.get("bannerDc")), pattern))
-            else -> listOf(
-                cb.like(cb.lower(root.get("bannerNm")), pattern),
-                cb.like(cb.lower(root.get("linkUrl")), pattern),
-                cb.like(cb.lower(root.get("bannerDc")), pattern),
-                cb.like(cb.lower(root.get("bannerImageFile")), pattern),
-                cb.like(cb.lower(root.get("bannerImage")), pattern),
-            )
-        }
+        val conditions =
+            when (c.searchType) {
+                "name" -> listOf(cb.like(cb.lower(root.get("bannerNm")), pattern))
+                "link" -> listOf(cb.like(cb.lower(root.get("linkUrl")), pattern))
+                "description" -> listOf(cb.like(cb.lower(root.get("bannerDc")), pattern))
+                else ->
+                    listOf(
+                        cb.like(cb.lower(root.get("bannerNm")), pattern),
+                        cb.like(cb.lower(root.get("linkUrl")), pattern),
+                        cb.like(cb.lower(root.get("bannerDc")), pattern),
+                        cb.like(cb.lower(root.get("bannerImageFile")), pattern),
+                        cb.like(cb.lower(root.get("bannerImage")), pattern),
+                    )
+            }
         return cb.and(domainPred, cb.or(*conditions.toTypedArray()))
     }
 

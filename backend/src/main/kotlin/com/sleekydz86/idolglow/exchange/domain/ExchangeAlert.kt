@@ -25,20 +25,15 @@ class ExchangeAlert(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
-
     @Column(name = "from_currency", nullable = false, length = 8)
     val fromCurrency: String,
-
     @Column(name = "to_currency", nullable = false, length = 8)
     val toCurrency: String,
-
     @Column(name = "target_rate", nullable = false, precision = 20, scale = 8)
     val targetRate: BigDecimal,
-
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now(),
 )

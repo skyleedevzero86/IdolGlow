@@ -10,31 +10,37 @@ import org.springframework.stereotype.Repository
 class ProductSearchQueryRepository(
     private val entityManager: EntityManager,
 ) {
-
     fun findOrderedProductIds(criteria: ProductSearchCriteria): List<Long> {
-        val sql = when (criteria.sort) {
-            ProductSort.NEWEST -> buildNewestSql(criteria)
-            ProductSort.POPULARITY -> buildAggregateSortSql(criteria, AggregateSortMode.POPULARITY)
-            ProductSort.RATING -> buildAggregateSortSql(criteria, AggregateSortMode.RATING)
-            ProductSort.REVIEW_COUNT -> buildAggregateSortSql(criteria, AggregateSortMode.REVIEW_COUNT)
-            ProductSort.DISTANCE -> buildDistanceSortSql(criteria)
-        }
-        @Suppress("UNCHECKED_CAST")
-        val rows = entityManager.createNativeQuery(sql.sql)
-            .also { q ->
-
-                val declaredParams = q.parameters.mapNotNull { it.name }.toSet()
-                sql.params.forEach { (k, v) ->
-                    if (k in declaredParams) {
-                        bindIfPresent(q, k, v)
-                    }
-                }
+        val sql =
+            when (criteria.sort) {
+                ProductSort.NEWEST -> buildNewestSql(criteria)
+                ProductSort.POPULARITY -> buildAggregateSortSql(criteria, AggregateSortMode.POPULARITY)
+                ProductSort.RATING -> buildAggregateSortSql(criteria, AggregateSortMode.RATING)
+                ProductSort.REVIEW_COUNT -> buildAggregateSortSql(criteria, AggregateSortMode.REVIEW_COUNT)
+                ProductSort.DISTANCE -> buildDistanceSortSql(criteria)
             }
-            .resultList as List<Number>
+
+        @Suppress("UNCHECKED_CAST")
+        val rows =
+            entityManager
+                .createNativeQuery(sql.sql)
+                .also { q ->
+
+                    val declaredParams = q.parameters.mapNotNull { it.name }.toSet()
+                    sql.params.forEach { (k, v) ->
+                        if (k in declaredParams) {
+                            bindIfPresent(q, k, v)
+                        }
+                    }
+                }.resultList as List<Number>
         return rows.map { it.toLong() }
     }
 
-    private fun bindIfPresent(query: jakarta.persistence.Query, name: String, value: Any) {
+    private fun bindIfPresent(
+        query: jakarta.persistence.Query,
+        name: String,
+        value: Any,
+    ) {
         try {
             query.setParameter(name, value)
         } catch (ex: IllegalArgumentException) {
@@ -46,17 +52,22 @@ class ProductSearchQueryRepository(
         }
     }
 
-    private data class BuiltSql(val sql: String, val params: Map<String, Any>)
+    private data class BuiltSql(
+        val sql: String,
+        val params: Map<String, Any>,
+    )
 
     private fun buildNewestSql(c: ProductSearchCriteria): BuiltSql {
-        val params = linkedMapOf<String, Any>(
-            "size" to c.size,
-            "lastIdBound" to (c.lastId ?: Long.MAX_VALUE),
-        )
+        val params =
+            linkedMapOf<String, Any>(
+                "size" to c.size,
+                "lastIdBound" to (c.lastId ?: Long.MAX_VALUE),
+            )
         val join = locationJoinClause(c)
         val filter = filterWhereClause(c, params)
         val geo = geoWhereClause(c, params)
-        val sql = """
+        val sql =
+            """
             SELECT p.id
             FROM products p
             $join
@@ -66,20 +77,22 @@ class ProductSearchQueryRepository(
             AND p.id < :lastIdBound
             ORDER BY p.id DESC
             LIMIT :size
-        """.trimIndent()
+            """.trimIndent()
         return BuiltSql(sql, params)
     }
 
     private fun buildDistanceSortSql(c: ProductSearchCriteria): BuiltSql {
-        val params = linkedMapOf<String, Any>(
-            "size" to c.size,
-            "offset" to c.offset,
-            "nearLat" to c.nearLatitude!!.toDouble(),
-            "nearLng" to c.nearLongitude!!.toDouble(),
-        )
+        val params =
+            linkedMapOf<String, Any>(
+                "size" to c.size,
+                "offset" to c.offset,
+                "nearLat" to c.nearLatitude!!.toDouble(),
+                "nearLng" to c.nearLongitude!!.toDouble(),
+            )
         val filter = filterWhereClause(c, params)
         val radiusSql = radiusWhereClause(c, params)
-        val sql = """
+        val sql =
+            """
             SELECT t.pid FROM (
                 SELECT p.id AS pid,
                     ${distanceExpr()} AS dm
@@ -92,7 +105,7 @@ class ProductSearchQueryRepository(
             WHERE t.dm IS NOT NULL
             ORDER BY t.dm ASC, t.pid DESC
             LIMIT :size OFFSET :offset
-        """.trimIndent()
+            """.trimIndent()
         return BuiltSql(sql, params)
     }
 
@@ -102,23 +115,29 @@ class ProductSearchQueryRepository(
         REVIEW_COUNT,
     }
 
-    private fun buildAggregateSortSql(c: ProductSearchCriteria, mode: AggregateSortMode): BuiltSql {
-        val params = linkedMapOf<String, Any>(
-            "size" to c.size,
-            "offset" to c.offset,
-        )
+    private fun buildAggregateSortSql(
+        c: ProductSearchCriteria,
+        mode: AggregateSortMode,
+    ): BuiltSql {
+        val params =
+            linkedMapOf<String, Any>(
+                "size" to c.size,
+                "offset" to c.offset,
+            )
         val join = locationJoinClause(c)
         val filter = filterWhereClause(c, params)
         val geo = geoWhereClause(c, params)
-        val orderBy = when (mode) {
-            AggregateSortMode.POPULARITY ->
-                "t.wc DESC, t.ar DESC, t.rc DESC, t.pid DESC"
-            AggregateSortMode.RATING ->
-                "t.ar DESC, t.rc DESC, t.wc DESC, t.pid DESC"
-            AggregateSortMode.REVIEW_COUNT ->
-                "t.rc DESC, t.ar DESC, t.wc DESC, t.pid DESC"
-        }
-        val sql = """
+        val orderBy =
+            when (mode) {
+                AggregateSortMode.POPULARITY ->
+                    "t.wc DESC, t.ar DESC, t.rc DESC, t.pid DESC"
+                AggregateSortMode.RATING ->
+                    "t.ar DESC, t.rc DESC, t.wc DESC, t.pid DESC"
+                AggregateSortMode.REVIEW_COUNT ->
+                    "t.rc DESC, t.ar DESC, t.wc DESC, t.pid DESC"
+            }
+        val sql =
+            """
             SELECT t.pid FROM (
                 SELECT p.id AS pid,
                     (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id) AS wc,
@@ -136,7 +155,7 @@ class ProductSearchQueryRepository(
             ) t
             ORDER BY $orderBy
             LIMIT :size OFFSET :offset
-        """.trimIndent()
+            """.trimIndent()
         return BuiltSql(sql, params)
     }
 
@@ -150,7 +169,10 @@ class ProductSearchQueryRepository(
         }
     }
 
-    private fun geoWhereClause(c: ProductSearchCriteria, params: MutableMap<String, Any>): String {
+    private fun geoWhereClause(
+        c: ProductSearchCriteria,
+        params: MutableMap<String, Any>,
+    ): String {
         if (!c.needsLocationJoin) return ""
         if (!c.applyRadiusFilter) return ""
         params["nearLat"] = c.nearLatitude!!.toDouble()
@@ -159,13 +181,19 @@ class ProductSearchQueryRepository(
         return " AND (${distanceExpr()}) <= :radiusMeters "
     }
 
-    private fun radiusWhereClause(c: ProductSearchCriteria, params: MutableMap<String, Any>): String {
+    private fun radiusWhereClause(
+        c: ProductSearchCriteria,
+        params: MutableMap<String, Any>,
+    ): String {
         if (!c.applyRadiusFilter) return ""
         params["radiusMeters"] = c.radiusMeters!!.toDouble()
         return " AND (${distanceExpr()}) <= :radiusMeters "
     }
 
-    private fun filterWhereClause(c: ProductSearchCriteria, params: MutableMap<String, Any>): String {
+    private fun filterWhereClause(
+        c: ProductSearchCriteria,
+        params: MutableMap<String, Any>,
+    ): String {
         val sb = StringBuilder()
         val kw = c.keyword?.trim()?.takeIf { it.isNotEmpty() }
         if (kw != null) {
@@ -182,7 +210,7 @@ class ProductSearchQueryRepository(
                     AND LOWER(ptk.tag_name) LIKE :keywordLike ESCAPE '${LIKE_ESCAPE_CHAR}'
                   )
                 )
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         c.minPrice?.let { mp ->
@@ -193,7 +221,7 @@ class ProductSearchQueryRepository(
                   SELECT MIN(o.price) FROM product_option po INNER JOIN options o ON o.id = po.option_id
                   WHERE po.product_id = p.id
                 ), 0) >= :minPrice
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         c.maxPrice?.let { xp ->
@@ -204,7 +232,7 @@ class ProductSearchQueryRepository(
                   SELECT MIN(o.price) FROM product_option po INNER JOIN options o ON o.id = po.option_id
                   WHERE po.product_id = p.id
                 ), 0) <= :maxPrice
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         val tags = c.effectiveTagNames
@@ -218,7 +246,7 @@ class ProductSearchQueryRepository(
                   FROM product_tag ptx
                   WHERE ptx.product_id = p.id AND ptx.tag_name IN (:tagNames)
                 ) = :expectedTagCount
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         c.visitDate?.let { d ->
@@ -233,7 +261,7 @@ class ProductSearchQueryRepository(
                   AND rs.is_booked = FALSE
                   AND (rs.hold_expires_at IS NULL OR rs.hold_expires_at < :now)
                 )
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         if (c.reservableOnly && c.visitDate == null) {
@@ -248,7 +276,7 @@ class ProductSearchQueryRepository(
                   AND rs2.is_booked = FALSE
                   AND (rs2.hold_expires_at IS NULL OR rs2.hold_expires_at < :now)
                 )
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         return sb.toString()
@@ -263,7 +291,8 @@ class ProductSearchQueryRepository(
         """.trimIndent()
 
     private fun escapeLike(raw: String): String =
-        raw.replace("\\", "\\\\")
+        raw
+            .replace("\\", "\\\\")
             .replace("%", "\\%")
             .replace("_", "\\_")
 

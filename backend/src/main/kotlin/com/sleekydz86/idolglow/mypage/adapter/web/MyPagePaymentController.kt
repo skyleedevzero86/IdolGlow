@@ -21,26 +21,24 @@ import org.springframework.web.bind.annotation.RestController
 class MyPagePaymentController(
     private val myPagePaymentService: MyPagePaymentService,
 ) {
-
     @GetMapping
-    fun list(@LoginUser userId: Long): ResponseEntity<List<MyPagePaymentSummaryResponse>> =
-        ResponseEntity.ok(myPagePaymentService.findPayments(userId))
+    fun list(
+        @LoginUser userId: Long,
+    ): ResponseEntity<List<MyPagePaymentSummaryResponse>> = ResponseEntity.ok(myPagePaymentService.findPayments(userId))
 
     @GetMapping("/{paymentId}")
     fun detail(
         @LoginUser userId: Long,
         @PathVariable paymentId: Long,
-    ): ResponseEntity<MyPagePaymentSummaryResponse> =
-        ResponseEntity.ok(myPagePaymentService.findPayment(userId, paymentId))
+    ): ResponseEntity<MyPagePaymentSummaryResponse> = ResponseEntity.ok(myPagePaymentService.findPayment(userId, paymentId))
 
     @PostMapping("/{paymentId}/cancel")
     fun cancel(
         @LoginUser userId: Long,
         @PathVariable paymentId: Long,
         @RequestBody(required = false) request: CancelPaymentRequest?,
-    ): ResponseEntity<MyPagePaymentSummaryResponse> {
-        return ResponseEntity.ok(myPagePaymentService.cancelPayment(userId, paymentId, request?.reason))
-    }
+    ): ResponseEntity<MyPagePaymentSummaryResponse> =
+        ResponseEntity.ok(myPagePaymentService.cancelPayment(userId, paymentId, request?.reason))
 
     @GetMapping("/{paymentId}/receipt.pdf")
     fun receipt(
@@ -48,7 +46,8 @@ class MyPagePaymentController(
         @PathVariable paymentId: Long,
     ): ResponseEntity<Resource> {
         val bytes = myPagePaymentService.renderReceiptPdf(userId, paymentId)
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .contentType(MediaType.APPLICATION_PDF)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-payment-$paymentId-receipt.pdf")
             .body(ByteArrayResource(bytes))

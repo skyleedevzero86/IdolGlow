@@ -14,7 +14,6 @@ class MypagePromoService(
     private val productDiscoveryService: ProductDiscoveryService,
     private val reservationQueryService: ReservationQueryService,
 ) {
-
     fun promoStrip(userId: Long): MypagePromoStripResponse =
         MypagePromoStripResponse(
             primary = primaryPromo(userId),
@@ -46,7 +45,10 @@ class MypagePromoService(
             ctaLabel = "둘러보기 →",
         )
 
-    private fun truncateName(raw: String, max: Int = 24): String {
+    private fun truncateName(
+        raw: String,
+        max: Int = 24,
+    ): String {
         val t = raw.trim()
         return if (t.length <= max) t else t.take(max - 1) + "…"
     }

@@ -1,7 +1,5 @@
 package com.sleekydz86.idolglow.mypage.graphql
 
-import com.sleekydz86.idolglow.mypage.application.dto.MypagePrimaryPromoResponse
-import com.sleekydz86.idolglow.mypage.application.dto.MypagePromoStripResponse
 import com.sleekydz86.idolglow.mypage.application.dto.MypageSecondaryPromoResponse
 
 data class MypageSecondaryPromoGraphQlResponse(
@@ -22,7 +20,7 @@ data class MypageSecondaryPromoGraphQlResponse(
                 textAfterStrong = response.textAfterStrong,
                 metricValue = response.metricValue,
                 metricUnit = response.metricUnit,
-                href = response.href
+                href = response.href,
             )
     }
 }

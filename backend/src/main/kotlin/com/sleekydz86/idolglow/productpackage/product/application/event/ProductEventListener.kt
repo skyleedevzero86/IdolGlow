@@ -7,7 +7,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 @Component
 class ProductEventListener(
-    private val productLocationCommandService: ProductLocationCommandService
+    private val productLocationCommandService: ProductLocationCommandService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 

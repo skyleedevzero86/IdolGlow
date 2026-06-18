@@ -15,7 +15,10 @@ interface FestivalEventExternalQueryPort {
 
     fun detailCommon(contentId: String): FestivalCommonDetail?
 
-    fun detailImage(contentId: String, imageYn: String = "Y"): List<FestivalImage>
+    fun detailImage(
+        contentId: String,
+        imageYn: String = "Y",
+    ): List<FestivalImage>
 
     fun searchKeyword(
         keyword: String,
@@ -38,7 +41,10 @@ interface FestivalEventExternalQueryPort {
         lclsSystm3: String? = null,
     ): List<FestivalEvent>
 
-    fun lDongCodes(lDongRegnCd: String?, lDongListYn: String): List<CodeEntry>
+    fun lDongCodes(
+        lDongRegnCd: String?,
+        lDongListYn: String,
+    ): List<CodeEntry>
 
     fun lclsCodes(
         lclsSystm1: String?,

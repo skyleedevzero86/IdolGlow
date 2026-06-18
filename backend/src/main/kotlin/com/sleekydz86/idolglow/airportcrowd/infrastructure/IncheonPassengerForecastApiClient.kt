@@ -24,17 +24,22 @@ class IncheonPassengerForecastApiClient(
 ) : PassengerForecastQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    override fun fetch(selectDate: Int, pageNo: Int, numOfRows: Int): List<PassengerForecast> {
+    override fun fetch(
+        selectDate: Int,
+        pageNo: Int,
+        numOfRows: Int,
+    ): List<PassengerForecast> {
         require(selectDate == 0 || selectDate == 1) { "selectDate는 0 또는 1이어야 합니다." }
         if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
-        val uri = buildUrl(
-            encodedServiceKey = encodedKey,
-            selectDate = selectDate,
-            pageNo = pageNo.coerceAtLeast(1),
-            numOfRows = numOfRows.coerceIn(1, 10000),
-        )
+        val uri =
+            buildUrl(
+                encodedServiceKey = encodedKey,
+                selectDate = selectDate,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = numOfRows.coerceIn(1, 10000),
+            )
         val response = requestRaw(uri)
         if (!response.statusCode.is2xxSuccessful) {
             if (response.statusCode.value() == 401) {
@@ -72,8 +77,9 @@ class IncheonPassengerForecastApiClient(
             (0 until itemNodes.length).mapNotNull { idx ->
                 val item = itemNodes.item(idx) as? Element ?: return@mapNotNull null
                 PassengerForecast(
-                    date = childText(item, "adate")
-                        ?.let { runCatching { LocalDate.parse(it, DATE_FORMATTER) }.getOrNull() },
+                    date =
+                        childText(item, "adate")
+                            ?.let { runCatching { LocalDate.parse(it, DATE_FORMATTER) }.getOrNull() },
                     timeSlot = childText(item, "atime") ?: return@mapNotNull null,
                     terminal1DepartureTotal = childText(item, "t1dgsum1").toIntFromDecimal(),
                     terminal2DepartureTotal = childText(item, "t2dgsum2").toIntFromDecimal(),
@@ -93,32 +99,33 @@ class IncheonPassengerForecastApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): String {
-        val query = buildList {
-            add("serviceKey=$encodedServiceKey")
-            add("selectdate=$selectDate")
-            add("type=xml")
-            add("pageNo=$pageNo")
-            add("numOfRows=$numOfRows")
-        }.joinToString("&")
+        val query =
+            buildList {
+                add("serviceKey=$encodedServiceKey")
+                add("selectdate=$selectDate")
+                add("type=xml")
+                add("pageNo=$pageNo")
+                add("numOfRows=$numOfRows")
+            }.joinToString("&")
         return "${properties.baseUrl.trimEnd('/')}?$query"
     }
 
-    private fun requestRaw(url: String): RawHttpResponse {
-        return runCatching {
-            webClient.get()
+    private fun requestRaw(url: String): RawHttpResponse =
+        runCatching {
+            webClient
+                .get()
                 .uri(url)
                 .exchangeToMono { response ->
-                    response.bodyToMono(String::class.java)
+                    response
+                        .bodyToMono(String::class.java)
                         .defaultIfEmpty("")
                         .map { body -> RawHttpResponse(response.statusCode(), body) }
-                }
-                .block()
+                }.block()
                 ?: RawHttpResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
             log.warn("출입국 승객 예고 API 호출 실패: {}", e.message)
             RawHttpResponse(HttpStatusCode.valueOf(502), e.message ?: "")
         }
-    }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("AIRPORT_PASSENGER_FORECAST_SERVICE_KEY=")
@@ -126,7 +133,10 @@ class IncheonPassengerForecastApiClient(
         return if (trimmed.contains('%')) trimmed else UriUtils.encodeQueryParam(trimmed, StandardCharsets.UTF_8)
     }
 
-    private fun childText(parent: Element, tag: String): String? {
+    private fun childText(
+        parent: Element,
+        tag: String,
+    ): String? {
         val node = parent.getElementsByTagName(tag).item(0) as? Element ?: return null
         return node.textContent?.trim()?.takeIf { it.isNotEmpty() }
     }

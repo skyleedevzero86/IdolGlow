@@ -24,24 +24,29 @@ class IncheonParkingCongestionApiClient(
 ) : ParkingCongestionQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    override fun fetchCurrent(pageNo: Int, numOfRows: Int): List<ParkingCongestion> {
+    override fun fetchCurrent(
+        pageNo: Int,
+        numOfRows: Int,
+    ): List<ParkingCongestion> {
         if (authCooldown.isBlocked(API_NAME)) return emptyList()
         val encodedKey = resolveEncodedServiceKey(properties.serviceKey)
         if (encodedKey.isBlank()) return emptyList()
 
-        val url = buildUrl(
-            encodedServiceKey = encodedKey,
-            pageNo = pageNo.coerceAtLeast(1),
-            numOfRows = numOfRows.coerceIn(1, 1000),
-        )
+        val url =
+            buildUrl(
+                encodedServiceKey = encodedKey,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = numOfRows.coerceIn(1, 1000),
+            )
         val rows = fetchByUrl(url)
         if (rows.isNotEmpty()) return rows
 
-        val fallbackUrl = buildUrl(
-            encodedServiceKey = encodedKey,
-            pageNo = pageNo.coerceAtLeast(1),
-            numOfRows = 1000,
-        )
+        val fallbackUrl =
+            buildUrl(
+                encodedServiceKey = encodedKey,
+                pageNo = pageNo.coerceAtLeast(1),
+                numOfRows = 1000,
+            )
         if (fallbackUrl != url) {
             return fetchByUrl(fallbackUrl)
         }
@@ -107,31 +112,32 @@ class IncheonParkingCongestionApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): String {
-        val query = buildList {
-            add("serviceKey=$encodedServiceKey")
-            add("type=xml")
-            add("pageNo=$pageNo")
-            add("numOfRows=$numOfRows")
-        }.joinToString("&")
+        val query =
+            buildList {
+                add("serviceKey=$encodedServiceKey")
+                add("type=xml")
+                add("pageNo=$pageNo")
+                add("numOfRows=$numOfRows")
+            }.joinToString("&")
         return "${properties.baseUrl.trimEnd('/')}?$query"
     }
 
-    private fun requestRaw(url: String): RawHttpResponse {
-        return runCatching {
-            webClient.get()
+    private fun requestRaw(url: String): RawHttpResponse =
+        runCatching {
+            webClient
+                .get()
                 .uri(url)
                 .exchangeToMono { response ->
-                    response.bodyToMono(String::class.java)
+                    response
+                        .bodyToMono(String::class.java)
                         .defaultIfEmpty("")
                         .map { body -> RawHttpResponse(response.statusCode(), body) }
-                }
-                .block()
+                }.block()
                 ?: RawHttpResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
             log.warn("주차장 혼잡도 API 호출 실패: {}", e.message)
             RawHttpResponse(HttpStatusCode.valueOf(502), e.message ?: "")
         }
-    }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("AIRPORT_PARKING_SERVICE_KEY=")

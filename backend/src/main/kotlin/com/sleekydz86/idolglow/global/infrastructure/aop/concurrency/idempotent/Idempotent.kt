@@ -6,5 +6,5 @@ annotation class Idempotent(
     val key: String,
     val prefix: String = "idempotency",
     val ttlMillis: Long = 60_000,
-    val waitTimeoutMillis: Long = 5_000
+    val waitTimeoutMillis: Long = 5_000,
 )

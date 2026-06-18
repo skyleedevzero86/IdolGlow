@@ -13,8 +13,7 @@ data class MbrdEditorLiveSyncMessage(
     val status: String?,
     val updatedAt: String?,
 ) {
-    fun toCommand(): MbrdEditorLiveSyncCommand =
-        MbrdEditorLiveSyncCommand(sessionId, documentId, title, author, markdown, tags, status)
+    fun toCommand(): MbrdEditorLiveSyncCommand = MbrdEditorLiveSyncCommand(sessionId, documentId, title, author, markdown, tags, status)
 
     companion object {
         fun from(view: MbrdEditorLiveSyncPayload): MbrdEditorLiveSyncMessage =

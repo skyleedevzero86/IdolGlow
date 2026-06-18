@@ -5,10 +5,9 @@ import com.sleekydz86.idolglow.airportcrowd.application.port.out.DepartureConges
 import com.sleekydz86.idolglow.airportcrowd.application.port.out.ParkingCongestionQueryPort
 import com.sleekydz86.idolglow.airportcrowd.application.port.out.PassengerForecastQueryPort
 import com.sleekydz86.idolglow.airportcrowd.domain.ArrivalCongestion
-import com.sleekydz86.idolglow.airportcrowd.domain.DepartureCongestion
 import com.sleekydz86.idolglow.airportcrowd.domain.DepartureCrowdLevel
-import com.sleekydz86.idolglow.airportcrowd.domain.PassengerForecast
 import com.sleekydz86.idolglow.airportcrowd.domain.ParkingCongestion
+import com.sleekydz86.idolglow.airportcrowd.domain.PassengerForecast
 import org.springframework.stereotype.Service
 
 @Service
@@ -30,8 +29,7 @@ class AirportCrowdQueryService(
                 gateId = normalizedGate,
                 pageNo = 1,
                 numOfRows = 1000,
-            )
-            .sortedWith(compareBy({ it.gateId }, { it.occurredAt }))
+            ).sortedWith(compareBy({ it.gateId }, { it.occurredAt }))
             .map {
                 DepartureCongestionView(
                     gateId = it.gateId,
@@ -48,24 +46,27 @@ class AirportCrowdQueryService(
     fun crowdCriteria(zone: String?): List<CrowdCriteriaView> {
         val normalizedZone = zone?.trim()?.lowercase()
         return when (normalizedZone) {
-            "arrival" -> listOf(
-                crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "시간당 1,000명 미만", "#0ac84c"),
-                crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "시간당 1,000~2,500명", "#fdd83f"),
-                crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "시간당 2,500~4,000명", "#ff8a00"),
-                crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "시간당 4,000명 이상이 유입됩니다", "#f24548"),
-            )
-            "parking" -> listOf(
-                crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "주차 점유율 55% 미만", "#0ac84c"),
-                crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "주차 점유율 55~75%", "#fdd83f"),
-                crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "주차 점유율 75~90%", "#ff8a00"),
-                crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "주차 점유율 90% 이상", "#f24548"),
-            )
-            else -> listOf(
-                crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "대기시간 20분 미만", "#0ac84c"),
-                crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "대기시간 20~30분", "#fdd83f"),
-                crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "대기시간 30~40분", "#ff8a00"),
-                crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "대기시간 40분 이상", "#f24548"),
-            )
+            "arrival" ->
+                listOf(
+                    crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "시간당 1,000명 미만", "#0ac84c"),
+                    crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "시간당 1,000~2,500명", "#fdd83f"),
+                    crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "시간당 2,500~4,000명", "#ff8a00"),
+                    crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "시간당 4,000명 이상이 유입됩니다", "#f24548"),
+                )
+            "parking" ->
+                listOf(
+                    crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "주차 점유율 55% 미만", "#0ac84c"),
+                    crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "주차 점유율 55~75%", "#fdd83f"),
+                    crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "주차 점유율 75~90%", "#ff8a00"),
+                    crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "주차 점유율 90% 이상", "#f24548"),
+                )
+            else ->
+                listOf(
+                    crowdCriteria(DepartureCrowdLevel.SMOOTH, "정상", "대기시간 20분 미만", "#0ac84c"),
+                    crowdCriteria(DepartureCrowdLevel.MODERATE, "다소 붐비네요", "대기시간 20~30분", "#fdd83f"),
+                    crowdCriteria(DepartureCrowdLevel.BUSY, "붐비다", "대기시간 30~40분", "#ff8a00"),
+                    crowdCriteria(DepartureCrowdLevel.HEAVY, "정말 붐비고 있어요", "대기시간 40분 이상", "#f24548"),
+                )
         }
     }
 
@@ -98,23 +99,31 @@ class AirportCrowdQueryService(
         private val SUPPORTED_ARRIVAL_TERMINALS = setOf("T1", "T2")
         private val AIRPORT_CODE_REGEX = Regex("^[A-Z]{3}$")
 
-        private val SUPPORTED_GATE_IDS = setOf(
-            "DG1_W", "DG1_E",
-            "DG2_W", "DG2_E",
-            "DG3_W", "DG3_E",
-            "DG4_W", "DG4_E",
-            "DG5_W", "DG5_E",
-            "DG6_W", "DG6_E",
-        )
+        private val SUPPORTED_GATE_IDS =
+            setOf(
+                "DG1_W",
+                "DG1_E",
+                "DG2_W",
+                "DG2_E",
+                "DG3_W",
+                "DG3_E",
+                "DG4_W",
+                "DG4_E",
+                "DG5_W",
+                "DG5_E",
+                "DG6_W",
+                "DG6_E",
+            )
     }
 
     fun passengerForecast(selectDate: Int?): PassengerForecastBundleView {
-        val dates = when (selectDate) {
-            0 -> listOf(0)
-            1 -> listOf(1)
-            null -> listOf(0, 1)
-            else -> throw IllegalArgumentException("selectdate는 0(오늘) 또는 1(내일)이어야 합니다.")
-        }
+        val dates =
+            when (selectDate) {
+                0 -> listOf(0)
+                1 -> listOf(1)
+                null -> listOf(0, 1)
+                else -> throw IllegalArgumentException("selectdate는 0(오늘) 또는 1(내일)이어야 합니다.")
+            }
         val today = if (0 in dates) passengerForecastQueryPort.fetch(0).sortedBy { it.timeSlot } else emptyList()
         val tomorrow = if (1 in dates) passengerForecastQueryPort.fetch(1).sortedBy { it.timeSlot } else emptyList()
         return PassengerForecastBundleView(
@@ -157,8 +166,7 @@ class AirportCrowdQueryService(
                 airport = normalizedAirport,
                 pageNo = 1,
                 numOfRows = 1000,
-            )
-            .sortedWith(compareBy({ it.entryGate }, { it.scheduleTime }))
+            ).sortedWith(compareBy({ it.entryGate }, { it.scheduleTime }))
             .map(::toArrivalView)
     }
 
@@ -195,13 +203,14 @@ class AirportCrowdQueryService(
         val parkingArea = item.parkingArea?.takeIf { it > 0 }
         val occupancyRate = if (parking != null && parkingArea != null) (parking * 100.0) / parkingArea else null
         val available = if (parking != null && parkingArea != null) (parkingArea - parking).coerceAtLeast(0) else null
-        val level = when {
-            occupancyRate == null -> DepartureCrowdLevel.UNKNOWN
-            occupancyRate < 55.0 -> DepartureCrowdLevel.SMOOTH
-            occupancyRate < 75.0 -> DepartureCrowdLevel.MODERATE
-            occupancyRate < 90.0 -> DepartureCrowdLevel.BUSY
-            else -> DepartureCrowdLevel.HEAVY
-        }
+        val level =
+            when {
+                occupancyRate == null -> DepartureCrowdLevel.UNKNOWN
+                occupancyRate < 55.0 -> DepartureCrowdLevel.SMOOTH
+                occupancyRate < 75.0 -> DepartureCrowdLevel.MODERATE
+                occupancyRate < 90.0 -> DepartureCrowdLevel.BUSY
+                else -> DepartureCrowdLevel.HEAVY
+            }
         return ParkingCongestionView(
             terminal = item.terminal,
             floor = item.floor,
@@ -213,5 +222,4 @@ class AirportCrowdQueryService(
             level = level,
         )
     }
-
 }

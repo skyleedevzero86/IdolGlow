@@ -16,17 +16,16 @@ import org.springframework.web.multipart.MultipartFile
 
 @Tag(name = "상품 옵션", description = "옵션 조회 및 생성 관련 API")
 interface OptionApi {
-
     @Operation(
         summary = "옵션 목록 조회",
-        description = "전체 옵션 목록을 조회합니다."
+        description = "전체 옵션 목록을 조회합니다.",
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     fun findOptions(): List<OptionResponse>
 
     @Operation(
         summary = "옵션 상세 조회",
-        description = "특정 옵션의 상세 정보를 조회합니다."
+        description = "특정 옵션의 상세 정보를 조회합니다.",
     )
     @ApiResponses(
         value = [
@@ -34,18 +33,18 @@ interface OptionApi {
             ApiResponse(
                 responseCode = "404",
                 description = "옵션을 찾을 수 없음",
-                content = [Content(schema = Schema(hidden = true))]
-            )
-        ]
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
     )
     fun findOption(
         @Parameter(description = "옵션 ID", example = "1")
-        optionId: Long
+        optionId: Long,
     ): OptionResponse
 
     @Operation(
         summary = "옵션 생성",
-        description = "관리자가 옵션을 생성합니다. 이미지 파일은 선택 사항입니다."
+        description = "관리자가 옵션을 생성합니다. 이미지 파일은 선택 사항입니다.",
     )
     @ApiResponses(
         value = [
@@ -53,9 +52,9 @@ interface OptionApi {
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청",
-                content = [Content(schema = Schema(hidden = true))]
-            )
-        ]
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
     )
     fun createOption(
         @Parameter(description = "옵션 생성 요청 본문")
@@ -65,10 +64,10 @@ interface OptionApi {
             content = [
                 Content(
                     mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    array = ArraySchema(schema = Schema(type = "string", format = "binary"))
-                )
-            ]
+                    array = ArraySchema(schema = Schema(type = "string", format = "binary")),
+                ),
+            ],
         )
-        images: List<MultipartFile>?
+        images: List<MultipartFile>?,
     ): OptionResponse
 }

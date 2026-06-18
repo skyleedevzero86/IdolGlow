@@ -18,7 +18,7 @@ data class CreateScheduleRequest(
     val startAt: LocalDateTime,
     @field:NotNull
     @field:Schema(description = "일정 종료 일시", example = "2025-05-01T10:00:00")
-    val endAt: LocalDateTime
+    val endAt: LocalDateTime,
 )
 
 fun CreateScheduleRequest.toCommand(userId: Long): CreateScheduleCommand =
@@ -27,5 +27,5 @@ fun CreateScheduleRequest.toCommand(userId: Long): CreateScheduleCommand =
         productId = productId,
         title = title,
         startAt = startAt,
-        endAt = endAt
+        endAt = endAt,
     )
