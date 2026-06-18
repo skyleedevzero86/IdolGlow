@@ -20,6 +20,8 @@ class GlowAlertQueryServiceTest {
 
     @Test
     fun `게스트_알림_조회는_페이지_메타데이터를_반환한다`() {
+        // given
+
         // when
         val page = service.findAlerts(page = 1, size = 3, status = "unread", category = "all", keyword = "")
 
@@ -32,6 +34,8 @@ class GlowAlertQueryServiceTest {
 
     @Test
     fun `게스트_알림_읽음_처리를_지원한다`() {
+        // given
+
         // when
         val marked = service.markRead(alertId = 1L)
 

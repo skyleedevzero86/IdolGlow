@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.productpackage.admin.graphql
+package com.sleekydz86.idolglow.productpackage.admin.adapter.graphql
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminSubscriptionOverviewResponse
 
 data class AdminSubscriptionOverviewGraphQlResponse(
     val totalActive: Int,

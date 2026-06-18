@@ -3,16 +3,14 @@ package com.sleekydz86.idolglow.productpackage.admin.application
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.CreateReservationSlotsCommand
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.ProductOptionAdminRepository
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
 import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
+import com.sleekydz86.idolglow.productpackage.option.application.dto.CreateOptionCommand
 import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
-import com.sleekydz86.idolglow.productpackage.option.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
+import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
-import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotRepository
@@ -22,7 +20,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import kotlin.collections.map
 
 @Transactional
 @Service
@@ -44,10 +41,10 @@ class AdminCatalogService(
 
     fun createSlots(
         productId: Long,
-        request: CreateReservationSlotsRequest,
+        command: CreateReservationSlotsCommand,
     ): List<AdminReservationSlotResponse> {
-        require(!request.endDate.isBefore(request.startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
-        require(request.startHour < request.endHour) { "시작 시간은 종료 시간보다 빨라야 합니다." }
+        require(!command.endDate.isBefore(command.startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
+        require(command.startHour < command.endHour) { "시작 시간은 종료 시간보다 빨라야 합니다." }
 
         val product =
             productCommandRepository.findById(productId)
@@ -58,16 +55,16 @@ class AdminCatalogService(
                 .map { slotKey(it.reservationDate, it.startTime) }
                 .toMutableSet()
 
-        var currentDate = request.startDate
-        val adminNote = request.adminNote?.trim()?.takeIf { it.isNotEmpty() }
-        while (!currentDate.isAfter(request.endDate)) {
-            if (request.excludeWeekends &&
+        var currentDate = command.startDate
+        val adminNote = command.adminNote?.trim()?.takeIf { it.isNotEmpty() }
+        while (!currentDate.isAfter(command.endDate)) {
+            if (command.excludeWeekends &&
                 (currentDate.dayOfWeek == DayOfWeek.SATURDAY || currentDate.dayOfWeek == DayOfWeek.SUNDAY)
             ) {
                 currentDate = currentDate.plusDays(1)
                 continue
             }
-            for (hour in request.startHour until request.endHour) {
+            for (hour in command.startHour until command.endHour) {
                 val startTime = LocalTime.of(hour, 0)
                 val key = slotKey(currentDate, startTime)
                 if (key !in existingKeys) {
@@ -92,9 +89,9 @@ class AdminCatalogService(
 
     fun updateProduct(
         productId: Long,
-        request: CreateProductRequest,
+        command: CreateProductCommand,
     ) {
-        productCommandService.updateProduct(productId, request.toCommand())
+        productCommandService.updateProduct(productId, command)
         adminAuditService.log(
             actionCode = "PRODUCT_UPDATE",
             targetType = "PRODUCT",
@@ -105,9 +102,9 @@ class AdminCatalogService(
 
     fun updateOption(
         optionId: Long,
-        request: CreateOptionRequest,
+        command: CreateOptionCommand,
     ) {
-        optionCommandService.updateOption(optionId, request.toCommand())
+        optionCommandService.updateOption(optionId, command)
         adminAuditService.log(
             actionCode = "OPTION_UPDATE",
             targetType = "OPTION",

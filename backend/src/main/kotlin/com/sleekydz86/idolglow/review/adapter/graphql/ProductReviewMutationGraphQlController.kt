@@ -1,12 +1,13 @@
-package com.sleekydz86.idolglow.review.graphql
+package com.sleekydz86.idolglow.review.adapter.graphql
 
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
+import com.sleekydz86.idolglow.review.adapter.web.request.UpdateProductReviewRequest
 import com.sleekydz86.idolglow.review.application.ProductReviewCommandService
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
 import com.sleekydz86.idolglow.review.application.ProductReviewTrustCommandService
+import com.sleekydz86.idolglow.review.application.dto.CreateProductReviewCommand
 import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
-import com.sleekydz86.idolglow.review.ui.request.UpdateProductReviewRequest
 import jakarta.validation.Valid
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -21,6 +22,25 @@ class ProductReviewMutationGraphQlController(
     private val productReviewTrustCommandService: ProductReviewTrustCommandService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
+    @MutationMapping
+    fun createProductReview(
+        @Argument productId: String,
+        @Argument input: CreateProductReviewGraphQlInput,
+    ): ProductReviewGraphQlResponse {
+        val userId = authenticatedUserIdResolver.resolveRequired()
+        val review =
+            productReviewCommandService.createReview(
+                CreateProductReviewCommand(
+                    productId = productId.toGraphQlIdLong("productId"),
+                    userId = userId,
+                    reservationId = input.reservationId.toGraphQlIdLong("reservationId"),
+                    rating = input.rating,
+                    content = input.content,
+                ),
+            )
+        return ProductReviewGraphQlResponse.from(productReviewQueryService.toResponse(review))
+    }
+
     @MutationMapping
     fun updateProductReview(
         @Argument productId: String,

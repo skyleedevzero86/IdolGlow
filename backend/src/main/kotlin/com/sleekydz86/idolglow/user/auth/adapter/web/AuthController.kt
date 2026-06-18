@@ -1,14 +1,14 @@
-package com.sleekydz86.idolglow.user.auth.ui
+package com.sleekydz86.idolglow.user.auth.adapter.web
 
+import com.sleekydz86.idolglow.user.auth.adapter.web.dto.PasswordLoginResponse
+import com.sleekydz86.idolglow.user.auth.adapter.web.dto.TemporaryPasswordResponse
+import com.sleekydz86.idolglow.user.auth.adapter.web.request.PasswordLoginRequest
+import com.sleekydz86.idolglow.user.auth.adapter.web.request.TemporaryPasswordRequest
 import com.sleekydz86.idolglow.user.auth.application.AuthService
 import com.sleekydz86.idolglow.user.auth.application.PasswordRecoveryService
 import com.sleekydz86.idolglow.user.auth.domain.dto.AccessTokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
-import com.sleekydz86.idolglow.user.auth.ui.dto.PasswordLoginResponse
-import com.sleekydz86.idolglow.user.auth.ui.dto.TemporaryPasswordResponse
-import com.sleekydz86.idolglow.user.auth.ui.request.PasswordLoginRequest
-import com.sleekydz86.idolglow.user.auth.ui.request.TemporaryPasswordRequest
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid

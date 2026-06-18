@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.wish.graphql
+package com.sleekydz86.idolglow.wish.adapter.graphql
 
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.wish.application.WishQueryService
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping

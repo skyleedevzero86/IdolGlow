@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.wish.ui
+package com.sleekydz86.idolglow.wish.adapter.web
 
 import com.sleekydz86.idolglow.wish.application.dto.WishToggleResponse
 import com.sleekydz86.idolglow.wish.application.dto.WishedProductPagingResponse

@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.review.graphql
+package com.sleekydz86.idolglow.review.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService

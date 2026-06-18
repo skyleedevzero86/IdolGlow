@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.schedule.application
 
-import com.sleekydz86.idolglow.global.infrastructure.config.AppCalendarProperties
-import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.config.AppCalendarProperties
+import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.schedule.application.dto.ScheduleCalendarExportResult
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
 import org.springframework.stereotype.Service
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -46,8 +46,8 @@ class ScheduleExternalCalendarService(
         }
     }
 
-    fun buildExportResponse(schedule: ScheduleResponse): ScheduleCalendarExportResponse =
-        ScheduleCalendarExportResponse(
+    fun buildExportResponse(schedule: ScheduleResponse): ScheduleCalendarExportResult =
+        ScheduleCalendarExportResult(
             googleCalendarUrl = buildGoogleCalendarUrl(schedule),
             icsRelativePath = "/schedules/${schedule.scheduleId}/calendar.ics",
         )

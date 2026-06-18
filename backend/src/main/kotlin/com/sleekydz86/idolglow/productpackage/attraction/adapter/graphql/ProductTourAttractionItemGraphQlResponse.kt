@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.attraction.graphql
+package com.sleekydz86.idolglow.productpackage.attraction.adapter.graphql
 
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionItemResponse
 

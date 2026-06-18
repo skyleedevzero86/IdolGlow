@@ -1,7 +1,4 @@
-package com.sleekydz86.idolglow.admin.ui.dto
-
-import com.sleekydz86.idolglow.user.auth.domain.UserOAuth
-import com.sleekydz86.idolglow.user.user.domain.User
+package com.sleekydz86.idolglow.admin.adapter.web.dto
 
 data class AdminUserSummaryResponse(
     val id: Long,
@@ -18,41 +15,4 @@ data class AdminUserSummaryResponse(
     val lastLoginAt: String?,
     val oauthLinked: Boolean,
     val oauthProviders: List<String>,
-) {
-    companion object {
-        fun from(
-            user: User,
-            oauths: List<UserOAuth> = emptyList(),
-        ): AdminUserSummaryResponse =
-            AdminUserSummaryResponse(
-                id = user.id,
-                email = user.email,
-                nickname = user.nickname.value,
-                role = user.role.name,
-                roleLabel = user.role.label(),
-                accountStatus = user.accountStatus.name,
-                accountStatusLabel = user.accountStatus.label(),
-                loginFailCount = user.loginFailCount,
-                locked = user.isPlatformLocked(),
-                platformUsername = user.platformUsername,
-                profileImageUrl = resolveProfileImageUrl(user, oauths),
-                lastLoginAt = user.lastLoginAt?.format(adminUserDateTimeFormatter),
-                oauthLinked = oauths.isNotEmpty(),
-                oauthProviders = oauths.map { it.provider.name }.distinct(),
-            )
-
-        private fun resolveProfileImageUrl(
-            user: User,
-            oauths: List<UserOAuth>,
-        ): String? {
-            val primary = user.profileImageUrl?.trim()?.takeIf { it.isNotEmpty() }
-            if (primary != null) {
-                return primary
-            }
-
-            return oauths
-                .sortedByDescending { it.provider.name == "GOOGLE" }
-                .firstNotNullOfOrNull { oauth -> oauth.profileImageUrl?.trim()?.takeIf { it.isNotEmpty() } }
-        }
-    }
-}
+)

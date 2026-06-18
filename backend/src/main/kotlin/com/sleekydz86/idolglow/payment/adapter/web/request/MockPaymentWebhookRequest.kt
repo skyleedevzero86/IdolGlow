@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.payment.ui.request
+package com.sleekydz86.idolglow.payment.adapter.web.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank

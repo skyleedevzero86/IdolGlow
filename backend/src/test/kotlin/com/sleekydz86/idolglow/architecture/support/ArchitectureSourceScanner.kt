@@ -110,5 +110,32 @@ object ArchitectureSourceScanner {
             .toList()
     }
 
+    private val mutationMappingPattern = Regex("""@MutationMapping\b""")
+
+    fun globalGraphQlMutation목록(sourceRoot: Path): List<String> {
+        if (!Files.exists(sourceRoot)) {
+            return emptyList()
+        }
+
+        val globalGraphQlPrefix = "com/sleekydz86/idolglow/global/adapter/graphql"
+        return sourceRoot
+            .toFile()
+            .walkTopDown()
+            .filter { it.isFile && it.name.endsWith(".kt") }
+            .filter { file ->
+                val relative = sourceRoot.relativize(file.toPath()).toString().replace('\\', '/')
+                relative.startsWith(globalGraphQlPrefix)
+            }.mapNotNull { file ->
+                val path = file.toPath()
+                val content = path.readText()
+                if (mutationMappingPattern.containsMatchIn(content)) {
+                    sourceRoot.relativize(path).toString().replace('\\', '/')
+                } else {
+                    null
+                }
+            }.sorted()
+            .toList()
+    }
+
     private val packagePattern = Regex("""^package\s+([\w.`]+)""", RegexOption.MULTILINE)
 }

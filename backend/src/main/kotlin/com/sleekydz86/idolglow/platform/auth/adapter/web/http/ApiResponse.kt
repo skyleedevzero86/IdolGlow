@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.auth.http
+package com.sleekydz86.idolglow.platform.auth.adapter.web.http
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude

@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.admin.ui
+package com.sleekydz86.idolglow.admin.adapter.web
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminGemmaChatResponse
-import com.sleekydz86.idolglow.admin.ui.request.AdminGemmaChatRequest
-import com.sleekydz86.idolglow.admin.ui.request.toCommand
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminGemmaChatResponse
+import com.sleekydz86.idolglow.admin.adapter.web.request.AdminGemmaChatRequest
+import com.sleekydz86.idolglow.admin.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.gemma.application.GemmaChatService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement

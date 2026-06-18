@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.pup.ui
+package com.sleekydz86.idolglow.pup.adapter.web
 
 import com.sleekydz86.idolglow.pup.application.PupAdminService
 import com.sleekydz86.idolglow.pup.application.dto.PupAdminPageResponse

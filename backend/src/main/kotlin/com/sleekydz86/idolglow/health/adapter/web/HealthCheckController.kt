@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.health.ui
+package com.sleekydz86.idolglow.health.adapter.web
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content

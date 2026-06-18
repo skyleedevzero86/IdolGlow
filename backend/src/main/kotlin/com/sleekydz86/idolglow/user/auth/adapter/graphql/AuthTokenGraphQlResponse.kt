@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.auth.graphql
+package com.sleekydz86.idolglow.user.auth.adapter.graphql
 
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 

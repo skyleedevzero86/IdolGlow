@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.admin.ui.request
+package com.sleekydz86.idolglow.productpackage.admin.adapter.web.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Max

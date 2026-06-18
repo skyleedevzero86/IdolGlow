@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.user.user.ui
+package com.sleekydz86.idolglow.user.user.adapter.web
 
+import com.sleekydz86.idolglow.user.user.adapter.web.request.ChangePasswordRequest
+import com.sleekydz86.idolglow.user.user.adapter.web.request.UpdateProfileRequest
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
-import com.sleekydz86.idolglow.user.user.ui.request.ChangePasswordRequest
-import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

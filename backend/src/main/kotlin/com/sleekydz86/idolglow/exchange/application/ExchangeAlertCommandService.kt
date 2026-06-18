@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.exchange.application
 
-import com.sleekydz86.idolglow.exchange.adapter.web.dto.CreateExchangeAlertRequest
+import com.sleekydz86.idolglow.exchange.application.dto.CreateExchangeAlertCommand
 import com.sleekydz86.idolglow.exchange.domain.ExchangeAlert
 import com.sleekydz86.idolglow.exchange.infrastructure.ExchangeAlertJpaRepository
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
@@ -15,19 +15,19 @@ class ExchangeAlertCommandService(
     @Transactional
     fun create(
         userId: Long,
-        request: CreateExchangeAlertRequest,
+        command: CreateExchangeAlertCommand,
     ): Long {
         val user =
             userRepository.findById(userId)
                 ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
         val from =
-            request.fromCurrency
+            command.fromCurrency
                 .trim()
                 .uppercase()
                 .substringBefore('(')
                 .trim()
         val to =
-            request.toCurrency
+            command.toCurrency
                 .trim()
                 .uppercase()
                 .substringBefore('(')
@@ -38,7 +38,7 @@ class ExchangeAlertCommandService(
                     user = user,
                     fromCurrency = from,
                     toCurrency = to,
-                    targetRate = request.targetRate.stripTrailingZeros(),
+                    targetRate = command.targetRate.stripTrailingZeros(),
                 ),
             )
         return saved.id

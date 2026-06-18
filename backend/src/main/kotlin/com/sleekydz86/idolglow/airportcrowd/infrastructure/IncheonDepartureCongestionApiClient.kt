@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.airportcrowd.infrastructure
 
 import com.sleekydz86.idolglow.airportcrowd.application.port.out.DepartureCongestionQueryPort
 import com.sleekydz86.idolglow.airportcrowd.domain.DepartureCongestion
-import com.sleekydz86.idolglow.global.infrastructure.config.IncheonAirportCongestionProperties
+import com.sleekydz86.idolglow.global.config.IncheonAirportCongestionProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component

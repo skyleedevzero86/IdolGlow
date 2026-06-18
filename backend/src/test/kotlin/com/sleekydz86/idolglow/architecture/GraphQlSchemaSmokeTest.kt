@@ -78,5 +78,9 @@ class GraphQlSchemaSmokeTest {
             .isEqualTo("toggleWish")
             .jsonPath("$.data.__schema.mutationType.fields[?(@.name == 'createProductReview')].name")
             .isEqualTo("createProductReview")
+            .jsonPath("$.data.__schema.mutationType.fields[?(@.name == 'cancelReservation')].name")
+            .isEqualTo("cancelReservation")
+            .jsonPath("$.data.__schema.mutationType.fields[?(@.name == 'registerSlotWaitlist')].name")
+            .isEqualTo("registerSlotWaitlist")
     }
 }

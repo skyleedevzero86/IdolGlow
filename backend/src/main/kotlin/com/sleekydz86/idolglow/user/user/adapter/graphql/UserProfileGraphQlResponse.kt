@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.user.user.graphql
+package com.sleekydz86.idolglow.user.user.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlValue
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlValue
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
 
 data class UserProfileGraphQlResponse(

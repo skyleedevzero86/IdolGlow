@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.sleekydz86.idolglow.exchangerate.application.port.out.ExchangeRateQueryPort
 import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
-import com.sleekydz86.idolglow.global.infrastructure.config.KoreaEximExchangeProperties
+import com.sleekydz86.idolglow.global.config.KoreaEximExchangeProperties
 import org.slf4j.LoggerFactory
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component

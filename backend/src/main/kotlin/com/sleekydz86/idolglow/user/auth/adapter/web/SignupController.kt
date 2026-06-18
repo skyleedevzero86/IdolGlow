@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.user.auth.ui
+package com.sleekydz86.idolglow.user.auth.adapter.web
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
+import com.sleekydz86.idolglow.user.auth.adapter.web.request.SignupRequest
 import com.sleekydz86.idolglow.user.auth.application.SignupService
 import com.sleekydz86.idolglow.user.auth.application.SignupVerificationService
 import com.sleekydz86.idolglow.user.auth.application.dto.SignupCheckResponse
 import com.sleekydz86.idolglow.user.auth.domain.dto.AccessTokenResponse
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
-import com.sleekydz86.idolglow.user.auth.ui.request.SignupRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse

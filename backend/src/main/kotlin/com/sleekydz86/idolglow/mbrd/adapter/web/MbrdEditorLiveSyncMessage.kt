@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mbrd.ui
+package com.sleekydz86.idolglow.mbrd.adapter.web
 
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorLiveSyncCommand
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorLiveSyncPayload

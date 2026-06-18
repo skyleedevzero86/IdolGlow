@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.user.ui.request
+package com.sleekydz86.idolglow.user.user.adapter.web.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank

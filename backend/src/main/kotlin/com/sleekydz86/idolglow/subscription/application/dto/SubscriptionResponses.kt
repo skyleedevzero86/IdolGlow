@@ -1,13 +1,6 @@
 package com.sleekydz86.idolglow.subscription.application.dto
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionDispatchResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionLatestContentResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionScheduleResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionSubscriberResponse
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
-import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -26,48 +19,6 @@ internal fun EmailSubscription.toRegistrationResponse(): SubscriptionRegistratio
         subscribedTargets = subscribedTargets().map { it.label },
         subscribedAt = requireNotNull(subscribedAt).asSubscriptionDateTime(),
         active = active,
-    )
-
-internal fun AdminSubscriptionOverviewResponse.Companion.create(
-    totalActive: Long,
-    newsletterSubscriberCount: Long,
-    issueSubscriberCount: Long,
-    totalDispatches: Long,
-    subscribers: List<EmailSubscription>,
-    subscriberPage: Int,
-    subscriberSize: Int,
-    subscriberTotalElements: Long,
-    subscriberTotalPages: Int,
-    subscriberHasNext: Boolean,
-    dispatches: List<SubscriptionDispatchHistory>,
-    dispatchPage: Int,
-    dispatchSize: Int,
-    dispatchTotalElements: Long,
-    dispatchTotalPages: Int,
-    dispatchHasNext: Boolean,
-    schedules: List<SubscriptionDispatchSchedule>,
-    latestContents: List<AdminSubscriptionLatestContentResponse>,
-): AdminSubscriptionOverviewResponse =
-    AdminSubscriptionOverviewResponse(
-        totalActive = totalActive,
-        totalSubscribers = subscriberTotalElements,
-        newsletterSubscriberCount = newsletterSubscriberCount,
-        issueSubscriberCount = issueSubscriberCount,
-        totalDispatches = totalDispatches,
-        subscribers = subscribers.map(AdminSubscriptionSubscriberResponse::from),
-        subscriberPage = subscriberPage,
-        subscriberSize = subscriberSize,
-        subscriberTotalElements = subscriberTotalElements,
-        subscriberTotalPages = subscriberTotalPages,
-        subscriberHasNext = subscriberHasNext,
-        dispatches = dispatches.map(AdminSubscriptionDispatchResponse::from),
-        dispatchPage = dispatchPage,
-        dispatchSize = dispatchSize,
-        dispatchTotalElements = dispatchTotalElements,
-        dispatchTotalPages = dispatchTotalPages,
-        dispatchHasNext = dispatchHasNext,
-        schedules = schedules.map(AdminSubscriptionScheduleResponse::from),
-        latestContents = latestContents,
     )
 
 private val subscriptionDateTimeFormatter: DateTimeFormatter =

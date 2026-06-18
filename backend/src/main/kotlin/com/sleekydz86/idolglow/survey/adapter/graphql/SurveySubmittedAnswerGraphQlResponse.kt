@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.survey.graphql
+package com.sleekydz86.idolglow.survey.adapter.graphql
 
 data class SurveySubmittedAnswerGraphQlResponse(
     val questionId: Long,

@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.user.ui.request
+package com.sleekydz86.idolglow.user.user.adapter.web.request
 
 import com.sleekydz86.idolglow.user.user.application.dto.UpsertUserSurveyCommand
 import com.sleekydz86.idolglow.user.user.domain.vo.ConceptType

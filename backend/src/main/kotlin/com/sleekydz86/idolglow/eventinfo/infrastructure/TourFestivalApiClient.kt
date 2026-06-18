@@ -6,7 +6,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.CodeEntry
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalImage
-import com.sleekydz86.idolglow.global.infrastructure.config.TourKorApiProperties
+import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component

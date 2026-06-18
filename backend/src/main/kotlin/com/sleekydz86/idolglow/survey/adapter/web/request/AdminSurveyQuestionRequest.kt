@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.survey.ui.request
+package com.sleekydz86.idolglow.survey.adapter.web.request
 
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import jakarta.validation.constraints.NotBlank

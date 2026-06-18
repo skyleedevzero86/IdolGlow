@@ -6,9 +6,9 @@ import com.sleekydz86.idolglow.platform.auth.application.dto.PasswordResetReques
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.platform.auth.util.JwtTokenUtil
 import com.sleekydz86.idolglow.platform.user.domain.exception.UserNotFoundException
-import com.sleekydz86.idolglow.platform.user.password.PasswordPolicyValidator
+import com.sleekydz86.idolglow.platform.user.infrastructure.password.PasswordPolicyValidator
+import com.sleekydz86.idolglow.platform.user.infrastructure.recovery.RecoveryJtiStore
 import com.sleekydz86.idolglow.platform.user.port.PlatformUserAccountPort
-import com.sleekydz86.idolglow.platform.user.recovery.RecoveryJtiStore
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.security.crypto.password.PasswordEncoder

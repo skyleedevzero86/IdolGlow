@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.mypage.ui
+package com.sleekydz86.idolglow.mypage.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.payment.adapter.web.request.CancelPaymentRequest
 import com.sleekydz86.idolglow.payment.application.MyPagePaymentService
 import com.sleekydz86.idolglow.payment.application.dto.MyPagePaymentSummaryResponse
-import com.sleekydz86.idolglow.payment.ui.request.CancelPaymentRequest
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders

@@ -1,10 +1,11 @@
-package com.sleekydz86.idolglow.event.ui
+package com.sleekydz86.idolglow.event.adapter.web
 
+import com.sleekydz86.idolglow.event.adapter.web.dto.AdminEventDetailResponse
+import com.sleekydz86.idolglow.event.adapter.web.dto.AdminEventImageUploadResponse
+import com.sleekydz86.idolglow.event.adapter.web.dto.AdminEventPageResponse
+import com.sleekydz86.idolglow.event.adapter.web.dto.toWebResponse
+import com.sleekydz86.idolglow.event.adapter.web.request.UpsertAdminEventRequest
 import com.sleekydz86.idolglow.event.application.AdminEventService
-import com.sleekydz86.idolglow.event.ui.dto.AdminEventDetailResponse
-import com.sleekydz86.idolglow.event.ui.dto.AdminEventImageUploadResponse
-import com.sleekydz86.idolglow.event.ui.dto.AdminEventPageResponse
-import com.sleekydz86.idolglow.event.ui.request.UpsertAdminEventRequest
 import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -40,13 +41,13 @@ class AdminEventController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(defaultValue = "") query: String,
         @RequestParam(defaultValue = "published") status: String,
-    ): ResponseEntity<AdminEventPageResponse> = ResponseEntity.ok(adminEventService.findEvents(page, size, query, status))
+    ): ResponseEntity<AdminEventPageResponse> = ResponseEntity.ok(adminEventService.findEvents(page, size, query, status).toWebResponse())
 
     @Operation(summary = "이벤트 상세 조회")
     @GetMapping("/{documentId}")
     fun findEvent(
         @PathVariable documentId: String,
-    ): ResponseEntity<AdminEventDetailResponse> = ResponseEntity.ok(adminEventService.findEvent(documentId))
+    ): ResponseEntity<AdminEventDetailResponse> = ResponseEntity.ok(adminEventService.findEvent(documentId).toWebResponse())
 
     @Operation(summary = "이벤트 등록/수정")
     @PostMapping
@@ -57,7 +58,7 @@ class AdminEventController(
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .location(URI.create("/admin/events/${saved.documentId}"))
-            .body(saved)
+            .body(saved.toWebResponse())
     }
 
     @Operation(summary = "이벤트 삭제")

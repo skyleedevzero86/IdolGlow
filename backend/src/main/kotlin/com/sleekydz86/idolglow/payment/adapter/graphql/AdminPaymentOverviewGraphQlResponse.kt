@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.payment.graphql
+package com.sleekydz86.idolglow.payment.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
 import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentOverviewResponse
 
 data class AdminPaymentOverviewGraphQlResponse(

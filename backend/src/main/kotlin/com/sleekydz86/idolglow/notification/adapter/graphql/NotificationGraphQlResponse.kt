@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.notification.graphql
+package com.sleekydz86.idolglow.notification.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlValue
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlValue
 import com.sleekydz86.idolglow.notification.application.dto.NotificationResponse
 import com.sleekydz86.idolglow.notification.domain.Notification
 

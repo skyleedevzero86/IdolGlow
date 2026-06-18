@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.user.user.ui
+package com.sleekydz86.idolglow.user.user.adapter.web
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.user.user.adapter.web.request.ChangePasswordRequest
+import com.sleekydz86.idolglow.user.user.adapter.web.request.UpdateProfileRequest
 import com.sleekydz86.idolglow.user.user.application.UserProfileImageService
 import com.sleekydz86.idolglow.user.user.application.UserService
 import com.sleekydz86.idolglow.user.user.application.dto.GetUserLoginInfoResponse
-import com.sleekydz86.idolglow.user.user.ui.request.ChangePasswordRequest
-import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

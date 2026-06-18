@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
-import com.sleekydz86.idolglow.global.infrastructure.config.CultureInfoApiProperties
+import com.sleekydz86.idolglow.global.config.CultureInfoApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component

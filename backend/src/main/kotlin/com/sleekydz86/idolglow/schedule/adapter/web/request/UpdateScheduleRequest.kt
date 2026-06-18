@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.schedule.ui.request
+package com.sleekydz86.idolglow.schedule.adapter.web.request
 
 import com.sleekydz86.idolglow.schedule.application.dto.UpdateScheduleCommand
 import io.swagger.v3.oas.annotations.media.Schema

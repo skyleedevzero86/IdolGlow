@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.schedule.ui.dto
+package com.sleekydz86.idolglow.schedule.adapter.web.dto
 
 import com.sleekydz86.idolglow.schedule.domain.Schedule
 import io.swagger.v3.oas.annotations.media.Schema

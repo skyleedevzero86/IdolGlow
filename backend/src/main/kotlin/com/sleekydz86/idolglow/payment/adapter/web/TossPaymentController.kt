@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.payment.ui
+package com.sleekydz86.idolglow.payment.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.payment.adapter.web.request.TossConfirmPaymentRequest
 import com.sleekydz86.idolglow.payment.application.TossPaymentConfirmService
 import com.sleekydz86.idolglow.payment.application.dto.PaymentResponse
-import com.sleekydz86.idolglow.payment.ui.request.TossConfirmPaymentRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid

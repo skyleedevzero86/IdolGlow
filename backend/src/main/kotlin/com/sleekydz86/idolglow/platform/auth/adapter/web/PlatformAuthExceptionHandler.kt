@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.platform.auth.adapter.web
 
-import com.sleekydz86.idolglow.platform.auth.http.ApiResponse
-import com.sleekydz86.idolglow.platform.auth.http.ErrorResponse
+import com.sleekydz86.idolglow.platform.auth.adapter.web.http.ApiResponse
+import com.sleekydz86.idolglow.platform.auth.adapter.web.http.ErrorResponse
 import com.sleekydz86.idolglow.platform.user.domain.exception.AuthenticationFailedException
 import com.sleekydz86.idolglow.platform.user.domain.exception.BasePlatformException
 import com.sleekydz86.idolglow.platform.user.domain.exception.InvalidTokenException

@@ -1,12 +1,13 @@
 package com.sleekydz86.idolglow.exchange.application
 
-import com.sleekydz86.idolglow.exchange.adapter.web.dto.ExchangeBranchResponse
+import com.sleekydz86.idolglow.exchange.application.dto.CreateExchangeAlertCommand
+import com.sleekydz86.idolglow.exchange.application.dto.ExchangeBranchResult
 import com.sleekydz86.idolglow.exchange.domain.ExchangeBranch
 import com.sleekydz86.idolglow.exchange.infrastructure.ExchangeBranchJpaRepository
 import com.sleekydz86.idolglow.exchange.infrastructure.NaverDirectionsClient
 import com.sleekydz86.idolglow.exchangerate.application.port.out.ExchangeRateQueryPort
 import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
-import com.sleekydz86.idolglow.global.infrastructure.config.ExchangeAirportHubProperties
+import com.sleekydz86.idolglow.global.config.ExchangeAirportHubProperties
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -20,7 +21,7 @@ class ExchangeBranchQueryService(
     private val naverDirectionsClient: NaverDirectionsClient,
     private val exchangeAirportHubProperties: ExchangeAirportHubProperties,
 ) {
-    fun listBranchesWithDrivingMinutes(currencyParam: String): List<ExchangeBranchResponse> {
+    fun listBranchesWithDrivingMinutes(currencyParam: String): List<ExchangeBranchResult> {
         val currency =
             currencyParam
                 .trim()
@@ -32,7 +33,7 @@ class ExchangeBranchQueryService(
         val hubLat = exchangeAirportHubProperties.latitude
         return rows.map { row ->
             val minutes = resolveDurationMinutes(row, hubLng, hubLat)
-            ExchangeBranchResponse(
+            ExchangeBranchResult(
                 branchId = row.id,
                 name = row.name,
                 rate = row.rate,

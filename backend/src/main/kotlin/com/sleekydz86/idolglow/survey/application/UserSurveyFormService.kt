@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.survey.application
 
+import com.sleekydz86.idolglow.survey.application.dto.SubmitSurveyResponseCommand
 import com.sleekydz86.idolglow.survey.domain.SurveyAnswer
 import com.sleekydz86.idolglow.survey.domain.SurveyAnswerOption
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
@@ -8,7 +9,6 @@ import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
 import com.sleekydz86.idolglow.survey.infrastructure.SurveyFormJpaRepository
 import com.sleekydz86.idolglow.survey.infrastructure.SurveySubmissionJpaRepository
-import com.sleekydz86.idolglow.survey.ui.request.SubmitSurveyResponseRequest
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +25,7 @@ class UserSurveyFormService(
 
     fun submitCurrentForm(
         userId: Long,
-        request: SubmitSurveyResponseRequest,
+        command: SubmitSurveyResponseCommand,
     ): SurveySubmissionResponse {
         val form =
             surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()
@@ -34,7 +34,7 @@ class UserSurveyFormService(
             userRepository.findById(userId)
                 ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
 
-        val answersByQuestionId = request.answers.associateBy { it.questionId }
+        val answersByQuestionId = command.answers.associateBy { it.questionId }
         val submission = SurveySubmission(form = form, user = user)
 
         for (question in form.questions) {

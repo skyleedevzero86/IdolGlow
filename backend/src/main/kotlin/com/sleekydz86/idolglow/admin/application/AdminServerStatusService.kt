@@ -1,16 +1,16 @@
 package com.sleekydz86.idolglow.admin.application
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminActuatorMetricResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminActuatorStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminCpuStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminDiskStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminInfrastructureStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminJvmStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminMemoryStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminServerStatusResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminServerSummaryResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSystemStatusResponse
-import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.admin.application.dto.AdminActuatorMetricResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminActuatorStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminCpuStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminDiskStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminInfrastructureStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminJvmStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminMemoryStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminServerStatusResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminServerSummaryResult
+import com.sleekydz86.idolglow.admin.application.dto.AdminSystemStatusResult
+import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import io.micrometer.core.instrument.MeterRegistry
 import io.minio.BucketExistsArgs
 import io.minio.MinioClient
@@ -43,7 +43,7 @@ class AdminServerStatusService(
     private val threadBean = ManagementFactory.getThreadMXBean()
     private val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-    fun getServerStatus(): AdminServerStatusResponse {
+    fun getServerStatus(): AdminServerStatusResult {
         val memory = memoryStatus()
         val disk = diskStatus()
         val jvm = jvmStatus()
@@ -56,11 +56,11 @@ class AdminServerStatusService(
                 mqStatus(),
             )
 
-        return AdminServerStatusResponse(
+        return AdminServerStatusResult(
             generatedAt = OffsetDateTime.now().format(dateTimeFormatter),
             overallStatus = resolveOverallStatus(infrastructure),
             summary =
-                AdminServerSummaryResponse(
+                AdminServerSummaryResult(
                     cpuUsagePercent = cpu.systemUsagePercent,
                     memoryUsagePercent = memory.usagePercent,
                     diskUsagePercent = disk.usagePercent,
@@ -68,7 +68,7 @@ class AdminServerStatusService(
                     uptimeSeconds = jvm.uptimeSeconds,
                 ),
             system =
-                AdminSystemStatusResponse(
+                AdminSystemStatusResult(
                     cpu = cpu,
                     memory = memory,
                     disk = disk,
@@ -76,33 +76,33 @@ class AdminServerStatusService(
                 ),
             infrastructure = infrastructure,
             actuator =
-                AdminActuatorStatusResponse(
+                AdminActuatorStatusResult(
                     enabled = true,
                     healthEndpoint = "/actuator/health",
                     metricsEndpoint = "/actuator/metrics",
                     metrics =
                         listOf(
-                            AdminActuatorMetricResponse(
+                            AdminActuatorMetricResult(
                                 name = "system.cpu.usage",
                                 value = meterPercent("system.cpu.usage"),
                             ),
-                            AdminActuatorMetricResponse(
+                            AdminActuatorMetricResult(
                                 name = "process.cpu.usage",
                                 value = meterPercent("process.cpu.usage"),
                             ),
-                            AdminActuatorMetricResponse(
+                            AdminActuatorMetricResult(
                                 name = "system.load.average.1m",
                                 value = meterValue("system.load.average.1m"),
                             ),
-                            AdminActuatorMetricResponse(
+                            AdminActuatorMetricResult(
                                 name = "jvm.threads.live",
                                 value = meterValue("jvm.threads.live"),
                             ),
-                            AdminActuatorMetricResponse(
+                            AdminActuatorMetricResult(
                                 name = "hikaricp.connections.active",
                                 value = meterValue("hikaricp.connections.active", "jdbc.connections.active"),
                             ),
-                            AdminActuatorMetricResponse(
+                            AdminActuatorMetricResult(
                                 name = "hikaricp.connections.max",
                                 value = meterValue("hikaricp.connections.max", "jdbc.connections.max"),
                             ),
@@ -111,21 +111,21 @@ class AdminServerStatusService(
         )
     }
 
-    private fun cpuStatus(): AdminCpuStatusResponse =
-        AdminCpuStatusResponse(
+    private fun cpuStatus(): AdminCpuStatusResult =
+        AdminCpuStatusResult(
             systemUsagePercent = meterPercent("system.cpu.usage"),
             processUsagePercent = meterPercent("process.cpu.usage"),
             systemLoadAverage = meterValue("system.load.average.1m"),
             availableProcessors = runtime.availableProcessors(),
         )
 
-    private fun memoryStatus(): AdminMemoryStatusResponse {
+    private fun memoryStatus(): AdminMemoryStatusResult {
         val maxBytes = runtime.maxMemory().coerceAtLeast(1L)
         val totalBytes = runtime.totalMemory()
         val freeBytes = runtime.freeMemory()
         val usedBytes = (totalBytes - freeBytes).coerceAtLeast(0L)
 
-        return AdminMemoryStatusResponse(
+        return AdminMemoryStatusResult(
             totalBytes = totalBytes,
             freeBytes = freeBytes,
             usedBytes = usedBytes,
@@ -134,14 +134,14 @@ class AdminServerStatusService(
         )
     }
 
-    private fun diskStatus(): AdminDiskStatusResponse {
+    private fun diskStatus(): AdminDiskStatusResult {
         val rootPath = Path.of(System.getProperty("user.dir")).toAbsolutePath().root ?: Path.of("/")
         val fileStore = Files.getFileStore(rootPath)
         val totalBytes = fileStore.totalSpace
         val freeBytes = fileStore.usableSpace
         val usedBytes = (totalBytes - freeBytes).coerceAtLeast(0L)
 
-        return AdminDiskStatusResponse(
+        return AdminDiskStatusResult(
             mountPath = rootPath.toString(),
             fileStoreName = fileStore.name(),
             totalBytes = totalBytes,
@@ -151,12 +151,12 @@ class AdminServerStatusService(
         )
     }
 
-    private fun jvmStatus(): AdminJvmStatusResponse {
+    private fun jvmStatus(): AdminJvmStatusResult {
         val heapUsage = memoryBean.heapMemoryUsage
         val nonHeapUsage = memoryBean.nonHeapMemoryUsage
         val heapMax = heapUsage.max.takeIf { it > 0 } ?: heapUsage.committed.coerceAtLeast(1L)
 
-        return AdminJvmStatusResponse(
+        return AdminJvmStatusResult(
             heapUsedBytes = heapUsage.used,
             heapCommittedBytes = heapUsage.committed,
             heapMaxBytes = heapMax,
@@ -176,7 +176,7 @@ class AdminServerStatusService(
         )
     }
 
-    private fun databaseStatus(): AdminInfrastructureStatusResponse {
+    private fun databaseStatus(): AdminInfrastructureStatusResult {
         val startedAt = System.nanoTime()
 
         return runCatching {
@@ -188,7 +188,7 @@ class AdminServerStatusService(
                 val idleConnections = meterValue("hikaricp.connections.idle", "jdbc.connections.idle")
                 val maxConnections = meterValue("hikaricp.connections.max", "jdbc.connections.max")
 
-                AdminInfrastructureStatusResponse(
+                AdminInfrastructureStatusResult(
                     type = "DATABASE",
                     label = "데이터베이스",
                     status = if (valid) "UP" else "DOWN",
@@ -208,7 +208,7 @@ class AdminServerStatusService(
                 )
             }
         }.getOrElse { error ->
-            AdminInfrastructureStatusResponse(
+            AdminInfrastructureStatusResult(
                 type = "DATABASE",
                 label = "데이터베이스",
                 status = "DOWN",
@@ -223,9 +223,9 @@ class AdminServerStatusService(
         }
     }
 
-    private fun minioStatus(): AdminInfrastructureStatusResponse {
+    private fun minioStatus(): AdminInfrastructureStatusResult {
         if (!minioStorageProperties.enabled || minioClient == null) {
-            return AdminInfrastructureStatusResponse(
+            return AdminInfrastructureStatusResult(
                 type = "MINIO",
                 label = "MinIO",
                 status = "NOT_CONFIGURED",
@@ -241,7 +241,7 @@ class AdminServerStatusService(
         }
 
         val client =
-            minioClient ?: return AdminInfrastructureStatusResponse(
+            minioClient ?: return AdminInfrastructureStatusResult(
                 type = "MINIO",
                 label = "MinIO",
                 status = "NOT_CONFIGURED",
@@ -262,7 +262,7 @@ class AdminServerStatusService(
                     BucketExistsArgs.builder().bucket(minioStorageProperties.bucket).build(),
                 )
 
-            AdminInfrastructureStatusResponse(
+            AdminInfrastructureStatusResult(
                 type = "MINIO",
                 label = "MinIO",
                 status = if (bucketExists) "UP" else "DOWN",
@@ -278,7 +278,7 @@ class AdminServerStatusService(
                     ),
             )
         }.getOrElse { error ->
-            AdminInfrastructureStatusResponse(
+            AdminInfrastructureStatusResult(
                 type = "MINIO",
                 label = "MinIO",
                 status = "DOWN",
@@ -294,12 +294,12 @@ class AdminServerStatusService(
         }
     }
 
-    private fun redisStatus(): AdminInfrastructureStatusResponse {
+    private fun redisStatus(): AdminInfrastructureStatusResult {
         val host = currentProperty("spring.data.redis.host", currentProperty("spring.redis.host", ""))
         val port = currentProperty("spring.data.redis.port", currentProperty("spring.redis.port", ""))
         val configured = host.isNotBlank()
 
-        return AdminInfrastructureStatusResponse(
+        return AdminInfrastructureStatusResult(
             type = "REDIS",
             label = "Redis",
             status = if (configured) "UNKNOWN" else "NOT_CONFIGURED",
@@ -319,13 +319,13 @@ class AdminServerStatusService(
         )
     }
 
-    private fun mqStatus(): AdminInfrastructureStatusResponse {
+    private fun mqStatus(): AdminInfrastructureStatusResult {
         val rabbitHost = currentProperty("spring.rabbitmq.host", "")
         val kafkaServers = currentProperty("spring.kafka.bootstrap-servers", "")
         val activeMqBroker = currentProperty("spring.activemq.broker-url", "")
         val configured = rabbitHost.isNotBlank() || kafkaServers.isNotBlank() || activeMqBroker.isNotBlank()
 
-        return AdminInfrastructureStatusResponse(
+        return AdminInfrastructureStatusResult(
             type = "MQ",
             label = "메시지 큐",
             status = if (configured) "UNKNOWN" else "NOT_CONFIGURED",
@@ -346,7 +346,7 @@ class AdminServerStatusService(
         )
     }
 
-    private fun resolveOverallStatus(infrastructure: List<AdminInfrastructureStatusResponse>): String =
+    private fun resolveOverallStatus(infrastructure: List<AdminInfrastructureStatusResult>): String =
         when {
             infrastructure.any { it.status == "DOWN" } -> "DOWN"
             infrastructure.any { it.status == "UNKNOWN" } -> "DEGRADED"

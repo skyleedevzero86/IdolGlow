@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.discovery.ui
+package com.sleekydz86.idolglow.productpackage.discovery.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import com.sleekydz86.idolglow.productpackage.discovery.application.ProductDiscoveryService

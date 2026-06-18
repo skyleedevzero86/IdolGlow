@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.admin.ui.dto
+package com.sleekydz86.idolglow.admin.adapter.web.dto
 
 import com.sleekydz86.idolglow.gemma.application.dto.GemmaChatResult
 import io.swagger.v3.oas.annotations.media.Schema

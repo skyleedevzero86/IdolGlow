@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.schedule.graphql
+package com.sleekydz86.idolglow.schedule.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlValue
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlValue
+import com.sleekydz86.idolglow.schedule.adapter.web.dto.ScheduleCommandResponse
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCommandResponse
 
 data class ScheduleGraphQlResponse(
     val scheduleId: String,

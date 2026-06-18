@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.schedule.graphql
+package com.sleekydz86.idolglow.schedule.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleSliceResponse
 
 data class ScheduleSliceGraphQlResponse(

@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.productpackage.product.graphql
+package com.sleekydz86.idolglow.productpackage.product.adapter.graphql
 
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.ProductBrowseRequestParser
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
-import com.sleekydz86.idolglow.productpackage.product.ui.ProductBrowseRequestParser
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
 import org.springframework.stereotype.Controller

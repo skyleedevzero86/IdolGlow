@@ -42,8 +42,10 @@ class JwtProvider(
                 .builder()
                 .setSubject(userId.toString())
                 .setIssuer(properties.jwt.issuer)
-                .claim(AUTHORITIES_KEY, role.name)
-                .claim(TOKEN_TYPE_KEY, JwtTokenType.ACCESS.name)
+                .claim(JwtClaimNames.AUTHORITY, role.name)
+                .claim(JwtClaimNames.TOKEN_TYPE, JwtTokenType.ACCESS.name)
+                .claim(JwtClaimNames.CHANNEL, AuthChannel.GLOBAL.name)
+                .claim(JwtClaimNames.USER_ID, userId)
                 .setIssuedAt(issuedAt)
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
@@ -54,8 +56,10 @@ class JwtProvider(
                 .builder()
                 .setSubject(userId.toString())
                 .setIssuer(properties.jwt.issuer)
-                .claim(AUTHORITIES_KEY, role.name)
-                .claim(TOKEN_TYPE_KEY, JwtTokenType.REFRESH.name)
+                .claim(JwtClaimNames.AUTHORITY, role.name)
+                .claim(JwtClaimNames.TOKEN_TYPE, JwtTokenType.REFRESH.name)
+                .claim(JwtClaimNames.CHANNEL, AuthChannel.GLOBAL.name)
+                .claim(JwtClaimNames.USER_ID, userId)
                 .setIssuedAt(issuedAt)
                 .setExpiration(refreshTokenExpiresIn)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
@@ -113,7 +117,7 @@ class JwtProvider(
         val userId = claims.subject.toLong()
         val role =
             UserRole.valueOf(
-                claims[AUTHORITIES_KEY]?.toString()
+                claims[JwtClaimNames.AUTHORITY]?.toString()
                     ?: throw IllegalArgumentException("토큰에 권한(auth) 클레임이 없습니다."),
             )
 
@@ -144,13 +148,11 @@ class JwtProvider(
 
     private fun extractTokenType(claims: Claims): JwtTokenType =
         JwtTokenType.valueOf(
-            claims[TOKEN_TYPE_KEY]?.toString()
+            claims[JwtClaimNames.TOKEN_TYPE]?.toString()
                 ?: throw IllegalArgumentException("토큰에 타입(type) 클레임이 없습니다."),
         )
 
     companion object {
-        private const val AUTHORITIES_KEY = "auth"
-        private const val TOKEN_TYPE_KEY = "type"
         private const val BEARER_TYPE = "Bearer"
     }
 }

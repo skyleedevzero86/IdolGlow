@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.admin.authverification.application
 
+import com.sleekydz86.idolglow.admin.authverification.application.dto.AuthVerificationAuditLogPageResult
+import com.sleekydz86.idolglow.admin.authverification.application.dto.AuthVerificationAuditLogResult
 import com.sleekydz86.idolglow.admin.authverification.domain.AuthVerificationAuditLog
 import com.sleekydz86.idolglow.admin.authverification.infrastructure.AuthVerificationAuditLogRepository
-import com.sleekydz86.idolglow.admin.authverification.ui.dto.AuthVerificationAuditLogPageResponse
-import com.sleekydz86.idolglow.admin.authverification.ui.dto.AuthVerificationAuditLogResponse
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -42,7 +42,7 @@ class AuthVerificationAuditService(
         size: Int,
         verificationType: String?,
         keyword: String?,
-    ): AuthVerificationAuditLogPageResponse {
+    ): AuthVerificationAuditLogPageResult {
         val pageable =
             PageRequest.of(
                 page.coerceAtLeast(1) - 1,
@@ -57,8 +57,8 @@ class AuthVerificationAuditService(
             } else {
                 authVerificationAuditLogRepository.searchByTypeAndKeyword(queryType, queryKeyword, pageable)
             }
-        return AuthVerificationAuditLogPageResponse(
-            logs = data.content.map(AuthVerificationAuditLogResponse::from),
+        return AuthVerificationAuditLogPageResult(
+            logs = data.content.map(AuthVerificationAuditLogResult::from),
             page = data.number + 1,
             size = data.size,
             totalElements = data.totalElements,

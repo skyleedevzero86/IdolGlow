@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.auth.filter
+package com.sleekydz86.idolglow.platform.auth.adapter.web.filter
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest

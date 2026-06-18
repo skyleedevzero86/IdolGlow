@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
-import com.sleekydz86.idolglow.global.infrastructure.config.CultureInfoApiProperties
+import com.sleekydz86.idolglow.global.config.CultureInfoApiProperties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test

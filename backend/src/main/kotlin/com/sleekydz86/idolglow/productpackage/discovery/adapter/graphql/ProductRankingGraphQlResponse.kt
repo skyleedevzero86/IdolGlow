@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.productpackage.discovery.graphql
+package com.sleekydz86.idolglow.productpackage.discovery.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
 import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
 
 data class ProductRankingGraphQlResponse(

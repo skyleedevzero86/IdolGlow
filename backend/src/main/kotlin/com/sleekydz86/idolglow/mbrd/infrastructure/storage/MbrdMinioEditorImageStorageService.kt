@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.mbrd.infrastructure.storage
 
-import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageContentPayload
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageUploadPayload
 import com.sleekydz86.idolglow.mbrd.domain.MbrdEditorAsset

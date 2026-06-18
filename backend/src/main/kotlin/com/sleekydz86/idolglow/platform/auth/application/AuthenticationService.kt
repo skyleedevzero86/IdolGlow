@@ -13,7 +13,7 @@ import com.sleekydz86.idolglow.platform.user.domain.exception.AuthenticationFail
 import com.sleekydz86.idolglow.platform.user.domain.exception.InvalidTokenException
 import com.sleekydz86.idolglow.platform.user.domain.exception.UserAlreadyExistsException
 import com.sleekydz86.idolglow.platform.user.domain.exception.UserNotFoundException
-import com.sleekydz86.idolglow.platform.user.password.PasswordPolicyValidator
+import com.sleekydz86.idolglow.platform.user.infrastructure.password.PasswordPolicyValidator
 import com.sleekydz86.idolglow.platform.user.port.PlatformUserAccountPort
 import com.sleekydz86.idolglow.user.user.domain.vo.Nickname
 import org.slf4j.LoggerFactory

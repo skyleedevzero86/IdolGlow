@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.admin.authverification.ui.dto
+package com.sleekydz86.idolglow.admin.authverification.adapter.web.dto
 
 import com.sleekydz86.idolglow.admin.authverification.domain.AuthVerificationAuditLog
 import java.time.LocalDateTime
