@@ -110,12 +110,7 @@ kotlin {
 
 tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
     options.release.set(24)
-}
-
-sourceSets {
-    main {
-        kotlin.srcDir("build/generated/source/kapt/main")
-    }
+    dependsOn(tasks.named("compileKotlin"))
 }
 
 kapt {
