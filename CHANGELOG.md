@@ -4,6 +4,50 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.5.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.4.0...v0.5.0) (2026-06-20)
+
+
+### Features
+
+* **#11:** integrate public data APIs and stabilize admin/backend workflow ([8de38eb](https://github.com/skyleedevzero86/IdolGlow/commit/8de38ebda71d671efd214c8e74ba8d1d95c559b6))
+* Glow 날씨 대시보드 및 기상청 연동 추가 ([ce7a38b](https://github.com/skyleedevzero86/IdolGlow/commit/ce7a38b0c05590d2fe3b642df7c85762fe79e85a))
+* Glow 알림 백엔드 조회/읽음 처리 API 정리 ([a3fa5b6](https://github.com/skyleedevzero86/IdolGlow/commit/a3fa5b6f0c4ba99c48ad1160e6376550fbc13e94))
+* improve admin survey editor and description management ([0d4fc8d](https://github.com/skyleedevzero86/IdolGlow/commit/0d4fc8d2c784b47ef6888cbf82234b0332a57772))
+* readme.md파일 업데이트 ([3bae0c4](https://github.com/skyleedevzero86/IdolGlow/commit/3bae0c482d5d18869f922802bcc381cb0af2e1be))
+* 공항 혼잡 기준 API 연동 ([5110346](https://github.com/skyleedevzero86/IdolGlow/commit/51103460de0feb35a80aaf528fcba02574ad5264))
+* 관리자 설문 목록 페이징 및 등록 페이지 분리 ([63e06b1](https://github.com/skyleedevzero86/IdolGlow/commit/63e06b1330a120f9aba5773ee4c26037242b15f6))
+* 불필요한파일 커밋못하게 수정 ([214a86f](https://github.com/skyleedevzero86/IdolGlow/commit/214a86fb14e78736ca470526da958348a8f56bb3))
+* 실데이터 우선 조회 강화 및 fallback 노출 조건 정리 ([f25cd1c](https://github.com/skyleedevzero86/IdolGlow/commit/f25cd1c0f43942e945e316cc55cb59173ebba984))
+* 예보·관측 API 여부 플래그 및 지역별 폴백 개선 ([f91e014](https://github.com/skyleedevzero86/IdolGlow/commit/f91e0144559838569dc1cf05845ce1b49aad7c54))
+* 인천공항 혼잡도/예측/주차 API 통합 연동 ([ca58843](https://github.com/skyleedevzero86/IdolGlow/commit/ca58843cbba7397446bc27e4422c3ab0c6907591))
+* 인프라자동배포 셋팅 ([7bdad0c](https://github.com/skyleedevzero86/IdolGlow/commit/7bdad0c7e418e6b95d68305ae8d7d03345678a9e))
+
+
+### Bug Fixes
+
+* depoly-local 윈도우버전  리눅스버전 반영 ([0e58312](https://github.com/skyleedevzero86/IdolGlow/commit/0e583120c0be1151b85357bb229c76d46c19c725))
+* DTO 분리 후 컴파일·기동 오류 복구 ([1e66f0c](https://github.com/skyleedevzero86/IdolGlow/commit/1e66f0c02c4fb4af49f675fb42b2c1c5e6e174f0))
+* GraphiQL CSP에 data: 허용으로 로컬 UI 로딩 실패 해결 ([3fb5f03](https://github.com/skyleedevzero86/IdolGlow/commit/3fb5f037964e8822da9600f5e7236e105023093d))
+* QueryDSL Q 클래스 컴파일 순서로 kapt 빌드 오류 해결 ([e307bf6](https://github.com/skyleedevzero86/IdolGlow/commit/e307bf6660303c88944db9285b37e9d8c338e49f))
+* REST OpenAPI 미문서화 엔드포인트 보완 및 Swagger 경로 정렬 ([de10a1e](https://github.com/skyleedevzero86/IdolGlow/commit/de10a1ed9269e8cc644690988dd5304bad4e01be))
+* soften KMA auth failures and use weather fallback data ([cbfb444](https://github.com/skyleedevzero86/IdolGlow/commit/cbfb444c999c8ddd5e6c13dd6ded2deae1b2f7fd))
+* Swagger 문서화 보강 및 AirportCrowdController API 등록 수정 ([be7b7bd](https://github.com/skyleedevzero86/IdolGlow/commit/be7b7bd79781250280084505aa29c2dc6be9fc6a))
+* 공항 혼잡도 API 인증 실패 반복 호출 방지 ([7f48fcc](https://github.com/skyleedevzero86/IdolGlow/commit/7f48fcc5404f8f0a6444a6ea55f7970ff07934ff))
+* 코드 리팩토링 ([38d4e5c](https://github.com/skyleedevzero86/IdolGlow/commit/38d4e5c75839680981648c0f77015763a873b0d7))
+* 풍향 라벨 "-" 처리 및 예보 기준 보강 ([1cff736](https://github.com/skyleedevzero86/IdolGlow/commit/1cff736bb57f8c7847fbdbe9f4cb5ec4bf385ee4))
+* 행사 API 타임아웃과 mock 이미지 URL 처리 개선 ([5caa74e](https://github.com/skyleedevzero86/IdolGlow/commit/5caa74ee5938dfb1191a4d82f9ee237047109039))
+
+
+### Refactoring
+
+* DTO 파일 분리 ([ce8e077](https://github.com/skyleedevzero86/IdolGlow/commit/ce8e0773f190d55123f24c6a9b2c8cc3cef0397d))
+* 아키텍처 구조 안정화 (패키지 정렬·GraphQL 분리·UI DTO 격리) ([ce903dc](https://github.com/skyleedevzero86/IdolGlow/commit/ce903dc8eebdf0746a0e03cb8f2fca499084b468))
+
+
+### Tests
+
+* 아키텍처 Phase 1 baseline 테스트 및 Spring context load 추가 ([e299e88](https://github.com/skyleedevzero86/IdolGlow/commit/e299e8880d6ae6071f8bdd9828c3156dab4c2c6b))
+
 ## [0.4.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.3.0...v0.4.0) (2026-04-28)
 
 
