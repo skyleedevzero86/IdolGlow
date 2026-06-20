@@ -11,6 +11,7 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import tools.jackson.databind.ObjectMapper
 import java.io.StringReader
+import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.xml.parsers.DocumentBuilderFactory
@@ -27,6 +28,7 @@ class SeoulSjwPerformApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): List<FestivalEvent> {
+        if (!seoulSjwApiProperties.enabled) return emptyList()
         val key = seoulSjwApiProperties.apiKey.trim()
         if (key.isEmpty()) return emptyList()
         val start = ((pageNo.coerceAtLeast(1) - 1) * numOfRows.coerceIn(1, 1000)) + 1
@@ -45,6 +47,7 @@ class SeoulSjwPerformApiClient(
     }
 
     fun detail(performIdx: String): FestivalEvent? {
+        if (!seoulSjwApiProperties.enabled) return null
         val key = seoulSjwApiProperties.apiKey.trim()
         if (key.isEmpty()) return null
         val path = "/$key/json/SJWPerform/1/1/$performIdx"
@@ -80,6 +83,7 @@ class SeoulSjwPerformApiClient(
     private fun fetchSjwEnvelope(path: String): SjwEnvelope? {
         val base = seoulSjwApiProperties.baseUrl.trimEnd('/')
         val uri = "$base$path"
+        val timeout = Duration.ofSeconds(seoulSjwApiProperties.timeoutSeconds.coerceIn(1, 30))
         val raw =
             runCatching {
                 webClient
@@ -87,9 +91,15 @@ class SeoulSjwPerformApiClient(
                     .uri(uri)
                     .retrieve()
                     .bodyToMono(String::class.java)
-                    .block()
+                    .timeout(timeout)
+                    .block(timeout.plusSeconds(1))
             }.getOrElse {
-                log.warn("SJWPerform 호출 실패: {}", it.message)
+                val failure = failureMessage(it)
+                if (isTimeoutFailure(it)) {
+                    log.info("SJWPerform 호출 시간 초과. timeout={}s, cause={}", timeout.seconds, failure)
+                } else {
+                    log.warn("SJWPerform 호출 실패: {}", failure)
+                }
                 return null
             } ?: return null
         val trimmed = raw.trim()
@@ -103,6 +113,20 @@ class SeoulSjwPerformApiClient(
                     null
                 }
         }
+    }
+
+    private fun isTimeoutFailure(error: Throwable): Boolean =
+        generateSequence(error) { it.cause }
+            .any { cause ->
+                cause is java.util.concurrent.TimeoutException ||
+                    cause::class.simpleName?.contains("Timeout", ignoreCase = true) == true
+            }
+
+    private fun failureMessage(error: Throwable): String {
+        val root = generateSequence(error) { it.cause }.last()
+        val type = root::class.simpleName ?: root.javaClass.simpleName
+        val message = root.message?.trim()?.takeIf { it.isNotEmpty() }
+        return if (message == null) type else "$type: $message"
     }
 
     private fun parseSjwXmlEnvelope(xml: String): SjwEnvelope? =

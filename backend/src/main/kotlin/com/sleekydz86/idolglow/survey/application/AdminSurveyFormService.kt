@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormSummaryResponse
 import com.sleekydz86.idolglow.survey.infrastructure.SurveyFormJpaRepository
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -193,13 +194,24 @@ class AdminSurveyFormService(
         size: Int,
     ): Page<SurveyForm> {
         val pageable = PageRequest.of(pageIndex.coerceAtLeast(0), size)
-        return surveyFormJpaRepository.search(
-            keyword = keyword.takeIf { it.isNotBlank() },
-            status = status,
-            primaryCategory = primaryCategory,
-            secondaryCategory = secondaryCategory,
-            pageable = pageable,
-        )
+        val pageIds =
+            surveyFormJpaRepository.search(
+                keyword = keyword.takeIf { it.isNotBlank() },
+                status = status,
+                primaryCategory = primaryCategory,
+                secondaryCategory = secondaryCategory,
+                pageable = pageable,
+            )
+        if (pageIds.content.isEmpty()) {
+            return PageImpl(emptyList(), pageable, pageIds.totalElements)
+        }
+
+        val formsById =
+            surveyFormJpaRepository
+                .findAllWithSummaryDetailsByIdIn(pageIds.content)
+                .associateBy { it.id }
+        val orderedForms = pageIds.content.mapNotNull(formsById::get)
+        return PageImpl(orderedForms, pageable, pageIds.totalElements)
     }
 
     private fun validateCategory(

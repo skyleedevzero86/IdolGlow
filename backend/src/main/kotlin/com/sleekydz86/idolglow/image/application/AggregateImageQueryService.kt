@@ -16,18 +16,29 @@ class AggregateImageQueryService(
         return rows
             .groupBy { it.aggregateId }
             .mapNotNull { (id, list) ->
-                list.minByOrNull { it.sortOrder }?.url?.let { url -> id to url }
+                list
+                    .sortedBy { it.sortOrder }
+                    .firstNotNullOfOrNull { image -> publicImageUrlOrNull(image.url) }
+                    ?.let { url -> id to url }
             }.toMap()
     }
 
     fun orderedProductImageUrls(productId: Long): List<String> =
-        imageRepository.findByAggregate(ImageAggregateType.PRODUCT, productId).map { it.url }
+        imageRepository
+            .findByAggregate(ImageAggregateType.PRODUCT, productId)
+            .mapNotNull { publicImageUrlOrNull(it.url) }
 
     fun orderedOptionImageUrlsByOptionIds(optionIds: Collection<Long>): Map<Long, List<String>> {
         if (optionIds.isEmpty()) return emptyMap()
         val rows = imageRepository.findByAggregates(ImageAggregateType.OPTION, optionIds)
         return rows.groupBy { it.aggregateId }.mapValues { (_, list) ->
-            list.sortedBy { it.sortOrder }.map { it.url }
+            list.sortedBy { it.sortOrder }.mapNotNull { publicImageUrlOrNull(it.url) }
         }
+    }
+
+    private fun publicImageUrlOrNull(url: String): String? {
+        val trimmed = url.trim().takeIf { it.isNotEmpty() } ?: return null
+        if (trimmed.contains("mock-cloud.example", ignoreCase = true)) return null
+        return trimmed
     }
 }
