@@ -4,5 +4,5 @@ enum class ImageAggregateType {
     PRODUCT,
     OPTION,
     USER,
-    PRODUCT_REVIEW
+    PRODUCT_REVIEW,
 }

@@ -8,11 +8,9 @@ import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.user.domain.vo.Nickname
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 
-fun UserAccountStatus.toPlatformUserStatus(): PlatformUserStatus =
-    PlatformUserStatus.valueOf(name)
+fun UserAccountStatus.toPlatformUserStatus(): PlatformUserStatus = PlatformUserStatus.valueOf(name)
 
-fun PlatformUserStatus.toUserAccountStatus(): UserAccountStatus =
-    UserAccountStatus.valueOf(name)
+fun PlatformUserStatus.toUserAccountStatus(): UserAccountStatus = UserAccountStatus.valueOf(name)
 
 fun UserRole.toPlatformUserRole(): PlatformUserRole =
     when (this) {

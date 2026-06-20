@@ -21,10 +21,14 @@ class ReservationSlotWaitlistService(
     private val reservationJpaRepository: ReservationJpaRepository,
     private val notificationCommandService: NotificationCommandService,
 ) {
-
-    fun register(userId: Long, productId: Long, reservationSlotId: Long): SlotWaitlistEntryResponse {
-        val slot = reservationSlotJpaRepository.findByIdForUpdate(reservationSlotId)
-            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다: $reservationSlotId")
+    fun register(
+        userId: Long,
+        productId: Long,
+        reservationSlotId: Long,
+    ): SlotWaitlistEntryResponse {
+        val slot =
+            reservationSlotJpaRepository.findByIdForUpdate(reservationSlotId)
+                ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다: $reservationSlotId")
         require(slot.product.id == productId) { "해당 슬롯은 상품 ID $productId 에 속하지 않습니다." }
 
         val now = LocalDateTime.now()
@@ -37,8 +41,8 @@ class ReservationSlotWaitlistService(
             !reservationJpaRepository.existsByUserIdAndReservationSlotIdAndStatusIn(
                 userId,
                 reservationSlotId,
-                activeStatuses
-            )
+                activeStatuses,
+            ),
         ) {
             "이미 해당 시간에 진행 중인 예약이 있습니다."
         }
@@ -47,18 +51,24 @@ class ReservationSlotWaitlistService(
             "이미 웨이팅에 등록되어 있습니다."
         }
 
-        val saved = reservationSlotWaitlistJpaRepository.save(
-            ReservationSlotWaitlistEntry(
-                userId = userId,
-                reservationSlot = slot,
+        val saved =
+            reservationSlotWaitlistJpaRepository.save(
+                ReservationSlotWaitlistEntry(
+                    userId = userId,
+                    reservationSlot = slot,
+                ),
             )
-        )
         return SlotWaitlistEntryResponse.from(saved)
     }
 
-    fun unregister(userId: Long, productId: Long, reservationSlotId: Long) {
-        val slot = reservationSlotJpaRepository.findWithProductById(reservationSlotId)
-            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다: $reservationSlotId")
+    fun unregister(
+        userId: Long,
+        productId: Long,
+        reservationSlotId: Long,
+    ) {
+        val slot =
+            reservationSlotJpaRepository.findWithProductById(reservationSlotId)
+                ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다: $reservationSlotId")
         require(slot.product.id == productId) { "해당 슬롯은 상품 ID $productId 에 속하지 않습니다." }
 
         val removed = reservationSlotWaitlistJpaRepository.deleteByUserIdAndReservationSlotId(userId, reservationSlotId)
@@ -66,7 +76,8 @@ class ReservationSlotWaitlistService(
     }
 
     fun findMine(userId: Long): List<SlotWaitlistEntryResponse> =
-        reservationSlotWaitlistJpaRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+        reservationSlotWaitlistJpaRepository
+            .findAllByUserIdOrderByCreatedAtDesc(userId)
             .map { SlotWaitlistEntryResponse.from(it) }
 
     fun notifyWaitersForReleasedSlot(reservationSlotId: Long) {

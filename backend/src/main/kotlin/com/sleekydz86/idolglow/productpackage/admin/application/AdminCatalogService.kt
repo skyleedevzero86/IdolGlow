@@ -3,16 +3,14 @@ package com.sleekydz86.idolglow.productpackage.admin.application
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSlotResponse
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.CreateReservationSlotsCommand
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.ProductOptionAdminRepository
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.CreateReservationSlotsRequest
 import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
+import com.sleekydz86.idolglow.productpackage.option.application.dto.CreateOptionCommand
 import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
-import com.sleekydz86.idolglow.productpackage.option.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
+import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
-import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotRepository
@@ -22,7 +20,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import kotlin.collections.map
 
 @Transactional
 @Service
@@ -37,32 +34,37 @@ class AdminCatalogService(
     private val imageEventPublisher: ImageEventPublisher,
     private val adminAuditService: AdminAuditService,
 ) {
-
     fun findSlots(productId: Long): List<AdminReservationSlotResponse> =
-        reservationSlotRepository.findAllByProductId(productId)
+        reservationSlotRepository
+            .findAllByProductId(productId)
             .map(AdminReservationSlotResponse::from)
 
-    fun createSlots(productId: Long, request: CreateReservationSlotsRequest): List<AdminReservationSlotResponse> {
-        require(!request.endDate.isBefore(request.startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
-        require(request.startHour < request.endHour) { "시작 시간은 종료 시간보다 빨라야 합니다." }
+    fun createSlots(
+        productId: Long,
+        command: CreateReservationSlotsCommand,
+    ): List<AdminReservationSlotResponse> {
+        require(!command.endDate.isBefore(command.startDate)) { "종료일은 시작일보다 빠를 수 없습니다." }
+        require(command.startHour < command.endHour) { "시작 시간은 종료 시간보다 빨라야 합니다." }
 
-        val product = productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
+        val product =
+            productCommandRepository.findById(productId)
+                ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
 
-        val existingKeys = product.reservationSlots
-            .map { slotKey(it.reservationDate, it.startTime) }
-            .toMutableSet()
+        val existingKeys =
+            product.reservationSlots
+                .map { slotKey(it.reservationDate, it.startTime) }
+                .toMutableSet()
 
-        var currentDate = request.startDate
-        val adminNote = request.adminNote?.trim()?.takeIf { it.isNotEmpty() }
-        while (!currentDate.isAfter(request.endDate)) {
-            if (request.excludeWeekends &&
+        var currentDate = command.startDate
+        val adminNote = command.adminNote?.trim()?.takeIf { it.isNotEmpty() }
+        while (!currentDate.isAfter(command.endDate)) {
+            if (command.excludeWeekends &&
                 (currentDate.dayOfWeek == DayOfWeek.SATURDAY || currentDate.dayOfWeek == DayOfWeek.SUNDAY)
             ) {
                 currentDate = currentDate.plusDays(1)
                 continue
             }
-            for (hour in request.startHour until request.endHour) {
+            for (hour in command.startHour until command.endHour) {
                 val startTime = LocalTime.of(hour, 0)
                 val key = slotKey(currentDate, startTime)
                 if (key !in existingKeys) {
@@ -73,7 +75,7 @@ class AdminCatalogService(
                             startTime = startTime,
                             endTime = startTime.plusHours(1),
                             adminNote = adminNote,
-                        )
+                        ),
                     )
                     existingKeys += key
                 }
@@ -87,9 +89,9 @@ class AdminCatalogService(
 
     fun updateProduct(
         productId: Long,
-        request: CreateProductRequest,
+        command: CreateProductCommand,
     ) {
-        productCommandService.updateProduct(productId, request.toCommand())
+        productCommandService.updateProduct(productId, command)
         adminAuditService.log(
             actionCode = "PRODUCT_UPDATE",
             targetType = "PRODUCT",
@@ -100,9 +102,9 @@ class AdminCatalogService(
 
     fun updateOption(
         optionId: Long,
-        request: CreateOptionRequest,
+        command: CreateOptionCommand,
     ) {
-        optionCommandService.updateOption(optionId, request.toCommand())
+        optionCommandService.updateOption(optionId, command)
         adminAuditService.log(
             actionCode = "OPTION_UPDATE",
             targetType = "OPTION",
@@ -115,8 +117,9 @@ class AdminCatalogService(
         slotId: Long,
         markdown: String?,
     ): AdminReservationSlotResponse {
-        val slot = reservationSlotRepository.findByIdForUpdate(slotId)
-            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
+        val slot =
+            reservationSlotRepository.findByIdForUpdate(slotId)
+                ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
         slot.updateAdminNote(markdown)
         adminAuditService.log(
             actionCode = "SLOT_NOTE_UPDATE",
@@ -128,8 +131,9 @@ class AdminCatalogService(
     }
 
     fun deleteSlot(slotId: Long) {
-        val slot = reservationSlotRepository.findByIdForUpdate(slotId)
-            ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
+        val slot =
+            reservationSlotRepository.findByIdForUpdate(slotId)
+                ?: throw IllegalArgumentException("예약 슬롯을 찾을 수 없습니다. slotId=$slotId")
         val now = LocalDateTime.now()
         slot.validateAvailability(slot.product.id, now)
         require(!reservationRepository.existsByReservationSlotId(slotId)) {
@@ -155,8 +159,9 @@ class AdminCatalogService(
         require(!productOptionAdminRepository.existsByOptionId(optionId)) {
             "상품에 연결된 옵션은 삭제할 수 없습니다."
         }
-        val option = optionRepository.findById(optionId)
-            ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
+        val option =
+            optionRepository.findById(optionId)
+                ?: throw IllegalArgumentException("옵션을 찾을 수 없습니다. optionId=$optionId")
         imageEventPublisher.publishDelete(ImageAggregateType.OPTION, optionId)
         optionRepository.delete(option)
         adminAuditService.log(
@@ -167,6 +172,8 @@ class AdminCatalogService(
         )
     }
 
-    private fun slotKey(date: LocalDate, startTime: LocalTime): String =
-        "$date|$startTime"
+    private fun slotKey(
+        date: LocalDate,
+        startTime: LocalTime,
+    ): String = "$date|$startTime"
 }

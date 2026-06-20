@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mypage.graphql
+package com.sleekydz86.idolglow.mypage.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.mypage.application.MypagePromoService
@@ -12,10 +12,9 @@ class MyPageGraphQlController(
     private val mypagePromoService: MypagePromoService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
     fun myPromo(): MypagePromoGraphQlResponse =
         MypagePromoGraphQlResponse.from(
-            mypagePromoService.promoStrip(authenticatedUserIdResolver.resolveRequired())
+            mypagePromoService.promoStrip(authenticatedUserIdResolver.resolveRequired()),
         )
 }

@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.auth.filter
+package com.sleekydz86.idolglow.platform.auth.adapter.web.filter
 
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.platform.auth.util.JwtTokenUtil
@@ -22,7 +22,6 @@ class PlatformJwtAuthenticationFilter(
     private val userDetailsService: UserDetailsService,
     private val properties: PlatformAuthProperties,
 ) : OncePerRequestFilter() {
-
     private val log = LoggerFactory.getLogger(PlatformJwtAuthenticationFilter::class.java)
     private val pathMatcher = AntPathMatcher()
 

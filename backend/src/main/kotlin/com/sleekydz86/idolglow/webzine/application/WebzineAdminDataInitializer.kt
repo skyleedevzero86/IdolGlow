@@ -19,7 +19,6 @@ import java.time.LocalDate
 class WebzineAdminDataInitializer(
     private val webzineIssueRepository: WebzineIssueRepository,
 ) : ApplicationRunner {
-
     private val log = LoggerFactory.getLogger(WebzineAdminDataInitializer::class.java)
 
     @Transactional
@@ -28,12 +27,13 @@ class WebzineAdminDataInitializer(
             return
         }
 
-        val volume101 = createIssue(
-            volume = 101,
-            issueDate = LocalDate.of(2026, 3, 1),
-            coverImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
-            teaser = "전시, 공연, 포럼, 행사 콘텐츠가 하나의 호 안에서 어떻게 묶이는지 살펴보는 웹진 샘플 데이터입니다.",
-        )
+        val volume101 =
+            createIssue(
+                volume = 101,
+                issueDate = LocalDate.of(2026, 3, 1),
+                coverImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
+                teaser = "전시, 공연, 포럼, 행사 콘텐츠가 하나의 호 안에서 어떻게 묶이는지 살펴보는 웹진 샘플 데이터입니다.",
+            )
         addArticle(
             issue = volume101,
             slug = "language-of-being-beyond-fragments",
@@ -49,23 +49,25 @@ class WebzineAdminDataInitializer(
             authorEmail = "nayeongso@daum.net",
             creditLine = "Video 디자이너 양채영",
             highlightQuote = "\"당신은 어떤 문장을 적고 싶나요?\" 한 권의 책이 된 전시, 《파편의 파편》",
-            galleryImageUrls = listOf(
-                "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1400&q=80",
-                "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
-                "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
-            ),
-            sections = listOf(
-                WebzineArticleSectionDraft(
-                    heading = "요약정보",
-                    body = "우리는 대개 부서지고 깨진 것을 불완전하다고 여긴다.\n\n하지만 전시는 파편을 오히려 새로운 가능성의 시작점으로 읽는다.",
-                    note = null,
+            galleryImageUrls =
+                listOf(
+                    "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1400&q=80",
+                    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+                    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
                 ),
-                WebzineArticleSectionDraft(
-                    heading = "전시의 언어",
-                    body = "정광희 작가에게 파편은 고정관념의 틀을 벗어나기 위한 의도적인 행위의 산물이다.\n\n작품은 파편이 흩어지는 순간 오히려 다른 가능성이 열린다는 감각을 전한다.",
-                    note = "파편은 해체가 아니라 생성의 시작이라는 전시 해설.",
+            sections =
+                listOf(
+                    WebzineArticleSectionDraft(
+                        heading = "요약정보",
+                        body = "우리는 대개 부서지고 깨진 것을 불완전하다고 여긴다.\n\n하지만 전시는 파편을 오히려 새로운 가능성의 시작점으로 읽는다.",
+                        note = null,
+                    ),
+                    WebzineArticleSectionDraft(
+                        heading = "전시의 언어",
+                        body = "정광희 작가에게 파편은 고정관념의 틀을 벗어나기 위한 의도적인 행위의 산물이다.\n\n작품은 파편이 흩어지는 순간 오히려 다른 가능성이 열린다는 감각을 전한다.",
+                        note = "파편은 해체가 아니라 생성의 시작이라는 전시 해설.",
+                    ),
                 ),
-            ),
         )
         addArticle(
             issue = volume101,
@@ -81,13 +83,14 @@ class WebzineAdminDataInitializer(
             authorName = "Idol Glow 편집부",
             authorEmail = "webzine@idolglow.local",
             creditLine = "Photo Idol Glow Archive",
-            sections = listOf(
-                WebzineArticleSectionDraft(
-                    heading = "공연 리듬",
-                    body = "수요극장은 관객의 한 주를 다시 묶어주는 반복 프로그램이다.\n\n공연 이후의 감상과 연결 콘텐츠까지 한 흐름으로 설계할 수 있다.",
-                    note = null,
+            sections =
+                listOf(
+                    WebzineArticleSectionDraft(
+                        heading = "공연 리듬",
+                        body = "수요극장은 관객의 한 주를 다시 묶어주는 반복 프로그램이다.\n\n공연 이후의 감상과 연결 콘텐츠까지 한 흐름으로 설계할 수 있다.",
+                        note = null,
+                    ),
                 ),
-            ),
         )
         addArticle(
             issue = volume101,
@@ -103,13 +106,14 @@ class WebzineAdminDataInitializer(
             authorName = "이수미",
             authorEmail = "academy@idolglow.local",
             creditLine = "Photo Program Team",
-            sections = listOf(
-                WebzineArticleSectionDraft(
-                    heading = "체험 포인트",
-                    body = "아이들과 가족이 함께 참여할 수 있는 동선과 재료 구성이 중요하다.\n\n관리 화면에서는 카드 썸네일과 태그만으로도 핵심이 보여야 한다.",
-                    note = null,
+            sections =
+                listOf(
+                    WebzineArticleSectionDraft(
+                        heading = "체험 포인트",
+                        body = "아이들과 가족이 함께 참여할 수 있는 동선과 재료 구성이 중요하다.\n\n관리 화면에서는 카드 썸네일과 태그만으로도 핵심이 보여야 한다.",
+                        note = null,
+                    ),
                 ),
-            ),
         )
         addArticle(
             issue = volume101,
@@ -125,22 +129,24 @@ class WebzineAdminDataInitializer(
             authorName = "김보라",
             authorEmail = "event@idolglow.local",
             creditLine = "Photo Event Team",
-            sections = listOf(
-                WebzineArticleSectionDraft(
-                    heading = "현장 분위기",
-                    body = "현장 기사에서는 사진 비중과 카드 리스트에서의 시각적 임팩트가 중요하다.\n\n대표 이미지와 짧은 설명만으로도 행사의 성격이 드러나야 한다.",
-                    note = null,
+            sections =
+                listOf(
+                    WebzineArticleSectionDraft(
+                        heading = "현장 분위기",
+                        body = "현장 기사에서는 사진 비중과 카드 리스트에서의 시각적 임팩트가 중요하다.\n\n대표 이미지와 짧은 설명만으로도 행사의 성격이 드러나야 한다.",
+                        note = null,
+                    ),
                 ),
-            ),
         )
         webzineIssueRepository.save(volume101)
 
-        val volume100 = createIssue(
-            volume = 100,
-            issueDate = LocalDate.of(2026, 1, 1),
-            coverImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
-            teaser = "100호 특집을 위한 샘플 호입니다.",
-        )
+        val volume100 =
+            createIssue(
+                volume = 100,
+                issueDate = LocalDate.of(2026, 1, 1),
+                coverImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+                teaser = "100호 특집을 위한 샘플 호입니다.",
+            )
         addArticle(
             issue = volume100,
             slug = "artificial-you-exhibition",
@@ -155,20 +161,36 @@ class WebzineAdminDataInitializer(
             authorName = "Idol Glow 편집부",
             authorEmail = "webzine@idolglow.local",
             creditLine = "Design Idol Glow",
-            sections = listOf(
-                WebzineArticleSectionDraft(
-                    heading = "특집 개요",
-                    body = "100호 특집은 강한 첫 화면과 카드 리스트의 통일된 톤이 중요하다.",
-                    note = null,
+            sections =
+                listOf(
+                    WebzineArticleSectionDraft(
+                        heading = "특집 개요",
+                        body = "100호 특집은 강한 첫 화면과 카드 리스트의 통일된 톤이 중요하다.",
+                        note = null,
+                    ),
                 ),
-            ),
         )
         webzineIssueRepository.save(volume100)
 
         listOf(
-            createIssue(99, LocalDate.of(2025, 12, 1), "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80", "Vol.99 샘플 호입니다."),
-            createIssue(98, LocalDate.of(2025, 11, 1), "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80", "Vol.98 샘플 호입니다."),
-            createIssue(97, LocalDate.of(2025, 10, 1), "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80", "Vol.97 샘플 호입니다."),
+            createIssue(
+                99,
+                LocalDate.of(2025, 12, 1),
+                "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
+                "Vol.99 샘플 호입니다.",
+            ),
+            createIssue(
+                98,
+                LocalDate.of(2025, 11, 1),
+                "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+                "Vol.98 샘플 호입니다.",
+            ),
+            createIssue(
+                97,
+                LocalDate.of(2025, 10, 1),
+                "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80",
+                "Vol.97 샘플 호입니다.",
+            ),
         ).forEach(webzineIssueRepository::save)
 
         log.info("웹진 Idol Glow 관리자 샘플 데이터를 생성했습니다.")
@@ -179,13 +201,14 @@ class WebzineAdminDataInitializer(
         issueDate: LocalDate,
         coverImageUrl: String,
         teaser: String,
-    ): WebzineIssue = WebzineIssue.create(
-        slug = "vol-$volume",
-        volume = volume,
-        issueDate = issueDate,
-        coverImageUrl = coverImageUrl,
-        teaser = teaser,
-    )
+    ): WebzineIssue =
+        WebzineIssue.create(
+            slug = "vol-$volume",
+            volume = volume,
+            issueDate = issueDate,
+            coverImageUrl = coverImageUrl,
+            teaser = teaser,
+        )
 
     private fun addArticle(
         issue: WebzineIssue,
@@ -209,23 +232,24 @@ class WebzineAdminDataInitializer(
             WebzineArticle.create(
                 issue = issue,
                 slug = slug,
-                draft = WebzineArticleDraft(
-                    title = title,
-                    kicker = kicker,
-                    summary = summary,
-                    heroImageUrl = heroImageUrl,
-                    cardImageUrl = cardImageUrl,
-                    category = category,
-                    formatLabel = formatLabel,
-                    authorName = authorName,
-                    authorEmail = authorEmail,
-                    creditLine = creditLine,
-                    highlightQuote = highlightQuote,
-                    sections = sections,
-                    galleryImageUrls = listOf(heroImageUrl, cardImageUrl) + galleryImageUrls,
-                    tags = tags,
-                )
-            )
+                draft =
+                    WebzineArticleDraft(
+                        title = title,
+                        kicker = kicker,
+                        summary = summary,
+                        heroImageUrl = heroImageUrl,
+                        cardImageUrl = cardImageUrl,
+                        category = category,
+                        formatLabel = formatLabel,
+                        authorName = authorName,
+                        authorEmail = authorEmail,
+                        creditLine = creditLine,
+                        highlightQuote = highlightQuote,
+                        sections = sections,
+                        galleryImageUrls = listOf(heroImageUrl, cardImageUrl) + galleryImageUrls,
+                        tags = tags,
+                    ),
+            ),
         )
     }
 }

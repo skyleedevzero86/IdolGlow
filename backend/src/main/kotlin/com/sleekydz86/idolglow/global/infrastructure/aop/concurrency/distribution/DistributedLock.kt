@@ -6,5 +6,5 @@ annotation class DistributedLock(
     val key: String,
     val prefix: String = "lock",
     val waitTimeMillis: Long = 1_000,
-    val leaseTimeMillis: Long = 10_000
+    val leaseTimeMillis: Long = 10_000,
 )

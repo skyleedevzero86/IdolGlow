@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component
 class ClasspathSubwayLineCatalogAdapter(
     private val objectMapper: ObjectMapper,
 ) : SubwayLineCatalogPort {
-
     private val cached: List<SubwayLine> by lazy { readCatalogLines() }
 
     override fun loadAllLines(): List<SubwayLine> = cached
@@ -22,9 +21,10 @@ class ClasspathSubwayLineCatalogAdapter(
         if (!res.exists()) {
             return emptyList()
         }
-        val rows: List<LineJson> = res.inputStream.use { stream ->
-            objectMapper.readValue(stream, object : TypeReference<List<LineJson>>() {})
-        }
+        val rows: List<LineJson> =
+            res.inputStream.use { stream ->
+                objectMapper.readValue(stream, object : TypeReference<List<LineJson>>() {})
+            }
         return rows.map { SubwayLine(id = it.id, name = it.name, colorHex = it.colorHex) }
     }
 

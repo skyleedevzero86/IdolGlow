@@ -1,4 +1,5 @@
-FROM jenkins/jenkins:lts-jdk21
+ARG JENKINS_BASE_IMAGE=jenkins/jenkins:jdk21
+FROM ${JENKINS_BASE_IMAGE}
 
 USER root
 

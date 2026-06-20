@@ -14,7 +14,3 @@ data class CreateExchangeAlertRequest(
     @field:Positive
     val targetRate: BigDecimal,
 )
-
-data class ExchangeAlertCreatedResponse(
-    val id: Long,
-)

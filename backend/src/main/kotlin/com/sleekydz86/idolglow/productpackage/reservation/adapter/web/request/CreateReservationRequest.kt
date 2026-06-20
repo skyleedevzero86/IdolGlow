@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui.request
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request
 
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
 import io.swagger.v3.oas.annotations.media.Schema
@@ -14,13 +14,16 @@ data class CreateReservationRequest(
     @field:Schema(description = "결제 총액", example = "300000.00")
     @field:NotNull
     @field:Positive
-    var totalPrice: BigDecimal
+    var totalPrice: BigDecimal,
 )
 
-fun CreateReservationRequest.toCommand(userId: Long, productId: Long): CreateReservationCommand =
+fun CreateReservationRequest.toCommand(
+    userId: Long,
+    productId: Long,
+): CreateReservationCommand =
     CreateReservationCommand(
         productId = productId,
         reservationSlotId = reservationSlotId,
         userId = userId,
-        totalPrice = totalPrice
+        totalPrice = totalPrice,
     )

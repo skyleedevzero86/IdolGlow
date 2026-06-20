@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.attraction.ui
+package com.sleekydz86.idolglow.productpackage.attraction.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -66,11 +66,11 @@ interface ProductTourAttractionApi {
                                     }
                                   ]
                                 }
-                                """
-                            )
-                        ]
-                    )
-                ]
+                                """,
+                            ),
+                        ],
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "400",
@@ -81,23 +81,23 @@ interface ProductTourAttractionApi {
                         examples = [
                             ExampleObject(
                                 name = "base_ym 형식 오류",
-                                value = """{"name":"INVALID_BASE_YM","message":"base_ym 형식이 올바르지 않습니다. YYYYMM 형식을 사용해 주세요.","errorCode":"INVALID_BASE_YM"}"""
-                            )
-                        ]
-                    )
-                ]
+                                value = """{"name":"INVALID_BASE_YM","message":"base_ym 형식이 올바르지 않습니다. YYYYMM 형식을 사용해 주세요.","errorCode":"INVALID_BASE_YM"}""",
+                            ),
+                        ],
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "404",
                 description = "상품 없음",
-                content = [Content(schema = Schema(hidden = true))]
+                content = [Content(schema = Schema(hidden = true))],
             ),
             ApiResponse(
                 responseCode = "502",
                 description = "외부 관광 API 오류",
-                content = [Content(schema = Schema(hidden = true))]
+                content = [Content(schema = Schema(hidden = true))],
             ),
-        ]
+        ],
     )
     fun findTourAttractions(
         @Parameter(description = "상품 ID", example = "7")

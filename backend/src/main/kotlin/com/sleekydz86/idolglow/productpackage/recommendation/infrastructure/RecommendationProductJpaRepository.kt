@@ -18,7 +18,7 @@ interface RecommendationProductJpaRepository : JpaRepository<Product, Long> {
           and (:tag is null or lower(t.tagName) = lower(:tag))
           and (:keyword is null or lower(p.name) like lower(concat('%', :keyword, '%')))
         order by p.recommendationScore desc, p.id desc
-        """
+        """,
     )
     fun findAdminPicked(
         @Param("tag") tag: String?,

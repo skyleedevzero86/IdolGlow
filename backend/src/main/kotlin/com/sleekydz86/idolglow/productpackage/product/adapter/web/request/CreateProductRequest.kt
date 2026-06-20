@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.product.ui.request
+package com.sleekydz86.idolglow.productpackage.product.adapter.web.request
 
 import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLocationPayload

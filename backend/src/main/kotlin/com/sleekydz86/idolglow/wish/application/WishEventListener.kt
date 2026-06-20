@@ -11,9 +11,8 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 @Component
 class WishEventListener(
-    private val wishRepository: WishRepository
+    private val wishRepository: WishRepository,
 ) {
-
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun handleWishDelete(event: WishDeleteEvent) {

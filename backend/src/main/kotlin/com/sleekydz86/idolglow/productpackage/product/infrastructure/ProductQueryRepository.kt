@@ -16,7 +16,6 @@ class ProductQueryRepository(
     private val entityManager: EntityManager,
     private val objectMapper: ObjectMapper,
 ) {
-
     fun hydrateForBrowse(
         orderedIds: List<Long>,
         wishCounts: Map<Long, Long>,
@@ -27,35 +26,44 @@ class ProductQueryRepository(
         if (orderedIds.isEmpty()) return emptyList()
 
         @Suppress("UNCHECKED_CAST")
-        val products = entityManager.createQuery(
-            """
-            select distinct p from Product p
-            left join fetch p.productOptions po
-            left join fetch po.option o
-            where p.id in :ids
-            """.trimIndent(),
-            Product::class.java
-        ).setParameter("ids", orderedIds).resultList as List<Product>
+        val products =
+            entityManager
+                .createQuery(
+                    """
+                    select distinct p from Product p
+                    left join fetch p.productOptions po
+                    left join fetch po.option o
+                    where p.id in :ids
+                    """.trimIndent(),
+                    Product::class.java,
+                ).setParameter("ids", orderedIds)
+                .resultList as List<Product>
 
         @Suppress("UNCHECKED_CAST")
         val locationRows =
-            entityManager.createQuery(
-                """
-                select pl from ProductLocation pl
-                join pl.product p
-                where p.id in :ids
-                """.trimIndent(),
-                ProductLocation::class.java,
-            ).setParameter("ids", orderedIds).resultList as List<ProductLocation>
+            entityManager
+                .createQuery(
+                    """
+                    select pl from ProductLocation pl
+                    join pl.product p
+                    where p.id in :ids
+                    """.trimIndent(),
+                    ProductLocation::class.java,
+                ).setParameter("ids", orderedIds)
+                .resultList as List<ProductLocation>
         val locationByProductId = locationRows.associateBy { it.product.id }
 
-        val tags = entityManager.createQuery(
-            "select pt from ProductTag pt where pt.product.id in :ids",
-            ProductTag::class.java
-        ).setParameter("ids", orderedIds).resultList
+        val tags =
+            entityManager
+                .createQuery(
+                    "select pt from ProductTag pt where pt.product.id in :ids",
+                    ProductTag::class.java,
+                ).setParameter("ids", orderedIds)
+                .resultList
 
         val tagNamesByProductId: Map<Long, List<String>> =
-            tags.groupBy { it.product.id }
+            tags
+                .groupBy { it.product.id }
                 .mapValues { (_, values) -> values.map { it.tagName }.distinct() }
 
         val productById = products.associateBy { it.id }

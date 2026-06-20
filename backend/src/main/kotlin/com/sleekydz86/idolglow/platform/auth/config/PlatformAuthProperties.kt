@@ -30,18 +30,19 @@ class PlatformAuthProperties {
 
     class HttpAuthSettings {
         var accessTokenCookieName: String = "accessToken"
-        var jwtFilterPermitPaths: MutableList<String> = mutableListOf(
-            "/actuator/**",
-            "/actuator",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/error",
-            "/favicon.ico",
-            "/platform/auth/login",
-            "/platform/auth/register",
-            "/platform/auth/refresh",
-            "/platform/auth/recovery/initiate",
-            "/platform/auth/recovery/reset",
-        )
+        var jwtFilterPermitPaths: MutableList<String> =
+            mutableListOf(
+                "/actuator/**",
+                "/actuator",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/error",
+                "/favicon.ico",
+                "/platform/auth/login",
+                "/platform/auth/register",
+                "/platform/auth/refresh",
+                "/platform/auth/recovery/initiate",
+                "/platform/auth/recovery/reset",
+            )
     }
 }

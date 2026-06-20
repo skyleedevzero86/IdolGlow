@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.user.auth.graphql
+package com.sleekydz86.idolglow.user.auth.adapter.graphql
 
+import com.sleekydz86.idolglow.user.auth.adapter.web.request.SignupRequest
 import com.sleekydz86.idolglow.user.auth.application.AuthService
 import com.sleekydz86.idolglow.user.auth.application.SignupService
-import com.sleekydz86.idolglow.user.auth.ui.request.SignupRequest
 import jakarta.validation.Valid
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -14,27 +14,31 @@ class AuthGraphQlController(
     private val signupService: SignupService,
     private val authService: AuthService,
 ) {
+    @QueryMapping
+    fun checkSignupEmail(
+        @Argument email: String?,
+    ): SignupCheckGraphQlResponse = SignupCheckGraphQlResponse.from(signupService.checkEmailField(email.orEmpty()))
 
     @QueryMapping
-    fun checkSignupEmail(@Argument email: String?): SignupCheckGraphQlResponse =
-        SignupCheckGraphQlResponse.from(signupService.checkEmailField(email.orEmpty()))
-
-    @QueryMapping
-    fun checkSignupNickname(@Argument nickname: String?): SignupCheckGraphQlResponse =
-        SignupCheckGraphQlResponse.from(signupService.checkNicknameField(nickname.orEmpty()))
+    fun checkSignupNickname(
+        @Argument nickname: String?,
+    ): SignupCheckGraphQlResponse = SignupCheckGraphQlResponse.from(signupService.checkNicknameField(nickname.orEmpty()))
 
     @MutationMapping
-    fun signup(@Argument @Valid input: SignupRequest): AuthTokenGraphQlResponse =
+    fun signup(
+        @Argument @Valid input: SignupRequest,
+    ): AuthTokenGraphQlResponse =
         AuthTokenGraphQlResponse.from(
             signupService.signup(
                 email = input.email,
                 rawNickname = input.nickname,
                 password = input.password,
                 subscribeToUpdates = input.subscribeToUpdates,
-            )
+            ),
         )
 
     @MutationMapping
-    fun reissueToken(@Argument refreshToken: String): AuthTokenGraphQlResponse =
-        AuthTokenGraphQlResponse.from(authService.reissue(refreshToken))
+    fun reissueToken(
+        @Argument refreshToken: String,
+    ): AuthTokenGraphQlResponse = AuthTokenGraphQlResponse.from(authService.reissue(refreshToken))
 }

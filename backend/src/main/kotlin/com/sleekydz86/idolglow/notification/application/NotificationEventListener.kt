@@ -12,7 +12,6 @@ class NotificationEventListener(
     private val notificationRepository: NotificationRepository,
     private val notificationStreamService: NotificationStreamService,
 ) {
-
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleNotificationCreated(event: NotificationCreatedEvent) {
         val notification = notificationRepository.findById(event.notificationId) ?: return

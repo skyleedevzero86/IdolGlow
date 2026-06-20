@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.admin.ui.request
+package com.sleekydz86.idolglow.admin.adapter.web.request
 
 import com.sleekydz86.idolglow.subscription.application.dto.UpsertSubscriptionDispatchScheduleCommand
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType

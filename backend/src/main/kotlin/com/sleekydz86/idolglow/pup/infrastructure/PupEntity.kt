@@ -9,8 +9,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
-import java.time.LocalDateTime
 import java.sql.Types
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "tb_popup_manage")

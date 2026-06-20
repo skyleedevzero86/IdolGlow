@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.productpackage.product.graphql
+package com.sleekydz86.idolglow.productpackage.product.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
 import java.math.BigDecimal
 
@@ -34,9 +34,10 @@ data class ProductSummaryGraphQlResponse(
                 totalPrice = response.totalPrice.asGraphQlNumber(),
                 tagNames = response.tagNames,
                 location = response.location?.let { ProductLocationSummaryGraphQlResponse.from(it) },
-                distanceMeters = response.distanceMeters?.let { d ->
-                    BigDecimal.valueOf(d).stripTrailingZeros().toPlainString()
-                },
+                distanceMeters =
+                    response.distanceMeters?.let { d ->
+                        BigDecimal.valueOf(d).stripTrailingZeros().toPlainString()
+                    },
                 wishCount = response.wishCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                 averageRating = BigDecimal.valueOf(response.averageRating).asGraphQlNumber(),
                 reviewCount = response.reviewCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),

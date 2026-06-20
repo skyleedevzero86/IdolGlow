@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request.CreateReservationRequest
+import com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationQueryService
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
-import com.sleekydz86.idolglow.productpackage.reservation.ui.request.CreateReservationRequest
-import com.sleekydz86.idolglow.productpackage.reservation.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -24,16 +24,16 @@ class ReservationController(
     private val reservationCommandService: ReservationCommandService,
     private val reservationQueryService: ReservationQueryService,
 ) : ReservationApi {
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     override fun createReservation(
         @LoginUser userId: Long,
         @PathVariable productId: Long,
-        @Valid @RequestBody request: CreateReservationRequest
+        @Valid @RequestBody request: CreateReservationRequest,
     ): ResponseEntity<ReservationCreatedResponse> {
         val reservation = reservationCommandService.createReservation(request.toCommand(userId, productId))
-        return ResponseEntity.created(URI.create("/products/$productId/reservations/${reservation.id}"))
+        return ResponseEntity
+            .created(URI.create("/products/$productId/reservations/${reservation.id}"))
             .body(reservation)
     }
 
@@ -47,7 +47,7 @@ class ReservationController(
         require(existing.productId == productId) { "해당 예약은 상품 ID $productId 에 속하지 않습니다." }
         reservationCommandService.cancelReservationByUser(reservationId, userId)
         return ResponseEntity.ok(
-            reservationQueryService.findReservationDetail(reservationId, userId)
+            reservationQueryService.findReservationDetail(reservationId, userId),
         )
     }
 }

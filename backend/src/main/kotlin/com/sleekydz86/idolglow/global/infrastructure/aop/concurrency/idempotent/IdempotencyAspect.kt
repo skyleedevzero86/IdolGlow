@@ -11,11 +11,13 @@ import java.util.concurrent.TimeoutException
 @Aspect
 class IdempotencyAspect(
     private val idempotencyStore: IdempotencyStore,
-    private val keyResolver: KeyExpressionResolver
+    private val keyResolver: KeyExpressionResolver,
 ) {
-
     @Around("@annotation(idempotent)")
-    fun around(joinPoint: ProceedingJoinPoint, idempotent: Idempotent): Any? {
+    fun around(
+        joinPoint: ProceedingJoinPoint,
+        idempotent: Idempotent,
+    ): Any? {
         val resolvedKey = keyResolver.resolve(idempotent.key, joinPoint)
         val storeKey = "${idempotent.prefix}:$resolvedKey"
         val entry = idempotencyStore.getOrCreate(storeKey, idempotent.ttlMillis)

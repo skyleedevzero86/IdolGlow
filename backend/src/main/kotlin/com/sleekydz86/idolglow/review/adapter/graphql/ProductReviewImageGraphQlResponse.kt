@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.review.graphql
+package com.sleekydz86.idolglow.review.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewImageResponse
 
 data class ProductReviewImageGraphQlResponse(
@@ -15,7 +15,7 @@ data class ProductReviewImageGraphQlResponse(
                 id = response.id.asGraphQlId(),
                 originalFilename = response.originalFilename,
                 url = response.url,
-                sortOrder = response.sortOrder
+                sortOrder = response.sortOrder,
             )
     }
 }

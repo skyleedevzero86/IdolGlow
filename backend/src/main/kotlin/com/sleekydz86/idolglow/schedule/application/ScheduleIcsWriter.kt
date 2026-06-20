@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 object ScheduleIcsWriter {
-
     private val utcFmt: DateTimeFormatter =
         DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(java.time.ZoneOffset.UTC)
 
@@ -54,7 +53,10 @@ object ScheduleIcsWriter {
 
     fun toUtf8Bytes(ics: String): ByteArray = ics.toByteArray(StandardCharsets.UTF_8)
 
-    private fun buildDescription(schedule: ScheduleResponse, productPageUrl: String?): String {
+    private fun buildDescription(
+        schedule: ScheduleResponse,
+        productPageUrl: String?,
+    ): String {
         val lines = mutableListOf<String>()
         lines += "IdolGlow 일정"
         lines += "상품 ID: ${schedule.productId}"
@@ -64,7 +66,10 @@ object ScheduleIcsWriter {
         return escapeIcsText(lines.joinToString("\n"))
     }
 
-    private fun valarm(trigger: String, description: String): String =
+    private fun valarm(
+        trigger: String,
+        description: String,
+    ): String =
         listOf(
             "BEGIN:VALARM",
             "TRIGGER:$trigger",
@@ -73,8 +78,10 @@ object ScheduleIcsWriter {
             "END:VALARM",
         ).joinToString("\r\n")
 
-    private fun foldProperty(name: String, escapedValue: String): String =
-        foldRawProperty("$name:$escapedValue")
+    private fun foldProperty(
+        name: String,
+        escapedValue: String,
+    ): String = foldRawProperty("$name:$escapedValue")
 
     private fun foldRawProperty(line: String): String {
         val bytes = line.toByteArray(StandardCharsets.UTF_8)
@@ -103,14 +110,18 @@ object ScheduleIcsWriter {
         return out.toString()
     }
 
-    private fun isUtf8CharBoundary(arr: ByteArray, index: Int): Boolean {
+    private fun isUtf8CharBoundary(
+        arr: ByteArray,
+        index: Int,
+    ): Boolean {
         if (index <= 0 || index >= arr.size) return true
         val b = arr[index].toInt() and 0xff
         return b and 0xC0 != 0x80
     }
 
     private fun escapeIcsText(s: String): String =
-        s.replace("\\", "\\\\")
+        s
+            .replace("\\", "\\\\")
             .replace(";", "\\;")
             .replace(",", "\\,")
             .replace("\r\n", "\\n")

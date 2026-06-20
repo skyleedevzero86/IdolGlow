@@ -1,9 +1,9 @@
-package com.sleekydz86.idolglow.payment.ui
+package com.sleekydz86.idolglow.payment.adapter.web
 
+import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookRequest
+import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookStatus
 import com.sleekydz86.idolglow.payment.application.ReservationPaymentService
 import com.sleekydz86.idolglow.payment.application.dto.PaymentResponse
-import com.sleekydz86.idolglow.payment.ui.request.MockPaymentWebhookRequest
-import com.sleekydz86.idolglow.payment.ui.request.MockPaymentWebhookStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -28,42 +28,42 @@ class PaymentController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
-
     @Operation(summary = "모의 결제 웹훅 처리", description = "테스트용 결제 상태 변경 웹훅을 받아 예약 결제 상태를 갱신합니다.")
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "결제 상태 반영 성공",
-                content = [Content(schema = Schema(implementation = PaymentResponse::class))]
+                content = [Content(schema = Schema(implementation = PaymentResponse::class))],
             ),
-            ApiResponse(responseCode = "400", description = "잘못된 요청 또는 웹훅 시크릿 불일치")
-        ]
+            ApiResponse(responseCode = "400", description = "잘못된 요청 또는 웹훅 시크릿 불일치"),
+        ],
     )
     @PostMapping("/webhook")
     fun handleWebhook(
         @Parameter(description = "모의 웹훅 인증 시크릿", example = "idolglow-mock-secret")
         @RequestHeader("X-Mock-Payment-Secret", required = false) secret: String?,
-        @Valid @RequestBody request: MockPaymentWebhookRequest
+        @Valid @RequestBody request: MockPaymentWebhookRequest,
     ): ResponseEntity<PaymentResponse> {
         require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
 
-        val payment = when (request.status) {
-            MockPaymentWebhookStatus.SUCCEEDED ->
-                reservationPaymentService.handlePaymentSucceeded(request.paymentReference)
+        val payment =
+            when (request.status) {
+                MockPaymentWebhookStatus.SUCCEEDED ->
+                    reservationPaymentService.handlePaymentSucceeded(request.paymentReference)
 
-            MockPaymentWebhookStatus.FAILED ->
-                reservationPaymentService.handlePaymentFailed(
-                    paymentReference = request.paymentReference,
-                    reason = request.failureReason ?: "모의 결제가 실패했습니다."
-                )
+                MockPaymentWebhookStatus.FAILED ->
+                    reservationPaymentService.handlePaymentFailed(
+                        paymentReference = request.paymentReference,
+                        reason = request.failureReason ?: "모의 결제가 실패했습니다.",
+                    )
 
-            MockPaymentWebhookStatus.CANCELED ->
-                reservationPaymentService.handlePaymentCanceled(
-                    paymentReference = request.paymentReference,
-                    reason = request.failureReason ?: "모의 결제가 취소되었습니다."
-                )
-        }
+                MockPaymentWebhookStatus.CANCELED ->
+                    reservationPaymentService.handlePaymentCanceled(
+                        paymentReference = request.paymentReference,
+                        reason = request.failureReason ?: "모의 결제가 취소되었습니다.",
+                    )
+            }
 
         return ResponseEntity.ok(PaymentResponse.from(payment))
     }

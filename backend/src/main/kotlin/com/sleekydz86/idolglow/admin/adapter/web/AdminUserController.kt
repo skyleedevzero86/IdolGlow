@@ -1,10 +1,11 @@
-package com.sleekydz86.idolglow.admin.ui
+package com.sleekydz86.idolglow.admin.adapter.web
 
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminUserPageResponse
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminUserSummaryResponse
+import com.sleekydz86.idolglow.admin.adapter.web.mapper.toWebResponse
+import com.sleekydz86.idolglow.admin.adapter.web.request.UpdateAdminUserRoleRequest
+import com.sleekydz86.idolglow.admin.adapter.web.request.UpdateAdminUserStatusRequest
 import com.sleekydz86.idolglow.admin.application.AdminUserService
-import com.sleekydz86.idolglow.admin.ui.dto.AdminUserPageResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminUserSummaryResponse
-import com.sleekydz86.idolglow.admin.ui.request.UpdateAdminUserRoleRequest
-import com.sleekydz86.idolglow.admin.ui.request.UpdateAdminUserStatusRequest
 import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 import io.swagger.v3.oas.annotations.Operation
@@ -28,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminUserController(
     private val adminUserService: AdminUserService,
 ) {
-
     @Operation(summary = "회원 목록 조회")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
@@ -38,8 +38,7 @@ class AdminUserController(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) role: UserRole?,
         @RequestParam(required = false) accountStatus: UserAccountStatus?,
-    ): ResponseEntity<AdminUserPageResponse> =
-        ResponseEntity.ok(adminUserService.findUsers(keyword, role, accountStatus, page, size))
+    ): ResponseEntity<AdminUserPageResponse> = ResponseEntity.ok(adminUserService.findUsers(keyword, role, accountStatus, page, size).toWebResponse())
 
     @Operation(summary = "회원 역할 변경")
     @SecurityRequirement(name = "bearerAuth")
@@ -47,8 +46,7 @@ class AdminUserController(
     fun updateRole(
         @PathVariable userId: Long,
         @RequestBody request: UpdateAdminUserRoleRequest,
-    ): ResponseEntity<AdminUserSummaryResponse> =
-        ResponseEntity.ok(adminUserService.updateUserRole(userId, request.role))
+    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.updateUserRole(userId, request.role).toWebResponse())
 
     @Operation(summary = "회원 상태 변경")
     @SecurityRequirement(name = "bearerAuth")
@@ -56,14 +54,12 @@ class AdminUserController(
     fun updateStatus(
         @PathVariable userId: Long,
         @RequestBody request: UpdateAdminUserStatusRequest,
-    ): ResponseEntity<AdminUserSummaryResponse> =
-        ResponseEntity.ok(adminUserService.updateUserStatus(userId, request.accountStatus))
+    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.updateUserStatus(userId, request.accountStatus).toWebResponse())
 
     @Operation(summary = "회원 잠금 해제")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{userId}/unlock")
     fun unlock(
         @PathVariable userId: Long,
-    ): ResponseEntity<AdminUserSummaryResponse> =
-        ResponseEntity.ok(adminUserService.unlockUser(userId))
+    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.unlockUser(userId).toWebResponse())
 }

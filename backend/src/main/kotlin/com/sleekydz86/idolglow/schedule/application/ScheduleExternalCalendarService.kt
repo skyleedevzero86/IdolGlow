@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.schedule.application
 
-import com.sleekydz86.idolglow.global.infrastructure.config.AppCalendarProperties
-import com.sleekydz86.idolglow.global.infrastructure.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.config.AppCalendarProperties
+import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.schedule.application.dto.ScheduleCalendarExportResult
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
-import com.sleekydz86.idolglow.schedule.ui.dto.ScheduleCalendarExportResponse
 import org.springframework.stereotype.Service
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -15,19 +15,19 @@ class ScheduleExternalCalendarService(
     private val calendarProperties: AppCalendarProperties,
     private val publicUrlProperties: AppPublicUrlProperties,
 ) {
-
     private val eventZone: ZoneId by lazy { ZoneId.of(calendarProperties.eventZoneId) }
 
     private val googleUtcFmt: DateTimeFormatter =
         DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(java.time.ZoneOffset.UTC)
 
     fun buildIcsBytes(schedule: ScheduleResponse): ByteArray {
-        val ics = ScheduleIcsWriter.build(
-            schedule = schedule,
-            eventZone = eventZone,
-            uidDomain = calendarProperties.uidDomain.trim().ifBlank { "idolglow.app" },
-            productPageUrl = productPageUrl(schedule.productId),
-        )
+        val ics =
+            ScheduleIcsWriter.build(
+                schedule = schedule,
+                eventZone = eventZone,
+                uidDomain = calendarProperties.uidDomain.trim().ifBlank { "idolglow.app" },
+                productPageUrl = productPageUrl(schedule.productId),
+            )
         return ScheduleIcsWriter.toUtf8Bytes(ics)
     }
 
@@ -46,8 +46,8 @@ class ScheduleExternalCalendarService(
         }
     }
 
-    fun buildExportResponse(schedule: ScheduleResponse): ScheduleCalendarExportResponse =
-        ScheduleCalendarExportResponse(
+    fun buildExportResponse(schedule: ScheduleResponse): ScheduleCalendarExportResult =
+        ScheduleCalendarExportResult(
             googleCalendarUrl = buildGoogleCalendarUrl(schedule),
             icsRelativePath = "/schedules/${schedule.scheduleId}/calendar.ics",
         )
@@ -69,6 +69,5 @@ class ScheduleExternalCalendarService(
         }.trimEnd()
     }
 
-    private fun urlEncode(s: String): String =
-        URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20")
+    private fun urlEncode(s: String): String = URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20")
 }

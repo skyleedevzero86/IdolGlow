@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.mbrd.ui.dto
+package com.sleekydz86.idolglow.mbrd.adapter.web.dto
 
 import com.sleekydz86.idolglow.mbrd.application.MbrdSaveEditorDraftCommand
 import jakarta.validation.constraints.NotBlank

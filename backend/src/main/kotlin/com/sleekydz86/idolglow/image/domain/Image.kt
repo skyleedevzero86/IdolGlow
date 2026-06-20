@@ -19,33 +19,24 @@ class Image(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "aggregate_type", nullable = false, length = 30)
     val aggregateType: ImageAggregateType,
-
     @Column(name = "aggregate_id", nullable = false)
     val aggregateId: Long,
-
     @Column(name = "original_filename", nullable = false, length = 255)
     val originalFilename: String,
-
     @Column(name = "unique_filename", nullable = false, length = 255)
     val uniqueFilename: String,
-
     @Column(name = "extension", nullable = false, length = 20)
     val extension: String,
-
     @Column(name = "file_size", nullable = false)
     val fileSize: Long,
-
     @Column(name = "url", nullable = false, length = 500)
     val url: String,
-
     @Column(name = "sort_order", nullable = false)
     var sortOrder: Int = 0,
 ) : BaseEntity() {
-
     fun changeSortOrder(targetSortOrder: Int): Image {
         require(targetSortOrder >= 0) { "정렬 순서는 0 이상이어야 합니다." }
         sortOrder = targetSortOrder
@@ -92,7 +83,7 @@ class Image(
             val extension = extractExtension(normalizedOriginal)
             return GeneratedFilename(
                 uniqueFilename = "${UUID.randomUUID()}.$extension",
-                extension = extension
+                extension = extension,
             )
         }
 
@@ -103,8 +94,3 @@ class Image(
         }
     }
 }
-
-data class GeneratedFilename(
-    val uniqueFilename: String,
-    val extension: String
-)

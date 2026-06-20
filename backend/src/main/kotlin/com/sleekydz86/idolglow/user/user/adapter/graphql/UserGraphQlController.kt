@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.user.user.graphql
+package com.sleekydz86.idolglow.user.user.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.user.user.adapter.web.request.CreateUserSurveyRequest
+import com.sleekydz86.idolglow.user.user.adapter.web.request.UpdateProfileRequest
+import com.sleekydz86.idolglow.user.user.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.user.user.application.UserService
 import com.sleekydz86.idolglow.user.user.application.UserSurveyCommandService
 import com.sleekydz86.idolglow.user.user.application.UserSurveyQueryService
-import com.sleekydz86.idolglow.user.user.ui.request.CreateUserSurveyRequest
-import com.sleekydz86.idolglow.user.user.ui.request.UpdateProfileRequest
-import com.sleekydz86.idolglow.user.user.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
@@ -22,35 +22,38 @@ class UserGraphQlController(
     private val userSurveyQueryService: UserSurveyQueryService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
     fun me(): UserProfileGraphQlResponse =
         UserProfileGraphQlResponse.from(
-            userService.getUser(authenticatedUserIdResolver.resolveRequired())
+            userService.getUser(authenticatedUserIdResolver.resolveRequired()),
         )
 
     @QueryMapping
     fun mySurvey(): UserSurveyGraphQlResponse =
         UserSurveyGraphQlResponse.from(
-            userSurveyQueryService.findUserSurvey(authenticatedUserIdResolver.resolveRequired())
+            userSurveyQueryService.findUserSurvey(authenticatedUserIdResolver.resolveRequired()),
         )
 
     @MutationMapping
-    fun updateProfile(@Argument @Valid input: UpdateProfileRequest): UserProfileGraphQlResponse =
+    fun updateProfile(
+        @Argument @Valid input: UpdateProfileRequest,
+    ): UserProfileGraphQlResponse =
         UserProfileGraphQlResponse.from(
             userService.updateProfile(
                 userId = authenticatedUserIdResolver.resolveRequired(),
                 nickname = input.nickname,
-                profileImageUrl = input.profileImageUrl
-            )
+                profileImageUrl = input.profileImageUrl,
+            ),
         )
 
     @MutationMapping
-    fun upsertUserSurvey(@Argument @Valid input: CreateUserSurveyRequest): UserSurveyUpsertGraphQlResponse =
+    fun upsertUserSurvey(
+        @Argument @Valid input: CreateUserSurveyRequest,
+    ): UserSurveyUpsertGraphQlResponse =
         UserSurveyUpsertGraphQlResponse.from(
             userSurveyCommandService.saveUserSurvey(
                 userId = authenticatedUserIdResolver.resolveRequired(),
-                command = input.toCommand()
-            )
+                command = input.toCommand(),
+            ),
         )
 }

@@ -15,15 +15,18 @@ import java.nio.file.StandardOpenOption
 @Profile("local", "test", "dev")
 @Component
 class LocalImageStorage(
-    @Value("\${app.storage.local.base-path:}") basePath: String? = null
+    @Value("\${app.storage.local.base-path:}") basePath: String? = null,
 ) : ImageStorage {
+    private val rootPath: Path =
+        basePath
+            ?.takeIf { it.isNotBlank() }
+            ?.let { Paths.get(it) }
+            ?: Paths.get(System.getProperty("user.home"), "Desktop", "image")
 
-    private val rootPath: Path = basePath
-        ?.takeIf { it.isNotBlank() }
-        ?.let { Paths.get(it) }
-        ?: Paths.get(System.getProperty("user.home"), "Desktop", "image")
-
-    override fun store(uniqueFilename: String, content: ByteArray): StoredImage {
+    override fun store(
+        uniqueFilename: String,
+        content: ByteArray,
+    ): StoredImage {
         require(uniqueFilename.isNotBlank()) { "저장 파일명은 비어 있을 수 없습니다." }
         require(content.isNotEmpty()) { "이미지 내용은 비어 있을 수 없습니다." }
 
@@ -34,11 +37,11 @@ class LocalImageStorage(
             content,
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.WRITE
+            StandardOpenOption.WRITE,
         )
         return StoredImage(
             url = targetPath.toUri().toString(),
-            fileSize = content.size.toLong()
+            fileSize = content.size.toLong(),
         )
     }
 }

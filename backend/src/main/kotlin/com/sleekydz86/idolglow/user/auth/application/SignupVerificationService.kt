@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.application
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
-import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
+import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
 import com.sleekydz86.idolglow.user.auth.domain.SignupVerificationStatus
@@ -51,10 +51,11 @@ class SignupVerificationService(
             to = email,
             subject = "[IdolGlow] 이메일 인증을 완료해 주세요",
             plainTextBody = "아래 링크를 5분 내에 눌러 인증을 완료해 주세요.\n$confirmUrl",
-            htmlBody = """
+            htmlBody =
+                """
                 <p>아래 링크를 <strong>5분 내</strong>에 눌러 이메일 인증을 완료해 주세요.</p>
                 <p><a href="$confirmUrl">$confirmUrl</a></p>
-            """.trimIndent(),
+                """.trimIndent(),
         )
         authVerificationAuditService.log(
             verificationType = AuthVerificationAuditService.TYPE_SIGNUP_EMAIL_VERIFICATION_REQUEST,
@@ -67,7 +68,10 @@ class SignupVerificationService(
     }
 
     @Transactional
-    fun confirmSignupEmailVerification(tokenValue: String, ipAddress: String): Boolean {
+    fun confirmSignupEmailVerification(
+        tokenValue: String,
+        ipAddress: String,
+    ): Boolean {
         val token = tokenRepository.findByToken(tokenValue) ?: return false
         val now = LocalDateTime.now()
         if (token.type != SignupVerificationType.EMAIL_SIGNUP_VERIFY) return false
@@ -94,11 +98,12 @@ class SignupVerificationService(
 
     @Transactional
     fun consumeVerifiedSignupToken(email: String) {
-        val token = tokenRepository.findTopByEmailAndTypeAndStatusOrderByCreatedAtDesc(
-            email = email,
-            type = SignupVerificationType.EMAIL_SIGNUP_VERIFY,
-            status = SignupVerificationStatus.VERIFIED,
-        ) ?: throw IllegalArgumentException("이메일 인증이 완료되지 않았습니다.")
+        val token =
+            tokenRepository.findTopByEmailAndTypeAndStatusOrderByCreatedAtDesc(
+                email = email,
+                type = SignupVerificationType.EMAIL_SIGNUP_VERIFY,
+                status = SignupVerificationStatus.VERIFIED,
+            ) ?: throw IllegalArgumentException("이메일 인증이 완료되지 않았습니다.")
         val now = LocalDateTime.now()
         if (token.confirmedAt == null || token.confirmedAt!!.isBefore(now.minusMinutes(5))) {
             token.status = SignupVerificationStatus.EXPIRED
@@ -136,12 +141,13 @@ class SignupVerificationService(
             to = user.email,
             subject = "[IdolGlow] 가입 아이디 확인이 필요합니다",
             plainTextBody = "가입한 아이디가 맞으면 확인 링크를 눌러 주세요.\n맞지 않으면 거부 링크를 눌러 계정을 정지할 수 있습니다.\n확인:$confirmUrl\n거부:$denyUrl",
-            htmlBody = """
+            htmlBody =
+                """
                 <p>가입한 아이디(<strong>${user.nickname.value}</strong>)가 맞는지 확인해 주세요.</p>
                 <p>유효시간은 <strong>5분</strong>입니다.</p>
                 <p><a href="$confirmUrl">맞습니다. 계속 진행</a></p>
                 <p><a href="$denyUrl">아닙니다. 계정 정지</a></p>
-            """.trimIndent(),
+                """.trimIndent(),
         )
         authVerificationAuditService.log(
             verificationType = AuthVerificationAuditService.TYPE_SIGNUP_ACCOUNT_CONFIRM_REQUEST,

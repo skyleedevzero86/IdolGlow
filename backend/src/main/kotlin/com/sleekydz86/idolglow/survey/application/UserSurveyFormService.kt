@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.survey.application
 
+import com.sleekydz86.idolglow.survey.application.dto.SubmitSurveyResponseCommand
 import com.sleekydz86.idolglow.survey.domain.SurveyAnswer
 import com.sleekydz86.idolglow.survey.domain.SurveyAnswerOption
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
@@ -8,7 +9,6 @@ import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
 import com.sleekydz86.idolglow.survey.infrastructure.SurveyFormJpaRepository
 import com.sleekydz86.idolglow.survey.infrastructure.SurveySubmissionJpaRepository
-import com.sleekydz86.idolglow.survey.ui.request.SubmitSurveyResponseRequest
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,16 +21,20 @@ class UserSurveyFormService(
     private val userRepository: UserRepository,
 ) {
     @Transactional(readOnly = true)
-    fun findCurrentForm(): SurveyFormResponse? =
-        surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
+    fun findCurrentForm(): SurveyFormResponse? = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
 
-    fun submitCurrentForm(userId: Long, request: SubmitSurveyResponseRequest): SurveySubmissionResponse {
-        val form = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()
-            ?: throw IllegalArgumentException("활성화된 설문지가 없습니다.")
-        val user = userRepository.findById(userId)
-            ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
+    fun submitCurrentForm(
+        userId: Long,
+        command: SubmitSurveyResponseCommand,
+    ): SurveySubmissionResponse {
+        val form =
+            surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()
+                ?: throw IllegalArgumentException("활성화된 설문지가 없습니다.")
+        val user =
+            userRepository.findById(userId)
+                ?: throw IllegalArgumentException("ID가 $userId 인 사용자를 찾을 수 없습니다.")
 
-        val answersByQuestionId = request.answers.associateBy { it.questionId }
+        val answersByQuestionId = command.answers.associateBy { it.questionId }
         val submission = SurveySubmission(form = form, user = user)
 
         for (question in form.questions) {
@@ -51,11 +55,13 @@ class UserSurveyFormService(
                     answer.answerText = text.ifBlank { null }
                 }
                 SurveyQuestionType.SINGLE_CHOICE,
-                SurveyQuestionType.MULTIPLE_CHOICE -> {
-                    val selected = answerRequest.selectedOptions
-                        .map { it.trim() }
-                        .filter { it.isNotBlank() }
-                        .distinct()
+                SurveyQuestionType.MULTIPLE_CHOICE,
+                -> {
+                    val selected =
+                        answerRequest.selectedOptions
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() }
+                            .distinct()
                     if (question.required && selected.isEmpty()) {
                         throw IllegalArgumentException("필수 객관식 문항 응답이 비어 있습니다. questionId=${question.id}")
                     }

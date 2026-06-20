@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.discovery.graphql
+package com.sleekydz86.idolglow.productpackage.discovery.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.productpackage.discovery.application.ProductDiscoveryService
@@ -12,17 +12,22 @@ class ProductDiscoveryGraphQlController(
     private val productDiscoveryService: ProductDiscoveryService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
-    fun popularProducts(@Argument size: Int?): List<ProductRankingGraphQlResponse> =
-        productDiscoveryService.findPopularProducts((size ?: 10).coerceIn(1, 50))
+    fun popularProducts(
+        @Argument size: Int?,
+    ): List<ProductRankingGraphQlResponse> =
+        productDiscoveryService
+            .findPopularProducts((size ?: 10).coerceIn(1, 50))
             .map(ProductRankingGraphQlResponse::from)
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
-    fun recommendedProducts(@Argument size: Int?): List<ProductRankingGraphQlResponse> =
-        productDiscoveryService.findRecommendedProducts(
-            authenticatedUserIdResolver.resolveRequired(),
-            (size ?: 10).coerceIn(1, 50)
-        ).map(ProductRankingGraphQlResponse::from)
+    fun recommendedProducts(
+        @Argument size: Int?,
+    ): List<ProductRankingGraphQlResponse> =
+        productDiscoveryService
+            .findRecommendedProducts(
+                authenticatedUserIdResolver.resolveRequired(),
+                (size ?: 10).coerceIn(1, 50),
+            ).map(ProductRankingGraphQlResponse::from)
 }

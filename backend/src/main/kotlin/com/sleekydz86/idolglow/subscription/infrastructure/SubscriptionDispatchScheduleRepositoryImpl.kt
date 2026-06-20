@@ -10,13 +10,12 @@ import org.springframework.stereotype.Repository
 class SubscriptionDispatchScheduleRepositoryImpl(
     private val subscriptionDispatchScheduleJpaRepository: SubscriptionDispatchScheduleJpaRepository,
 ) : SubscriptionDispatchSchedulePort {
-
     override fun findAllByLatest(): List<SubscriptionDispatchSchedule> =
         subscriptionDispatchScheduleJpaRepository.findAll(
             Sort.by(
                 Sort.Order.asc("contentType"),
                 Sort.Order.desc("createdAt"),
-            )
+            ),
         )
 
     override fun findAllActive(): List<SubscriptionDispatchSchedule> =

@@ -8,5 +8,5 @@ data class ScheduleSliceResponse(
     @Schema(description = "다음 페이지 존재 여부", example = "true")
     val hasNext: Boolean,
     @Schema(description = "다음 페이지 조회에 사용할 마지막 일정 ID", example = "10")
-    val nextCursorId: Long?
+    val nextCursorId: Long?,
 )

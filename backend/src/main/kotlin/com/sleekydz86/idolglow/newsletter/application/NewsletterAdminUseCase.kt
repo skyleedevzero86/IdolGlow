@@ -5,9 +5,15 @@ import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterPageRes
 import com.sleekydz86.idolglow.newsletter.application.dto.UpsertNewsletterCommand
 
 interface NewsletterAdminUseCase {
-    fun findNewsletters(page: Int, size: Int): AdminNewsletterPageResponse
+    fun findNewsletters(
+        page: Int,
+        size: Int,
+    ): AdminNewsletterPageResponse
+
     fun findNewsletter(newsletterSlug: String): AdminNewsletterDetailResponse
+
     fun createNewsletter(command: UpsertNewsletterCommand): AdminNewsletterDetailResponse
+
     fun updateNewsletter(
         newsletterSlug: String,
         command: UpsertNewsletterCommand,

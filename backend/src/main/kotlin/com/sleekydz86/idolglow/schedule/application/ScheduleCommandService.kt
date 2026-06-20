@@ -10,17 +10,17 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 @Service
 class ScheduleCommandService(
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
 ) {
-
     fun createSchedule(command: CreateScheduleCommand): Schedule {
-        val schedule = Schedule.of(
-            userId = command.userId,
-            productId = command.productId,
-            title = command.title,
-            startAt = command.startAt,
-            endAt = command.endAt
-        )
+        val schedule =
+            Schedule.of(
+                userId = command.userId,
+                productId = command.productId,
+                title = command.title,
+                startAt = command.startAt,
+                endAt = command.endAt,
+            )
         return scheduleRepository.save(schedule)
     }
 
@@ -29,17 +29,23 @@ class ScheduleCommandService(
         schedule.update(
             title = command.title,
             startAt = command.startAt,
-            endAt = command.endAt
+            endAt = command.endAt,
         )
         return schedule
     }
 
-    fun deleteSchedule(scheduleId: Long, userId: Long) {
+    fun deleteSchedule(
+        scheduleId: Long,
+        userId: Long,
+    ) {
         val schedule = findUserSchedule(scheduleId, userId)
         scheduleRepository.delete(schedule)
     }
 
-    private fun findUserSchedule(scheduleId: Long, userId: Long): Schedule =
+    private fun findUserSchedule(
+        scheduleId: Long,
+        userId: Long,
+    ): Schedule =
         scheduleRepository.findByIdAndUserId(scheduleId, userId)
             ?: throw IllegalArgumentException("일정을 찾을 수 없습니다: $scheduleId")
 }

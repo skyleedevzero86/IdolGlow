@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.SlotWaitlistEntryResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -8,10 +8,9 @@ import io.swagger.v3.oas.annotations.tags.Tag
 
 @Tag(name = "예약 슬롯 웨이팅", description = "매진 슬롯 빈자리 알림(웨이팅)")
 interface ReservationSlotWaitlistApi {
-
     @Operation(
         summary = "슬롯 웨이팅 등록",
-        description = "해당 슬롯이 예약 확정이거나 결제 대기(선점) 중일 때만 등록할 수 있습니다. 빈자리가 나면 알림을 보냅니다."
+        description = "해당 슬롯이 예약 확정이거나 결제 대기(선점) 중일 때만 등록할 수 있습니다. 빈자리가 나면 알림을 보냅니다.",
     )
     @ApiResponse(responseCode = "201", description = "등록 성공")
     fun register(

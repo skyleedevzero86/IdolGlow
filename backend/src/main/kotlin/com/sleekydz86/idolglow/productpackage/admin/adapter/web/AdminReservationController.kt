@@ -1,10 +1,13 @@
-package com.sleekydz86.idolglow.productpackage.admin.ui
+package com.sleekydz86.idolglow.productpackage.admin.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.admin.adapter.web.request.UpdateAdminMarkdownRequest
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminReservationService
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSummaryResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.ReservationDashboardResponse
-import com.sleekydz86.idolglow.productpackage.admin.ui.request.UpdateAdminMarkdownRequest
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -18,13 +21,15 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
+@Tag(name = "관리자 예약", description = "관리자 예약 대시보드 및 취소·메모 API")
+@SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/admin/reservations")
 class AdminReservationController(
     private val adminReservationService: AdminReservationService,
 ) {
-
+    @Operation(summary = "예약 대시보드 조회")
     @GetMapping("/dashboard")
     fun findDashboard(
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) fromDate: LocalDate?,
@@ -39,6 +44,7 @@ class AdminReservationController(
             ),
         )
 
+    @Operation(summary = "예약 목록 조회")
     @GetMapping
     fun findReservations(
         @RequestParam(required = false) status: ReservationStatus?,
@@ -55,10 +61,13 @@ class AdminReservationController(
             ),
         )
 
+    @Operation(summary = "예약 취소")
     @PostMapping("/{reservationId}/cancel")
-    fun cancelReservation(@PathVariable reservationId: Long): ResponseEntity<AdminReservationSummaryResponse> =
-        ResponseEntity.ok(adminReservationService.cancelReservation(reservationId))
+    fun cancelReservation(
+        @PathVariable reservationId: Long,
+    ): ResponseEntity<AdminReservationSummaryResponse> = ResponseEntity.ok(adminReservationService.cancelReservation(reservationId))
 
+    @Operation(summary = "관리자 메모 수정")
     @PatchMapping("/{reservationId}/memo")
     fun updateAdminMemo(
         @PathVariable reservationId: Long,

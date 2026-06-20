@@ -22,13 +22,11 @@ class SubwayQueryApplicationService(
     private val externalStationSearchPort: SubwayExternalStationSearchPort,
     private val pageEnrichmentPort: SubwayPageEnrichmentPort,
 ) : SubwayQueryUseCase {
-
     private val linesById: Map<String, SubwayLine> by lazy {
         lineCatalogPort.loadAllLines().associateBy { it.id }
     }
 
-    override fun listLines(): List<SubwayLine> =
-        lineCatalogPort.loadAllLines()
+    override fun listLines(): List<SubwayLine> = lineCatalogPort.loadAllLines()
 
     override fun listStations(lineId: String): List<SubwayStationOnLine> {
         val line = linesById[lineId] ?: return emptyList()
@@ -56,11 +54,12 @@ class SubwayQueryApplicationService(
                     "$lineId:${remote.stationCd}",
                     SubwayStationOnLine(
                         line = line,
-                        stop = SubwayStationStop(
-                            code = remote.stationCd,
-                            name = remote.stationName,
-                            frCode = remote.frCode.ifEmpty { remote.stationCd.takeLast(3) },
-                        ),
+                        stop =
+                            SubwayStationStop(
+                                code = remote.stationCd,
+                                name = remote.stationName,
+                                frCode = remote.frCode.ifEmpty { remote.stationCd.takeLast(3) },
+                            ),
                     ),
                 )
             }
@@ -68,7 +67,10 @@ class SubwayQueryApplicationService(
         return hits.values.take(30)
     }
 
-    override fun getStationPage(lineId: String, stationCd: String): SubwayStationPageResult {
+    override fun getStationPage(
+        lineId: String,
+        stationCd: String,
+    ): SubwayStationPageResult {
         val line = linesById[lineId] ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 노선입니다.")
         val stops = stationOrderPort.orderedStops(lineId)
         if (stops.isEmpty()) {

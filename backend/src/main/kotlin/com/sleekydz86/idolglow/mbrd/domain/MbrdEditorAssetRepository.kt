@@ -4,5 +4,6 @@ import java.util.UUID
 
 interface MbrdEditorAssetRepository {
     fun save(asset: MbrdEditorAsset): MbrdEditorAsset
+
     fun findById(id: UUID): MbrdEditorAsset?
 }

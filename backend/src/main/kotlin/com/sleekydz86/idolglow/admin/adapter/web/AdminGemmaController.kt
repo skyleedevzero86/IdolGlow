@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.admin.ui
+package com.sleekydz86.idolglow.admin.adapter.web
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminGemmaChatResponse
-import com.sleekydz86.idolglow.admin.ui.request.AdminGemmaChatRequest
-import com.sleekydz86.idolglow.admin.ui.request.toCommand
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminGemmaChatResponse
+import com.sleekydz86.idolglow.admin.adapter.web.request.AdminGemmaChatRequest
+import com.sleekydz86.idolglow.admin.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.gemma.application.GemmaChatService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminGemmaController(
     private val gemmaChatService: GemmaChatService,
 ) {
-
     @Operation(
         summary = "Gemma 채팅 테스트",
         description = "OpenAI 호환 /chat/completions 엔드포인트로 Gemma 모델을 호출합니다. 텍스트만 보내거나 imageUrl을 함께 보내 멀티모달 요청을 할 수 있습니다.",
@@ -34,7 +33,7 @@ class AdminGemmaController(
     ): ResponseEntity<AdminGemmaChatResponse> =
         ResponseEntity.ok(
             AdminGemmaChatResponse.from(
-                gemmaChatService.chat(request.toCommand())
-            )
+                gemmaChatService.chat(request.toCommand()),
+            ),
         )
 }

@@ -11,14 +11,3 @@ data class SurveyRecommendationResponse(
     val attractions: List<SurveyRecommendedAttractionResponse>,
     val recommendedProducts: List<ProductPagingQueryResponse>,
 )
-
-data class SurveyRecommendedAttractionResponse(
-    val attractionCode: String,
-    val name: String,
-    val areaName: String?,
-    val signguName: String?,
-    val categoryLarge: String?,
-    val categoryMiddle: String?,
-    val rank: Int,
-    val reason: String,
-)

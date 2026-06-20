@@ -6,5 +6,5 @@ data class CreateReservationCommand(
     val productId: Long,
     val reservationSlotId: Long,
     val userId: Long,
-    val totalPrice: BigDecimal
+    val totalPrice: BigDecimal,
 )

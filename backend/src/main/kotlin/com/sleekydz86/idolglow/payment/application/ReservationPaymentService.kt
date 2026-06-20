@@ -3,8 +3,8 @@ package com.sleekydz86.idolglow.payment.application
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.Payment
-import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationSlotWaitlistService
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
@@ -24,7 +24,6 @@ class ReservationPaymentService(
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
     private val paymentNotificationMailService: PaymentNotificationMailService,
 ) {
-
     fun handlePaymentSucceeded(paymentReference: String): Payment {
         val payment = findPaymentForUpdate(paymentReference)
         return finalizeAfterGatewaySuccess(payment)
@@ -67,7 +66,10 @@ class ReservationPaymentService(
         return payment
     }
 
-    fun handlePaymentFailed(paymentReference: String, reason: String): Payment {
+    fun handlePaymentFailed(
+        paymentReference: String,
+        reason: String,
+    ): Payment {
         val payment = findPaymentForUpdate(paymentReference)
         val reservation = findReservationForUpdate(payment.reservation.id)
 
@@ -92,7 +94,7 @@ class ReservationPaymentService(
                 type = NotificationType.PAYMENT_FAILED,
                 title = "결제 실패",
                 message = "예약 #${reservation.id} 결제에 실패했습니다.",
-                link = "/reservations/${reservation.id}"
+                link = "/reservations/${reservation.id}",
             )
             reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
         }
@@ -102,7 +104,10 @@ class ReservationPaymentService(
         return payment
     }
 
-    fun handlePaymentCanceled(paymentReference: String, reason: String): Payment {
+    fun handlePaymentCanceled(
+        paymentReference: String,
+        reason: String,
+    ): Payment {
         val payment = findPaymentForUpdate(paymentReference)
         val reservation = findReservationForUpdate(payment.reservation.id)
 
@@ -127,7 +132,7 @@ class ReservationPaymentService(
                 type = NotificationType.PAYMENT_FAILED,
                 title = "결제 취소",
                 message = "예약 #${reservation.id} 결제가 취소되었습니다.",
-                link = "/reservations/${reservation.id}"
+                link = "/reservations/${reservation.id}",
             )
             reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
         }

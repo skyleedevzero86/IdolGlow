@@ -15,13 +15,14 @@ class WishQueryService(
     fun findWishedProductByNoOffset(
         userId: Long,
         lastWishId: Long?,
-        size: Int
+        size: Int,
     ): List<WishedProductPagingResponse> {
-        val list = wishRepository.findByWishedProductsByNoOffset(
-            userId = userId,
-            lastWishId = lastWishId,
-            size = size,
-        )
+        val list =
+            wishRepository.findByWishedProductsByNoOffset(
+                userId = userId,
+                lastWishId = lastWishId,
+                size = size,
+            )
         val thumbs = aggregateImageQueryService.firstProductImageUrlByProductIds(list.map { it.id })
         return list.map { it.copy(thumbnailUrl = thumbs[it.id]) }
     }

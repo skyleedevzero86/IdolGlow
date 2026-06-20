@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.product.ui
+package com.sleekydz86.idolglow.productpackage.product.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductBrowseParams
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
@@ -7,7 +7,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 object ProductBrowseRequestParser {
-
     fun parse(
         lastId: Long?,
         offset: Int?,
@@ -30,7 +29,12 @@ object ProductBrowseRequestParser {
             offset = offset,
             size = size,
             tag = tag?.trim()?.takeIf { it.isNotEmpty() },
-            tags = tags.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }.distinct(),
+            tags =
+                tags
+                    .orEmpty()
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .distinct(),
             keyword = keyword,
             minPrice = parseBigDecimal("minPrice", minPrice),
             maxPrice = parseBigDecimal("maxPrice", maxPrice),
@@ -49,12 +53,15 @@ object ProductBrowseRequestParser {
             ProductSort.valueOf(raw.trim().uppercase())
         } catch (_: IllegalArgumentException) {
             throw IllegalArgumentException(
-                "sort는 NEWEST, POPULARITY, RATING, REVIEW_COUNT, DISTANCE 중 하나여야 합니다."
+                "sort는 NEWEST, POPULARITY, RATING, REVIEW_COUNT, DISTANCE 중 하나여야 합니다.",
             )
         }
     }
 
-    private fun parseBigDecimal(label: String, raw: String?): BigDecimal? {
+    private fun parseBigDecimal(
+        label: String,
+        raw: String?,
+    ): BigDecimal? {
         val t = raw?.trim() ?: return null
         if (t.isEmpty()) return null
         return try {
@@ -90,11 +97,13 @@ object ProductBrowseRequestParser {
         nearLongitude: String?,
         radiusMeters: Int?,
     ): ProductBrowseParams {
-        val lastIdLong = when {
-            lastId.isNullOrBlank() -> null
-            else -> lastId.toLongOrNull()
-                ?: throw IllegalArgumentException("lastId는 숫자여야 합니다.")
-        }
+        val lastIdLong =
+            when {
+                lastId.isNullOrBlank() -> null
+                else ->
+                    lastId.toLongOrNull()
+                        ?: throw IllegalArgumentException("lastId는 숫자여야 합니다.")
+            }
         return parse(
             lastId = lastIdLong,
             offset = offset,

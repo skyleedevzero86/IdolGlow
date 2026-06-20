@@ -5,16 +5,18 @@ import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ImageJpaRepository : JpaRepository<Image, Long> {
-
     fun findByAggregateTypeAndAggregateIdOrderBySortOrderAsc(
         aggregateType: ImageAggregateType,
-        aggregateId: Long
+        aggregateId: Long,
     ): List<Image>
 
     fun findByAggregateTypeAndAggregateIdInOrderBySortOrderAsc(
         aggregateType: ImageAggregateType,
-        aggregateIds: Collection<Long>
+        aggregateIds: Collection<Long>,
     ): List<Image>
 
-    fun deleteByAggregateTypeAndAggregateId(aggregateType: ImageAggregateType, aggregateId: Long)
+    fun deleteByAggregateTypeAndAggregateId(
+        aggregateType: ImageAggregateType,
+        aggregateId: Long,
+    )
 }

@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.user.auth.application
 
-import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
-import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.global.adapter.security.JwtTokenType
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuth
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuthRepository
@@ -19,7 +19,6 @@ class AuthService(
     private val userOAuthRepository: UserOAuthRepository,
     private val jwtProvider: JwtProvider,
 ) {
-
     @Transactional
     fun login(
         provider: AuthProvider,
@@ -31,25 +30,28 @@ class AuthService(
         val oauthUser = userOAuthRepository.findByProviderAndProviderId(provider, providerId)
         oauthUser?.updateProfile(name = name, picture = picture)
 
-        val userId: Long = oauthUser?.userId
-            ?: run {
+        val userId: Long =
+            oauthUser?.userId
+                ?: run {
+                    val user: User =
+                        userRepository.findByEmail(email)
+                            ?: userRepository.saveAndFlush(User.of(email = email))
 
-                val user: User = userRepository.findByEmail(email)
-                    ?: userRepository.saveAndFlush(User.of(email = email))
+                    UserOAuth
+                        .of(
+                            userId = user.id,
+                            provider = provider,
+                            providerId = providerId,
+                            email = email,
+                            profileName = name,
+                            profileImageUrl = picture,
+                        ).let { userOAuthRepository.save(it) }
+                    user.id
+                }
 
-                UserOAuth.of(
-                    userId = user.id,
-                    provider = provider,
-                    providerId = providerId,
-                    email = email,
-                    profileName = name,
-                    profileImageUrl = picture,
-                ).let { userOAuthRepository.save(it) }
-                user.id
-            }
-
-        val user = userRepository.findById(userId)
-            ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
+        val user =
+            userRepository.findById(userId)
+                ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
 
         user.updateLastLoginTime()
 
@@ -71,8 +73,9 @@ class AuthService(
         }
 
         val userId = jwtProvider.getSubjectAsUserId(refreshToken)
-        val user = userRepository.findById(userId)
-            ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
+        val user =
+            userRepository.findById(userId)
+                ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
 
         return jwtProvider.generateToken(user.id, user.role)
     }

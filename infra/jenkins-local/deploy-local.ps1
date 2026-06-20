@@ -10,6 +10,7 @@ $deployRoot = if ($env:DEPLOY_ROOT) { $env:DEPLOY_ROOT } else { "D:\intel3\IdolG
 $buildId = if ($env:BUILD_ID) { $env:BUILD_ID } else { "manual-$(Get-Date -Format 'yyyyMMddHHmmss')" }
 $targetDir = Join-Path $deployRoot "$DeployEnv\$buildId"
 $latestDir = Join-Path $deployRoot "$DeployEnv\latest"
+$previousDir = Join-Path $deployRoot "$DeployEnv\previous"
 
 function Resolve-FrontendDir {
     param([string]$RootPath)
@@ -50,6 +51,14 @@ function Resolve-FrontendBuildDir {
 New-Item -ItemType Directory -Force -Path (Join-Path $targetDir "backend") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $targetDir "frontend") | Out-Null
 
+if (Test-Path $latestDir) {
+    if (Test-Path $previousDir) {
+        Remove-Item -LiteralPath $previousDir -Recurse -Force
+    }
+    Copy-Item -Path $latestDir -Destination $previousDir -Recurse -Force
+    Write-Output "이전 배포본을 보관했습니다: $previousDir"
+}
+
 $backendLibDir = Join-Path $WorkspaceDir "backend\build\libs"
 $backendJar = Get-ChildItem -Path $backendLibDir -Filter *.jar -ErrorAction SilentlyContinue |
     Where-Object { $_.Name -notlike "*-plain.jar" } |
@@ -83,6 +92,7 @@ WORKSPACE_DIR=$WorkspaceDir
 BACKEND_JAR=$($backendJar.Name)
 FRONTEND_DIR=$frontendDir
 FRONTEND_BUILD_DIR=$frontendBuildDir
+PREVIOUS_DIR=$previousDir
 "@ | Set-Content -Path (Join-Path $targetDir "deploy-info.txt") -Encoding UTF8
 
 if (Test-Path $latestDir) {

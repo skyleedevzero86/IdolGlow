@@ -25,7 +25,6 @@ class SubscriptionAdminDataInitializer(
     private val newsletterRepository: NewsletterRepository,
     private val webzineIssueRepository: WebzineIssueRepository,
 ) : ApplicationRunner {
-
     private val log = LoggerFactory.getLogger(SubscriptionAdminDataInitializer::class.java)
 
     override fun run(args: ApplicationArguments) {
@@ -34,11 +33,13 @@ class SubscriptionAdminDataInitializer(
         }
 
         if (subscriptionDispatchHistoryPort.count() == 0L) {
-            newsletterRepository.findAllByLatest()
+            newsletterRepository
+                .findAllByLatest()
                 .take(2)
                 .forEach(subscriptionDispatchRecorder::recordNewsletterDispatch)
 
-            webzineIssueRepository.findAllByLatest()
+            webzineIssueRepository
+                .findAllByLatest()
                 .take(2)
                 .forEach(subscriptionDispatchRecorder::recordWebzineIssueDispatch)
         }

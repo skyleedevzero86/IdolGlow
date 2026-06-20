@@ -19,15 +19,12 @@ class SurveySubmission(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_form_id", nullable = false)
     val form: SurveyForm,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
-
     @OneToMany(
         mappedBy = "submission",
         cascade = [CascadeType.ALL],

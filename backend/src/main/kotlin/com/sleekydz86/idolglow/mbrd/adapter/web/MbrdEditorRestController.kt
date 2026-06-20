@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.mbrd.ui
+package com.sleekydz86.idolglow.mbrd.adapter.web
 
+import com.sleekydz86.idolglow.mbrd.adapter.web.dto.MbrdSaveDraftRequest
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorBootstrapService
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorDocumentViewCountPayload
-import com.sleekydz86.idolglow.mbrd.ui.dto.MbrdSaveDraftRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -40,29 +40,35 @@ class MbrdEditorRestController(
 
     @Operation(summary = "문서 상세 조회")
     @GetMapping("/documents/{documentId}")
-    fun loadDocument(@PathVariable documentId: String) =
-        editorBootstrapService.loadDocument(documentId)
+    fun loadDocument(
+        @PathVariable documentId: String,
+    ) = editorBootstrapService.loadDocument(documentId)
 
     @Operation(summary = "URL slug 로 출간 문서 상세 조회")
     @GetMapping("/documents/slug/{urlSlug}")
-    fun loadPublishedDocumentByUrlSlug(@PathVariable urlSlug: String) =
-        editorBootstrapService.loadPublishedDocumentByUrlSlug(urlSlug)
+    fun loadPublishedDocumentByUrlSlug(
+        @PathVariable urlSlug: String,
+    ) = editorBootstrapService.loadPublishedDocumentByUrlSlug(urlSlug)
 
     @Operation(summary = "문서 저장")
     @PostMapping("/draft")
     @ResponseStatus(HttpStatus.CREATED)
-    fun saveDraft(@Valid @RequestBody request: MbrdSaveDraftRequest) =
-        editorBootstrapService.save(request.toCommand())
+    fun saveDraft(
+        @Valid @RequestBody request: MbrdSaveDraftRequest,
+    ) = editorBootstrapService.save(request.toCommand())
 
     @Operation(summary = "문서 삭제")
     @DeleteMapping("/documents/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deleteDocument(@PathVariable documentId: String) {
+    fun deleteDocument(
+        @PathVariable documentId: String,
+    ) {
         editorBootstrapService.deleteDocument(documentId)
     }
 
     @Operation(summary = "게시 문서 조회수 1 증가 (공개 상세 등에서 호출)")
     @PostMapping("/documents/{documentId}/view")
-    fun recordDocumentView(@PathVariable documentId: String): MbrdEditorDocumentViewCountPayload =
-        editorBootstrapService.recordDocumentView(documentId)
+    fun recordDocumentView(
+        @PathVariable documentId: String,
+    ): MbrdEditorDocumentViewCountPayload = editorBootstrapService.recordDocumentView(documentId)
 }

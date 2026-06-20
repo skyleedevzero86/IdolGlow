@@ -1,8 +1,6 @@
 package com.sleekydz86.idolglow.payment.application
 
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.ObjectMapper
-import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
@@ -12,6 +10,8 @@ import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -25,21 +25,21 @@ class TossWebhookService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val reservationPaymentService: ReservationPaymentService,
 ) {
-
     fun handleSignedPayload(rawBody: String) {
-        val root = runCatching { objectMapper.readTree(rawBody) }.getOrElse {
-            paymentLogCommandService.append(
-                payment = null,
-                orderId = null,
-                paymentKey = null,
-                logType = PaymentLogType.WEBHOOK_RECEIVED,
-                step = PaymentLogStep.SERVER,
-                httpStatus = 200,
-                requestBody = rawBody,
-                errorMessage = "웹훅 JSON 파싱 실패",
-            )
-            return
-        }
+        val root =
+            runCatching { objectMapper.readTree(rawBody) }.getOrElse {
+                paymentLogCommandService.append(
+                    payment = null,
+                    orderId = null,
+                    paymentKey = null,
+                    logType = PaymentLogType.WEBHOOK_RECEIVED,
+                    step = PaymentLogStep.SERVER,
+                    httpStatus = 200,
+                    requestBody = rawBody,
+                    errorMessage = "웹훅 JSON 파싱 실패",
+                )
+                return
+            }
 
         val data = root.path("data")
         val logOrderId =
@@ -68,8 +68,18 @@ class TossWebhookService(
             return
         }
 
-        val orderId = data.path("orderId").asText(null)?.trim()?.takeIf { it.isNotEmpty() }
-        val paymentKey = data.path("paymentKey").asText(null)?.trim()?.takeIf { it.isNotEmpty() }
+        val orderId =
+            data
+                .path("orderId")
+                .asText(null)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+        val paymentKey =
+            data
+                .path("paymentKey")
+                .asText(null)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
         if (orderId == null || paymentKey == null) {
             logSystem(null, logOrderId, logPaymentKey, rawBody, "orderId 또는 paymentKey 없음")
             return
@@ -134,18 +144,21 @@ class TossWebhookService(
         val status = pjson.path("status").asText(null)?.trim() ?: ""
         when (status) {
             "DONE" -> finalizeFromRemote(payment, pjson, remote.rawBody!!)
-            "CANCELED" -> reservationPaymentService.handlePaymentCanceled(
-                payment.paymentReference,
-                "결제 취소",
-            )
-            "ABORTED" -> reservationPaymentService.handlePaymentCanceled(
-                payment.paymentReference,
-                "결제 중단",
-            )
-            "EXPIRED" -> reservationPaymentService.handlePaymentFailed(
-                payment.paymentReference,
-                "결제 만료",
-            )
+            "CANCELED" ->
+                reservationPaymentService.handlePaymentCanceled(
+                    payment.paymentReference,
+                    "결제 취소",
+                )
+            "ABORTED" ->
+                reservationPaymentService.handlePaymentCanceled(
+                    payment.paymentReference,
+                    "결제 중단",
+                )
+            "EXPIRED" ->
+                reservationPaymentService.handlePaymentFailed(
+                    payment.paymentReference,
+                    "결제 만료",
+                )
             "WAITING_FOR_DEPOSIT", "IN_PROGRESS", "READY" -> {
                 logSystem(payment, orderId, paymentKey, remote.rawBody, "토스 상태 보류: $status")
             }
@@ -158,14 +171,21 @@ class TossWebhookService(
         }
     }
 
-    private fun finalizeFromRemote(payment: Payment, json: JsonNode, rawJson: String) {
+    private fun finalizeFromRemote(
+        payment: Payment,
+        json: JsonNode,
+        rawJson: String,
+    ) {
         TossPaymentResponseMapper.applyConfirmSuccess(payment, json, rawJson)
         val approvedAt = payment.approvedAt ?: LocalDateTime.now()
         payment.markSucceeded(approvedAt)
         reservationPaymentService.finalizeAfterGatewaySuccess(payment)
     }
 
-    private fun amountMatches(json: JsonNode, expected: BigDecimal): Boolean {
+    private fun amountMatches(
+        json: JsonNode,
+        expected: BigDecimal,
+    ): Boolean {
         val total = json.path("totalAmount")
         if (!total.isNumber) return false
         return BigDecimal.valueOf(total.asLong()).compareTo(expected.stripTrailingZeros()) == 0

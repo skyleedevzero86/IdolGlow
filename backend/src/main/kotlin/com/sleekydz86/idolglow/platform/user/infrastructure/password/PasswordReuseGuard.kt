@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.user.password
+package com.sleekydz86.idolglow.platform.user.infrastructure.password
 
 import com.sleekydz86.idolglow.platform.user.port.PlatformPasswordHistoryPort
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component
 @Component
 @ConditionalOnProperty(prefix = "platform.auth", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class PasswordReuseGuard {
-
     fun matchesRecentHistory(
         userId: Long,
         rawPassword: String,

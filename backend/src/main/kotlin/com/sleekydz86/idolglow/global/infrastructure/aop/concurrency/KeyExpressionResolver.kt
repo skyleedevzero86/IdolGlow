@@ -7,12 +7,14 @@ import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 
 class KeyExpressionResolver {
-
     private val parser = SpelExpressionParser()
     private val nameDiscoverer = DefaultParameterNameDiscoverer()
 
-    fun resolve(expression: String, joinPoint: ProceedingJoinPoint): String {
-        return try {
+    fun resolve(
+        expression: String,
+        joinPoint: ProceedingJoinPoint,
+    ): String =
+        try {
             val method = (joinPoint.signature as MethodSignature).method
             val paramNames = nameDiscoverer.getParameterNames(method).orEmpty()
             val context = StandardEvaluationContext(joinPoint.target)
@@ -28,5 +30,4 @@ class KeyExpressionResolver {
         } catch (ex: Exception) {
             expression
         }
-    }
 }

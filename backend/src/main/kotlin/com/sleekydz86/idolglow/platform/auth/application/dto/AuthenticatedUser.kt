@@ -12,6 +12,7 @@ data class AuthenticatedUser(
             private var role: String? = null
 
             fun email(email: String) = apply { this.email = email }
+
             fun role(role: String) = apply { this.role = role }
 
             fun build(): AuthenticatedUser =

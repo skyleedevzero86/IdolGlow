@@ -15,21 +15,17 @@ data class SurveySubmissionResponse(
                 id = submission.id,
                 formId = submission.form.id,
                 submittedAt = submission.createdAt,
-                answers = submission.answers.map { answer ->
-                    SurveySubmittedAnswerResponse(
-                        questionId = answer.question.id,
-                        answerText = answer.answerText,
-                        selectedOptions = answer.selectedOptions
-                            .sortedBy { it.displayOrder }
-                            .map { it.optionText },
-                    )
-                },
+                answers =
+                    submission.answers.map { answer ->
+                        SurveySubmittedAnswerResponse(
+                            questionId = answer.question.id,
+                            answerText = answer.answerText,
+                            selectedOptions =
+                                answer.selectedOptions
+                                    .sortedBy { it.displayOrder }
+                                    .map { it.optionText },
+                        )
+                    },
             )
     }
 }
-
-data class SurveySubmittedAnswerResponse(
-    val questionId: Long,
-    val answerText: String?,
-    val selectedOptions: List<String>,
-)

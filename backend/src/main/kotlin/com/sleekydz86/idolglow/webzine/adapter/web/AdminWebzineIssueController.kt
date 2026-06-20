@@ -1,5 +1,7 @@
-package com.sleekydz86.idolglow.webzine.ui
+package com.sleekydz86.idolglow.webzine.adapter.web
 
+import com.sleekydz86.idolglow.webzine.adapter.web.request.CreateWebzineIssueRequest
+import com.sleekydz86.idolglow.webzine.adapter.web.request.UpsertWebzineArticleRequest
 import com.sleekydz86.idolglow.webzine.application.WebzineAdminUseCase
 import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueArticleResponse
@@ -9,8 +11,6 @@ import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueVolumeResponse
 import com.sleekydz86.idolglow.webzine.application.dto.CreateWebzineIssueCommand
 import com.sleekydz86.idolglow.webzine.application.dto.UpsertWebzineArticleCommand
 import com.sleekydz86.idolglow.webzine.application.dto.UpsertWebzineArticleSectionCommand
-import com.sleekydz86.idolglow.webzine.ui.request.CreateWebzineIssueRequest
-import com.sleekydz86.idolglow.webzine.ui.request.UpsertWebzineArticleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -39,7 +39,6 @@ class AdminWebzineIssueController(
     private val webzineAdminUseCase: WebzineAdminUseCase,
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
-
     @Operation(summary = "웹진 호 목록 조회")
     @GetMapping
     fun findIssues(
@@ -48,8 +47,7 @@ class AdminWebzineIssueController(
         @RequestParam(required = false) year: Int?,
         @RequestParam(required = false) month: Int?,
         @RequestParam(required = false) volume: Int?,
-    ): ResponseEntity<AdminIssuePageResponse> =
-        ResponseEntity.ok(webzineAdminUseCase.findIssues(page, size, year, month, volume))
+    ): ResponseEntity<AdminIssuePageResponse> = ResponseEntity.ok(webzineAdminUseCase.findIssues(page, size, year, month, volume))
 
     @Operation(summary = "웹진 호 등록")
     @PostMapping
@@ -67,17 +65,19 @@ class AdminWebzineIssueController(
     fun updateIssue(
         @PathVariable issueSlug: String,
         @Valid @RequestBody request: CreateWebzineIssueRequest,
-    ): ResponseEntity<AdminIssueVolumeResponse> =
-        ResponseEntity.ok(webzineAdminUseCase.updateIssue(issueSlug, request.toCommand()))
+    ): ResponseEntity<AdminIssueVolumeResponse> = ResponseEntity.ok(webzineAdminUseCase.updateIssue(issueSlug, request.toCommand()))
 
     @Operation(summary = "웹진 호 단건 조회")
     @GetMapping("/{issueSlug}")
-    fun findIssue(@PathVariable issueSlug: String): ResponseEntity<AdminIssueVolumeResponse> =
-        ResponseEntity.ok(webzineAdminUseCase.findIssue(issueSlug))
+    fun findIssue(
+        @PathVariable issueSlug: String,
+    ): ResponseEntity<AdminIssueVolumeResponse> = ResponseEntity.ok(webzineAdminUseCase.findIssue(issueSlug))
 
     @Operation(summary = "웹진 호 삭제")
     @DeleteMapping("/{issueSlug}")
-    fun deleteIssue(@PathVariable issueSlug: String): ResponseEntity<Void> {
+    fun deleteIssue(
+        @PathVariable issueSlug: String,
+    ): ResponseEntity<Void> {
         webzineAdminUseCase.deleteIssue(issueSlug)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
@@ -87,8 +87,7 @@ class AdminWebzineIssueController(
     fun findArticle(
         @PathVariable issueSlug: String,
         @PathVariable articleSlug: String,
-    ): ResponseEntity<AdminIssueArticleResponse> =
-        ResponseEntity.ok(webzineAdminUseCase.findArticle(issueSlug, articleSlug))
+    ): ResponseEntity<AdminIssueArticleResponse> = ResponseEntity.ok(webzineAdminUseCase.findArticle(issueSlug, articleSlug))
 
     @Operation(summary = "웹진 기사 등록")
     @PostMapping("/{issueSlug}/articles")
@@ -126,8 +125,7 @@ class AdminWebzineIssueController(
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
         @RequestParam(required = false) folder: String?,
-    ): ResponseEntity<AdminIssueImageUploadResponse> =
-        ResponseEntity.ok(webzineImageUploadUseCase.upload(file, folder))
+    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, folder))
 
     private fun CreateWebzineIssueRequest.toCommand(): CreateWebzineIssueCommand =
         CreateWebzineIssueCommand(
@@ -152,12 +150,13 @@ class AdminWebzineIssueController(
             authorEmail = authorEmail,
             creditLine = creditLine,
             highlightQuote = highlightQuote,
-            sections = sections.map {
-                UpsertWebzineArticleSectionCommand(
-                    heading = it.heading,
-                    body = it.body,
-                    note = it.note,
-                )
-            },
+            sections =
+                sections.map {
+                    UpsertWebzineArticleSectionCommand(
+                        heading = it.heading,
+                        body = it.body,
+                        note = it.note,
+                    )
+                },
         )
 }

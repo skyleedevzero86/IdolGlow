@@ -26,20 +26,22 @@ class MimAdminService(
         val resolvedSize = size.coerceIn(1, 100)
         val resolvedSearchType = searchType?.trim()?.lowercase().orEmpty()
         val resolvedKeyword = keyword?.trim().orEmpty()
-        val criteria = MimListCriteria(
-            pageIndex = resolvedPage,
-            pageSize = resolvedSize,
-            domainId = "kr",
-            searchType = resolvedSearchType,
-            keyword = resolvedKeyword,
-        )
+        val criteria =
+            MimListCriteria(
+                pageIndex = resolvedPage,
+                pageSize = resolvedSize,
+                domainId = "kr",
+                searchType = resolvedSearchType,
+                keyword = resolvedKeyword,
+            )
         val totalCount = mimRepository.count(criteria)
         val items = mimRepository.findList(criteria)
-        val totalPages = if (totalCount == 0) {
-            0
-        } else {
-            ceil(totalCount.toDouble() / resolvedSize).toInt()
-        }
+        val totalPages =
+            if (totalCount == 0) {
+                0
+            } else {
+                ceil(totalCount.toDouble() / resolvedSize).toInt()
+            }
         return MimAdminPageResponse(
             items = items.map(MimAdminItemResponse::from),
             page = resolvedPage,
@@ -50,43 +52,50 @@ class MimAdminService(
     }
 
     fun findOne(imageId: String): MimAdminItemResponse {
-        val item = mimRepository.findById(imageId)
-            ?: throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
+        val item =
+            mimRepository.findById(imageId)
+                ?: throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
         return MimAdminItemResponse.from(item)
     }
 
     @Transactional
     fun create(request: UpsertMimRequest): MimAdminItemResponse {
         val id = "IMG_${System.currentTimeMillis()}"
-        val toSave = MimItem(
-            imageId = id,
-            domainId = "kr",
-            imageName = request.imageName,
-            imagePath = request.imagePath,
-            imageFileName = request.imageFileName,
-            description = request.description,
-            activeYn = request.activeYn ?: "Y",
-            createdBy = request.createdBy,
-            createdAtFormatted = null,
-            domainName = null,
-        )
+        val toSave =
+            MimItem(
+                imageId = id,
+                domainId = "kr",
+                imageName = request.imageName,
+                imagePath = request.imagePath,
+                imageFileName = request.imageFileName,
+                description = request.description,
+                activeYn = request.activeYn ?: "Y",
+                createdBy = request.createdBy,
+                createdAtFormatted = null,
+                domainName = null,
+            )
         mimRepository.insert(toSave)
         return findOne(id)
     }
 
     @Transactional
-    fun update(imageId: String, request: UpsertMimRequest): MimAdminItemResponse {
-        val existing = mimRepository.findById(imageId)
-            ?: throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
-        val merged = existing.copy(
-            domainId = existing.domainId ?: "kr",
-            imageName = request.imageName,
-            imagePath = request.imagePath,
-            imageFileName = request.imageFileName,
-            description = request.description,
-            activeYn = request.activeYn ?: existing.activeYn,
-            createdBy = request.createdBy ?: existing.createdBy,
-        )
+    fun update(
+        imageId: String,
+        request: UpsertMimRequest,
+    ): MimAdminItemResponse {
+        val existing =
+            mimRepository.findById(imageId)
+                ?: throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
+        val merged =
+            existing.copy(
+                domainId = existing.domainId ?: "kr",
+                imageName = request.imageName,
+                imagePath = request.imagePath,
+                imageFileName = request.imageFileName,
+                description = request.description,
+                activeYn = request.activeYn ?: existing.activeYn,
+                createdBy = request.createdBy ?: existing.createdBy,
+            )
         mimRepository.update(merged)
         return findOne(imageId)
     }

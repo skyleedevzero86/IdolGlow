@@ -1,15 +1,17 @@
 package com.sleekydz86.idolglow.payment.application
 
-import tools.jackson.databind.JsonNode
 import com.sleekydz86.idolglow.payment.domain.Payment
-import java.math.BigDecimal
+import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
 
 object TossPaymentResponseMapper {
-
-    fun applyConfirmSuccess(payment: Payment, json: JsonNode, rawJson: String) {
+    fun applyConfirmSuccess(
+        payment: Payment,
+        json: JsonNode,
+        rawJson: String,
+    ) {
         payment.paymentKey = json.path("paymentKey").asText(null)
         payment.externalStatus = json.path("status").asText(null)
         payment.orderName = json.path("orderName").asText(null)
@@ -52,7 +54,11 @@ object TossPaymentResponseMapper {
         payment.rawResponseJson = rawJson
     }
 
-    fun applyFailure(payment: Payment, json: JsonNode?, raw: String?) {
+    fun applyFailure(
+        payment: Payment,
+        json: JsonNode?,
+        raw: String?,
+    ) {
         payment.failCode = json?.path("code")?.asText(null)
         val msg = json?.path("message")?.asText(null)
         if (!msg.isNullOrBlank()) {

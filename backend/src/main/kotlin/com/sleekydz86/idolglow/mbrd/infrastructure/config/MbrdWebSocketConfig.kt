@@ -15,7 +15,8 @@ class MbrdWebSocketConfig : WebSocketMessageBrokerConfigurer {
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/ws-mbrd")
+        registry
+            .addEndpoint("/ws-mbrd")
             .setAllowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
             .withSockJS()
     }

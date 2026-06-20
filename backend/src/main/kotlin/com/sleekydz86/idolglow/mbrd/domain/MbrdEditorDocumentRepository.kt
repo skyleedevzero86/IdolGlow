@@ -4,9 +4,13 @@ import java.time.Instant
 
 interface MbrdEditorDocumentRepository {
     fun findById(id: MbrdDocumentId): MbrdEditorDocument?
+
     fun findByUrlSlug(urlSlug: String): MbrdEditorDocument?
+
     fun findLatest(): MbrdEditorDocument?
+
     fun findLatestByStatus(status: MbrdDocumentPublicationStatus): MbrdEditorDocument?
+
     fun findPrevious(
         id: MbrdDocumentId,
         updatedAt: Instant,
@@ -27,8 +31,14 @@ interface MbrdEditorDocumentRepository {
         status: MbrdDocumentPublicationStatus,
     ): List<MbrdEditorDocument>
 
-    fun count(query: String, status: MbrdDocumentPublicationStatus): Long
+    fun count(
+        query: String,
+        status: MbrdDocumentPublicationStatus,
+    ): Long
+
     fun deleteById(id: MbrdDocumentId): Boolean
+
     fun save(document: MbrdEditorDocument): MbrdEditorDocument
+
     fun incrementViewCount(id: MbrdDocumentId): Long
 }

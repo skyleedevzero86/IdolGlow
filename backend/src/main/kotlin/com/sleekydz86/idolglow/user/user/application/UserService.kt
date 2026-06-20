@@ -19,7 +19,6 @@ class UserService(
     private val userOAuthRepository: UserOAuthRepository,
     private val passwordEncoder: PasswordEncoder,
 ) {
-
     fun getUser(userId: Long): GetUserLoginInfoResponse {
         val user = findUser(userId)
         return buildLoginResponse(user)
@@ -30,10 +29,15 @@ class UserService(
             ?: throw CustomException(AuthExceptionType.USER_NOT_FOUND)
 
     @Transactional
-    fun changePassword(userId: Long, currentPassword: String, newPassword: String): Boolean {
+    fun changePassword(
+        userId: Long,
+        currentPassword: String,
+        newPassword: String,
+    ): Boolean {
         val user = findUser(userId)
-        val hash = user.passwordHash
-            ?: throw CustomException(UserExceptionType.PASSWORD_CHANGE_NOT_SUPPORTED)
+        val hash =
+            user.passwordHash
+                ?: throw CustomException(UserExceptionType.PASSWORD_CHANGE_NOT_SUPPORTED)
         val current = currentPassword.trim()
         val next = newPassword.trim()
         if (!passwordEncoder.matches(current, hash)) {
@@ -59,7 +63,11 @@ class UserService(
     }
 
     @Transactional
-    fun updateProfile(userId: Long, nickname: String?, profileImageUrl: String?): GetUserLoginInfoResponse {
+    fun updateProfile(
+        userId: Long,
+        nickname: String?,
+        profileImageUrl: String?,
+    ): GetUserLoginInfoResponse {
         if (nickname == null && profileImageUrl == null) {
             return getUser(userId)
         }
@@ -73,7 +81,10 @@ class UserService(
         return buildLoginResponse(userRepository.save(user))
     }
 
-    private fun applyProfileImageUrl(user: User, raw: String) {
+    private fun applyProfileImageUrl(
+        user: User,
+        raw: String,
+    ) {
         val t = raw.trim()
         if (t.isEmpty()) {
             user.profileImageUrl = null
@@ -82,9 +93,10 @@ class UserService(
         if (t.length > 500) {
             throw CustomException(UserExceptionType.INVALID_PROFILE_IMAGE_URL)
         }
-        val uri = runCatching { URI.create(t) }.getOrElse {
-            throw CustomException(UserExceptionType.INVALID_PROFILE_IMAGE_URL)
-        }
+        val uri =
+            runCatching { URI.create(t) }.getOrElse {
+                throw CustomException(UserExceptionType.INVALID_PROFILE_IMAGE_URL)
+            }
         val scheme = uri.scheme?.lowercase()
         if (scheme != "http" && scheme != "https") {
             throw CustomException(UserExceptionType.INVALID_PROFILE_IMAGE_URL)

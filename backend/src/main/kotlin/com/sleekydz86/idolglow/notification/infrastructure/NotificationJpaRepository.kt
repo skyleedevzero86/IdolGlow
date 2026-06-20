@@ -9,11 +9,34 @@ import java.time.LocalDateTime
 
 interface NotificationJpaRepository : JpaRepository<Notification, Long> {
     fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<Notification>
-    fun findAllByUserIdAndTypeOrderByCreatedAtDesc(userId: Long, type: NotificationType): List<Notification>
+
+    fun findAllByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+        userId: Long,
+        createdAtFrom: LocalDateTime,
+    ): List<Notification>
+
+    fun findAllByUserIdAndTypeOrderByCreatedAtDesc(
+        userId: Long,
+        type: NotificationType,
+    ): List<Notification>
+
     fun countByUserIdAndReadAtIsNull(userId: Long): Long
-    fun existsByUserIdAndTypeAndLink(userId: Long, type: NotificationType, link: String): Boolean
+
+    fun countByUserIdAndReadAtIsNullAndCreatedAtGreaterThanEqual(
+        userId: Long,
+        createdAtFrom: LocalDateTime,
+    ): Long
+
+    fun existsByUserIdAndTypeAndLink(
+        userId: Long,
+        type: NotificationType,
+        link: String,
+    ): Boolean
 
     @Modifying
     @Query("UPDATE Notification n SET n.readAt = :readAt WHERE n.userId = :userId AND n.readAt IS NULL")
-    fun markAllReadByUserId(userId: Long, readAt: LocalDateTime): Int
+    fun markAllReadByUserId(
+        userId: Long,
+        readAt: LocalDateTime,
+    ): Int
 }

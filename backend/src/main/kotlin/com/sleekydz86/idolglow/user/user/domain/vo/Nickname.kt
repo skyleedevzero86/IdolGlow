@@ -8,9 +8,8 @@ import jakarta.persistence.Embeddable
 @Embeddable
 data class Nickname(
     @Column(name = "nickname", nullable = false, length = 10)
-    val value: String = ""
+    val value: String = "",
 ) {
-
     companion object {
         private val NICKNAME_RULE_PATTERN = Regex("^[a-zA-Z0-9가-힣]{2,10}$")
 

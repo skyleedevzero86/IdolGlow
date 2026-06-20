@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.notification.graphql
+package com.sleekydz86.idolglow.notification.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
-import com.sleekydz86.idolglow.global.graphql.asGraphQlValue
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlValue
 import com.sleekydz86.idolglow.notification.application.dto.NotificationResponse
 import com.sleekydz86.idolglow.notification.domain.Notification
 
@@ -23,7 +23,7 @@ data class NotificationGraphQlResponse(
                 message = response.message,
                 link = response.link,
                 readAt = response.readAt.asGraphQlValue(),
-                createdAt = response.createdAt.asGraphQlValue()
+                createdAt = response.createdAt.asGraphQlValue(),
             )
 
         fun from(notification: Notification): NotificationGraphQlResponse =
@@ -34,7 +34,7 @@ data class NotificationGraphQlResponse(
                 message = notification.message,
                 link = notification.link,
                 readAt = notification.readAt.asGraphQlValue(),
-                createdAt = notification.createdAt.asGraphQlValue()
+                createdAt = notification.createdAt.asGraphQlValue(),
             )
     }
 }

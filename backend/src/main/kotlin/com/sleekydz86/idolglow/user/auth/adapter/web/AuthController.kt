@@ -1,14 +1,14 @@
-package com.sleekydz86.idolglow.user.auth.ui
+package com.sleekydz86.idolglow.user.auth.adapter.web
 
+import com.sleekydz86.idolglow.user.auth.adapter.web.dto.PasswordLoginResponse
+import com.sleekydz86.idolglow.user.auth.adapter.web.dto.TemporaryPasswordResponse
+import com.sleekydz86.idolglow.user.auth.adapter.web.request.PasswordLoginRequest
+import com.sleekydz86.idolglow.user.auth.adapter.web.request.TemporaryPasswordRequest
 import com.sleekydz86.idolglow.user.auth.application.AuthService
 import com.sleekydz86.idolglow.user.auth.application.PasswordRecoveryService
 import com.sleekydz86.idolglow.user.auth.domain.dto.AccessTokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
-import com.sleekydz86.idolglow.user.auth.ui.dto.PasswordLoginResponse
-import com.sleekydz86.idolglow.user.auth.ui.dto.TemporaryPasswordResponse
-import com.sleekydz86.idolglow.user.auth.ui.request.PasswordLoginRequest
-import com.sleekydz86.idolglow.user.auth.ui.request.TemporaryPasswordRequest
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
@@ -29,9 +29,11 @@ class AuthController(
     private val passwordRecoveryService: PasswordRecoveryService,
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
 ) : AuthApi {
-
     @GetMapping("/login/{provider}")
-    override fun login(response: HttpServletResponse, @PathVariable("provider") provider: String) {
+    override fun login(
+        response: HttpServletResponse,
+        @PathVariable("provider") provider: String,
+    ) {
         if (!AuthProvider.isAllowedRegistrationId(provider)) {
             throw IllegalArgumentException("지원하지 않는 로그인 제공자입니다: $provider")
         }
@@ -43,7 +45,7 @@ class AuthController(
         @CookieValue(value = RefreshTokenCookieSupporter.REFRESH_TOKEN_COOKIE, required = false) refreshToken: String?,
         @CookieValue(value = RefreshTokenCookieSupporter.REFRESH_CSRF_COOKIE, required = false) refreshCsrfToken: String?,
         @RequestHeader(value = RefreshTokenCookieSupporter.REFRESH_CSRF_HEADER, required = false) refreshCsrfHeader: String?,
-        response: HttpServletResponse
+        response: HttpServletResponse,
     ): ResponseEntity<AccessTokenResponse> {
         refreshTokenCookieSupporter.validateCsrf(refreshCsrfHeader, refreshCsrfToken)
 
@@ -57,7 +59,7 @@ class AuthController(
     override fun logout(
         @CookieValue(value = RefreshTokenCookieSupporter.REFRESH_CSRF_COOKIE, required = false) refreshCsrfToken: String?,
         @RequestHeader(value = RefreshTokenCookieSupporter.REFRESH_CSRF_HEADER, required = false) refreshCsrfHeader: String?,
-        response: HttpServletResponse
+        response: HttpServletResponse,
     ): ResponseEntity<Void> {
         refreshTokenCookieSupporter.validateCsrf(refreshCsrfHeader, refreshCsrfToken)
         refreshTokenCookieSupporter.expireAuthenticationCookies(response)
@@ -80,14 +82,20 @@ class AuthController(
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<TemporaryPasswordResponse> {
         val forwardedFor = httpServletRequest.getHeader("X-Forwarded-For")
-        val ip = forwardedFor?.split(",")?.firstOrNull()?.trim()?.takeIf { it.isNotBlank() }
-            ?: httpServletRequest.remoteAddr.orEmpty().ifBlank { "unknown" }
+        val ip =
+            forwardedFor
+                ?.split(",")
+                ?.firstOrNull()
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?: httpServletRequest.remoteAddr.orEmpty().ifBlank { "unknown" }
         val sent = passwordRecoveryService.issueTemporaryPassword(request.email, ip)
-        val message = if (sent) {
-            "등록된 이메일로 임시 비밀번호를 발송했습니다."
-        } else {
-            "가입된 이메일을 찾을 수 없거나 비밀번호 로그인을 지원하지 않는 계정입니다."
-        }
+        val message =
+            if (sent) {
+                "등록된 이메일로 임시 비밀번호를 발송했습니다."
+            } else {
+                "가입된 이메일을 찾을 수 없거나 비밀번호 로그인을 지원하지 않는 계정입니다."
+            }
         return ResponseEntity.ok(TemporaryPasswordResponse(sent = sent, message = message))
     }
 
@@ -97,14 +105,20 @@ class AuthController(
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<TemporaryPasswordResponse> {
         val forwardedFor = httpServletRequest.getHeader("X-Forwarded-For")
-        val ip = forwardedFor?.split(",")?.firstOrNull()?.trim()?.takeIf { it.isNotBlank() }
-            ?: httpServletRequest.remoteAddr.orEmpty().ifBlank { "unknown" }
+        val ip =
+            forwardedFor
+                ?.split(",")
+                ?.firstOrNull()
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?: httpServletRequest.remoteAddr.orEmpty().ifBlank { "unknown" }
         val sent = passwordRecoveryService.sendAccountIdReminder(request.email, ip)
-        val message = if (sent) {
-            "등록된 이메일로 아이디 안내 메일을 발송했습니다."
-        } else {
-            "가입된 이메일을 찾을 수 없습니다."
-        }
+        val message =
+            if (sent) {
+                "등록된 이메일로 아이디 안내 메일을 발송했습니다."
+            } else {
+                "가입된 이메일을 찾을 수 없습니다."
+            }
         return ResponseEntity.ok(TemporaryPasswordResponse(sent = sent, message = message))
     }
 }

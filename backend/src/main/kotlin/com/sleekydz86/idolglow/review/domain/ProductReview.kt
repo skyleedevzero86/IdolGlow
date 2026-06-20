@@ -21,59 +21,59 @@ import java.time.LocalDateTime
     uniqueConstraints = [
         UniqueConstraint(
             name = "uk_product_review_user",
-            columnNames = ["product_id", "user_id"]
-        )
-    ]
+            columnNames = ["product_id", "user_id"],
+        ),
+    ],
 )
 class ProductReview(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     val product: Product,
-
     @Column(name = "user_id", nullable = false)
     val userId: Long,
-
     @Embedded
     var rating: ReviewRating,
-
     @Column(nullable = false, length = 2000)
     var content: String,
-
     @Column(name = "reservation_id")
     val reservationId: Long? = null,
-
     @Column(name = "helpful_count", nullable = false)
     var helpfulCount: Long = 0L,
-
     @Column(name = "hidden_at")
     var hiddenAt: LocalDateTime? = null,
-
     @Column(name = "hidden_reason", length = 80)
     var hiddenReason: String? = null,
 ) : BaseEntity() {
-
     val verifiedPurchase: Boolean
         get() = reservationId != null
 
     fun isHidden(): Boolean = hiddenAt != null
 
-    fun validateOwner(userId: Long, productId: Long) {
+    fun validateOwner(
+        userId: Long,
+        productId: Long,
+    ) {
         require(this.userId == userId) { "본인이 작성한 리뷰만 처리할 수 있습니다." }
         require(this.product.id == productId) { "해당 리뷰는 상품 ID $productId 에 속하지 않습니다." }
     }
 
-    fun changeReview(rating: ReviewRating, content: String): ProductReview {
+    fun changeReview(
+        rating: ReviewRating,
+        content: String,
+    ): ProductReview {
         validateContent(content)
         this.rating = rating
         this.content = content
         return this
     }
 
-    fun hide(now: LocalDateTime, reason: String) {
+    fun hide(
+        now: LocalDateTime,
+        reason: String,
+    ) {
         hiddenAt = now
         hiddenReason = reason.take(80)
     }

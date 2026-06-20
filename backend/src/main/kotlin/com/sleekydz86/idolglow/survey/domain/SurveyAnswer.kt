@@ -19,18 +19,14 @@ class SurveyAnswer(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_submission_id", nullable = false)
     val submission: SurveySubmission,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_question_id", nullable = false)
     val question: SurveyQuestion,
-
     @Column(name = "answer_text", columnDefinition = "TEXT")
     var answerText: String? = null,
-
     @OneToMany(
         mappedBy = "answer",
         cascade = [CascadeType.ALL],

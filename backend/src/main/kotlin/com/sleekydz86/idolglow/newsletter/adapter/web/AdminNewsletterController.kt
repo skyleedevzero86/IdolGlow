@@ -1,11 +1,11 @@
-package com.sleekydz86.idolglow.newsletter.ui
+package com.sleekydz86.idolglow.newsletter.adapter.web
 
+import com.sleekydz86.idolglow.newsletter.adapter.web.request.UpsertNewsletterRequest
 import com.sleekydz86.idolglow.newsletter.application.NewsletterAdminUseCase
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterDetailResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterImageUploadResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterPageResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.UpsertNewsletterCommand
-import com.sleekydz86.idolglow.newsletter.ui.request.UpsertNewsletterRequest
 import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -35,21 +35,18 @@ class AdminNewsletterController(
     private val newsletterAdminUseCase: NewsletterAdminUseCase,
     private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
 ) {
-
     @Operation(summary = "소식지 목록 조회")
     @GetMapping
     fun findNewsletters(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
-    ): ResponseEntity<AdminNewsletterPageResponse> =
-        ResponseEntity.ok(newsletterAdminUseCase.findNewsletters(page, size))
+    ): ResponseEntity<AdminNewsletterPageResponse> = ResponseEntity.ok(newsletterAdminUseCase.findNewsletters(page, size))
 
     @Operation(summary = "소식지 단건 조회")
     @GetMapping("/{newsletterSlug}")
     fun findNewsletter(
         @PathVariable newsletterSlug: String,
-    ): ResponseEntity<AdminNewsletterDetailResponse> =
-        ResponseEntity.ok(newsletterAdminUseCase.findNewsletter(newsletterSlug))
+    ): ResponseEntity<AdminNewsletterDetailResponse> = ResponseEntity.ok(newsletterAdminUseCase.findNewsletter(newsletterSlug))
 
     @Operation(summary = "소식지 등록")
     @PostMapping
@@ -92,7 +89,7 @@ class AdminNewsletterController(
                 objectKey = upload.objectKey,
                 contentType = upload.contentType,
                 size = upload.size,
-            )
+            ),
         )
     }
 

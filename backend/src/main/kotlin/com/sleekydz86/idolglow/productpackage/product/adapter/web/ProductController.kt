@@ -1,12 +1,12 @@
-package com.sleekydz86.idolglow.productpackage.product.ui
+package com.sleekydz86.idolglow.productpackage.product.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
+import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
-import com.sleekydz86.idolglow.productpackage.product.ui.request.CreateProductRequest
-import com.sleekydz86.idolglow.productpackage.product.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -25,9 +25,8 @@ import java.net.URI
 @RestController
 class ProductController(
     private val productQueryService: ProductQueryService,
-    private val productCommandService: ProductCommandService
+    private val productCommandService: ProductCommandService,
 ) : ProductApi {
-
     @GetMapping
     override fun findProducts(
         @RequestParam(required = false) lastId: Long?,
@@ -46,35 +45,40 @@ class ProductController(
         @RequestParam(required = false) radiusMeters: Int?,
     ): ResponseEntity<ProductBrowseResult> {
         val resolvedSize = (size ?: 20).coerceIn(1, 50)
-        val params = ProductBrowseRequestParser.parse(
-            lastId = lastId,
-            offset = offset,
-            size = resolvedSize,
-            tag = tag,
-            tags = tags,
-            keyword = keyword,
-            minPrice = minPrice,
-            maxPrice = maxPrice,
-            visitDate = visitDate,
-            reservableOnly = reservableOnly,
-            sort = sort,
-            nearLatitude = nearLatitude,
-            nearLongitude = nearLongitude,
-            radiusMeters = radiusMeters,
-        )
+        val params =
+            ProductBrowseRequestParser.parse(
+                lastId = lastId,
+                offset = offset,
+                size = resolvedSize,
+                tag = tag,
+                tags = tags,
+                keyword = keyword,
+                minPrice = minPrice,
+                maxPrice = maxPrice,
+                visitDate = visitDate,
+                reservableOnly = reservableOnly,
+                sort = sort,
+                nearLatitude = nearLatitude,
+                nearLongitude = nearLongitude,
+                radiusMeters = radiusMeters,
+            )
         return ResponseEntity.ok(productQueryService.browseProducts(params))
     }
 
     @GetMapping("/{productId}")
-    override fun findProduct(@PathVariable productId: Long): ResponseEntity<ProductSpecificResponse> =
-        ResponseEntity.ok(productQueryService.findProductSpecificById(productId))
+    override fun findProduct(
+        @PathVariable productId: Long,
+    ): ResponseEntity<ProductSpecificResponse> = ResponseEntity.ok(productQueryService.findProductSpecificById(productId))
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    override fun createProduct(@Valid @RequestBody request: CreateProductRequest): ResponseEntity<ProductCreatedResponse> {
+    override fun createProduct(
+        @Valid @RequestBody request: CreateProductRequest,
+    ): ResponseEntity<ProductCreatedResponse> {
         val product = productCommandService.createProduct(request.toCommand())
-        return ResponseEntity.created(URI.create("/products/" + product.id))
+        return ResponseEntity
+            .created(URI.create("/products/" + product.id))
             .body(ProductCreatedResponse(id = product.id))
     }
 }

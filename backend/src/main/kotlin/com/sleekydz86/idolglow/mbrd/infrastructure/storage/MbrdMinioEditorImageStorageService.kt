@@ -1,11 +1,11 @@
 package com.sleekydz86.idolglow.mbrd.infrastructure.storage
 
-import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageContentPayload
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageUploadPayload
-import com.sleekydz86.idolglow.mbrd.infrastructure.config.MbrdEditorProperties
 import com.sleekydz86.idolglow.mbrd.domain.MbrdEditorAsset
 import com.sleekydz86.idolglow.mbrd.domain.MbrdEditorAssetRepository
+import com.sleekydz86.idolglow.mbrd.infrastructure.config.MbrdEditorProperties
 import io.minio.BucketExistsArgs
 import io.minio.GetObjectArgs
 import io.minio.MakeBucketArgs
@@ -41,7 +41,8 @@ class MbrdMinioEditorImageStorageService(
         val contentType = image.contentType ?: "application/octet-stream"
         image.inputStream.use { inputStream ->
             minioClient.putObject(
-                PutObjectArgs.builder()
+                PutObjectArgs
+                    .builder()
                     .bucket(bucket())
                     .`object`(objectKey)
                     .stream(inputStream, image.size, -1)
@@ -70,14 +71,17 @@ class MbrdMinioEditorImageStorageService(
     }
 
     fun load(assetId: UUID): MbrdEditorImageContentPayload {
-        val asset = assetRepository.findById(assetId)
-            ?: throw IllegalArgumentException("업로드한 이미지를 찾을 수 없습니다.")
-        val stream = minioClient.getObject(
-            GetObjectArgs.builder()
-                .bucket(asset.bucketName)
-                .`object`(asset.objectKey)
-                .build(),
-        )
+        val asset =
+            assetRepository.findById(assetId)
+                ?: throw IllegalArgumentException("업로드한 이미지를 찾을 수 없습니다.")
+        val stream =
+            minioClient.getObject(
+                GetObjectArgs
+                    .builder()
+                    .bucket(asset.bucketName)
+                    .`object`(asset.objectKey)
+                    .build(),
+            )
         return MbrdEditorImageContentPayload(
             stream = stream,
             contentType = asset.contentType,
@@ -125,13 +129,14 @@ class MbrdMinioEditorImageStorageService(
     }
 
     companion object {
-        private val ALLOWED_IMAGE_TYPES = setOf(
-            "image/png",
-            "image/jpeg",
-            "image/jpg",
-            "image/gif",
-            "image/webp",
-            "image/svg+xml",
-        )
+        private val ALLOWED_IMAGE_TYPES =
+            setOf(
+                "image/png",
+                "image/jpeg",
+                "image/jpg",
+                "image/gif",
+                "image/webp",
+                "image/svg+xml",
+            )
     }
 }
