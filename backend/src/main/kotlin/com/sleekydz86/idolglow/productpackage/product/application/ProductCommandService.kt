@@ -29,23 +29,23 @@ class ProductCommandService(
     private val imageEventPublisher: ImageEventPublisher,
     private val objectMapper: ObjectMapper,
 ) {
-
     fun createProduct(command: CreateProductCommand): Product {
         val options = findOptions(command.optionIds)
         val today = LocalDate.now()
         val slotStartDate = command.slotStartDate ?: today.plusDays(1)
         val slotEndDate = command.slotEndDate ?: today.plusMonths(12)
-        val product = Product.createWithTimeSlots(
-            name = command.name,
-            description = command.description,
-            basePrice = command.basePrice,
-            options = options,
-            tagNames = command.tagNames,
-            slotStartDate = slotStartDate,
-            slotEndDate = slotEndDate,
-            slotStartTime = command.slotStartTime,
-            slotEndTime = command.slotEndTime
-        )
+        val product =
+            Product.createWithTimeSlots(
+                name = command.name,
+                description = command.description,
+                basePrice = command.basePrice,
+                options = options,
+                tagNames = command.tagNames,
+                slotStartDate = slotStartDate,
+                slotEndDate = slotEndDate,
+                slotStartTime = command.slotStartTime,
+                slotEndTime = command.slotEndTime,
+            )
         product.tourAttractionPicksJson =
             TourAttractionPicksJsonCodec.encode(command.tourAttractionPicks, objectMapper)
         val saved = productCommandRepository.save(product)
@@ -53,8 +53,8 @@ class ProductCommandService(
         eventPublisher.publishEvent(
             ProductCreateEvent(
                 productId = saved.id,
-                location = command.location
-            )
+                location = command.location,
+            ),
         )
 
         return saved
@@ -64,8 +64,9 @@ class ProductCommandService(
         productId: Long,
         command: CreateProductCommand,
     ): Product {
-        val product = productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
+        val product =
+            productCommandRepository.findById(productId)
+                ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
         val options = findOptions(command.optionIds)
         product.updateBasics(
             name = command.name,
@@ -83,18 +84,19 @@ class ProductCommandService(
     }
 
     fun deleteProduct(productId: Long) {
-        val product = productCommandRepository.findById(productId)
-            ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
+        val product =
+            productCommandRepository.findById(productId)
+                ?: throw IllegalArgumentException("상품을 찾을 수 없습니다. productId=$productId")
 
         productCommandRepository.delete(product)
 
         wishEventPublisher.publishDelete(
             aggregateType = WishAggregateType.PRODUCT,
-            aggregateId = productId
+            aggregateId = productId,
         )
         imageEventPublisher.publishDelete(
             aggregateType = ImageAggregateType.PRODUCT,
-            aggregateId = productId
+            aggregateId = productId,
         )
     }
 

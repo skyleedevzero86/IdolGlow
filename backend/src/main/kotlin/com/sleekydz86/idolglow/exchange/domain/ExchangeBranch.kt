@@ -20,25 +20,18 @@ class ExchangeBranch(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 200)
     val name: String,
-
     @Column(nullable = false, precision = 20, scale = 8)
     val rate: BigDecimal,
-
     @Column(nullable = false, length = 8)
     val currency: String,
-
     @Column(nullable = false)
     val lat: Double,
-
     @Column(nullable = false)
     val lng: Double,
-
     @Column(name = "sort_order", nullable = false)
     val sortOrder: Int = 0,
-
     @Column(name = "airport_hub", nullable = false)
     val airportHub: Boolean = false,
 )

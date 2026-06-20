@@ -8,9 +8,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class ImageEventPublisher(
-    private val applicationEventPublisher: ApplicationEventPublisher
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
-
     fun publishCreate(event: ImageCreateEvent) {
         applicationEventPublisher.publishEvent(event)
     }
@@ -20,7 +19,7 @@ class ImageEventPublisher(
         aggregateId: Long,
         originalFilename: String,
         content: ByteArray,
-        sortOrder: Int = 0
+        sortOrder: Int = 0,
     ) {
         publishCreate(
             ImageCreateEvent(
@@ -28,8 +27,8 @@ class ImageEventPublisher(
                 aggregateId = aggregateId,
                 originalFilename = originalFilename,
                 content = content,
-                sortOrder = sortOrder
-            )
+                sortOrder = sortOrder,
+            ),
         )
     }
 
@@ -41,7 +40,7 @@ class ImageEventPublisher(
             ImageDeleteEvent(
                 aggregateType = aggregateType,
                 aggregateId = aggregateId,
-            )
+            ),
         )
     }
 

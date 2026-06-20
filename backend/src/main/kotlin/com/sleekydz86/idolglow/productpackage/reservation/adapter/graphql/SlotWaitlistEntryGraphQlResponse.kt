@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.reservation.graphql
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.graphql
 
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.SlotWaitlistEntryResponse
 

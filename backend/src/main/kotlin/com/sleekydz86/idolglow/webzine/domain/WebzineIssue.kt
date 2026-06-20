@@ -20,34 +20,31 @@ import java.time.LocalDate
     uniqueConstraints = [
         UniqueConstraint(name = "uk_webzine_issue_slug", columnNames = ["slug"]),
         UniqueConstraint(name = "uk_webzine_issue_volume", columnNames = ["volume"]),
-    ]
+    ],
 )
 class WebzineIssue(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 80)
     var slug: String,
-
     @Column(nullable = false)
     var volume: Int,
-
     @Column(name = "issue_date", nullable = false)
     var issueDate: LocalDate,
-
     @Column(name = "cover_image_url", nullable = false, length = 500)
     var coverImageUrl: String,
-
     @Column(nullable = false, length = 1000)
     var teaser: String,
-
     @OrderBy("createdAt DESC")
     @OneToMany(mappedBy = "issue", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val articles: MutableList<WebzineArticle> = mutableListOf(),
 ) : BaseEntity() {
-
-    fun update(issueDate: LocalDate, coverImageUrl: String, teaser: String) {
+    fun update(
+        issueDate: LocalDate,
+        coverImageUrl: String,
+        teaser: String,
+    ) {
         this.issueDate = issueDate
         this.coverImageUrl = coverImageUrl
         this.teaser = teaser

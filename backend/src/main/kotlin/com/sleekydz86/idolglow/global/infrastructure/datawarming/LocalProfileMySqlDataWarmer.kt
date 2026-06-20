@@ -47,9 +47,8 @@ class LocalProfileMySqlDataWarmer(
     private val scheduleJpaRepository: ScheduleJpaRepository,
     private val productReviewJpaRepository: ProductReviewJpaRepository,
     private val imageJpaRepository: ImageJpaRepository,
-    private val jwtProvider: JwtProvider
+    private val jwtProvider: JwtProvider,
 ) : ApplicationRunner {
-
     private val log = LoggerFactory.getLogger(LocalProfileMySqlDataWarmer::class.java)
 
     @Transactional
@@ -63,13 +62,14 @@ class LocalProfileMySqlDataWarmer(
             return
         }
 
-        val user1 = userJpaRepository.save(
-            User.of(
-                email = "alice@example.com",
-                nickname = "alice01",
-                role = UserRole.ADMIN
+        val user1 =
+            userJpaRepository.save(
+                User.of(
+                    email = "alice@example.com",
+                    nickname = "alice01",
+                    role = UserRole.ADMIN,
+                ),
             )
-        )
         val user2 = userJpaRepository.save(User.of(email = "bob@example.com", nickname = "bob02"))
 
         userOAuthJpaRepository.save(
@@ -77,8 +77,8 @@ class LocalProfileMySqlDataWarmer(
                 userId = user1.id,
                 provider = AuthProvider.TEST,
                 providerId = "google",
-                email = user1.email
-            )
+                email = user1.email,
+            ),
         )
 
         userSurveyJpaRepository.save(
@@ -90,60 +90,65 @@ class LocalProfileMySqlDataWarmer(
                 visitEndDate = LocalDate.now().plusDays(5),
                 visitStartTime = "09:00",
                 visitEndTime = "24:00",
-                places = listOf("서울", "홍대")
-            )
+                places = listOf("서울", "홍대"),
+            ),
         )
 
-        val option1 = optionJpaRepository.save(
-            Option(
-                name = "포토 촬영",
-                description = "스튜디오 포토 촬영 옵션입니다.",
-                price = BigDecimal("5000.00"),
-                location = "서울 스튜디오"
+        val option1 =
+            optionJpaRepository.save(
+                Option(
+                    name = "포토 촬영",
+                    description = "스튜디오 포토 촬영 옵션입니다.",
+                    price = BigDecimal("5000.00"),
+                    location = "서울 스튜디오",
+                ),
             )
-        )
-        val option2 = optionJpaRepository.save(
-            Option(
-                name = "메이크업 세션",
-                description = "전문 메이크업 세션 옵션입니다.",
-                price = BigDecimal("8000.00"),
-                location = "서울 살롱"
+        val option2 =
+            optionJpaRepository.save(
+                Option(
+                    name = "메이크업 세션",
+                    description = "전문 메이크업 세션 옵션입니다.",
+                    price = BigDecimal("8000.00"),
+                    location = "서울 살롱",
+                ),
             )
-        )
 
         val slotStartDate = LocalDate.now().minusDays(7)
         val slotEndDate = LocalDate.now().minusDays(5)
-        val product = Product.createWithTimeSlots(
-            name = "아이돌 체험",
-            description = "사진 촬영과 스타일링이 포함된 원데이 아이돌 체험입니다.",
-            basePrice = BigDecimal.ZERO,
-            options = listOf(option1, option2),
-            tagNames = listOf("아이돌", "촬영", "메이크업"),
-            slotStartDate = slotStartDate,
-            slotEndDate = slotEndDate
-        )
-        val locationPayload = ProductLocationPayload(
-            name = "IdolGlow 스튜디오",
-            latitude = BigDecimal("37.5665"),
-            longitude = BigDecimal("126.9780"),
-            roadAddressName = "서울로 1",
-            addressName = "서울특별시",
-            kakaoPlaceId = "kakao-1234"
-        )
+        val product =
+            Product.createWithTimeSlots(
+                name = "아이돌 체험",
+                description = "사진 촬영과 스타일링이 포함된 원데이 아이돌 체험입니다.",
+                basePrice = BigDecimal.ZERO,
+                options = listOf(option1, option2),
+                tagNames = listOf("아이돌", "촬영", "메이크업"),
+                slotStartDate = slotStartDate,
+                slotEndDate = slotEndDate,
+            )
+        val locationPayload =
+            ProductLocationPayload(
+                name = "IdolGlow 스튜디오",
+                latitude = BigDecimal("37.5665"),
+                longitude = BigDecimal("126.9780"),
+                roadAddressName = "서울로 1",
+                addressName = "서울특별시",
+                kakaoPlaceId = "kakao-1234",
+            )
         val productLocation = ProductLocation.of(product, locationPayload)
         product.setLocation(productLocation)
         val savedProduct = productJpaRepository.save(product)
 
         val reservationSlot = savedProduct.reservationSlots.first()
         val reservationExpiresAt = LocalDateTime.now().plusMinutes(15)
-        val reservation = Reservation(
-            reservationSlot = reservationSlot,
-            userId = user1.id,
-            visitDate = reservationSlot.reservationDate,
-            visitStartTime = reservationSlot.startTime,
-            visitEndTime = reservationSlot.endTime,
-            totalPrice = savedProduct.totalPrice
-        ).request(reservationExpiresAt)
+        val reservation =
+            Reservation(
+                reservationSlot = reservationSlot,
+                userId = user1.id,
+                visitDate = reservationSlot.reservationDate,
+                visitStartTime = reservationSlot.startTime,
+                visitEndTime = reservationSlot.endTime,
+                totalPrice = savedProduct.totalPrice,
+            ).request(reservationExpiresAt)
         val savedReservation = reservationJpaRepository.save(reservation)
         reservationSlot.hold(savedReservation.id, reservationExpiresAt)
         savedReservation.confirm()
@@ -156,19 +161,20 @@ class LocalProfileMySqlDataWarmer(
                 productId = savedProduct.id,
                 title = "로컬 샘플 방문",
                 startAt = scheduleStart,
-                endAt = scheduleEnd
-            )
+                endAt = scheduleEnd,
+            ),
         )
 
-        val review = productReviewJpaRepository.save(
-            ProductReview.of(
-                product = savedProduct,
-                userId = user1.id,
-                ratingScore = 5,
-                content = "정말 만족스러운 체험이었어요.",
-                reservationId = savedReservation.id,
+        val review =
+            productReviewJpaRepository.save(
+                ProductReview.of(
+                    product = savedProduct,
+                    userId = user1.id,
+                    ratingScore = 5,
+                    content = "정말 만족스러운 체험이었어요.",
+                    reservationId = savedReservation.id,
+                ),
             )
-        )
 
         logTokenForUser(user1)
 
@@ -182,7 +188,7 @@ class LocalProfileMySqlDataWarmer(
                     extension = "jpg",
                     fileSize = 12345,
                     url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvgc55oqyCgDe0etT2gGO0-TVO4aTJJo2ZCMXSIjb48AjGSchKAsofP_ExwitaeDfhSMU85Zongk3oLNBfgnFhLaG8qBKDF2IAA6hq3Q&s=10",
-                    sortOrder = 0
+                    sortOrder = 0,
                 ),
                 Image(
                     aggregateType = ImageAggregateType.OPTION,
@@ -192,7 +198,7 @@ class LocalProfileMySqlDataWarmer(
                     extension = "jpg",
                     fileSize = 23456,
                     url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvgc55oqyCgDe0etT2gGO0-TVO4aTJJo2ZCMXSIjb48AjGSchKAsofP_ExwitaeDfhSMU85Zongk3oLNBfgnFhLaG8qBKDF2IAA6hq3Q&s=10",
-                    sortOrder = 0
+                    sortOrder = 0,
                 ),
                 Image(
                     aggregateType = ImageAggregateType.USER,
@@ -202,7 +208,7 @@ class LocalProfileMySqlDataWarmer(
                     extension = "jpg",
                     fileSize = 34567,
                     url = "https://i.namu.wiki/i/16EvgURhGL60lzie4kEN-z_tVzwlMsvcf_kPlY3aShL4kfg9Jng2QvB_72EJGFn2l2aNHBl8FjJLxZmRGaNqFQ.webp",
-                    sortOrder = 0
+                    sortOrder = 0,
                 ),
                 Image(
                     aggregateType = ImageAggregateType.PRODUCT_REVIEW,
@@ -212,9 +218,9 @@ class LocalProfileMySqlDataWarmer(
                     extension = "jpg",
                     fileSize = 45678,
                     url = "https://img4.daumcdn.net/thumb/R658x0.q70/?fname=https://t1.daumcdn.net/news/202504/30/xportsnews/20250430200826062kfst.jpg",
-                    sortOrder = 0
-                )
-            )
+                    sortOrder = 0,
+                ),
+            ),
         )
     }
 
@@ -224,7 +230,7 @@ class LocalProfileMySqlDataWarmer(
             "로컬 테스트 토큰(userId={}): 액세스 토큰={}, 리프레시 토큰={}",
             user.id,
             token.accessToken,
-            token.refreshToken
+            token.refreshToken,
         )
     }
 }

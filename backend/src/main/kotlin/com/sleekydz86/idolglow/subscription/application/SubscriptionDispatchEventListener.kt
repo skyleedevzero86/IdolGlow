@@ -11,7 +11,6 @@ import org.springframework.transaction.event.TransactionalEventListener
 class SubscriptionDispatchEventListener(
     private val subscriptionDispatchMailService: SubscriptionDispatchMailService,
 ) {
-
     @Async("subscriptionDispatchExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     fun onNewsletterDispatch(event: NewsletterDispatchRequestedEvent) {

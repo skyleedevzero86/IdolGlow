@@ -16,21 +16,18 @@ import jakarta.persistence.UniqueConstraint
 @Table(
     name = "product_review_reports",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_review_report_user", columnNames = ["review_id", "reporter_user_id"])
-    ]
+        UniqueConstraint(name = "uk_review_report_user", columnNames = ["review_id", "reporter_user_id"]),
+    ],
 )
 class ProductReviewReport(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "review_id", nullable = false)
     val review: ProductReview,
-
     @Column(name = "reporter_user_id", nullable = false)
     val reporterUserId: Long,
-
     @Column(nullable = false, length = 200)
     val reason: String,
 ) : BaseEntity()

@@ -71,10 +71,3 @@ data class AdminReservationSummaryResponse(
             )
     }
 }
-
-data class AdminReservationPaymentProjection(
-    val reservationId: Long,
-    val paymentReference: String,
-    val status: PaymentStatus,
-    val failureReason: String?,
-)

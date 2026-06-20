@@ -1,10 +1,11 @@
-package com.sleekydz86.idolglow.admin.ui
+package com.sleekydz86.idolglow.admin.adapter.web
 
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminProductReviewPageResponse
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminProductReviewSummaryResponse
+import com.sleekydz86.idolglow.admin.adapter.web.mapper.toWebResponse
+import com.sleekydz86.idolglow.admin.adapter.web.request.HideAdminProductReviewRequest
 import com.sleekydz86.idolglow.admin.application.AdminProductReviewService
 import com.sleekydz86.idolglow.admin.application.AdminReviewVisibilityFilter
-import com.sleekydz86.idolglow.admin.ui.dto.AdminProductReviewPageResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminProductReviewSummaryResponse
-import com.sleekydz86.idolglow.admin.ui.request.HideAdminProductReviewRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -27,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminProductReviewController(
     private val adminProductReviewService: AdminProductReviewService,
 ) {
-
     @Operation(summary = "리뷰 목록 조회", description = "키워드(내용·상품명), 공개 여부 필터, 페이지네이션")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
@@ -37,7 +37,7 @@ class AdminProductReviewController(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "ALL") visibility: AdminReviewVisibilityFilter,
     ): ResponseEntity<AdminProductReviewPageResponse> =
-        ResponseEntity.ok(adminProductReviewService.findReviews(keyword, visibility, page, size))
+        ResponseEntity.ok(adminProductReviewService.findReviews(keyword, visibility, page, size).toWebResponse())
 
     @Operation(summary = "리뷰 비공개 처리")
     @SecurityRequirement(name = "bearerAuth")
@@ -46,13 +46,12 @@ class AdminProductReviewController(
         @PathVariable reviewId: Long,
         @Valid @RequestBody(required = false) request: HideAdminProductReviewRequest?,
     ): ResponseEntity<AdminProductReviewSummaryResponse> =
-        ResponseEntity.ok(adminProductReviewService.hideReview(reviewId, request?.reason))
+        ResponseEntity.ok(adminProductReviewService.hideReview(reviewId, request?.reason).toWebResponse())
 
     @Operation(summary = "리뷰 공개 복구")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{reviewId}/unhide")
     fun unhideReview(
         @PathVariable reviewId: Long,
-    ): ResponseEntity<AdminProductReviewSummaryResponse> =
-        ResponseEntity.ok(adminProductReviewService.unhideReview(reviewId))
+    ): ResponseEntity<AdminProductReviewSummaryResponse> = ResponseEntity.ok(adminProductReviewService.unhideReview(reviewId).toWebResponse())
 }

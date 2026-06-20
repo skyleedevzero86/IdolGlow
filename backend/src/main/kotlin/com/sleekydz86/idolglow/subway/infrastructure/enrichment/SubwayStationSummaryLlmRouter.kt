@@ -13,7 +13,6 @@ class SubwayStationSummaryLlmRouter(
     @Value("\${app.llm.subway.provider:auto}")
     private val providerRaw: String,
 ) {
-
     @Cacheable(
         cacheNames = [OpenAiSubwayStationSummaryClient.CACHE_NAME],
         key = "#lineId + ':' + #stationCd",

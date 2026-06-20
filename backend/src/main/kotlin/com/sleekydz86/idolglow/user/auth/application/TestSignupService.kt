@@ -13,22 +13,21 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class TestSignupService(
     private val userRepository: UserRepository,
-    private val userOAuthRepository: UserOAuthRepository
+    private val userOAuthRepository: UserOAuthRepository,
 ) {
-
     @Transactional
     fun testSignup(request: TestSignupRequest): TestSignupResponse {
         val result = signupOrGetTestUser(request.seed)
         return TestSignupResponse(
             userId = result.userId,
-            email = result.email
+            email = result.email,
         )
     }
 
     private fun signupOrGetTestUser(seed: String): TestUser {
-        val email = "test+${seed}@google.com"
+        val email = "test+$seed@google.com"
         val provider = AuthProvider.TEST
-        val providerId = "test-${seed}"
+        val providerId = "test-$seed"
 
         val userByEmail: User? = userRepository.findByEmail(email = email)
         if (userByEmail != null) {
@@ -42,7 +41,12 @@ class TestSignupService(
         return TestUser(userId = saved.id, email = saved.email)
     }
 
-    private fun ensureOAuthMapping(userId: Long, provider: AuthProvider, providerId: String, email: String) {
+    private fun ensureOAuthMapping(
+        userId: Long,
+        provider: AuthProvider,
+        providerId: String,
+        email: String,
+    ) {
         val existing = userOAuthRepository.findByProviderAndProviderId(provider, providerId)
         if (existing != null) return
 
@@ -54,8 +58,8 @@ class TestSignupService(
                 userId = userId,
                 provider = provider,
                 providerId = providerId,
-                email = email
-            )
+                email = email,
+            ),
         )
     }
 }

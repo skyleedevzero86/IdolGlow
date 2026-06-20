@@ -14,23 +14,19 @@ import jakarta.persistence.UniqueConstraint
 @Entity
 @Table(
     name = "notification_preferences",
-    uniqueConstraints = [UniqueConstraint(name = "uk_np_user_type", columnNames = ["user_id", "type"])]
+    uniqueConstraints = [UniqueConstraint(name = "uk_np_user_type", columnNames = ["user_id", "type"])],
 )
 class NotificationPreference(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(name = "user_id", nullable = false)
     val userId: Long,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     val type: NotificationType,
-
     @Column(nullable = false)
     var enabled: Boolean = true,
 ) : BaseEntity() {
-
     fun update(enabled: Boolean) {
         this.enabled = enabled
     }

@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.productpackage.product.graphql
+package com.sleekydz86.idolglow.productpackage.product.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductLocationSummaryResponse
 
 data class ProductLocationSummaryGraphQlResponse(

@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.review.graphql
+package com.sleekydz86.idolglow.review.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.asGraphQlId
+import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewResponse
 
 data class ProductReviewGraphQlResponse(

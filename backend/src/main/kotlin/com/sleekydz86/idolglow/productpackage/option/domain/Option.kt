@@ -15,20 +15,15 @@ class Option(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(nullable = false, length = 120)
     var name: String,
-
     @Column(nullable = false, columnDefinition = "TEXT")
     var description: String,
-
     @Column(nullable = false)
     var price: BigDecimal,
-
     @Column(nullable = false, length = 200)
     var location: String,
 ) : BaseEntity() {
-
     fun update(
         name: String,
         description: String,

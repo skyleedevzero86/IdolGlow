@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.auth.http
+package com.sleekydz86.idolglow.platform.auth.adapter.web.http
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -25,10 +25,15 @@ data class ErrorResponse(
         private val errorResponse = ErrorResponse()
 
         fun requestId(requestId: String?) = apply { errorResponse.requestId = requestId }
+
         fun errorCode(errorCode: String?) = apply { errorResponse.errorCode = errorCode }
+
         fun message(message: String?) = apply { errorResponse.message = message }
+
         fun path(path: String?) = apply { errorResponse.path = path }
+
         fun status(status: Int) = apply { errorResponse.status = status }
+
         fun timestamp(timestamp: LocalDateTime) = apply { errorResponse.timestamp = timestamp }
 
         fun build(): ErrorResponse = errorResponse

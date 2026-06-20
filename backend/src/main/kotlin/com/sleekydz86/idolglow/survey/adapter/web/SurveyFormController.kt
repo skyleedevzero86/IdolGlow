@@ -1,12 +1,16 @@
-package com.sleekydz86.idolglow.survey.ui
+package com.sleekydz86.idolglow.survey.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.survey.adapter.web.request.SubmitSurveyResponseRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.survey.application.SurveyRecommendationService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendationResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
-import com.sleekydz86.idolglow.survey.ui.request.SubmitSurveyResponseRequest
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -19,32 +23,44 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
+@Tag(name = "설문", description = "사용자 설문 조회·제출·추천 API")
 @RestController
 @RequestMapping("/survey-forms")
 class SurveyFormController(
     private val userSurveyFormService: UserSurveyFormService,
     private val surveyRecommendationService: SurveyRecommendationService,
 ) {
+    @Operation(summary = "현재 설문 조회")
     @GetMapping("/current")
     fun findCurrent(): ResponseEntity<SurveyFormResponse> =
-        userSurveyFormService.findCurrentForm()
+        userSurveyFormService
+            .findCurrentForm()
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
 
+    @Operation(summary = "현재 설문 제출")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/current/submissions")
     @ResponseStatus(HttpStatus.CREATED)
     fun submitCurrent(
         @LoginUser userId: Long,
         @Valid @RequestBody request: SubmitSurveyResponseRequest,
     ): ResponseEntity<SurveySubmissionResponse> =
-        ResponseEntity.status(HttpStatus.CREATED).body(userSurveyFormService.submitCurrentForm(userId, request))
+        ResponseEntity.status(HttpStatus.CREATED).body(userSurveyFormService.submitCurrentForm(userId, request.toCommand()))
 
+    @Operation(summary = "내 최신 제출 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/current/submissions/me/latest")
-    fun findMyLatest(@LoginUser userId: Long): ResponseEntity<SurveySubmissionResponse> =
-        userSurveyFormService.findMyLatestSubmission(userId)
+    fun findMyLatest(
+        @LoginUser userId: Long,
+    ): ResponseEntity<SurveySubmissionResponse> =
+        userSurveyFormService
+            .findMyLatestSubmission(userId)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
 
+    @Operation(summary = "설문 기반 추천 생성")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/current/submissions/{submissionId}/recommendation")
     fun generateRecommendation(
         @LoginUser userId: Long,
@@ -56,6 +72,6 @@ class SurveyFormController(
                 userId = userId,
                 submissionId = submissionId,
                 useLlm = useLlm,
-            )
+            ),
         )
 }

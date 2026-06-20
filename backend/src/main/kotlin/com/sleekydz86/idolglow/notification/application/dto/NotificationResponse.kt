@@ -31,7 +31,7 @@ data class NotificationResponse(
                 message = notification.message,
                 link = notification.link,
                 readAt = notification.readAt,
-                createdAt = notification.createdAt
+                createdAt = notification.createdAt,
             )
     }
 }

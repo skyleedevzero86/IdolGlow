@@ -1,6 +1,6 @@
-package com.sleekydz86.idolglow.wish.graphql
+package com.sleekydz86.idolglow.wish.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.wish.application.WishQueryService
 import org.springframework.graphql.data.method.annotation.Argument
@@ -14,15 +14,15 @@ class WishGraphQlController(
     private val wishQueryService: WishQueryService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
     fun wishes(
         @Argument lastWishId: String?,
         @Argument size: Int?,
     ): List<WishProductGraphQlResponse> =
-        wishQueryService.findWishedProductByNoOffset(
-            userId = authenticatedUserIdResolver.resolveRequired(),
-            lastWishId = lastWishId?.takeIf { it.isNotBlank() }?.toGraphQlIdLong("lastWishId"),
-            size = (size ?: 20).coerceIn(1, 50)
-        ).map(WishProductGraphQlResponse::from)
+        wishQueryService
+            .findWishedProductByNoOffset(
+                userId = authenticatedUserIdResolver.resolveRequired(),
+                lastWishId = lastWishId?.takeIf { it.isNotBlank() }?.toGraphQlIdLong("lastWishId"),
+                size = (size ?: 20).coerceIn(1, 50),
+            ).map(WishProductGraphQlResponse::from)
 }

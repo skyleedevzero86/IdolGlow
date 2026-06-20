@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.admin.ui.request
+package com.sleekydz86.idolglow.productpackage.admin.adapter.web.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Max
@@ -22,7 +22,6 @@ data class CreateReservationSlotsRequest(
     @field:Min(10)
     @field:Max(16)
     val endHour: Int = 16,
-
     @field:Schema(description = "토요일 일요일 제외 여부")
     val excludeWeekends: Boolean = false,
     val adminNote: String? = null,

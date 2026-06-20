@@ -12,7 +12,6 @@ import java.util.UUID
 class MbrdJdbcEditorAssetRepository(
     private val jdbcTemplate: NamedParameterJdbcTemplate,
 ) : MbrdEditorAssetRepository {
-
     override fun save(asset: MbrdEditorAsset): MbrdEditorAsset {
         jdbcTemplate.update(
             """
@@ -32,24 +31,25 @@ class MbrdJdbcEditorAssetRepository(
     }
 
     override fun findById(id: UUID): MbrdEditorAsset? {
-        val list = jdbcTemplate.query(
-            """
-            SELECT id, object_key, bucket_name, original_file_name, content_type, file_size, uploaded_at
-            FROM editor_assets
-            WHERE id = :id
-            """.trimIndent(),
-            mapOf("id" to id),
-        ) { rs, _ ->
-            MbrdEditorAsset(
-                id = rs.getObject("id", UUID::class.java),
-                objectKey = rs.getString("object_key"),
-                bucketName = rs.getString("bucket_name"),
-                originalFileName = rs.getString("original_file_name"),
-                contentType = rs.getString("content_type"),
-                fileSize = rs.getLong("file_size"),
-                uploadedAt = rs.getTimestamp("uploaded_at").toInstant(),
-            )
-        }
+        val list =
+            jdbcTemplate.query(
+                """
+                SELECT id, object_key, bucket_name, original_file_name, content_type, file_size, uploaded_at
+                FROM editor_assets
+                WHERE id = :id
+                """.trimIndent(),
+                mapOf("id" to id),
+            ) { rs, _ ->
+                MbrdEditorAsset(
+                    id = rs.getObject("id", UUID::class.java),
+                    objectKey = rs.getString("object_key"),
+                    bucketName = rs.getString("bucket_name"),
+                    originalFileName = rs.getString("original_file_name"),
+                    contentType = rs.getString("content_type"),
+                    fileSize = rs.getLong("file_size"),
+                    uploadedAt = rs.getTimestamp("uploaded_at").toInstant(),
+                )
+            }
         return list.firstOrNull()
     }
 }

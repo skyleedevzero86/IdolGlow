@@ -6,15 +6,17 @@ import org.springframework.stereotype.Component
 
 @Component
 class NotificationEventPublisher(
-    private val applicationEventPublisher: ApplicationEventPublisher
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
-
-    fun publishCreated(notificationId: Long, userId: Long) {
+    fun publishCreated(
+        notificationId: Long,
+        userId: Long,
+    ) {
         applicationEventPublisher.publishEvent(
             NotificationCreatedEvent(
                 notificationId = notificationId,
-                userId = userId
-            )
+                userId = userId,
+            ),
         )
     }
 }

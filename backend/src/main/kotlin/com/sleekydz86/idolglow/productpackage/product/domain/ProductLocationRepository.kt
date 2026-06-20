@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ProductLocationRepository {
     fun save(location: ProductLocation): ProductLocation
+
     fun findByProductId(productId: Long): ProductLocation?
 }

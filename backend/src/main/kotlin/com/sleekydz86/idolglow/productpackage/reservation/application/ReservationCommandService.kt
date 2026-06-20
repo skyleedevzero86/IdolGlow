@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.reservation.application
 
-import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
@@ -43,7 +43,6 @@ class ReservationCommandService(
     @Value("\${reservation.pending-timeout-seconds:900}")
     private val pendingTimeoutSeconds: Long,
 ) {
-
     fun createReservation(command: CreateReservationCommand): ReservationCreatedResponse {
         val now = LocalDateTime.now()
         val reservationSlot =
@@ -54,25 +53,27 @@ class ReservationCommandService(
         product.validateTotalPrice(command.totalPrice)
         val expiresAt = now.plusSeconds(pendingTimeoutSeconds)
 
-        val reservation = Reservation(
-            reservationSlot = reservationSlot,
-            userId = command.userId,
-            visitDate = reservationSlot.reservationDate,
-            visitStartTime = reservationSlot.startTime,
-            visitEndTime = reservationSlot.endTime,
-            totalPrice = command.totalPrice
-        ).request(expiresAt)
+        val reservation =
+            Reservation(
+                reservationSlot = reservationSlot,
+                userId = command.userId,
+                visitDate = reservationSlot.reservationDate,
+                visitStartTime = reservationSlot.startTime,
+                visitEndTime = reservationSlot.endTime,
+                totalPrice = command.totalPrice,
+            ).request(expiresAt)
 
         val savedReservation = reservationRepository.save(reservation)
         reservationSlot.hold(savedReservation.id, expiresAt, now)
         val paymentRef = createPaymentReference(savedReservation.id, now)
-        val payment = paymentRepository.save(
-            if (tossPaymentProperties.useTossProvider) {
-                Payment.createPendingForToss(savedReservation, paymentRef)
-            } else {
-                Payment.createMock(savedReservation, paymentRef)
-            }
-        )
+        val payment =
+            paymentRepository.save(
+                if (tossPaymentProperties.useTossProvider) {
+                    Payment.createPendingForToss(savedReservation, paymentRef)
+                } else {
+                    Payment.createMock(savedReservation, paymentRef)
+                },
+            )
 
         return ReservationCreatedResponse.from(savedReservation, payment)
     }
@@ -102,7 +103,7 @@ class ReservationCommandService(
             reason = ReservationCancelReason.USER_REQUESTED,
             notificationType = NotificationType.RESERVATION_CANCELED,
             notificationTitle = "예약 취소",
-            notificationMessage = "예약 #${reservation.id} 이(가) 취소되었습니다."
+            notificationMessage = "예약 #${reservation.id} 이(가) 취소되었습니다.",
         )
         return reservation
     }
@@ -130,7 +131,7 @@ class ReservationCommandService(
             reason = ReservationCancelReason.ADMIN_CANCELED,
             notificationType = NotificationType.RESERVATION_CANCELED,
             notificationTitle = "운영자 예약 취소",
-            notificationMessage = "예약 #${reservation.id} 이(가) 운영자에 의해 취소되었습니다."
+            notificationMessage = "예약 #${reservation.id} 이(가) 운영자에 의해 취소되었습니다.",
         )
         return reservation
     }
@@ -151,7 +152,7 @@ class ReservationCommandService(
             type = NotificationType.RESERVATION_CONFIRMED,
             title = "예약 확정",
             message = "예약 #${reservation.id} 이(가) 확정되었습니다.",
-            link = "/reservations/${reservation.id}"
+            link = "/reservations/${reservation.id}",
         )
         return reservation
     }
@@ -180,9 +181,11 @@ class ReservationCommandService(
             if (notificationRepository.existsByUserIdAndTypeAndLink(
                     reservation.userId,
                     NotificationType.RESERVATION_EXPIRING_SOON,
-                    link
+                    link,
                 )
-            ) return@forEach
+            ) {
+                return@forEach
+            }
             notificationCommandService.create(
                 userId = reservation.userId,
                 type = NotificationType.RESERVATION_EXPIRING_SOON,
@@ -193,7 +196,10 @@ class ReservationCommandService(
         }
     }
 
-    fun expirePendingReservation(reservationId: Long, now: LocalDateTime = LocalDateTime.now()): Reservation? {
+    fun expirePendingReservation(
+        reservationId: Long,
+        now: LocalDateTime = LocalDateTime.now(),
+    ): Reservation? {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         if (!reservation.isExpired(now)) {
             return reservation
@@ -207,7 +213,7 @@ class ReservationCommandService(
             reason = ReservationCancelReason.PAYMENT_EXPIRED,
             notificationType = NotificationType.PAYMENT_EXPIRED,
             notificationTitle = "예약 만료",
-            notificationMessage = "예약 #${reservation.id} 결제가 완료되기 전에 예약이 만료되었습니다."
+            notificationMessage = "예약 #${reservation.id} 결제가 완료되기 전에 예약이 만료되었습니다.",
         )
         return reservation
     }
@@ -241,7 +247,7 @@ class ReservationCommandService(
             type = notificationType,
             title = notificationTitle,
             message = notificationMessage,
-            link = "/reservations/${reservation.id}"
+            link = "/reservations/${reservation.id}",
         )
         reservationSlotWaitlistService.notifyWaitersForReleasedSlot(reservation.reservationSlot.id)
     }
@@ -249,12 +255,13 @@ class ReservationCommandService(
     private fun ensureScheduleExists(reservation: Reservation) {
         val startAt = LocalDateTime.of(reservation.visitDate, reservation.visitStartTime)
         val endAt = LocalDateTime.of(reservation.visitDate, reservation.visitEndTime)
-        val existing = scheduleRepository.findByReservationContext(
-            userId = reservation.userId,
-            productId = reservation.reservationSlot.product.id,
-            startAt = startAt,
-            endAt = endAt
-        )
+        val existing =
+            scheduleRepository.findByReservationContext(
+                userId = reservation.userId,
+                productId = reservation.reservationSlot.product.id,
+                startAt = startAt,
+                endAt = endAt,
+            )
         if (existing != null) {
             return
         }
@@ -264,25 +271,28 @@ class ReservationCommandService(
                 productId = reservation.reservationSlot.product.id,
                 title = reservation.reservationSlot.product.name,
                 startAt = startAt,
-                endAt = endAt
-            )
+                endAt = endAt,
+            ),
         )
     }
 
     private fun removeScheduleIfExists(reservation: Reservation) {
-        val schedule = scheduleRepository.findByReservationContext(
-            userId = reservation.userId,
-            productId = reservation.reservationSlot.product.id,
-            startAt = LocalDateTime.of(reservation.visitDate, reservation.visitStartTime),
-            endAt = LocalDateTime.of(reservation.visitDate, reservation.visitEndTime)
-        )
+        val schedule =
+            scheduleRepository.findByReservationContext(
+                userId = reservation.userId,
+                productId = reservation.reservationSlot.product.id,
+                startAt = LocalDateTime.of(reservation.visitDate, reservation.visitStartTime),
+                endAt = LocalDateTime.of(reservation.visitDate, reservation.visitEndTime),
+            )
         if (schedule != null) {
             scheduleRepository.delete(schedule)
         }
     }
 
-    private fun createPaymentReference(reservationId: Long, now: LocalDateTime): String =
-        "pay_mock_${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
+    private fun createPaymentReference(
+        reservationId: Long,
+        now: LocalDateTime,
+    ): String = "pay_mock_${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
 
     companion object {
         private val PAYMENT_REFERENCE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")

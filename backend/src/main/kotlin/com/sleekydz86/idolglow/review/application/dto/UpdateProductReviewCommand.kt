@@ -5,5 +5,5 @@ data class UpdateProductReviewCommand(
     val reviewId: Long,
     val userId: Long,
     val rating: Int,
-    val content: String
+    val content: String,
 )

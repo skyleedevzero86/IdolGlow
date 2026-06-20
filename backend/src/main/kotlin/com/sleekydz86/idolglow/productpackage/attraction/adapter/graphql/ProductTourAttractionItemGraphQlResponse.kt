@@ -1,0 +1,34 @@
+package com.sleekydz86.idolglow.productpackage.attraction.adapter.graphql
+
+import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionItemResponse
+
+data class ProductTourAttractionItemGraphQlResponse(
+    val attractionCode: String,
+    val name: String,
+    val areaName: String?,
+    val signguName: String?,
+    val categoryLarge: String?,
+    val categoryMiddle: String?,
+    val rank: Int,
+    val mapX: Double?,
+    val mapY: Double?,
+    val score: Int,
+    val reason: String,
+) {
+    companion object {
+        fun from(response: ProductTourAttractionItemResponse): ProductTourAttractionItemGraphQlResponse =
+            ProductTourAttractionItemGraphQlResponse(
+                attractionCode = response.attractionCode,
+                name = response.name,
+                areaName = response.areaName,
+                signguName = response.signguName,
+                categoryLarge = response.categoryLarge,
+                categoryMiddle = response.categoryMiddle,
+                rank = response.rank,
+                mapX = response.mapX,
+                mapY = response.mapY,
+                score = response.score,
+                reason = response.reason,
+            )
+    }
+}

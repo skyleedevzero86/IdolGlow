@@ -13,13 +13,10 @@ import java.time.LocalDateTime
 class UserPasswordHistoryEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
-
     @Column(name = "user_id", nullable = false)
     var userId: Long,
-
     @Column(name = "password_hash", nullable = false, length = 255)
     var passwordHash: String,
-
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(),
 )

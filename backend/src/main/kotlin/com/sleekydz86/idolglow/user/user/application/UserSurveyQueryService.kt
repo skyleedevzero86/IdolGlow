@@ -17,6 +17,7 @@ class UserSurveyQueryService(
         val survey = userSurveyRepository.findByUserId(userId) ?: return null
         return UserSurveyResponse.from(survey)
     }
+
     fun findUserSurvey(userId: Long): UserSurveyResponse =
         findUserSurveyIfPresent(userId)
             ?: throw IllegalArgumentException("사용자 설문 정보를 찾을 수 없습니다.")

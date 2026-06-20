@@ -7,18 +7,19 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class NotificationPreferenceRepositoryImpl(
-    private val notificationPreferenceJpaRepository: NotificationPreferenceJpaRepository
+    private val notificationPreferenceJpaRepository: NotificationPreferenceJpaRepository,
 ) : NotificationPreferenceRepository {
+    override fun findAllByUserId(userId: Long): List<NotificationPreference> = notificationPreferenceJpaRepository.findAllByUserId(userId)
 
-    override fun findAllByUserId(userId: Long): List<NotificationPreference> =
-        notificationPreferenceJpaRepository.findAllByUserId(userId)
+    override fun findByUserIdAndType(
+        userId: Long,
+        type: NotificationType,
+    ): NotificationPreference? = notificationPreferenceJpaRepository.findByUserIdAndType(userId, type)
 
-    override fun findByUserIdAndType(userId: Long, type: NotificationType): NotificationPreference? =
-        notificationPreferenceJpaRepository.findByUserIdAndType(userId, type)
+    override fun save(preference: NotificationPreference): NotificationPreference = notificationPreferenceJpaRepository.save(preference)
 
-    override fun save(preference: NotificationPreference): NotificationPreference =
-        notificationPreferenceJpaRepository.save(preference)
-
-    override fun isDisabled(userId: Long, type: NotificationType): Boolean =
-        notificationPreferenceJpaRepository.existsByUserIdAndTypeAndEnabledFalse(userId, type)
+    override fun isDisabled(
+        userId: Long,
+        type: NotificationType,
+    ): Boolean = notificationPreferenceJpaRepository.existsByUserIdAndTypeAndEnabledFalse(userId, type)
 }

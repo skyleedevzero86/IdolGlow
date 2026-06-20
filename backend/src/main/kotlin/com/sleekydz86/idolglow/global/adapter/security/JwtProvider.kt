@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.global.adapter.security
 
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
-import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
+import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
@@ -24,36 +24,46 @@ import java.util.Date
 class JwtProvider(
     private val properties: PlatformAuthProperties,
 ) {
-
     private val log = LoggerFactory.getLogger(JwtProvider::class.java)
 
     private val signingKey: Key by lazy { JwtSigningKeyFactory.create(properties.jwt.secret) }
 
-    fun generateToken(userId: Long, role: UserRole): TokenResponse {
+    fun generateToken(
+        userId: Long,
+        role: UserRole,
+    ): TokenResponse {
         val issuedAt = Date()
         val now = issuedAt.time
         val accessTokenExpiresIn = Date(now + properties.jwt.accessTokenTtl.toMillis())
         val refreshTokenExpiresIn = Date(now + properties.jwt.refreshTokenTtl.toMillis())
 
-        val accessToken = Jwts.builder()
-            .setSubject(userId.toString())
-            .setIssuer(properties.jwt.issuer)
-            .claim(AUTHORITIES_KEY, role.name)
-            .claim(TOKEN_TYPE_KEY, JwtTokenType.ACCESS.name)
-            .setIssuedAt(issuedAt)
-            .setExpiration(accessTokenExpiresIn)
-            .signWith(signingKey, SignatureAlgorithm.HS512)
-            .compact()
+        val accessToken =
+            Jwts
+                .builder()
+                .setSubject(userId.toString())
+                .setIssuer(properties.jwt.issuer)
+                .claim(JwtClaimNames.AUTHORITY, role.name)
+                .claim(JwtClaimNames.TOKEN_TYPE, JwtTokenType.ACCESS.name)
+                .claim(JwtClaimNames.CHANNEL, AuthChannel.GLOBAL.name)
+                .claim(JwtClaimNames.USER_ID, userId)
+                .setIssuedAt(issuedAt)
+                .setExpiration(accessTokenExpiresIn)
+                .signWith(signingKey, SignatureAlgorithm.HS512)
+                .compact()
 
-        val refreshToken = Jwts.builder()
-            .setSubject(userId.toString())
-            .setIssuer(properties.jwt.issuer)
-            .claim(AUTHORITIES_KEY, role.name)
-            .claim(TOKEN_TYPE_KEY, JwtTokenType.REFRESH.name)
-            .setIssuedAt(issuedAt)
-            .setExpiration(refreshTokenExpiresIn)
-            .signWith(signingKey, SignatureAlgorithm.HS512)
-            .compact()
+        val refreshToken =
+            Jwts
+                .builder()
+                .setSubject(userId.toString())
+                .setIssuer(properties.jwt.issuer)
+                .claim(JwtClaimNames.AUTHORITY, role.name)
+                .claim(JwtClaimNames.TOKEN_TYPE, JwtTokenType.REFRESH.name)
+                .claim(JwtClaimNames.CHANNEL, AuthChannel.GLOBAL.name)
+                .claim(JwtClaimNames.USER_ID, userId)
+                .setIssuedAt(issuedAt)
+                .setExpiration(refreshTokenExpiresIn)
+                .signWith(signingKey, SignatureAlgorithm.HS512)
+                .compact()
 
         if (properties.jwt.logToken) {
             log.debug("액세스 토큰: {}", accessToken)
@@ -70,7 +80,8 @@ class JwtProvider(
     }
 
     fun resolveToken(request: HttpServletRequest): String? =
-        request.getHeader(HttpHeaders.AUTHORIZATION)
+        request
+            .getHeader(HttpHeaders.AUTHORIZATION)
             ?.takeIf { it.startsWith("$BEARER_TYPE ") }
             ?.substring(BEARER_TYPE.length + 1)
             ?: request.cookies
@@ -89,7 +100,10 @@ class JwtProvider(
 
     fun validateRefreshToken(token: String): Boolean = validateToken(token, JwtTokenType.REFRESH)
 
-    private fun validateToken(token: String, expectedType: JwtTokenType): Boolean =
+    private fun validateToken(
+        token: String,
+        expectedType: JwtTokenType,
+    ): Boolean =
         try {
             extractTokenType(parseSignedClaims(token).body) == expectedType
         } catch (_: JwtException) {
@@ -101,10 +115,11 @@ class JwtProvider(
     fun findAuthentication(token: String): Authentication {
         val claims = parseClaims(token)
         val userId = claims.subject.toLong()
-        val role = UserRole.valueOf(
-            claims[AUTHORITIES_KEY]?.toString()
-                ?: throw IllegalArgumentException("토큰에 권한(auth) 클레임이 없습니다.")
-        )
+        val role =
+            UserRole.valueOf(
+                claims[JwtClaimNames.AUTHORITY]?.toString()
+                    ?: throw IllegalArgumentException("토큰에 권한(auth) 클레임이 없습니다."),
+            )
 
         return UsernamePasswordAuthenticationToken(
             userId.toString(),
@@ -113,11 +128,9 @@ class JwtProvider(
         )
     }
 
-    fun getSubjectAsUserId(token: String): Long =
-        parseClaims(token).subject.toLong()
+    fun getSubjectAsUserId(token: String): Long = parseClaims(token).subject.toLong()
 
-    fun getTokenType(token: String): JwtTokenType =
-        extractTokenType(parseClaims(token))
+    fun getTokenType(token: String): JwtTokenType = extractTokenType(parseClaims(token))
 
     private fun parseClaims(token: String): Claims =
         try {
@@ -127,20 +140,19 @@ class JwtProvider(
         }
 
     private fun parseSignedClaims(token: String): Jws<Claims> =
-        Jwts.parserBuilder()
+        Jwts
+            .parserBuilder()
             .setSigningKey(signingKey)
             .build()
             .parseClaimsJws(token)
 
     private fun extractTokenType(claims: Claims): JwtTokenType =
         JwtTokenType.valueOf(
-            claims[TOKEN_TYPE_KEY]?.toString()
-                ?: throw IllegalArgumentException("토큰에 타입(type) 클레임이 없습니다.")
+            claims[JwtClaimNames.TOKEN_TYPE]?.toString()
+                ?: throw IllegalArgumentException("토큰에 타입(type) 클레임이 없습니다."),
         )
 
     companion object {
-        private const val AUTHORITIES_KEY = "auth"
-        private const val TOKEN_TYPE_KEY = "type"
         private const val BEARER_TYPE = "Bearer"
     }
 }

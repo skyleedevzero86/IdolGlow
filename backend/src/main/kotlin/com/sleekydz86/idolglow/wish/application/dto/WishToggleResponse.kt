@@ -12,11 +12,11 @@ class WishToggleResponse(
     companion object {
         fun from(
             id: Long,
-            wished: Boolean
+            wished: Boolean,
         ): WishToggleResponse =
             WishToggleResponse(
                 id = id,
-                wished = wished
+                wished = wished,
             )
     }
 }

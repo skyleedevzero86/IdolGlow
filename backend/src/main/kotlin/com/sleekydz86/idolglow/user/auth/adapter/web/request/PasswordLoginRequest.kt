@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.user.auth.ui.request
+package com.sleekydz86.idolglow.user.auth.adapter.web.request
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

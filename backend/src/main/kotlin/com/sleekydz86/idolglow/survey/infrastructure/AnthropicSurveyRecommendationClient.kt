@@ -40,53 +40,63 @@ class AnthropicSurveyRecommendationClient(
             return null
         }
 
-        val userContent = SurveyLlmPrompts.userJson(
-            objectMapper,
-            titleFallback,
-            subtitleFallback,
-            narrativeFallback,
-            answerHighlights,
-            attractions,
-        )
+        val userContent =
+            SurveyLlmPrompts.userJson(
+                objectMapper,
+                titleFallback,
+                subtitleFallback,
+                narrativeFallback,
+                answerHighlights,
+                attractions,
+            )
 
-        val request = SurveyAnthropicMessagesRequest(
-            model = model,
-            maxTokens = 2048,
-            temperature = 0.3,
-            system = SurveyLlmPrompts.system,
-            messages = listOf(SurveyAnthropicMessage(role = "user", content = userContent)),
-        )
+        val request =
+            SurveyAnthropicMessagesRequest(
+                model = model,
+                maxTokens = 2048,
+                temperature = 0.3,
+                system = SurveyLlmPrompts.system,
+                messages = listOf(SurveyAnthropicMessage(role = "user", content = userContent)),
+            )
 
-        val body = try {
-            webClient.post()
-                .uri("${baseUrl.trimEnd('/')}/v1/messages")
-                .header("x-api-key", normalizedApiKey)
-                .header("anthropic-version", ANTHROPIC_VERSION)
-                .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(String::class.java)
-                .block()
-        } catch (e: Exception) {
-            log.warn("Survey Anthropic call failed: {}", e.message)
-            return null
-        } ?: return null
+        val body =
+            try {
+                webClient
+                    .post()
+                    .uri("${baseUrl.trimEnd('/')}/v1/messages")
+                    .header("x-api-key", normalizedApiKey)
+                    .header("anthropic-version", ANTHROPIC_VERSION)
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .block()
+            } catch (e: Exception) {
+                log.warn("설문 추천 Anthropic 호출 실패: {}", e.message)
+                return null
+            } ?: return null
 
-        val text = runCatching {
-            objectMapper.readValue(body, SurveyAnthropicMessagesResponse::class.java)
-                .content.firstOrNull { it.type == "text" }?.text
-        }.getOrNull() ?: return null
+        val text =
+            runCatching {
+                objectMapper
+                    .readValue(body, SurveyAnthropicMessagesResponse::class.java)
+                    .content
+                    .firstOrNull { it.type == "text" }
+                    ?.text
+            }.getOrNull() ?: return null
 
-        val json = text.trim()
-            .removePrefix("```json")
-            .removePrefix("```")
-            .removeSuffix("```")
-            .trim()
+        val json =
+            text
+                .trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
 
         return runCatching {
             objectMapper.readValue(json, LlmSurveyRecommendation::class.java).normalize()
         }.getOrElse { e ->
-            log.warn("Survey Anthropic JSON parse failed: {}", e.message)
+            log.warn("설문 추천 Anthropic JSON 파싱 실패: {}", e.message)
             null
         }
     }

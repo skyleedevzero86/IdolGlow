@@ -38,69 +38,75 @@ class MbrdJdbcEditorDocumentRepository(
     private var pgSearchAvailable: Boolean? = null
 
     override fun findById(id: MbrdDocumentId): MbrdEditorDocument? =
-        jdbcTemplate.query(
-            baseSelect() + " WHERE id = :id",
-            mapOf("id" to id.value),
-            rowMapper,
-        ).firstOrNull()
+        jdbcTemplate
+            .query(
+                baseSelect() + " WHERE id = :id",
+                mapOf("id" to id.value),
+                rowMapper,
+            ).firstOrNull()
 
     override fun findByUrlSlug(urlSlug: String): MbrdEditorDocument? {
         val normalized = normalizeQuery(urlSlug)
         if (normalized.isBlank()) return null
-        return jdbcTemplate.query(
-            baseSelect() +
-                " WHERE url_slug = :urlSlug AND publication_status = :status ORDER BY updated_at DESC LIMIT 1",
-            mapOf(
-                "urlSlug" to normalized,
-                "status" to MbrdDocumentPublicationStatus.PUBLISHED.name,
-            ),
-            rowMapper,
-        ).firstOrNull()
+        return jdbcTemplate
+            .query(
+                baseSelect() +
+                    " WHERE url_slug = :urlSlug AND publication_status = :status ORDER BY updated_at DESC LIMIT 1",
+                mapOf(
+                    "urlSlug" to normalized,
+                    "status" to MbrdDocumentPublicationStatus.PUBLISHED.name,
+                ),
+                rowMapper,
+            ).firstOrNull()
     }
 
     override fun findLatest(): MbrdEditorDocument? =
-        jdbcTemplate.query(
-            baseSelect() + " ORDER BY updated_at DESC LIMIT 1",
-            MapSqlParameterSource(),
-            rowMapper,
-        ).firstOrNull()
+        jdbcTemplate
+            .query(
+                baseSelect() + " ORDER BY updated_at DESC LIMIT 1",
+                MapSqlParameterSource(),
+                rowMapper,
+            ).firstOrNull()
 
     override fun findLatestByStatus(status: MbrdDocumentPublicationStatus): MbrdEditorDocument? =
-        jdbcTemplate.query(
-            baseSelect() + " WHERE publication_status = :status ORDER BY updated_at DESC LIMIT 1",
-            mapOf("status" to status.name),
-            rowMapper,
-        ).firstOrNull()
+        jdbcTemplate
+            .query(
+                baseSelect() + " WHERE publication_status = :status ORDER BY updated_at DESC LIMIT 1",
+                mapOf("status" to status.name),
+                rowMapper,
+            ).firstOrNull()
 
     override fun findPrevious(
         id: MbrdDocumentId,
         updatedAt: Instant,
         status: MbrdDocumentPublicationStatus,
     ): MbrdEditorDocument? =
-        jdbcTemplate.query(
-            baseSelect() +
-                " WHERE id <> :id AND publication_status = :status AND updated_at > :updatedAt ORDER BY updated_at ASC LIMIT 1",
-            MapSqlParameterSource()
-                .addValue("id", id.value)
-                .addValue("status", status.name)
-                .addValue("updatedAt", Timestamp.from(updatedAt)),
-            rowMapper,
-        ).firstOrNull()
+        jdbcTemplate
+            .query(
+                baseSelect() +
+                    " WHERE id <> :id AND publication_status = :status AND updated_at > :updatedAt ORDER BY updated_at ASC LIMIT 1",
+                MapSqlParameterSource()
+                    .addValue("id", id.value)
+                    .addValue("status", status.name)
+                    .addValue("updatedAt", Timestamp.from(updatedAt)),
+                rowMapper,
+            ).firstOrNull()
 
     override fun findNext(
         id: MbrdDocumentId,
         updatedAt: Instant,
         status: MbrdDocumentPublicationStatus,
     ): MbrdEditorDocument? =
-        jdbcTemplate.query(
-            baseSelect() +
-                " WHERE id <> :id AND publication_status = :status AND updated_at < :updatedAt ORDER BY updated_at DESC LIMIT 1",
-            MapSqlParameterSource()
-                .addValue("id", id.value)
-                .addValue("status", status.name)
-                .addValue("updatedAt", Timestamp.from(updatedAt)),
-            rowMapper,
-        ).firstOrNull()
+        jdbcTemplate
+            .query(
+                baseSelect() +
+                    " WHERE id <> :id AND publication_status = :status AND updated_at < :updatedAt ORDER BY updated_at DESC LIMIT 1",
+                MapSqlParameterSource()
+                    .addValue("id", id.value)
+                    .addValue("status", status.name)
+                    .addValue("updatedAt", Timestamp.from(updatedAt)),
+                rowMapper,
+            ).firstOrNull()
 
     override fun findPage(
         page: Int,
@@ -112,17 +118,21 @@ class MbrdJdbcEditorDocumentRepository(
         val normalizedQuery = normalizeQuery(query)
         val searching = normalizedQuery.isNotBlank()
         val usePgSearch = searching && isPgSearchAvailable()
-        val params = MapSqlParameterSource()
-            .addValue("limit", size)
-            .addValue("offset", page * size)
-            .addValue("query", normalizedQuery)
-            .addValue("likeQuery", "%$normalizedQuery%")
-            .addValue("embedding", embeddingLiteral)
-            .addValue("status", status.name)
+        val params =
+            MapSqlParameterSource()
+                .addValue("limit", size)
+                .addValue("offset", page * size)
+                .addValue("query", normalizedQuery)
+                .addValue("likeQuery", "%$normalizedQuery%")
+                .addValue("embedding", embeddingLiteral)
+                .addValue("status", status.name)
         return jdbcTemplate.query(selectPageSql(searching, usePgSearch), params, rowMapper)
     }
 
-    override fun count(query: String, status: MbrdDocumentPublicationStatus): Long {
+    override fun count(
+        query: String,
+        status: MbrdDocumentPublicationStatus,
+    ): Long {
         val normalizedQuery = normalizeQuery(query)
         val searching = normalizedQuery.isNotBlank()
         val usePgSearch = searching && isPgSearchAvailable()
@@ -138,10 +148,11 @@ class MbrdJdbcEditorDocumentRepository(
     }
 
     override fun deleteById(id: MbrdDocumentId): Boolean {
-        val rows = jdbcTemplate.update(
-            "DELETE FROM editor_documents WHERE id = :id",
-            mapOf("id" to id.value),
-        )
+        val rows =
+            jdbcTemplate.update(
+                "DELETE FROM editor_documents WHERE id = :id",
+                mapOf("id" to id.value),
+            )
         return rows > 0
     }
 
@@ -155,17 +166,18 @@ class MbrdJdbcEditorDocumentRepository(
     }
 
     override fun incrementViewCount(id: MbrdDocumentId): Long {
-        val n = jdbcTemplate.update(
-            """
-            UPDATE editor_documents
-            SET view_count = view_count + 1
-            WHERE id = :id AND publication_status = :published
-            """.trimIndent(),
-            mapOf(
-                "id" to id.value,
-                "published" to MbrdDocumentPublicationStatus.PUBLISHED.name,
-            ),
-        )
+        val n =
+            jdbcTemplate.update(
+                """
+                UPDATE editor_documents
+                SET view_count = view_count + 1
+                WHERE id = :id AND publication_status = :published
+                """.trimIndent(),
+                mapOf(
+                    "id" to id.value,
+                    "published" to MbrdDocumentPublicationStatus.PUBLISHED.name,
+                ),
+            )
         if (n == 0) {
             return 0L
         }
@@ -192,7 +204,7 @@ class MbrdJdbcEditorDocumentRepository(
                 embedding = :embedding,
                 view_count = :viewCount
             WHERE id = :id
-        """.trimIndent()
+            """.trimIndent()
     }
 
     private fun insertSql(): String {
@@ -205,7 +217,7 @@ class MbrdJdbcEditorDocumentRepository(
                 :id, :title, :author, :markdown, $tagsExpr, :urlSlug, :introduction, :thumbnailImageUrl,
                 :publicationStatus, :updatedAt, :embedding, :viewCount
             )
-        """.trimIndent()
+            """.trimIndent()
     }
 
     private fun tagsJsonUpdateExpression(): String =
@@ -238,7 +250,10 @@ class MbrdJdbcEditorDocumentRepository(
             .addValue("viewCount", document.viewCount)
     }
 
-    private fun selectPageSql(searching: Boolean, usePgSearch: Boolean): String {
+    private fun selectPageSql(
+        searching: Boolean,
+        usePgSearch: Boolean,
+    ): String {
         if (!searching) {
             return baseSelect() +
                 " WHERE publication_status = :status ORDER BY updated_at DESC LIMIT :limit OFFSET :offset"
@@ -251,7 +266,10 @@ class MbrdJdbcEditorDocumentRepository(
             " ORDER BY updated_at DESC LIMIT :limit OFFSET :offset"
     }
 
-    private fun countSql(searching: Boolean, usePgSearch: Boolean): String {
+    private fun countSql(
+        searching: Boolean,
+        usePgSearch: Boolean,
+    ): String {
         if (!searching) {
             return "SELECT COUNT(*) FROM editor_documents WHERE publication_status = :status"
         }
@@ -268,8 +286,7 @@ class MbrdJdbcEditorDocumentRepository(
             "(title ILIKE :likeQuery OR author ILIKE :likeQuery OR markdown ILIKE :likeQuery)"
         }
 
-    private fun pgSearchPredicate(): String =
-        "(title @@@ :query OR author @@@ :query OR markdown @@@ :query)"
+    private fun pgSearchPredicate(): String = "(title @@@ :query OR author @@@ :query OR markdown @@@ :query)"
 
     private fun baseSelect(): String =
         """
@@ -277,20 +294,22 @@ class MbrdJdbcEditorDocumentRepository(
         FROM editor_documents
         """.trimIndent()
 
-    private val rowMapper = RowMapper { rs: ResultSet, _: Int ->
-        mapDocumentRow(rs)
-    }
+    private val rowMapper =
+        RowMapper { rs: ResultSet, _: Int ->
+            mapDocumentRow(rs)
+        }
 
     private fun mapDocumentRow(rs: ResultSet): MbrdEditorDocument {
         val updatedAt = rs.getTimestamp("updated_at")?.toInstant() ?: Instant.now()
         val rawStatus = rs.getString("publication_status")
         val publicationStatus = parsePublicationStatus(rawStatus)
         val idObj = rs.getObject("id")
-        val uuid = when (idObj) {
-            is UUID -> idObj
-            is String -> UUID.fromString(idObj)
-            else -> UUID.fromString(idObj.toString())
-        }
+        val uuid =
+            when (idObj) {
+                is UUID -> idObj
+                is String -> UUID.fromString(idObj)
+                else -> UUID.fromString(idObj.toString())
+            }
         val viewCountRaw = rs.getLong("view_count")
         val viewCount = if (rs.wasNull()) 0L else viewCountRaw
         return MbrdEditorDocument(
@@ -333,11 +352,12 @@ class MbrdJdbcEditorDocumentRepository(
         pgSearchAvailable?.let { return it }
         synchronized(this) {
             pgSearchAvailable?.let { return it }
-            val available = jdbcTemplate.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_search')",
-                MapSqlParameterSource(),
-                Boolean::class.java,
-            ) ?: false
+            val available =
+                jdbcTemplate.queryForObject(
+                    "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_search')",
+                    MapSqlParameterSource(),
+                    Boolean::class.java,
+                ) ?: false
             pgSearchAvailable = available
             return available
         }

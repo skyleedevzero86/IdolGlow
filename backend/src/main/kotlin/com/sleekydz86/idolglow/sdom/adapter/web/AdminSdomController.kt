@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.sdom.ui
+package com.sleekydz86.idolglow.sdom.adapter.web
 
 import com.sleekydz86.idolglow.sdom.application.SdomQueryService
 import io.swagger.v3.oas.annotations.Operation

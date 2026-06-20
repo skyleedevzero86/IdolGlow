@@ -2,7 +2,15 @@ package com.sleekydz86.idolglow.productpackage.product.domain
 
 import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductLocationPayload
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToOne
+import jakarta.persistence.Table
 import java.math.BigDecimal
 
 @Entity
@@ -11,39 +19,29 @@ class ProductLocation(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false, unique = true)
     val product: Product,
-
     @Column(nullable = false, length = 120)
     var name: String,
-
     @Column(nullable = false, precision = 10, scale = 7)
     var latitude: BigDecimal,
-
     @Column(nullable = false, precision = 10, scale = 7)
     var longitude: BigDecimal,
-
     @Column(name = "road_address_name")
     var roadAddressName: String?,
-
     @Column(name = "address_name")
     var addressName: String?,
-
     @Column(name = "kakao_place_id", nullable = false, length = 40)
-    var kakaoPlaceId: String
-): BaseEntity() {
-
+    var kakaoPlaceId: String,
+) : BaseEntity() {
     init {
         validate()
     }
 
     fun displayAddress(): String = roadAddressName ?: addressName!!
 
-    fun update(
-        payload: ProductLocationPayload
-    ) {
+    fun update(payload: ProductLocationPayload) {
         name = payload.name
         latitude = payload.latitude
         longitude = payload.longitude
@@ -71,17 +69,16 @@ class ProductLocation(
 
         fun of(
             product: Product,
-            payload: ProductLocationPayload
-        ): ProductLocation {
-            return ProductLocation(
+            payload: ProductLocationPayload,
+        ): ProductLocation =
+            ProductLocation(
                 product = product,
                 name = payload.name,
                 latitude = payload.latitude,
                 longitude = payload.longitude,
                 roadAddressName = payload.roadAddressName,
                 addressName = payload.addressName,
-                kakaoPlaceId = payload.kakaoPlaceId
+                kakaoPlaceId = payload.kakaoPlaceId,
             )
-        }
     }
 }

@@ -1,15 +1,19 @@
-package com.sleekydz86.idolglow.survey.graphql
+package com.sleekydz86.idolglow.survey.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.survey.adapter.web.request.AdminSurveyQuestionRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.AdminUpsertSurveyFormRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.SubmitSurveyResponseRequest
+import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
+import com.sleekydz86.idolglow.survey.adapter.web.request.SurveyAnswerRequest
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
+import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
+import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
-import com.sleekydz86.idolglow.survey.ui.request.AdminSurveyQuestionRequest
-import com.sleekydz86.idolglow.survey.ui.request.AdminUpsertSurveyFormRequest
-import com.sleekydz86.idolglow.survey.ui.request.SubmitSurveyResponseRequest
-import com.sleekydz86.idolglow.survey.ui.request.SurveyAnswerRequest
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.graphql.data.method.annotation.QueryMapping
@@ -23,57 +27,68 @@ class SurveyFormGraphQlController(
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
     @QueryMapping
-    fun currentSurveyForm(): SurveyFormGraphQlResponse? =
-        userSurveyFormService.findCurrentForm()?.let(SurveyFormGraphQlResponse::from)
+    fun currentSurveyForm(): SurveyFormGraphQlResponse? = userSurveyFormService.findCurrentForm()?.let(SurveyFormGraphQlResponse::from)
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    fun adminCurrentSurveyForm(): SurveyFormGraphQlResponse? =
-        adminSurveyFormService.findCurrent()?.let(SurveyFormGraphQlResponse::from)
+    fun adminCurrentSurveyForm(): SurveyFormGraphQlResponse? = adminSurveyFormService.findCurrent()?.let(SurveyFormGraphQlResponse::from)
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
     fun myLatestSurveySubmission(): SurveySubmissionGraphQlResponse? =
-        userSurveyFormService.findMyLatestSubmission(authenticatedUserIdResolver.resolveRequired())
+        userSurveyFormService
+            .findMyLatestSubmission(authenticatedUserIdResolver.resolveRequired())
             ?.let(SurveySubmissionGraphQlResponse::from)
 
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
-    fun upsertAdminCurrentSurveyForm(@Argument input: UpsertAdminSurveyFormGraphQlInput): SurveyFormGraphQlResponse {
-        val response = adminSurveyFormService.upsertCurrent(
-            AdminUpsertSurveyFormRequest(
-                title = input.title,
-                description = input.description,
-                questions = input.questions.map {
-                    AdminSurveyQuestionRequest(
-                        order = it.order,
-                        title = it.title,
-                        description = it.description,
-                        type = it.type,
-                        required = it.required,
-                        options = it.options,
-                    )
-                },
-            ),
-        )
+    fun upsertAdminCurrentSurveyForm(
+        @Argument input: UpsertAdminSurveyFormGraphQlInput,
+    ): SurveyFormGraphQlResponse {
+        val response =
+            adminSurveyFormService.upsertCurrent(
+                AdminUpsertSurveyFormRequest(
+                    title = input.title,
+                    description = input.description,
+                    descriptionTags = input.descriptionTags,
+                    status = input.status,
+                    primaryCategory = input.primaryCategory,
+                    secondaryCategory = input.secondaryCategory,
+                    questions =
+                        input.questions.map {
+                            AdminSurveyQuestionRequest(
+                                order = it.order,
+                                title = it.title,
+                                description = it.description,
+                                type = it.type,
+                                required = it.required,
+                                options = it.options,
+                            )
+                        },
+                ).toCommand(),
+            )
         return SurveyFormGraphQlResponse.from(response)
     }
 
     @MutationMapping
     @PreAuthorize("isAuthenticated()")
-    fun submitCurrentSurveyForm(@Argument input: SubmitSurveyFormGraphQlInput): SurveySubmissionGraphQlResponse {
-        val response = userSurveyFormService.submitCurrentForm(
-            authenticatedUserIdResolver.resolveRequired(),
-            SubmitSurveyResponseRequest(
-                answers = input.answers.map {
-                    SurveyAnswerRequest(
-                        questionId = it.questionId,
-                        answerText = it.answerText,
-                        selectedOptions = it.selectedOptions,
-                    )
-                },
-            ),
-        )
+    fun submitCurrentSurveyForm(
+        @Argument input: SubmitSurveyFormGraphQlInput,
+    ): SurveySubmissionGraphQlResponse {
+        val response =
+            userSurveyFormService.submitCurrentForm(
+                authenticatedUserIdResolver.resolveRequired(),
+                SubmitSurveyResponseRequest(
+                    answers =
+                        input.answers.map {
+                            SurveyAnswerRequest(
+                                questionId = it.questionId,
+                                answerText = it.answerText,
+                                selectedOptions = it.selectedOptions,
+                            )
+                        },
+                ).toCommand(),
+            )
         return SurveySubmissionGraphQlResponse.from(response)
     }
 }
@@ -81,6 +96,10 @@ class SurveyFormGraphQlController(
 data class UpsertAdminSurveyFormGraphQlInput(
     val title: String,
     val description: String?,
+    val descriptionTags: List<String> = emptyList(),
+    val status: SurveyFormStatus = SurveyFormStatus.SCHEDULED,
+    val primaryCategory: SurveyFormPrimaryCategory = SurveyFormPrimaryCategory.ALL,
+    val secondaryCategory: SurveyFormSecondaryCategory? = null,
     val questions: List<UpsertAdminSurveyQuestionGraphQlInput>,
 )
 
@@ -107,6 +126,13 @@ data class SurveyFormGraphQlResponse(
     val id: Long,
     val title: String,
     val description: String?,
+    val descriptionTags: List<String>,
+    val status: SurveyFormStatus,
+    val statusLabel: String,
+    val primaryCategory: SurveyFormPrimaryCategory,
+    val primaryCategoryLabel: String,
+    val secondaryCategory: SurveyFormSecondaryCategory?,
+    val secondaryCategoryLabel: String?,
     val questions: List<SurveyQuestionGraphQlResponse>,
 ) {
     companion object {
@@ -115,17 +141,25 @@ data class SurveyFormGraphQlResponse(
                 id = source.id,
                 title = source.title,
                 description = source.description,
-                questions = source.questions.map {
-                    SurveyQuestionGraphQlResponse(
-                        id = it.id,
-                        order = it.order,
-                        title = it.title,
-                        description = it.description,
-                        type = it.type,
-                        required = it.required,
-                        options = it.options,
-                    )
-                },
+                descriptionTags = source.descriptionTags,
+                status = source.status,
+                statusLabel = source.statusLabel,
+                primaryCategory = source.primaryCategory,
+                primaryCategoryLabel = source.primaryCategoryLabel,
+                secondaryCategory = source.secondaryCategory,
+                secondaryCategoryLabel = source.secondaryCategoryLabel,
+                questions =
+                    source.questions.map {
+                        SurveyQuestionGraphQlResponse(
+                            id = it.id,
+                            order = it.order,
+                            title = it.title,
+                            description = it.description,
+                            type = it.type,
+                            required = it.required,
+                            options = it.options,
+                        )
+                    },
             )
     }
 }
@@ -152,19 +186,14 @@ data class SurveySubmissionGraphQlResponse(
                 id = source.id,
                 formId = source.formId,
                 submittedAt = source.submittedAt?.toString(),
-                answers = source.answers.map {
-                    SurveySubmittedAnswerGraphQlResponse(
-                        questionId = it.questionId,
-                        answerText = it.answerText,
-                        selectedOptions = it.selectedOptions,
-                    )
-                },
+                answers =
+                    source.answers.map {
+                        SurveySubmittedAnswerGraphQlResponse(
+                            questionId = it.questionId,
+                            answerText = it.answerText,
+                            selectedOptions = it.selectedOptions,
+                        )
+                    },
             )
     }
 }
-
-data class SurveySubmittedAnswerGraphQlResponse(
-    val questionId: Long,
-    val answerText: String?,
-    val selectedOptions: List<String>,
-)

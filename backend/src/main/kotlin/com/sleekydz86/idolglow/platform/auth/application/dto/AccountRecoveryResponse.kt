@@ -16,12 +16,14 @@ data class AccountRecoveryResponse(
             private var expiresIn: Long = 0
 
             fun success(success: Boolean) = apply { this.success = success }
+
             fun message(message: String) = apply { this.message = message }
+
             fun recoveryToken(recoveryToken: String?) = apply { this.recoveryToken = recoveryToken }
+
             fun expiresIn(expiresIn: Long) = apply { this.expiresIn = expiresIn }
 
-            fun build(): AccountRecoveryResponse =
-                AccountRecoveryResponse(success, message, recoveryToken, expiresIn)
+            fun build(): AccountRecoveryResponse = AccountRecoveryResponse(success, message, recoveryToken, expiresIn)
         }
     }
 }

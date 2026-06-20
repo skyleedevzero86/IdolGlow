@@ -45,16 +45,3 @@ class SignupVerificationToken(
 ) {
     fun isExpired(now: LocalDateTime): Boolean = now.isAfter(expiresAt)
 }
-
-enum class SignupVerificationType {
-    EMAIL_SIGNUP_VERIFY,
-    ACCOUNT_CONFIRM,
-}
-
-enum class SignupVerificationStatus {
-    PENDING,
-    VERIFIED,
-    USED,
-    REJECTED,
-    EXPIRED,
-}

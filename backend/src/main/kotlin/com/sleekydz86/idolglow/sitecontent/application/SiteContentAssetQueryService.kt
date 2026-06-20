@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.sitecontent.application
 
-import com.sleekydz86.idolglow.global.infrastructure.config.MinioStorageProperties
+import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import com.sleekydz86.idolglow.sitecontent.application.dto.SiteContentAssetPayload
 import io.minio.GetObjectArgs
 import io.minio.MinioClient
@@ -29,15 +29,19 @@ class SiteContentAssetQueryService(
     }
 
     private fun readFromMinio(objectKey: String): SiteContentAssetPayload {
-        val client = minioClientProvider.getIfAvailable()
-            ?: throw IllegalStateException("MinIO가 활성화되어 있으나 MinioClient 빈을 사용할 수 없습니다.")
+        val client =
+            minioClientProvider.getIfAvailable()
+                ?: throw IllegalStateException("객체 스토리지가 활성화되어 있으나 클라이언트 빈을 사용할 수 없습니다.")
 
-        val bytes = client.getObject(
-            GetObjectArgs.builder()
-                .bucket(minioStorageProperties.bucket)
-                .`object`(objectKey)
-                .build(),
-        ).use { it.readBytes() }
+        val bytes =
+            client
+                .getObject(
+                    GetObjectArgs
+                        .builder()
+                        .bucket(minioStorageProperties.bucket)
+                        .`object`(objectKey)
+                        .build(),
+                ).use { it.readBytes() }
 
         return SiteContentAssetPayload(
             bytes = bytes,
@@ -58,10 +62,12 @@ class SiteContentAssetQueryService(
     }
 
     private fun resolveLocalPath(objectKey: String): Path {
-        val root = localBasePath.trim().takeIf { it.isNotEmpty() }
-            ?: Paths.get(System.getProperty("user.home"), "Desktop", "image").toString()
+        val root =
+            localBasePath.trim().takeIf { it.isNotEmpty() }
+                ?: Paths.get(System.getProperty("user.home"), "Desktop", "image").toString()
 
-        return Paths.get(root)
+        return Paths
+            .get(root)
             .resolve(objectKey.replace("/", "\\"))
             .toAbsolutePath()
             .normalize()

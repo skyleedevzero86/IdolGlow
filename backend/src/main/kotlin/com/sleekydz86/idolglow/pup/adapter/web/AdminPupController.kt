@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.pup.ui
+package com.sleekydz86.idolglow.pup.adapter.web
 
 import com.sleekydz86.idolglow.pup.application.PupAdminService
 import com.sleekydz86.idolglow.pup.application.dto.PupAdminPageResponse
@@ -40,17 +40,19 @@ class AdminPupController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) searchType: String?,
         @RequestParam(required = false) keyword: String?,
-    ): ResponseEntity<PupAdminPageResponse> =
-        ResponseEntity.ok(pupAdminService.findPage(page, size, searchType, keyword))
+    ): ResponseEntity<PupAdminPageResponse> = ResponseEntity.ok(pupAdminService.findPage(page, size, searchType, keyword))
 
     @Operation(summary = "팝업 단건 조회")
     @GetMapping("/{popupId}")
-    fun one(@PathVariable popupId: String) =
-        ResponseEntity.ok(pupAdminService.findOne(popupId))
+    fun one(
+        @PathVariable popupId: String,
+    ) = ResponseEntity.ok(pupAdminService.findOne(popupId))
 
     @Operation(summary = "팝업 등록")
     @PostMapping
-    fun create(@Valid @RequestBody request: UpsertPupRequest): ResponseEntity<*> {
+    fun create(
+        @Valid @RequestBody request: UpsertPupRequest,
+    ): ResponseEntity<*> {
         val created = pupAdminService.create(request)
         return ResponseEntity
             .created(URI.create("/admin/pup/${created.popupId}"))
@@ -61,8 +63,7 @@ class AdminPupController(
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
-    ): ResponseEntity<AdminIssueImageUploadResponse> =
-        ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/popups"))
+    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/popups"))
 
     @Operation(summary = "팝업 수정")
     @PutMapping("/{popupId}")
@@ -73,7 +74,9 @@ class AdminPupController(
 
     @Operation(summary = "팝업 삭제")
     @DeleteMapping("/{popupId}")
-    fun delete(@PathVariable popupId: String): ResponseEntity<Void> {
+    fun delete(
+        @PathVariable popupId: String,
+    ): ResponseEntity<Void> {
         pupAdminService.delete(popupId)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }

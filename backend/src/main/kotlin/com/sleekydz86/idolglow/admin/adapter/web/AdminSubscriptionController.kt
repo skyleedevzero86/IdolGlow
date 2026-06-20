@@ -1,8 +1,9 @@
-package com.sleekydz86.idolglow.admin.ui
+package com.sleekydz86.idolglow.admin.adapter.web
 
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionOverviewResponse
-import com.sleekydz86.idolglow.admin.ui.dto.AdminSubscriptionScheduleResponse
-import com.sleekydz86.idolglow.admin.ui.request.UpsertSubscriptionDispatchScheduleRequest
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminSubscriptionOverviewResponse
+import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminSubscriptionScheduleResponse
+import com.sleekydz86.idolglow.admin.adapter.web.dto.toWebResponse as subscriptionToWebResponse
+import com.sleekydz86.idolglow.admin.adapter.web.request.UpsertSubscriptionDispatchScheduleRequest
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import io.swagger.v3.oas.annotations.Operation
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminSubscriptionController(
     private val subscriptionAdminUseCase: SubscriptionAdminUseCase,
 ) {
-
     @Operation(
         summary = "구독·발송 개요 조회",
         description = "구독자 통계와 최근 발송 이력을 관리자 구독 화면용으로 반환합니다.",
@@ -50,7 +50,7 @@ class AdminSubscriptionController(
                 subscriberSize = subscriberSize,
                 dispatchPage = dispatchPage,
                 dispatchSize = dispatchSize,
-            )
+            ).subscriptionToWebResponse(),
         )
 
     @Operation(summary = "예약 발송 스케줄 저장")
@@ -60,5 +60,5 @@ class AdminSubscriptionController(
         @PathVariable contentType: SubscriptionContentType,
         @Valid @RequestBody request: UpsertSubscriptionDispatchScheduleRequest,
     ): ResponseEntity<AdminSubscriptionScheduleResponse> =
-        ResponseEntity.ok(subscriptionAdminUseCase.upsertDispatchSchedule(request.toCommand(contentType)))
+        ResponseEntity.ok(subscriptionAdminUseCase.upsertDispatchSchedule(request.toCommand(contentType)).subscriptionToWebResponse())
 }

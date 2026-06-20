@@ -1,13 +1,12 @@
 package com.sleekydz86.idolglow.user.auth.application
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
-import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
+import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
+import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
-import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
-import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
@@ -31,7 +30,10 @@ class PasswordRecoveryService(
     private val random = SecureRandom()
 
     @Transactional
-    fun issueTemporaryPassword(email: String, ipAddress: String): Boolean {
+    fun issueTemporaryPassword(
+        email: String,
+        ipAddress: String,
+    ): Boolean {
         val normalized = email.trim().lowercase()
         if (normalized.isBlank()) return false
         val user = userRepository.findByEmail(normalized) ?: return false
@@ -46,11 +48,12 @@ class PasswordRecoveryService(
             to = user.email,
             subject = "[IdolGlow] 임시 비밀번호가 발급되었습니다",
             plainTextBody = "임시 비밀번호: $temporaryPassword\n로그인 후 반드시 비밀번호를 변경해 주세요.",
-            htmlBody = """
+            htmlBody =
+                """
                 <p>임시 비밀번호가 발급되었습니다.</p>
                 <p><strong>$temporaryPassword</strong></p>
                 <p>로그인 후 즉시 새 비밀번호로 변경해 주세요.</p>
-            """.trimIndent(),
+                """.trimIndent(),
         )
         authVerificationAuditService.log(
             verificationType = AuthVerificationAuditService.TYPE_PASSWORD_TEMP_ISSUED,
@@ -64,7 +67,10 @@ class PasswordRecoveryService(
     }
 
     @Transactional(readOnly = true)
-    fun sendAccountIdReminder(email: String, ipAddress: String): Boolean {
+    fun sendAccountIdReminder(
+        email: String,
+        ipAddress: String,
+    ): Boolean {
         val normalized = email.trim().lowercase()
         if (normalized.isBlank()) return false
         val user = userRepository.findByEmail(normalized) ?: return false
@@ -73,10 +79,11 @@ class PasswordRecoveryService(
             to = user.email,
             subject = "[IdolGlow] 아이디 찾기 결과 안내",
             plainTextBody = "요청하신 계정의 아이디는 '${user.nickname.value}' 입니다.",
-            htmlBody = """
+            htmlBody =
+                """
                 <p>요청하신 계정의 아이디는 아래와 같습니다.</p>
                 <p><strong>${user.nickname.value}</strong></p>
-            """.trimIndent(),
+                """.trimIndent(),
         )
         authVerificationAuditService.log(
             verificationType = AuthVerificationAuditService.TYPE_ACCOUNT_ID_FIND,
@@ -90,10 +97,14 @@ class PasswordRecoveryService(
     }
 
     @Transactional
-    fun loginWithPassword(email: String, password: String): PasswordLoginResult {
+    fun loginWithPassword(
+        email: String,
+        password: String,
+    ): PasswordLoginResult {
         val normalized = email.trim().lowercase()
-        val user = userRepository.findByEmail(normalized)
-            ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
+        val user =
+            userRepository.findByEmail(normalized)
+                ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
         val hash = user.passwordHash ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
         if (!passwordEncoder.matches(password, hash)) {
             throw CustomException(AuthExceptionType.UNAUTHENTICATED)
@@ -109,7 +120,10 @@ class PasswordRecoveryService(
     }
 
     @Transactional
-    fun markPasswordChanged(user: User, ipAddress: String) {
+    fun markPasswordChanged(
+        user: User,
+        ipAddress: String,
+    ) {
         authVerificationAuditService.log(
             verificationType = AuthVerificationAuditService.TYPE_PASSWORD_CHANGED,
             email = user.email,
@@ -129,7 +143,12 @@ class PasswordRecoveryService(
         }
     }
 
-    private fun sendMail(to: String, subject: String, plainTextBody: String, htmlBody: String) {
+    private fun sendMail(
+        to: String,
+        subject: String,
+        plainTextBody: String,
+        htmlBody: String,
+    ) {
         if (!appMailProperties.enabled) {
             log.warn("메일 기능 비활성화 상태입니다. to={}, subject={}", to, subject)
             return
@@ -144,8 +163,3 @@ class PasswordRecoveryService(
         )
     }
 }
-
-data class PasswordLoginResult(
-    val token: TokenResponse,
-    val requirePasswordChange: Boolean,
-)

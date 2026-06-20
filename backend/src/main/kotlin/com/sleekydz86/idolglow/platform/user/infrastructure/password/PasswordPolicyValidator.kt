@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.platform.user.password
+package com.sleekydz86.idolglow.platform.user.infrastructure.password
 
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -10,7 +10,6 @@ import java.util.regex.Pattern
 class PasswordPolicyValidator(
     private val properties: PlatformAuthProperties,
 ) {
-
     data class PasswordValidationResult(
         val valid: Boolean,
         val errors: List<String>,
@@ -88,10 +87,19 @@ class PasswordPolicyValidator(
 
     private fun isCommonWeakPassword(password: String): Boolean {
         val lowerPassword = password.lowercase()
-        val weakPasswords = listOf(
-            "password", "123456", "qwerty", "admin", "letmein",
-            "welcome", "monkey", "dragon", "master", "hello",
-        )
+        val weakPasswords =
+            listOf(
+                "password",
+                "123456",
+                "qwerty",
+                "admin",
+                "letmein",
+                "welcome",
+                "monkey",
+                "dragon",
+                "master",
+                "hello",
+            )
         return weakPasswords.contains(lowerPassword)
     }
 

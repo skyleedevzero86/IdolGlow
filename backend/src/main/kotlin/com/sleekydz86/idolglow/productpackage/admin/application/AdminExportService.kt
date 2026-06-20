@@ -21,15 +21,115 @@ class AdminExportService(
     private val optionJpaRepository: OptionJpaRepository,
     private val reservationSlotJpaRepository: ReservationSlotJpaRepository,
 ) {
-
-    fun exportReservationsCsv(visitDateFrom: LocalDate, visitDateTo: LocalDate): String {
-        val rows = adminReservationQueryRepository.findReservationsByVisitDateRange(
-            visitDateFrom,
-            visitDateTo,
-            MAX_ROWS
-        )
+    fun exportReservationsCsv(
+        visitDateFrom: LocalDate,
+        visitDateTo: LocalDate,
+    ): String {
+        val rows =
+            adminReservationQueryRepository.findReservationsByVisitDateRange(
+                visitDateFrom,
+                visitDateTo,
+                MAX_ROWS,
+            )
         val lines = mutableListOf<String>()
-        lines += joinRow(
+        lines +=
+            joinRow(
+                listOf(
+                    "reservationId",
+                    "userId",
+                    "productId",
+                    "productName",
+                    "visitDate",
+                    "status",
+                    "totalPrice",
+                    "cancelReason",
+                ),
+            )
+        for (r in rows) {
+            val p = r.reservationSlot.product
+            lines +=
+                joinRow(
+                    listOf(
+                        r.id.toString(),
+                        r.userId.toString(),
+                        p.id.toString(),
+                        csvEscape(p.name),
+                        r.visitDate.toString(),
+                        r.status.name,
+                        r.totalPrice.toPlainString(),
+                        r.cancelReason?.name ?: "",
+                    ),
+                )
+        }
+        return lines.joinToString("\r\n") + "\r\n"
+    }
+
+    fun exportPaymentsCsv(
+        visitDateFrom: LocalDate,
+        visitDateTo: LocalDate,
+    ): String {
+        val payments =
+            adminReservationQueryRepository.findPaymentsByVisitDateRange(
+                visitDateFrom,
+                visitDateTo,
+                MAX_ROWS,
+            )
+        val lines = mutableListOf<String>()
+        lines +=
+            joinRow(
+                listOf(
+                    "paymentId",
+                    "paymentReference",
+                    "status",
+                    "amount",
+                    "reservationId",
+                    "productId",
+                    "productName",
+                    "visitDate",
+                    "failedAt",
+                    "failureReason",
+                ),
+            )
+        for (p in payments) {
+            val r = p.reservation
+            val pr = r.reservationSlot.product
+            lines +=
+                joinRow(
+                    listOf(
+                        p.id.toString(),
+                        csvEscape(p.paymentReference),
+                        p.status.name,
+                        p.amount.toPlainString(),
+                        r.id.toString(),
+                        pr.id.toString(),
+                        csvEscape(pr.name),
+                        r.visitDate.toString(),
+                        p.failedAt?.toString() ?: "",
+                        csvEscape(p.failureReason ?: ""),
+                    ),
+                )
+        }
+        return lines.joinToString("\r\n") + "\r\n"
+    }
+
+    fun exportReservationsXlsx(
+        visitDateFrom: LocalDate,
+        visitDateTo: LocalDate,
+    ): ByteArray {
+        val rows =
+            adminReservationQueryRepository.findReservationsByVisitDateRange(
+                visitDateFrom,
+                visitDateTo,
+                MAX_ROWS,
+            )
+        val workbook = XSSFWorkbook()
+        val sheet = workbook.createSheet("reservations")
+        val headerStyle =
+            workbook.createCellStyle().apply {
+                fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
+                fillPattern = FillPatternType.SOLID_FOREGROUND
+            }
+        val headers =
             listOf(
                 "reservationId",
                 "userId",
@@ -40,89 +140,6 @@ class AdminExportService(
                 "totalPrice",
                 "cancelReason",
             )
-        )
-        for (r in rows) {
-            val p = r.reservationSlot.product
-            lines += joinRow(
-                listOf(
-                    r.id.toString(),
-                    r.userId.toString(),
-                    p.id.toString(),
-                    csvEscape(p.name),
-                    r.visitDate.toString(),
-                    r.status.name,
-                    r.totalPrice.toPlainString(),
-                    r.cancelReason?.name ?: "",
-                )
-            )
-        }
-        return lines.joinToString("\r\n") + "\r\n"
-    }
-
-    fun exportPaymentsCsv(visitDateFrom: LocalDate, visitDateTo: LocalDate): String {
-        val payments = adminReservationQueryRepository.findPaymentsByVisitDateRange(
-            visitDateFrom,
-            visitDateTo,
-            MAX_ROWS
-        )
-        val lines = mutableListOf<String>()
-        lines += joinRow(
-            listOf(
-                "paymentId",
-                "paymentReference",
-                "status",
-                "amount",
-                "reservationId",
-                "productId",
-                "productName",
-                "visitDate",
-                "failedAt",
-                "failureReason",
-            )
-        )
-        for (p in payments) {
-            val r = p.reservation
-            val pr = r.reservationSlot.product
-            lines += joinRow(
-                listOf(
-                    p.id.toString(),
-                    csvEscape(p.paymentReference),
-                    p.status.name,
-                    p.amount.toPlainString(),
-                    r.id.toString(),
-                    pr.id.toString(),
-                    csvEscape(pr.name),
-                    r.visitDate.toString(),
-                    p.failedAt?.toString() ?: "",
-                    csvEscape(p.failureReason ?: ""),
-                )
-            )
-        }
-        return lines.joinToString("\r\n") + "\r\n"
-    }
-
-    fun exportReservationsXlsx(visitDateFrom: LocalDate, visitDateTo: LocalDate): ByteArray {
-        val rows = adminReservationQueryRepository.findReservationsByVisitDateRange(
-            visitDateFrom,
-            visitDateTo,
-            MAX_ROWS
-        )
-        val workbook = XSSFWorkbook()
-        val sheet = workbook.createSheet("reservations")
-        val headerStyle = workbook.createCellStyle().apply {
-            fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
-            fillPattern = FillPatternType.SOLID_FOREGROUND
-        }
-        val headers = listOf(
-            "reservationId",
-            "userId",
-            "productId",
-            "productName",
-            "visitDate",
-            "status",
-            "totalPrice",
-            "cancelReason",
-        )
         val headerRow = sheet.createRow(0)
         headers.forEachIndexed { index, label ->
             headerRow.createCell(index).apply {
@@ -149,30 +166,36 @@ class AdminExportService(
         }
     }
 
-    fun exportPaymentsXlsx(visitDateFrom: LocalDate, visitDateTo: LocalDate): ByteArray {
-        val payments = adminReservationQueryRepository.findPaymentsByVisitDateRange(
-            visitDateFrom,
-            visitDateTo,
-            MAX_ROWS
-        )
+    fun exportPaymentsXlsx(
+        visitDateFrom: LocalDate,
+        visitDateTo: LocalDate,
+    ): ByteArray {
+        val payments =
+            adminReservationQueryRepository.findPaymentsByVisitDateRange(
+                visitDateFrom,
+                visitDateTo,
+                MAX_ROWS,
+            )
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet("payments")
-        val headerStyle = workbook.createCellStyle().apply {
-            fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
-            fillPattern = FillPatternType.SOLID_FOREGROUND
-        }
-        val headers = listOf(
-            "paymentId",
-            "paymentReference",
-            "status",
-            "amount",
-            "reservationId",
-            "productId",
-            "productName",
-            "visitDate",
-            "failedAt",
-            "failureReason",
-        )
+        val headerStyle =
+            workbook.createCellStyle().apply {
+                fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
+                fillPattern = FillPatternType.SOLID_FOREGROUND
+            }
+        val headers =
+            listOf(
+                "paymentId",
+                "paymentReference",
+                "status",
+                "amount",
+                "reservationId",
+                "productId",
+                "productName",
+                "visitDate",
+                "failedAt",
+                "failureReason",
+            )
         val headerRow = sheet.createRow(0)
         headers.forEachIndexed { index, label ->
             headerRow.createCell(index).apply {
@@ -206,22 +229,24 @@ class AdminExportService(
         val products = productJpaRepository.findAll().sortedBy { it.id }
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet("products")
-        val headerStyle = workbook.createCellStyle().apply {
-            fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
-            fillPattern = FillPatternType.SOLID_FOREGROUND
-        }
-        val headers = listOf(
-            "productId",
-            "name",
-            "basePrice",
-            "optionsTotalPrice",
-            "minPrice",
-            "totalPrice",
-            "tagNames",
-            "location",
-            "slotCount",
-            "description",
-        )
+        val headerStyle =
+            workbook.createCellStyle().apply {
+                fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
+                fillPattern = FillPatternType.SOLID_FOREGROUND
+            }
+        val headers =
+            listOf(
+                "productId",
+                "name",
+                "basePrice",
+                "optionsTotalPrice",
+                "minPrice",
+                "totalPrice",
+                "tagNames",
+                "location",
+                "slotCount",
+                "description",
+            )
         val headerRow = sheet.createRow(0)
         headers.forEachIndexed { index, label ->
             headerRow.createCell(index).apply {
@@ -253,17 +278,19 @@ class AdminExportService(
         val options = optionJpaRepository.findAll().sortedBy { it.id }
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet("options")
-        val headerStyle = workbook.createCellStyle().apply {
-            fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
-            fillPattern = FillPatternType.SOLID_FOREGROUND
-        }
-        val headers = listOf(
-            "optionId",
-            "name",
-            "price",
-            "location",
-            "description",
-        )
+        val headerStyle =
+            workbook.createCellStyle().apply {
+                fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
+                fillPattern = FillPatternType.SOLID_FOREGROUND
+            }
+        val headers =
+            listOf(
+                "optionId",
+                "name",
+                "price",
+                "location",
+                "description",
+            )
         val headerRow = sheet.createRow(0)
         headers.forEachIndexed { index, label ->
             headerRow.createCell(index).apply {
@@ -286,32 +313,40 @@ class AdminExportService(
         }
     }
 
-    fun exportSlotsXlsx(productId: Long, dateFrom: LocalDate?, dateTo: LocalDate?): ByteArray {
+    fun exportSlotsXlsx(
+        productId: Long,
+        dateFrom: LocalDate?,
+        dateTo: LocalDate?,
+    ): ByteArray {
         require(dateFrom == null || dateTo == null || !dateTo.isBefore(dateFrom)) {
             "dateTo는 dateFrom 이상이어야 합니다."
         }
-        val slots = reservationSlotJpaRepository.findAllByProductIdOrderByReservationDateAscStartTimeAsc(productId)
-            .asSequence()
-            .filter { slot -> dateFrom == null || !slot.reservationDate.isBefore(dateFrom) }
-            .filter { slot -> dateTo == null || !slot.reservationDate.isAfter(dateTo) }
-            .toList()
+        val slots =
+            reservationSlotJpaRepository
+                .findAllByProductIdOrderByReservationDateAscStartTimeAsc(productId)
+                .asSequence()
+                .filter { slot -> dateFrom == null || !slot.reservationDate.isBefore(dateFrom) }
+                .filter { slot -> dateTo == null || !slot.reservationDate.isAfter(dateTo) }
+                .toList()
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet("slots")
-        val headerStyle = workbook.createCellStyle().apply {
-            fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
-            fillPattern = FillPatternType.SOLID_FOREGROUND
-        }
-        val headers = listOf(
-            "slotId",
-            "productId",
-            "productName",
-            "reservationDate",
-            "startTime",
-            "endTime",
-            "status",
-            "holdReservationId",
-            "adminNote",
-        )
+        val headerStyle =
+            workbook.createCellStyle().apply {
+                fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
+                fillPattern = FillPatternType.SOLID_FOREGROUND
+            }
+        val headers =
+            listOf(
+                "slotId",
+                "productId",
+                "productName",
+                "reservationDate",
+                "startTime",
+                "endTime",
+                "status",
+                "holdReservationId",
+                "adminNote",
+            )
         val headerRow = sheet.createRow(0)
         headers.forEachIndexed { index, label ->
             headerRow.createCell(index).apply {
@@ -347,8 +382,7 @@ class AdminExportService(
             }
         }
 
-    private fun csvEscape(s: String): String =
-        s.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    private fun csvEscape(s: String): String = s.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
 
     companion object {
         private const val MAX_ROWS = 5000

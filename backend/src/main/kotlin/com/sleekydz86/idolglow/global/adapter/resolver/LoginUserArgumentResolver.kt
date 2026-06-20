@@ -9,17 +9,14 @@ import org.springframework.web.method.support.ModelAndViewContainer
 
 @Component
 class LoginUserArgumentResolver(
-    private val authenticatedUserIdResolver: AuthenticatedUserIdResolver
+    private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) : HandlerMethodArgumentResolver {
-
-    override fun supportsParameter(parameter: MethodParameter): Boolean {
-        return parameter.hasParameterAnnotation(LoginUser::class.java)
-    }
+    override fun supportsParameter(parameter: MethodParameter): Boolean = parameter.hasParameterAnnotation(LoginUser::class.java)
 
     override fun resolveArgument(
         parameter: MethodParameter,
         mavContainer: ModelAndViewContainer?,
         webRequest: NativeWebRequest,
-        binderFactory: WebDataBinderFactory?
+        binderFactory: WebDataBinderFactory?,
     ): Any? = authenticatedUserIdResolver.resolveRequired()
 }

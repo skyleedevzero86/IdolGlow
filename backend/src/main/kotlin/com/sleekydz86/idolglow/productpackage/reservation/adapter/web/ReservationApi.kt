@@ -1,8 +1,8 @@
-package com.sleekydz86.idolglow.productpackage.reservation.ui
+package com.sleekydz86.idolglow.productpackage.reservation.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request.CreateReservationRequest
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
-import com.sleekydz86.idolglow.productpackage.reservation.ui.request.CreateReservationRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -16,10 +16,9 @@ import org.springframework.http.ResponseEntity
 
 @Tag(name = "상품 예약", description = "상품 예약 생성 및 취소 API")
 interface ReservationApi {
-
     @Operation(
         summary = "예약 생성",
-        description = "로그인한 사용자가 상품 예약을 생성하고 결제 대기 정보를 받습니다."
+        description = "로그인한 사용자가 상품 예약을 생성하고 결제 대기 정보를 받습니다.",
     )
     @ApiResponses(
         value = [
@@ -30,28 +29,28 @@ interface ReservationApi {
                     Header(
                         name = "Location",
                         description = "생성된 예약 URI",
-                        schema = Schema(type = "string")
-                    )
-                ]
+                        schema = Schema(type = "string"),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청",
-                content = [Content(schema = Schema(hidden = true))]
-            )
-        ]
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
     )
     fun createReservation(
         @Parameter(hidden = true)
         userId: Long,
         @Parameter(description = "상품 ID", example = "1")
         productId: Long,
-        @Valid request: CreateReservationRequest
+        @Valid request: CreateReservationRequest,
     ): ResponseEntity<ReservationCreatedResponse>
 
     @Operation(
         summary = "예약 취소",
-        description = "로그인한 사용자가 자신의 예약을 취소합니다."
+        description = "로그인한 사용자가 자신의 예약을 취소합니다.",
     )
     @ApiResponses(
         value = [
@@ -59,9 +58,9 @@ interface ReservationApi {
             ApiResponse(
                 responseCode = "404",
                 description = "예약을 찾을 수 없음",
-                content = [Content(schema = Schema(hidden = true))]
-            )
-        ]
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
     )
     fun cancelReservation(
         @Parameter(hidden = true)

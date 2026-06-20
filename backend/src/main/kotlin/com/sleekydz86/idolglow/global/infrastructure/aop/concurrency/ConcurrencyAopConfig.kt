@@ -14,7 +14,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy
 @Configuration
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 class ConcurrencyAopConfig {
-
     @Bean
     @ConditionalOnMissingBean
     fun distributedLockProvider(): DistributedLockProvider = LocalDistributedLockProvider()
@@ -31,13 +30,13 @@ class ConcurrencyAopConfig {
     @ConditionalOnMissingBean
     fun distributedLockAspect(
         lockProvider: DistributedLockProvider,
-        keyExpressionResolver: KeyExpressionResolver
+        keyExpressionResolver: KeyExpressionResolver,
     ): DistributedLockAspect = DistributedLockAspect(lockProvider, keyExpressionResolver)
 
     @Bean
     @ConditionalOnMissingBean
     fun idempotencyAspect(
         idempotencyStore: IdempotencyStore,
-        keyExpressionResolver: KeyExpressionResolver
+        keyExpressionResolver: KeyExpressionResolver,
     ): IdempotencyAspect = IdempotencyAspect(idempotencyStore, keyExpressionResolver)
 }

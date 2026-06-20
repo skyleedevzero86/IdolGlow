@@ -1,0 +1,161 @@
+services:
+  postgres:
+    image: paradedb/paradedb:pg17
+    container_name: idolglow-postgres
+    restart: unless-stopped
+    command: postgres -c shared_preload_libraries=pg_search,pg_cron
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: idolglow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: Asia/Seoul
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/01-init-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d idolglow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  postgres-ext-init:
+    image: postgres:17-alpine
+    container_name: idolglow-postgres-ext-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: postgres
+    entrypoint: >
+      /bin/sh -c "
+      psql -h postgres -U postgres -d idolglow -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS vector;' &&
+      psql -h postgres -U postgres -d idolglow -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pg_search;' &&
+      psql -h postgres -U postgres -d idolglow -c \"SELECT extname, extversion FROM pg_extension WHERE extname IN ('vector','pg_search') ORDER BY extname;\" &&
+      exit 0
+      "
+    restart: "no"
+
+  mysql:
+    image: mysql:8.4
+    container_name: idolglow-mysql
+    restart: unless-stopped
+    profiles: ["mysql"]
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: idolglow
+      MYSQL_USER: idolglow
+      MYSQL_PASSWORD: idolglow
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Seoul
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  minio:
+    image: minio/minio:latest
+    container_name: idolglow-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      TZ: Asia/Seoul
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: idolglow-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/idolglow &&
+      mc anonymous set download local/idolglow &&
+      exit 0
+      "
+    restart: "no"
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: idolglow-backend
+    restart: unless-stopped
+    profiles: ["app"]
+    ports:
+      - "9090:9090"
+    environment:
+      TZ: Asia/Seoul
+      SERVER_PORT: 9090
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod,select}
+      JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD:-idolglow-dev-secret-2026!}
+      DB_URL: jdbc:postgresql://postgres:5432/idolglow
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      MINIO_ENABLED: "true"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: idolglow
+      MINIO_PUBLIC_BASE_URL: http://localhost:9000/idolglow
+      MINIO_PUBLIC_READ_PROFILE_OBJECTS: "true"
+      MINIO_PUBLIC_READ_WEBZINE_OBJECTS: "true"
+      APP_PUBLIC_BASE_URL: http://localhost:9090
+      MOCK_PAYMENT_WEBHOOK_SECRET: ${MOCK_PAYMENT_WEBHOOK_SECRET:-dev-mock-webhook-secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-ext-init:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9090/health/check || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/docker/frontend/Dockerfile
+      target: ${FRONTEND_TARGET:-static}
+      args:
+        FRONTEND_DIR: ${FRONTEND_DIR:-docs/acc-webzine}
+    container_name: idolglow-frontend
+    restart: unless-stopped
+    profiles: ["app"]
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  mysql_data:
+  minio_data:

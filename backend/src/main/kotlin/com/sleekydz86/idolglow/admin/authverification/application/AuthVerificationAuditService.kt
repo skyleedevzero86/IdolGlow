@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.admin.authverification.application
 
+import com.sleekydz86.idolglow.admin.authverification.application.dto.AuthVerificationAuditLogPageResult
+import com.sleekydz86.idolglow.admin.authverification.application.dto.AuthVerificationAuditLogResult
 import com.sleekydz86.idolglow.admin.authverification.domain.AuthVerificationAuditLog
 import com.sleekydz86.idolglow.admin.authverification.infrastructure.AuthVerificationAuditLogRepository
-import com.sleekydz86.idolglow.admin.authverification.ui.dto.AuthVerificationAuditLogPageResponse
-import com.sleekydz86.idolglow.admin.authverification.ui.dto.AuthVerificationAuditLogResponse
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -42,21 +42,23 @@ class AuthVerificationAuditService(
         size: Int,
         verificationType: String?,
         keyword: String?,
-    ): AuthVerificationAuditLogPageResponse {
-        val pageable = PageRequest.of(
-            page.coerceAtLeast(1) - 1,
-            size.coerceIn(1, 100),
-            Sort.by(Sort.Direction.DESC, "createdAt"),
-        )
+    ): AuthVerificationAuditLogPageResult {
+        val pageable =
+            PageRequest.of(
+                page.coerceAtLeast(1) - 1,
+                size.coerceIn(1, 100),
+                Sort.by(Sort.Direction.DESC, "createdAt"),
+            )
         val queryType = verificationType?.trim().orEmpty()
         val queryKeyword = keyword?.trim()
-        val data = if (queryType.isBlank()) {
-            authVerificationAuditLogRepository.searchByKeyword(queryKeyword, pageable)
-        } else {
-            authVerificationAuditLogRepository.searchByTypeAndKeyword(queryType, queryKeyword, pageable)
-        }
-        return AuthVerificationAuditLogPageResponse(
-            logs = data.content.map(AuthVerificationAuditLogResponse::from),
+        val data =
+            if (queryType.isBlank()) {
+                authVerificationAuditLogRepository.searchByKeyword(queryKeyword, pageable)
+            } else {
+                authVerificationAuditLogRepository.searchByTypeAndKeyword(queryType, queryKeyword, pageable)
+            }
+        return AuthVerificationAuditLogPageResult(
+            logs = data.content.map(AuthVerificationAuditLogResult::from),
             page = data.number + 1,
             size = data.size,
             totalElements = data.totalElements,

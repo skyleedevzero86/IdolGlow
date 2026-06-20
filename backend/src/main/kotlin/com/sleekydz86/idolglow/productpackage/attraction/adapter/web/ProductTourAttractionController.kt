@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.productpackage.attraction.ui
+package com.sleekydz86.idolglow.productpackage.attraction.adapter.web
 
 import com.sleekydz86.idolglow.productpackage.attraction.application.ProductTourAttractionQueryService
 import com.sleekydz86.idolglow.productpackage.attraction.domain.dto.ProductTourAttractionResponse
@@ -22,8 +22,8 @@ class ProductTourAttractionController(
         @RequestParam(required = false) areaCode: Int?,
         @RequestParam(required = false) signguCode: Int?,
         @RequestParam(required = false) category: String?,
-    ): ResponseEntity<ProductTourAttractionResponse> {
-        return ResponseEntity.ok(
+    ): ResponseEntity<ProductTourAttractionResponse> =
+        ResponseEntity.ok(
             productTourAttractionQueryService.findAttractionsByProduct(
                 productId = productId,
                 size = size ?: 10,
@@ -31,7 +31,6 @@ class ProductTourAttractionController(
                 category = category,
                 areaCode = areaCode,
                 signguCode = signguCode,
-            )
+            ),
         )
-    }
 }

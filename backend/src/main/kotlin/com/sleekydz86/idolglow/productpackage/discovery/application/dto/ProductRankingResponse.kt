@@ -31,10 +31,9 @@ data class ProductRankingResponse(
     val reviewCount: Long,
     @field:Schema(
         description = "추천 신호와 겹친 상품 태그(찜/리뷰 선호 태그 및 설문 컨셉명과 일치하는 태그)",
-        example = "[\"DREAMY\", \"메이크업\"]"
+        example = "[\"DREAMY\", \"메이크업\"]",
     )
     val matchedTags: List<String>,
-
     @field:Schema(description = "상품 대표 이미지 URL(없으면 null)")
     val thumbnailUrl: String? = null,
 ) {

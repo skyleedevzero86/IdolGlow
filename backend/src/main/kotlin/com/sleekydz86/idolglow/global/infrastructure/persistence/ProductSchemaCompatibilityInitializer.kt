@@ -12,7 +12,6 @@ import javax.sql.DataSource
 class ProductSchemaCompatibilityInitializer(
     private val dataSource: DataSource,
 ) : ApplicationRunner {
-
     private val log = LoggerFactory.getLogger(ProductSchemaCompatibilityInitializer::class.java)
 
     override fun run(args: ApplicationArguments) {
@@ -43,18 +42,19 @@ class ProductSchemaCompatibilityInitializer(
         }
 
         val databaseProductName = connection.metaData.databaseProductName.lowercase()
-        val alterSql = when {
-            databaseProductName.contains("postgresql") -> postgresAlterSql
-            databaseProductName.contains("mysql") || databaseProductName.contains("mariadb") -> mysqlAlterSql
-            else -> {
-                log.warn(
-                    "지원하지 않는 DB({})라 products.{} 컬럼 자동 보정을 건너뜁니다.",
-                    connection.metaData.databaseProductName,
-                    columnName,
-                )
-                return
+        val alterSql =
+            when {
+                databaseProductName.contains("postgresql") -> postgresAlterSql
+                databaseProductName.contains("mysql") || databaseProductName.contains("mariadb") -> mysqlAlterSql
+                else -> {
+                    log.warn(
+                        "지원하지 않는 DB({})라 products.{} 컬럼 자동 보정을 건너뜁니다.",
+                        connection.metaData.databaseProductName,
+                        columnName,
+                    )
+                    return
+                }
             }
-        }
 
         connection.createStatement().use { statement ->
             statement.execute(alterSql)

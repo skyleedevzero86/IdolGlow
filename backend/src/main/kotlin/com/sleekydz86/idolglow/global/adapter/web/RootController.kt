@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.global.adapter.web
 
+import com.sleekydz86.idolglow.global.config.OpenApiPaths
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirements
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController
 )
 @RestController
 class RootController {
-
     @SecurityRequirements
     @Operation(
         summary = "API 안내",
@@ -27,8 +27,8 @@ class RootController {
         mapOf(
             "service" to "idolglow-api",
             "health" to "/health/check",
-            "swaggerUi" to "/swagger-ui.html",
-            "openApi" to "/v3/api-docs",
+            "swaggerUi" to OpenApiPaths.SWAGGER_UI,
+            "openApi" to OpenApiPaths.API_DOCS,
         )
 
     @SecurityRequirements
@@ -38,6 +38,5 @@ class RootController {
     )
     @ApiResponse(responseCode = "204", description = "콘텐츠 없음")
     @GetMapping("/favicon.ico")
-    fun favicon(): ResponseEntity<Void> =
-        ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+    fun favicon(): ResponseEntity<Void> = ResponseEntity.status(HttpStatus.NO_CONTENT).build()
 }

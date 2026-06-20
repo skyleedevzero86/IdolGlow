@@ -18,54 +18,38 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "users")
 class User(
-
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
-
     @Column(nullable = false)
     var email: String,
-
     @Embedded
     var nickname: Nickname,
-
     @Column(name = "profile_image_url", length = 500)
     var profileImageUrl: String? = null,
-
     @Column(name = "password_hash", length = 255)
     var passwordHash: String? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var role: UserRole = UserRole.USER,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status", nullable = false)
     var accountStatus: UserAccountStatus = UserAccountStatus.APPROVED,
-
     @Column(name = "platform_username", length = 50)
     var platformUsername: String? = null,
-
     @Column(name = "login_fail_count", nullable = false)
     var loginFailCount: Int = 0,
-
     @Column(name = "account_locked_at")
     var accountLockedAt: LocalDateTime? = null,
-
     @Column(name = "password_changed_at")
     var passwordChangedAt: LocalDateTime? = null,
-
     @Column(name = "last_password_change_date")
     var lastPasswordChangeDate: LocalDate? = null,
-
     @Column(name = "password_change_daily_count", nullable = false)
     var passwordChangeDailyCount: Int = 0,
-
     @Column
     var lastLoginAt: LocalDateTime? = null,
-
     @Column(name = "temporary_password_required", nullable = false)
     var temporaryPasswordRequired: Boolean = false,
-
     @Column(name = "temporary_password_issued_at")
     var temporaryPasswordIssuedAt: LocalDateTime? = null,
 ) {
@@ -87,8 +71,7 @@ class User(
         return statusOk && notLocked
     }
 
-    fun isPlatformLocked(): Boolean =
-        loginFailCount >= 5 || accountStatus == UserAccountStatus.SUSPENDED
+    fun isPlatformLocked(): Boolean = loginFailCount >= 5 || accountStatus == UserAccountStatus.SUSPENDED
 
     fun applyEncodedPasswordChange(encodedPassword: String) {
         passwordHash = encodedPassword
@@ -133,13 +116,19 @@ class User(
         }
     }
 
-    fun issueTemporaryPassword(encodedPassword: String, now: LocalDateTime = LocalDateTime.now()) {
+    fun issueTemporaryPassword(
+        encodedPassword: String,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
         passwordHash = encodedPassword
         temporaryPasswordRequired = true
         temporaryPasswordIssuedAt = now
     }
 
-    fun completePasswordChange(encodedPassword: String, now: LocalDateTime = LocalDateTime.now()) {
+    fun completePasswordChange(
+        encodedPassword: String,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
         passwordHash = encodedPassword
         passwordChangedAt = now
         temporaryPasswordRequired = false

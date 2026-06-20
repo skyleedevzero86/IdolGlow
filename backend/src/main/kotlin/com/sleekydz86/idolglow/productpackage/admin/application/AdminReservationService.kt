@@ -19,7 +19,6 @@ class AdminReservationService(
     private val reservationRepository: ReservationRepository,
     private val adminAuditService: AdminAuditService,
 ) {
-
     fun findDashboard(
         fromDate: LocalDate?,
         toDate: LocalDate?,
@@ -28,12 +27,14 @@ class AdminReservationService(
         val reservationCounts = adminReservationQueryRepository.countReservationDashboard(LocalDate.now(), fromDate, toDate)
         val paymentCounts = adminReservationQueryRepository.countPaymentsByStatus(fromDate, toDate)
         val recentReservationEntities = adminReservationQueryRepository.findRecentReservations(fromDate, toDate, recentSize)
-        val recentReservationPayments = adminReservationQueryRepository.findPaymentsByReservationIds(
-            recentReservationEntities.map { it.id }
-        )
-        val recentReservations = recentReservationEntities.map { reservation ->
-            AdminReservationSummaryResponse.from(reservation, recentReservationPayments[reservation.id])
-        }
+        val recentReservationPayments =
+            adminReservationQueryRepository.findPaymentsByReservationIds(
+                recentReservationEntities.map { it.id },
+            )
+        val recentReservations =
+            recentReservationEntities.map { reservation ->
+                AdminReservationSummaryResponse.from(reservation, recentReservationPayments[reservation.id])
+            }
 
         return ReservationDashboardResponse(
             pendingCount = reservationCounts.pendingCount,
@@ -45,7 +46,7 @@ class AdminReservationService(
             paymentFailedCount = paymentCounts[PaymentStatus.FAILED] ?: 0L,
             paymentCanceledCount = paymentCounts[PaymentStatus.CANCELED] ?: 0L,
             paymentExpiredCount = paymentCounts[PaymentStatus.EXPIRED] ?: 0L,
-            recentReservations = recentReservations
+            recentReservations = recentReservations,
         )
     }
 
@@ -80,8 +81,9 @@ class AdminReservationService(
         reservationId: Long,
         markdown: String?,
     ): AdminReservationSummaryResponse {
-        val reservation = reservationRepository.findByIdForUpdate(reservationId)
-            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다. reservationId=$reservationId")
+        val reservation =
+            reservationRepository.findByIdForUpdate(reservationId)
+                ?: throw IllegalArgumentException("예약을 찾을 수 없습니다. reservationId=$reservationId")
         reservation.updateAdminMemo(markdown)
         val payments = adminReservationQueryRepository.findPaymentsByReservationIds(listOf(reservation.id))
         adminAuditService.log(

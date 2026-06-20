@@ -31,29 +31,38 @@ class ProductTourAttractionQueryService(
     ): ProductTourAttractionResponse {
         val resolvedAreaCode = areaCode ?: SeoulDistrictTourCodeMapper.SEOUL_AREA_CODE
         val resolvedSignguCode = signguCode ?: DEFAULT_SIGNGU_CODE
-        val district = SeoulDistrictTourCodeMapper.districtOf(resolvedSignguCode)
-            ?: "signgu-$resolvedSignguCode"
+        val district =
+            SeoulDistrictTourCodeMapper.districtOf(resolvedSignguCode)
+                ?: "signgu-$resolvedSignguCode"
         val resolvedBaseYm = resolveBaseYm(baseYm)
         val resolvedSize = size.coerceIn(1, MAX_RESULT_SIZE)
 
         val normalizedCategory = category?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
 
-        val attractions = fetchAttractionsSafely(
-            baseYm = resolvedBaseYm,
-            areaCode = resolvedAreaCode,
-            signguCode = resolvedSignguCode,
-        )
+        val attractions =
+            fetchAttractionsSafely(
+                baseYm = resolvedBaseYm,
+                areaCode = resolvedAreaCode,
+                signguCode = resolvedSignguCode,
+            )
 
-        val scored = attractions.asSequence()
-            .filter { attraction ->
-                normalizedCategory == null ||
-                    attraction.categoryLarge.orEmpty().lowercase().contains(normalizedCategory) ||
-                    attraction.categoryMiddle.orEmpty().lowercase().contains(normalizedCategory)
-            }
-            .map { attraction -> ScoredAttraction(attraction, computeScore(attraction)) }
-            .sortedWith(compareByDescending<ScoredAttraction> { it.score }.thenBy { it.attraction.rank }.thenBy { it.attraction.name })
-            .take(resolvedSize)
-            .toList()
+        val scored =
+            attractions
+                .asSequence()
+                .filter { attraction ->
+                    normalizedCategory == null ||
+                        attraction.categoryLarge
+                            .orEmpty()
+                            .lowercase()
+                            .contains(normalizedCategory) ||
+                        attraction.categoryMiddle
+                            .orEmpty()
+                            .lowercase()
+                            .contains(normalizedCategory)
+                }.map { attraction -> ScoredAttraction(attraction, computeScore(attraction)) }
+                .sortedWith(compareByDescending<ScoredAttraction> { it.score }.thenBy { it.attraction.rank }.thenBy { it.attraction.name })
+                .take(resolvedSize)
+                .toList()
 
         return ProductTourAttractionResponse(
             productId = productId,
@@ -62,22 +71,23 @@ class ProductTourAttractionQueryService(
             areaCode = resolvedAreaCode,
             signguCode = resolvedSignguCode,
             baseYm = resolvedBaseYm,
-            attractions = scored.map { scoredAttraction ->
-                val attraction = scoredAttraction.attraction
-                ProductTourAttractionItemResponse(
-                    attractionCode = attraction.attractionCode,
-                    name = attraction.name,
-                    areaName = attraction.areaName,
-                    signguName = attraction.signguName,
-                    categoryLarge = attraction.categoryLarge,
-                    categoryMiddle = attraction.categoryMiddle,
-                    rank = attraction.rank,
-                    mapX = attraction.mapX,
-                    mapY = attraction.mapY,
-                    score = scoredAttraction.score,
-                    reason = defaultReason(attraction, district, resolvedBaseYm),
-                )
-            }
+            attractions =
+                scored.map { scoredAttraction ->
+                    val attraction = scoredAttraction.attraction
+                    ProductTourAttractionItemResponse(
+                        attractionCode = attraction.attractionCode,
+                        name = attraction.name,
+                        areaName = attraction.areaName,
+                        signguName = attraction.signguName,
+                        categoryLarge = attraction.categoryLarge,
+                        categoryMiddle = attraction.categoryMiddle,
+                        rank = attraction.rank,
+                        mapX = attraction.mapX,
+                        mapY = attraction.mapY,
+                        score = scoredAttraction.score,
+                        reason = defaultReason(attraction, district, resolvedBaseYm),
+                    )
+                },
         )
     }
 
@@ -85,8 +95,8 @@ class ProductTourAttractionQueryService(
         baseYm: String,
         areaCode: Int,
         signguCode: Int,
-    ): List<TourAttraction> {
-        return try {
+    ): List<TourAttraction> =
+        try {
             tourAttractionQueryPort.fetchAreaBasedAttractions(
                 baseYm = baseYm,
                 areaCode = areaCode,
@@ -97,7 +107,7 @@ class ProductTourAttractionQueryService(
             val exceptionType = exception.getExceptionType()
             if (exceptionType is TourAttractionExceptionType && exceptionType in EXTERNAL_TOUR_API_FAILURES) {
                 log.warn(
-                    "외부 Tour API 연동 실패로 빈 관광지 추천 목록을 반환합니다. baseYm={}, areaCode={}, signguCode={}, errorCode={}",
+                    "외부 관광 API 연동 실패로 빈 관광지 추천 목록을 반환합니다. baseYm={}, areaCode={}, signguCode={}, errorCode={}",
                     baseYm,
                     areaCode,
                     signguCode,
@@ -108,11 +118,11 @@ class ProductTourAttractionQueryService(
                 throw exception
             }
         }
-    }
 
     private fun resolveBaseYm(baseYm: String?): String {
-        val resolved = baseYm?.trim()?.takeIf { it.isNotEmpty() }
-            ?: YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMM"))
+        val resolved =
+            baseYm?.trim()?.takeIf { it.isNotEmpty() }
+                ?: YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMM"))
         if (!BASE_YM_PATTERN.matches(resolved)) {
             throw CustomException(TourAttractionExceptionType.INVALID_BASE_YM)
         }
@@ -124,21 +134,29 @@ class ProductTourAttractionQueryService(
         return rankScore
     }
 
-    private fun defaultReason(attraction: TourAttraction, district: String, baseYm: String): String {
+    private fun defaultReason(
+        attraction: TourAttraction,
+        district: String,
+        baseYm: String,
+    ): String {
         val middle = attraction.categoryMiddle?.trim().takeUnless { it.isNullOrBlank() } ?: "관광"
         return "$district 내 $middle 카테고리 상위권 관광지입니다. 데이터 기준월: $baseYm"
     }
 
-    private data class ScoredAttraction(val attraction: TourAttraction, val score: Int)
+    private data class ScoredAttraction(
+        val attraction: TourAttraction,
+        val score: Int,
+    )
 
     companion object {
         private val BASE_YM_PATTERN = Regex("^\\d{6}$")
-        private val EXTERNAL_TOUR_API_FAILURES = setOf(
-            TourAttractionExceptionType.TOUR_API_KEY_MISSING,
-            TourAttractionExceptionType.TOUR_API_CALL_FAILED,
-            TourAttractionExceptionType.TOUR_API_BAD_RESPONSE,
-            TourAttractionExceptionType.TOUR_API_ERROR,
-        )
+        private val EXTERNAL_TOUR_API_FAILURES =
+            setOf(
+                TourAttractionExceptionType.TOUR_API_KEY_MISSING,
+                TourAttractionExceptionType.TOUR_API_CALL_FAILED,
+                TourAttractionExceptionType.TOUR_API_BAD_RESPONSE,
+                TourAttractionExceptionType.TOUR_API_ERROR,
+            )
         private const val MAX_RESULT_SIZE = 1000
         private const val TOUR_API_NUM_OF_ROWS = 1000
         private const val DEFAULT_SIGNGU_CODE = 11530

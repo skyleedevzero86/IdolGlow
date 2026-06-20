@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.mbrd.infrastructure
 
 import org.springframework.stereotype.Component
-import java.util.Locale
 import java.lang.Math.floorMod
+import java.util.Locale
 import kotlin.math.sqrt
 
 @Component
@@ -26,8 +26,7 @@ class MbrdEditorEmbeddingEncoder {
         return toVectorLiteral(vector)
     }
 
-    private fun normalize(content: String): String =
-        content.lowercase(Locale.ROOT).replace("[^\\p{L}\\p{N}\\s]+".toRegex(), " ").trim()
+    private fun normalize(content: String): String = content.lowercase(Locale.ROOT).replace("[^\\p{L}\\p{N}\\s]+".toRegex(), " ").trim()
 
     private fun normalizeVector(vector: DoubleArray) {
         val magnitude = sqrt(vector.sumOf { it * it })

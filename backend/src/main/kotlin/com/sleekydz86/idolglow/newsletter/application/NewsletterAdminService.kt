@@ -21,8 +21,10 @@ class NewsletterAdminService(
     private val newsletterRepository: NewsletterRepository,
     private val adminAuditService: AdminAuditService,
 ) : NewsletterAdminUseCase {
-
-    override fun findNewsletters(page: Int, size: Int): AdminNewsletterPageResponse {
+    override fun findNewsletters(
+        page: Int,
+        size: Int,
+    ): AdminNewsletterPageResponse {
         val resolvedPage = page.coerceAtLeast(1)
         val resolvedSize = size.coerceIn(1, 20)
         val allNewsletters = newsletterRepository.findAllByLatest()
@@ -52,12 +54,13 @@ class NewsletterAdminService(
             "동일한 제목의 소식지가 이미 등록되어 있습니다."
         }
 
-        val savedNewsletter = newsletterRepository.save(
-            Newsletter.create(
-                slug = slug,
-                draft = command.toDraft(),
+        val savedNewsletter =
+            newsletterRepository.save(
+                Newsletter.create(
+                    slug = slug,
+                    draft = command.toDraft(),
+                ),
             )
-        )
 
         adminAuditService.log(
             actionCode = "NEWSLETTER_CREATE",
@@ -115,27 +118,31 @@ class NewsletterAdminService(
             ?: throw EntityNotFoundException("소식지를 찾을 수 없습니다. newsletterSlug=$newsletterSlug")
 
     private fun generateNewsletterSlug(title: String): String {
-        val normalized = Normalizer.normalize(title, Normalizer.Form.NFKD)
-            .replace(Regex("[^\\p{ASCII}]"), " ")
-            .lowercase()
-            .replace(Regex("[^a-z0-9\\s-]"), " ")
-            .trim()
-            .replace(Regex("\\s+"), "-")
-            .replace(Regex("-+"), "-")
+        val normalized =
+            Normalizer
+                .normalize(title, Normalizer.Form.NFKD)
+                .replace(Regex("[^\\p{ASCII}]"), " ")
+                .lowercase()
+                .replace(Regex("[^a-z0-9\\s-]"), " ")
+                .trim()
+                .replace(Regex("\\s+"), "-")
+                .replace(Regex("-+"), "-")
 
         return normalized.ifBlank { "newsletter-${System.currentTimeMillis()}" }
     }
 
     private fun UpsertNewsletterCommand.toDraft(): NewsletterDraft {
-        val normalizedTags = tags
-            .flatMap { it.split(',') }
-            .map { it.trim().removePrefix("#") }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val normalizedTags =
+            tags
+                .flatMap { it.split(',') }
+                .map { it.trim().removePrefix("#") }
+                .filter { it.isNotEmpty() }
+                .distinct()
 
-        val normalizedParagraphs = paragraphs
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+        val normalizedParagraphs =
+            paragraphs
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
 
         return NewsletterDraft(
             title = title.trim(),

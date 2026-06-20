@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.review.graphql
+package com.sleekydz86.idolglow.review.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.review.application.ProductReviewQueryService
@@ -12,19 +12,23 @@ class ProductReviewGraphQlController(
     private val productReviewQueryService: ProductReviewQueryService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
-    fun productReviews(@Argument productId: String): List<ProductReviewGraphQlResponse> {
-        val parsedProductId = productId.toLongOrNull()
-            ?: throw IllegalArgumentException("productId는 숫자여야 합니다.")
+    fun productReviews(
+        @Argument productId: String,
+    ): List<ProductReviewGraphQlResponse> {
+        val parsedProductId =
+            productId.toLongOrNull()
+                ?: throw IllegalArgumentException("productId는 숫자여야 합니다.")
 
-        return productReviewQueryService.findReviewsByProduct(parsedProductId)
+        return productReviewQueryService
+            .findReviewsByProduct(parsedProductId)
             .map(ProductReviewGraphQlResponse::from)
     }
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
     fun myReviews(): List<ProductReviewGraphQlResponse> =
-        productReviewQueryService.findReviewsByUser(authenticatedUserIdResolver.resolveRequired())
+        productReviewQueryService
+            .findReviewsByUser(authenticatedUserIdResolver.resolveRequired())
             .map(ProductReviewGraphQlResponse::from)
 }

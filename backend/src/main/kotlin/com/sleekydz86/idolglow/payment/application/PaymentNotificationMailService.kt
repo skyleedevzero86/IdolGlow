@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.sleekydz86.idolglow.global.infrastructure.config.AppMailProperties
+import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
@@ -14,7 +14,6 @@ class PaymentNotificationMailService(
     private val outboundMailPort: OutboundMailPort,
     private val userRepository: UserRepository,
 ) {
-
     private val log = LoggerFactory.getLogger(PaymentNotificationMailService::class.java)
 
     fun sendSucceeded(payment: Payment) {
@@ -29,7 +28,11 @@ class PaymentNotificationMailService(
         send(payment, "결제 취소가 완료되었습니다.", "결제 취소")
     }
 
-    private fun send(payment: Payment, detail: String, title: String) {
+    private fun send(
+        payment: Payment,
+        detail: String,
+        title: String,
+    ) {
         if (!appMailProperties.enabled) {
             return
         }
@@ -38,18 +41,20 @@ class PaymentNotificationMailService(
         val visitLine =
             "${payment.reservation.visitDate} ${payment.reservation.visitStartTime} ~ ${payment.reservation.visitEndTime}"
         val subject = "[IdolGlow] $title 안내"
-        val plainText = buildString {
-            appendLine("$title 안내")
-            appendLine()
-            appendLine("상품명: $productName")
-            appendLine("방문일시: $visitLine")
-            appendLine("결제참조: ${payment.paymentReference}")
-            appendLine("상태: ${payment.status.name}")
-            appendLine("결제금액: ${payment.amount.toPlainString()} KRW")
-            appendLine("취소금액: ${payment.cancelAmount.toPlainString()} KRW")
-            appendLine("안내: $detail")
-        }
-        val htmlBody = """
+        val plainText =
+            buildString {
+                appendLine("$title 안내")
+                appendLine()
+                appendLine("상품명: $productName")
+                appendLine("방문일시: $visitLine")
+                appendLine("결제참조: ${payment.paymentReference}")
+                appendLine("상태: ${payment.status.name}")
+                appendLine("결제금액: ${payment.amount.toPlainString()} KRW")
+                appendLine("취소금액: ${payment.cancelAmount.toPlainString()} KRW")
+                appendLine("안내: $detail")
+            }
+        val htmlBody =
+            """
             <html>
             <body style="font-family:'Malgun Gothic',Arial,sans-serif;color:#111827;">
               <h2 style="margin:0 0 16px;">$title 안내</h2>
@@ -62,7 +67,7 @@ class PaymentNotificationMailService(
               <p style="margin:20px 0 0;">${escapeHtml(detail)}</p>
             </body>
             </html>
-        """.trimIndent()
+            """.trimIndent()
 
         runCatching {
             outboundMailPort.send(
@@ -71,7 +76,7 @@ class PaymentNotificationMailService(
                     subject = subject,
                     plainTextBody = plainText,
                     htmlBody = htmlBody,
-                )
+                ),
             )
         }.onFailure { ex ->
             log.error("결제 결과 메일 발송 실패: paymentId={}", payment.id, ex)

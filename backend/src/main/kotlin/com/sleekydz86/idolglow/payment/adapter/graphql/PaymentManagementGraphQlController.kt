@@ -1,7 +1,7 @@
-package com.sleekydz86.idolglow.payment.graphql
+package com.sleekydz86.idolglow.payment.adapter.graphql
 
-import com.sleekydz86.idolglow.global.graphql.toGraphQlIdLong
-import com.sleekydz86.idolglow.global.graphql.toGraphQlLocalDate
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
+import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlLocalDate
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
 import com.sleekydz86.idolglow.payment.application.AdminPaymentService
 import com.sleekydz86.idolglow.payment.application.MyPagePaymentService
@@ -18,7 +18,6 @@ class PaymentManagementGraphQlController(
     private val myPagePaymentService: MyPagePaymentService,
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
-
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
     fun adminPayments(
@@ -27,12 +26,13 @@ class PaymentManagementGraphQlController(
         @Argument productId: String?,
         @Argument size: Int?,
     ): List<AdminPaymentSummaryGraphQlResponse> =
-        adminPaymentService.findPayments(
-            status = status,
-            visitDate = visitDate?.takeIf { it.isNotBlank() }?.toGraphQlLocalDate("visitDate"),
-            productId = productId?.takeIf { it.isNotBlank() }?.toGraphQlIdLong("productId"),
-            size = (size ?: 50).coerceIn(1, 200),
-        ).map(AdminPaymentSummaryGraphQlResponse::from)
+        adminPaymentService
+            .findPayments(
+                status = status,
+                visitDate = visitDate?.takeIf { it.isNotBlank() }?.toGraphQlLocalDate("visitDate"),
+                productId = productId?.takeIf { it.isNotBlank() }?.toGraphQlIdLong("productId"),
+                size = (size ?: 50).coerceIn(1, 200),
+            ).map(AdminPaymentSummaryGraphQlResponse::from)
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -46,7 +46,7 @@ class PaymentManagementGraphQlController(
                 status = status,
                 visitDate = visitDate?.takeIf { it.isNotBlank() }?.toGraphQlLocalDate("visitDate"),
                 productId = productId?.takeIf { it.isNotBlank() }?.toGraphQlIdLong("productId"),
-            )
+            ),
         )
 
     @QueryMapping
@@ -61,32 +61,39 @@ class PaymentManagementGraphQlController(
                 status = status,
                 visitDate = visitDate?.takeIf { it.isNotBlank() }?.toGraphQlLocalDate("visitDate"),
                 productId = productId?.takeIf { it.isNotBlank() }?.toGraphQlIdLong("productId"),
-            )
+            ),
         )
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    fun adminPaymentDetail(@Argument paymentId: String): AdminPaymentDetailGraphQlResponse =
+    fun adminPaymentDetail(
+        @Argument paymentId: String,
+    ): AdminPaymentDetailGraphQlResponse =
         AdminPaymentDetailGraphQlResponse.from(
-            adminPaymentService.findPaymentDetail(paymentId.toGraphQlIdLong("paymentId"))
+            adminPaymentService.findPaymentDetail(paymentId.toGraphQlIdLong("paymentId")),
         )
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
-    fun myPayments(@Argument size: Int?): List<MyPaymentSummaryGraphQlResponse> =
-        myPagePaymentService.findPayments(
-            userId = authenticatedUserIdResolver.resolveRequired(),
-            size = (size ?: 100).coerceIn(1, 200),
-        ).map(MyPaymentSummaryGraphQlResponse::from)
+    fun myPayments(
+        @Argument size: Int?,
+    ): List<MyPaymentSummaryGraphQlResponse> =
+        myPagePaymentService
+            .findPayments(
+                userId = authenticatedUserIdResolver.resolveRequired(),
+                size = (size ?: 100).coerceIn(1, 200),
+            ).map(MyPaymentSummaryGraphQlResponse::from)
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
-    fun myPaymentDetail(@Argument paymentId: String): MyPaymentSummaryGraphQlResponse =
+    fun myPaymentDetail(
+        @Argument paymentId: String,
+    ): MyPaymentSummaryGraphQlResponse =
         MyPaymentSummaryGraphQlResponse.from(
             myPagePaymentService.findPayment(
                 userId = authenticatedUserIdResolver.resolveRequired(),
                 paymentId = paymentId.toGraphQlIdLong("paymentId"),
-            )
+            ),
         )
 
     @MutationMapping
@@ -100,6 +107,6 @@ class PaymentManagementGraphQlController(
                 userId = authenticatedUserIdResolver.resolveRequired(),
                 paymentId = paymentId.toGraphQlIdLong("paymentId"),
                 reason = reason,
-            )
+            ),
         )
 }

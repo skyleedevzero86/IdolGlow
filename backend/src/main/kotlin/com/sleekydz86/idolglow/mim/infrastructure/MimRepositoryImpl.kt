@@ -21,15 +21,15 @@ class MimRepositoryImpl(
     private val jpaRepository: MimJpaRepository,
     private val entityManager: EntityManager,
 ) : MimRepository {
-
     private val fmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
     override fun findList(criteria: MimListCriteria): List<MimItem> {
-        val pageable = PageRequest.of(
-            criteria.pageIndex - 1,
-            criteria.pageSize,
-            Sort.by(Sort.Direction.DESC, "frstRegistPnttm"),
-        )
+        val pageable =
+            PageRequest.of(
+                criteria.pageIndex - 1,
+                criteria.pageSize,
+                Sort.by(Sort.Direction.DESC, "frstRegistPnttm"),
+            )
         val cb = entityManager.criteriaBuilder
         val cq = cb.createQuery(MimEntity::class.java)
         val root = cq.from(MimEntity::class.java)
@@ -43,35 +43,35 @@ class MimRepositoryImpl(
         return q.resultList.map(::toItem)
     }
 
-    override fun count(criteria: MimListCriteria): Int =
-        jpaRepository.count(countSpec(criteria)).toInt()
+    override fun count(criteria: MimListCriteria): Int = jpaRepository.count(countSpec(criteria)).toInt()
 
-    override fun findById(imageId: String): MimItem? =
-        jpaRepository.findById(imageId).map { toItem(it) }.orElse(null)
+    override fun findById(imageId: String): MimItem? = jpaRepository.findById(imageId).map { toItem(it) }.orElse(null)
 
     override fun findActiveByDomain(domainId: String): List<MimItem> =
-        jpaRepository.findAll(
-            Specification
-                .where(domainIdEquals(domainId))
-                .and(activeEquals()),
-            Sort.by(Sort.Order.asc("frstRegistPnttm")),
-        ).map(::toItem)
+        jpaRepository
+            .findAll(
+                Specification
+                    .where(domainIdEquals(domainId))
+                    .and(activeEquals()),
+                Sort.by(Sort.Order.asc("frstRegistPnttm")),
+            ).map(::toItem)
 
     override fun insert(item: MimItem) {
-        val e = MimEntity(
-            imageId = item.imageId,
-            domainId = item.domainId?.ifBlank { null } ?: "kr",
-            domain = null,
-            imageNm = item.imageName,
-            image = item.imagePath,
-            imageFile = item.imageFileName,
-            imageDc = item.description,
-            reflctAt = item.activeYn ?: "Y",
-            frstRegisterId = item.createdBy,
-            frstRegistPnttm = java.time.LocalDateTime.now(),
-            lastUpdusrId = null,
-            lastUpdtPnttm = null,
-        )
+        val e =
+            MimEntity(
+                imageId = item.imageId,
+                domainId = item.domainId?.ifBlank { null } ?: "kr",
+                domain = null,
+                imageNm = item.imageName,
+                image = item.imagePath,
+                imageFile = item.imageFileName,
+                imageDc = item.description,
+                reflctAt = item.activeYn ?: "Y",
+                frstRegisterId = item.createdBy,
+                frstRegistPnttm = java.time.LocalDateTime.now(),
+                lastUpdusrId = null,
+                lastUpdtPnttm = null,
+            )
         jpaRepository.save(e)
     }
 
@@ -92,7 +92,11 @@ class MimRepositoryImpl(
         jpaRepository.deleteById(imageId)
     }
 
-    private fun adminListPredicate(c: MimListCriteria, root: Root<MimEntity>, cb: CriteriaBuilder): Predicate {
+    private fun adminListPredicate(
+        c: MimListCriteria,
+        root: Root<MimEntity>,
+        cb: CriteriaBuilder,
+    ): Predicate {
         val domainId = c.domainId.ifBlank { "kr" }
         val domainPred = cb.equal(root.get<String>("domainId"), domainId)
         val keyword = c.keyword.trim().lowercase()
@@ -101,16 +105,18 @@ class MimRepositoryImpl(
         }
 
         val pattern = "%$keyword%"
-        val conditions = when (c.searchType) {
-            "name" -> listOf(cb.like(cb.lower(root.get("imageNm")), pattern))
-            "description" -> listOf(cb.like(cb.lower(root.get("imageDc")), pattern))
-            else -> listOf(
-                cb.like(cb.lower(root.get("imageNm")), pattern),
-                cb.like(cb.lower(root.get("imageDc")), pattern),
-                cb.like(cb.lower(root.get("imageFile")), pattern),
-                cb.like(cb.lower(root.get("image")), pattern),
-            )
-        }
+        val conditions =
+            when (c.searchType) {
+                "name" -> listOf(cb.like(cb.lower(root.get("imageNm")), pattern))
+                "description" -> listOf(cb.like(cb.lower(root.get("imageDc")), pattern))
+                else ->
+                    listOf(
+                        cb.like(cb.lower(root.get("imageNm")), pattern),
+                        cb.like(cb.lower(root.get("imageDc")), pattern),
+                        cb.like(cb.lower(root.get("imageFile")), pattern),
+                        cb.like(cb.lower(root.get("image")), pattern),
+                    )
+            }
         return cb.and(domainPred, cb.or(*conditions.toTypedArray()))
     }
 

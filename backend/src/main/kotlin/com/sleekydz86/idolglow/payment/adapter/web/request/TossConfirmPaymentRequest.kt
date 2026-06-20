@@ -1,4 +1,4 @@
-package com.sleekydz86.idolglow.payment.ui.request
+package com.sleekydz86.idolglow.payment.adapter.web.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
@@ -10,11 +10,9 @@ data class TossConfirmPaymentRequest(
     @field:NotBlank
     @field:Schema(description = "토스 paymentKey", example = "tgen...")
     val paymentKey: String,
-
     @field:NotBlank
     @field:Schema(description = "주문번호(예약 생성 시 내려준 orderId)", example = "ORD_...")
     val orderId: String,
-
     @field:NotNull
     @field:Schema(description = "결제 금액(원)", example = "50000")
     val amount: BigDecimal,

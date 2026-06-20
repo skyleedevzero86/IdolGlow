@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service
 class FestivalEventQueryService(
     private val festivalEventExternalQueryPort: FestivalEventExternalQueryPort,
 ) : FestivalEventQueryUseCase {
-
     override fun listByDate(
         eventStartDate: String,
         eventEndDate: String,
@@ -34,7 +33,10 @@ class FestivalEventQueryService(
         return festivalEventExternalQueryPort.detailCommon(id)
     }
 
-    override fun detailImages(contentId: String, imageYn: String): List<FestivalImage> {
+    override fun detailImages(
+        contentId: String,
+        imageYn: String,
+    ): List<FestivalImage> {
         val id = contentId.trim()
         val yn = imageYn.trim().uppercase().ifEmpty { "Y" }
         require(id.isNotEmpty()) { "contentId는 필수입니다." }
@@ -59,11 +61,12 @@ class FestivalEventQueryService(
         val c2 = lclsSystm2?.trim()?.takeIf { it.isNotEmpty() }
         val c3 = lclsSystm3?.trim()?.takeIf { it.isNotEmpty() }
         val hasFilter = regn != null || signgu != null || c1 != null || c2 != null || c3 != null
-        val q = when {
-            trimmed.isNotEmpty() -> trimmed
-            hasFilter -> DEFAULT_KEYWORD_FOR_FILTER_ONLY_SEARCH
-            else -> throw IllegalArgumentException("keyword는 필수입니다. 지역·분류만 검색할 때는 조건을 하나 이상 선택하세요.")
-        }
+        val q =
+            when {
+                trimmed.isNotEmpty() -> trimmed
+                hasFilter -> DEFAULT_KEYWORD_FOR_FILTER_ONLY_SEARCH
+                else -> throw IllegalArgumentException("keyword는 필수입니다. 지역·분류만 검색할 때는 조건을 하나 이상 선택하세요.")
+            }
         val page = pageNo.coerceAtLeast(1)
         val rows = numOfRows.coerceIn(1, 100)
         if (trimmed.isEmpty()) {
@@ -89,7 +92,10 @@ class FestivalEventQueryService(
         )
     }
 
-    override fun lDongCodes(lDongRegnCd: String?, lDongListYn: String): List<CodeEntry> {
+    override fun lDongCodes(
+        lDongRegnCd: String?,
+        lDongListYn: String,
+    ): List<CodeEntry> {
         val yn = lDongListYn.trim().uppercase().ifEmpty { "N" }
         require(yn == "Y" || yn == "N") { "lDongListYn은 Y 또는 N 이어야 합니다." }
         return festivalEventExternalQueryPort.lDongCodes(lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() }, yn)

@@ -1,11 +1,11 @@
-package com.sleekydz86.idolglow.productpackage.option.ui
+package com.sleekydz86.idolglow.productpackage.option.adapter.web
 
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.CreateOptionRequest
+import com.sleekydz86.idolglow.productpackage.option.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.option.application.OptionCommandService
 import com.sleekydz86.idolglow.productpackage.option.application.OptionQueryService
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionImageFile
 import com.sleekydz86.idolglow.productpackage.option.application.dto.OptionResponse
-import com.sleekydz86.idolglow.productpackage.option.ui.request.CreateOptionRequest
-import com.sleekydz86.idolglow.productpackage.option.ui.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -27,14 +27,13 @@ class OptionController(
     private val optionQueryService: OptionQueryService,
     private val optionCommandService: OptionCommandService,
 ) : OptionApi {
-
     @GetMapping
-    override fun findOptions(): List<OptionResponse> =
-        optionQueryService.findOptions()
+    override fun findOptions(): List<OptionResponse> = optionQueryService.findOptions()
 
     @GetMapping("/{optionId}")
-    override fun findOption(@PathVariable optionId: Long): OptionResponse =
-        optionQueryService.findOption(optionId)
+    override fun findOption(
+        @PathVariable optionId: Long,
+    ): OptionResponse = optionQueryService.findOption(optionId)
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @ResponseStatus(HttpStatus.CREATED)
@@ -50,14 +49,14 @@ class OptionController(
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    fun createOptionJson(@Valid @RequestBody request: CreateOptionRequest): OptionResponse =
-        optionCommandService.createOption(request.toCommand())
+    fun createOptionJson(
+        @Valid @RequestBody request: CreateOptionRequest,
+    ): OptionResponse = optionCommandService.createOption(request.toCommand())
 
     @PutMapping("/{optionId}")
     @PreAuthorize("hasRole('ADMIN')")
     fun updateOption(
         @PathVariable optionId: Long,
         @Valid @RequestBody request: CreateOptionRequest,
-    ): OptionResponse =
-        optionCommandService.updateOption(optionId, request.toCommand())
+    ): OptionResponse = optionCommandService.updateOption(optionId, request.toCommand())
 }

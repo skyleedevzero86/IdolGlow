@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.payment.infrastructure
 
-import com.sleekydz86.idolglow.global.infrastructure.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -12,8 +12,11 @@ import javax.crypto.spec.SecretKeySpec
 class TossWebhookSignatureVerifier(
     private val props: TossPaymentProperties,
 ) {
-
-    fun verify(rawBody: String, signatureHeader: String?, transmissionTime: String?): Boolean {
+    fun verify(
+        rawBody: String,
+        signatureHeader: String?,
+        transmissionTime: String?,
+    ): Boolean {
         val secret = effectiveSecret()
         if (secret.isBlank() || signatureHeader.isNullOrBlank() || transmissionTime.isNullOrBlank()) {
             return false
@@ -24,10 +27,12 @@ class TossWebhookSignatureVerifier(
         val expected = mac.doFinal(message.toByteArray(StandardCharsets.UTF_8))
         val expectedB64 = Base64.getEncoder().encodeToString(expected)
 
-        val candidates = signatureHeader.split(',')
-            .map { it.trim() }
-            .filter { it.startsWith("v1:") }
-            .map { it.removePrefix("v1:").trim() }
+        val candidates =
+            signatureHeader
+                .split(',')
+                .map { it.trim() }
+                .filter { it.startsWith("v1:") }
+                .map { it.removePrefix("v1:").trim() }
 
         return candidates.any { candidate ->
             try {
@@ -40,6 +45,5 @@ class TossWebhookSignatureVerifier(
         }
     }
 
-    private fun effectiveSecret(): String =
-        props.webhookSecret.trim().ifBlank { props.secretKey.trim() }
+    private fun effectiveSecret(): String = props.webhookSecret.trim().ifBlank { props.secretKey.trim() }
 }

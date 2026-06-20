@@ -1,21 +1,20 @@
 package com.sleekydz86.idolglow.gemma.application
 
-import tools.jackson.databind.JsonNode
 import com.sleekydz86.idolglow.gemma.application.dto.GemmaChatCommand
 import com.sleekydz86.idolglow.gemma.application.dto.GemmaChatResult
 import com.sleekydz86.idolglow.gemma.infrastructure.GemmaApiClient
-import com.sleekydz86.idolglow.global.infrastructure.config.GemmaProperties
+import com.sleekydz86.idolglow.global.config.GemmaProperties
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.gemma.GemmaExceptionType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import tools.jackson.databind.JsonNode
 
 @Service
 class GemmaChatService(
     private val gemmaProperties: GemmaProperties,
     private val gemmaApiClient: GemmaApiClient,
 ) {
-
     private val log = LoggerFactory.getLogger(this::class.java)
 
     fun chat(command: GemmaChatCommand): GemmaChatResult {
@@ -28,23 +27,25 @@ class GemmaChatService(
             throw CustomException(GemmaExceptionType.GEMMA_DISABLED)
         }
 
-        val model = command.model?.trim().takeUnless { it.isNullOrBlank() }
-            ?: gemmaProperties.model.trim().ifBlank { "google/gemma-4-E4B-it" }
+        val model =
+            command.model?.trim().takeUnless { it.isNullOrBlank() }
+                ?: gemmaProperties.model.trim().ifBlank { "google/gemma-4-E4B-it" }
 
         val systemPrompt = buildSystemPrompt(command.systemPrompt, command.enableThinking)
-        val response = gemmaApiClient.chat(
-            model = model,
-            systemPrompt = systemPrompt,
-            userPrompt = command.prompt.trim(),
-            imageUrl = command.imageUrl?.trim().takeUnless { it.isNullOrBlank() },
-            temperature = command.temperature,
-            topP = command.topP,
-            maxTokens = command.maxTokens,
-        )
+        val response =
+            gemmaApiClient.chat(
+                model = model,
+                systemPrompt = systemPrompt,
+                userPrompt = command.prompt.trim(),
+                imageUrl = command.imageUrl?.trim().takeUnless { it.isNullOrBlank() },
+                temperature = command.temperature,
+                topP = command.topP,
+                maxTokens = command.maxTokens,
+            )
 
         if (!response.isSuccess2xx || response.json == null) {
             log.warn(
-                "Gemma 호출 실패: status={} body={} error={}",
+                "젬마(Gemma) 호출 실패. HTTP상태={}, 응답본문={}, 오류메시지={}",
                 response.httpStatus,
                 response.rawBody,
                 response.error?.message,
@@ -54,7 +55,7 @@ class GemmaChatService(
 
         val answer = extractAssistantText(response.json)
         if (answer.isBlank()) {
-            log.warn("Gemma 응답 본문이 비어 있습니다: {}", response.rawBody)
+            log.warn("젬마(Gemma) 응답 본문이 비어 있습니다: {}", response.rawBody)
             throw CustomException(GemmaExceptionType.GEMMA_EMPTY_RESPONSE)
         }
 
@@ -62,7 +63,12 @@ class GemmaChatService(
         return GemmaChatResult(
             model = response.json.path("model").asText(model),
             answer = answer,
-            finishReason = response.json.path("choices").path(0).path("finish_reason").asText(null),
+            finishReason =
+                response.json
+                    .path("choices")
+                    .path(0)
+                    .path("finish_reason")
+                    .asText(null),
             promptTokens = usage.intOrNull("prompt_tokens"),
             completionTokens = usage.intOrNull("completion_tokens"),
             totalTokens = usage.intOrNull("total_tokens"),
@@ -70,7 +76,10 @@ class GemmaChatService(
         )
     }
 
-    private fun buildSystemPrompt(systemPrompt: String?, enableThinking: Boolean): String {
+    private fun buildSystemPrompt(
+        systemPrompt: String?,
+        enableThinking: Boolean,
+    ): String {
         val base = systemPrompt?.trim().takeUnless { it.isNullOrBlank() } ?: DEFAULT_SYSTEM_PROMPT
         if (!enableThinking || base.startsWith(THINKING_TOKEN)) {
             return base
@@ -79,17 +88,25 @@ class GemmaChatService(
     }
 
     private fun extractAssistantText(root: JsonNode): String {
-        val content = root.path("choices").path(0).path("message").path("content")
+        val content =
+            root
+                .path("choices")
+                .path(0)
+                .path("message")
+                .path("content")
         return when {
             content.isMissingNode || content.isNull -> ""
             content.isTextual -> content.asText()
-            content.isArray -> content.mapNotNull { part ->
-                when {
-                    part.path("type").asText() == "text" -> part.path("text").asText(null)
-                    part.isTextual -> part.asText()
-                    else -> null
-                }
-            }.joinToString("\n").trim()
+            content.isArray ->
+                content
+                    .mapNotNull { part ->
+                        when {
+                            part.path("type").asText() == "text" -> part.path("text").asText(null)
+                            part.isTextual -> part.asText()
+                            else -> null
+                        }
+                    }.joinToString("\n")
+                    .trim()
             else -> content.toString()
         }
     }

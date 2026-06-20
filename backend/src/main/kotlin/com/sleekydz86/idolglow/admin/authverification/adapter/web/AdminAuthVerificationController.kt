@@ -1,7 +1,8 @@
-package com.sleekydz86.idolglow.admin.authverification.ui
+package com.sleekydz86.idolglow.admin.authverification.adapter.web
 
+import com.sleekydz86.idolglow.admin.authverification.adapter.web.dto.AuthVerificationAuditLogPageResponse
+import com.sleekydz86.idolglow.admin.authverification.adapter.web.dto.toWebResponse
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
-import com.sleekydz86.idolglow.admin.authverification.ui.dto.AuthVerificationAuditLogPageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -25,12 +26,13 @@ class AdminAuthVerificationController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) verificationType: String?,
         @RequestParam(required = false) keyword: String?,
-    ): ResponseEntity<AuthVerificationAuditLogPageResponse> = ResponseEntity.ok(
-        authVerificationAuditService.findPage(
-            page = page,
-            size = size,
-            verificationType = verificationType,
-            keyword = keyword,
-        ),
-    )
+    ): ResponseEntity<AuthVerificationAuditLogPageResponse> =
+        ResponseEntity.ok(
+            authVerificationAuditService.findPage(
+                page = page,
+                size = size,
+                verificationType = verificationType,
+                keyword = keyword,
+            ).toWebResponse(),
+        )
 }

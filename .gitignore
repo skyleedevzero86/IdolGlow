@@ -14,6 +14,8 @@
 *.app
 #Rapid Application Development File
 rad.json
+*.sh
+*.ps1
 #Translation Base-file
 *.g.xlf
 #License-file
@@ -25,3 +27,13 @@ frontend/
 .run/
 infra/jenkins-local/.env
 infra/jenkins-local/deployments/
+infra/jenkins-local/init.groovy.d/02-create-pipeline-job.groovy
+infra/jenkins-local/start-jenkins.ps1
+infra/up.ps1
+infra/up.sh
+.idea/
+infra/jenkins-local/
+infra/jenkins-local/deploy-local.ps1
+infra/jenkins-local/deploy-local.sh
+backend/.editorconfig
+backend/config/

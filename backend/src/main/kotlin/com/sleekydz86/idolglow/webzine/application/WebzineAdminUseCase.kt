@@ -17,15 +17,24 @@ interface WebzineAdminUseCase {
 
     fun findIssue(issueSlug: String): AdminIssueVolumeResponse
 
-    fun findArticle(issueSlug: String, articleSlug: String): AdminIssueArticleResponse
+    fun findArticle(
+        issueSlug: String,
+        articleSlug: String,
+    ): AdminIssueArticleResponse
 
     fun createIssue(command: CreateWebzineIssueCommand): AdminIssueVolumeResponse
 
-    fun updateIssue(issueSlug: String, command: CreateWebzineIssueCommand): AdminIssueVolumeResponse
+    fun updateIssue(
+        issueSlug: String,
+        command: CreateWebzineIssueCommand,
+    ): AdminIssueVolumeResponse
 
     fun deleteIssue(issueSlug: String)
 
-    fun createArticle(issueSlug: String, command: UpsertWebzineArticleCommand): AdminIssueArticleResponse
+    fun createArticle(
+        issueSlug: String,
+        command: UpsertWebzineArticleCommand,
+    ): AdminIssueArticleResponse
 
     fun updateArticle(
         issueSlug: String,
@@ -33,5 +42,8 @@ interface WebzineAdminUseCase {
         command: UpsertWebzineArticleCommand,
     ): AdminIssueArticleResponse
 
-    fun deleteArticle(issueSlug: String, articleSlug: String)
+    fun deleteArticle(
+        issueSlug: String,
+        articleSlug: String,
+    )
 }
