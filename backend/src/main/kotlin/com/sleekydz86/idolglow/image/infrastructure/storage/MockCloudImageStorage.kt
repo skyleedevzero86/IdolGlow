@@ -18,7 +18,7 @@ class MockCloudImageStorage : ImageStorage {
         require(content.isNotEmpty()) { "이미지 내용은 비어 있을 수 없습니다." }
 
         return StoredImage(
-            url = "https://mock-cloud.example/images/$uniqueFilename",
+            url = "/exchange-article-reviews-thumb.png",
             fileSize = content.size.toLong(),
         )
     }

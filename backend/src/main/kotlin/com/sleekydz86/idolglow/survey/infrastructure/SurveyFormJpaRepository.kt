@@ -41,7 +41,7 @@ interface SurveyFormJpaRepository : JpaRepository<SurveyForm, Long> {
 
     @Query(
         value = """
-        select f
+        select f.id
         from SurveyForm f
         left join f.descriptionContent d
         where (:keyword is null
@@ -70,5 +70,18 @@ interface SurveyFormJpaRepository : JpaRepository<SurveyForm, Long> {
         @Param("primaryCategory") primaryCategory: SurveyFormPrimaryCategory?,
         @Param("secondaryCategory") secondaryCategory: SurveyFormSecondaryCategory?,
         pageable: Pageable,
-    ): Page<SurveyForm>
+    ): Page<Long>
+
+    @Query(
+        """
+        select distinct f
+        from SurveyForm f
+        left join fetch f.questions
+        left join fetch f.descriptionContent
+        where f.id in :ids
+        """,
+    )
+    fun findAllWithSummaryDetailsByIdIn(
+        @Param("ids") ids: Collection<Long>,
+    ): List<SurveyForm>
 }
