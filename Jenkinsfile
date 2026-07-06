@@ -107,6 +107,30 @@ def resolveGitBranch() {
     return branch.replaceFirst(/^origin\//, '')
 }
 
+def shouldRequireReleaseTag() {
+    if (params.DEPLOY_ENV == 'prod') {
+        return true
+    }
+
+    if (!params.REQUIRE_RELEASE_TAG) {
+        return false
+    }
+
+    if (env.TAG_NAME?.trim()) {
+        return true
+    }
+
+    return resolveGitBranch() == 'main'
+}
+
+def fetchGitTagsForReleaseDetection() {
+    if (isUnix()) {
+        sh 'git fetch origin --tags --force 2>/dev/null || true'
+    } else {
+        bat '@git fetch origin --tags --force 2>nul'
+    }
+}
+
 def resolveGitCommitShort() {
     if (isUnix()) {
         return sh(
@@ -121,8 +145,13 @@ def resolveGitCommitShort() {
     ).trim()
 }
 
-def sendTelegramMessage(String message) {
+def sendTelegramMessage(String message, boolean finalSummary = false) {
     if (!params.SEND_TELEGRAM) {
+        return
+    }
+
+    if (finalSummary && env.TELEGRAM_FINAL_SUMMARY_SENT == 'true') {
+        echo 'Telegram 최종 요약은 이미 전송됨 — 중복 생략'
         return
     }
 
@@ -136,19 +165,48 @@ def sendTelegramMessage(String message) {
         if (isUnix()) {
             sh '''
                 curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-                  -d chat_id="${TG_CHAT}" \
-                  -d parse_mode="HTML" \
-                  --data-urlencode text@telegram-message.txt
+                  -F chat_id="${TG_CHAT}" \
+                  -F parse_mode="HTML" \
+                  -F text=@telegram-message.txt
             '''
         } else {
             bat '''
                 curl -fsS -X POST "https://api.telegram.org/bot%TG_TOKEN%/sendMessage" ^
-                  -d chat_id="%TG_CHAT%" ^
-                  -d parse_mode=HTML ^
-                  --data-urlencode text@telegram-message.txt
+                  -F chat_id="%TG_CHAT%" ^
+                  -F parse_mode=HTML ^
+                  -F text=@telegram-message.txt
             '''
         }
     }
+
+    if (finalSummary) {
+        env.TELEGRAM_FINAL_SUMMARY_SENT = 'true'
+    }
+}
+
+def formatTelegramActionLines(String action) {
+    return action
+        .split('\n')
+        .collect { line -> line?.trim() }
+        .findAll { it }
+        .collect { line -> "• ${escapeTelegramHtml(line)}" }
+        .join('\n')
+}
+
+def resolveFailedStageName() {
+    if (env.PIPELINE_FAILED_STAGE?.trim()) {
+        return env.PIPELINE_FAILED_STAGE.trim()
+    }
+
+    if (env.STAGE_NAME?.trim()) {
+        return env.STAGE_NAME.trim()
+    }
+
+    return '알 수 없음'
+}
+
+def markPipelineFailed(String stageName) {
+    env.PIPELINE_FAILED_STAGE = stageName
 }
 
 def resolveFailureGuide(String failedStage) {
@@ -156,9 +214,13 @@ def resolveFailureGuide(String failedStage) {
         case '릴리즈 검증':
             return [
                 headline: '배포 전 검사에서 중단',
-                reason: '정식 버전 태그(v*)가 없습니다. release-please가 main에 생성한 태그가 필요합니다.',
+                reason: resolveGitBranch() == 'main'
+                    ? 'main 브랜치 빌드인데 이 커밋에 release-please 태그(v*)가 없습니다. Release PR 머지 커밋에서만 배포하세요.'
+                    : '이 브랜치/커밋에 릴리즈 태그(v*)가 없습니다.',
                 impact: '서버에 새 버전은 반영되지 않았습니다. (빌드·배포 미실행)',
-                action: '개발 테스트: Jenkins에서 REQUIRE_RELEASE_TAG=false 로 재실행\n정식 배포: main 머지 → Release PR → v* 태그 생성 후 재실행',
+                action: resolveGitBranch() == 'main'
+                    ? 'GitHub Release PR 머지 후 생성된 v* 태그 커밋을 빌드하세요.\n개발 테스트: REQUIRE_RELEASE_TAG=false 또는 chor/dev 브랜치에서 빌드'
+                    : '정식 배포: main Release PR → v* 태그\n개발 테스트: REQUIRE_RELEASE_TAG=false',
             ]
         case '변경 로그 읽기':
             return [
@@ -249,15 +311,16 @@ ${versionLine}
 백엔드: ${params.RUN_BACKEND_BUILD ? '빌드 완료' : '건너뜀'} | 프론트: ${params.RUN_FRONTEND_BUILD && env.FRONTEND_DIR?.trim() ? '빌드 완료' : '건너뜀'}
 ${healthStatus}
 
-${buildTelegramContextBlock(true)}"""
+${buildTelegramContextBlock(true)}
+<i>알림 summary-v3 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'failure') {
-            def failedStage = env.STAGE_NAME ?: ''
+            def failedStage = resolveFailedStageName()
             def guide = resolveFailureGuide(failedStage)
 
             message = """❌ <b>IdolGlow 배포 중단</b>
 
 <b>📋 요약</b>
-자동 배포가 시작됐으나 <b>${escapeTelegramHtml(failedStage ?: '알 수 없음')}</b> 단계에서 중단되었습니다.
+자동 배포가 시작됐으나 <b>${escapeTelegramHtml(failedStage)}</b> 단계에서 중단되었습니다.
 
 <b>🔍 원인</b>
 ${escapeTelegramHtml(guide.reason)}
@@ -266,9 +329,10 @@ ${escapeTelegramHtml(guide.reason)}
 ${escapeTelegramHtml(guide.impact)}
 
 <b>✅ 다음 조치 (개발팀)</b>
-<pre>${escapeTelegramHtml(guide.action)}</pre>
+${formatTelegramActionLines(guide.action)}
 
-${buildTelegramContextBlock(false)}"""
+${buildTelegramContextBlock(false)}
+<i>알림 summary-v3 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'aborted') {
             message = """⏹️ <b>IdolGlow 배포 중단됨</b>
 
@@ -295,7 +359,8 @@ ${buildTelegramContextBlock(false)}"""
         }
 
         if (message) {
-            sendTelegramMessage(message)
+            def isFinalSummary = outcome in ['success', 'failure', 'aborted']
+            sendTelegramMessage(message, isFinalSummary)
         }
     } catch (Exception telegramError) {
         echo "Telegram 알림 전송 실패 (빌드는 계속): ${telegramError.message}"
@@ -324,7 +389,7 @@ pipeline {
         booleanParam(
             name: 'REQUIRE_RELEASE_TAG',
             defaultValue: true,
-            description: 'true이면 release-please 태그(v*)가 있는 커밋에서만 배포를 허용합니다. prod 배포 시 항상 강제됩니다.'
+            description: 'true이면 main(또는 태그 빌드)에서 v* 태그를 요구합니다. chor/dev 등 개발 브랜치는 자동으로 완화됩니다. prod는 항상 강제됩니다.'
         )
         booleanParam(
             name: 'RUN_BACKEND_BUILD',
@@ -365,6 +430,8 @@ pipeline {
         RELEASE_TAG = ''
         EFFECTIVE_CHANGELOG_SECTION = ''
         HEALTH_CHECK_TARGET = ''
+        PIPELINE_FAILED_STAGE = ''
+        TELEGRAM_FINAL_SUMMARY_SENT = 'false'
     }
 
     stages {
@@ -372,12 +439,15 @@ pipeline {
             steps {
                 checkout scm
                 script {
+                    fetchGitTagsForReleaseDetection()
                     env.REPO_ROOT = pwd()
                     env.FRONTEND_DIR = resolveFrontendDir()
                     env.RELEASE_TAG = resolveGitTag()
 
                     if (env.RELEASE_TAG) {
                         echo "Git 태그 감지: ${env.RELEASE_TAG}"
+                    } else {
+                        echo "Git 태그 없음 (브랜치: ${resolveGitBranch()}, 태그 검증: ${shouldRequireReleaseTag()})"
                     }
                 }
             }
@@ -386,12 +456,13 @@ pipeline {
         stage('릴리즈 검증') {
             steps {
                 script {
-                    def requireTag = params.REQUIRE_RELEASE_TAG || params.DEPLOY_ENV == 'prod'
+                    def requireTag = shouldRequireReleaseTag()
                     if (requireTag && !env.RELEASE_TAG) {
+                        markPipelineFailed('릴리즈 검증')
                         error(
                             'release-please 태그(v*)가 없습니다. ' +
-                            'Release PR 머지 후 생성된 태그를 기준으로 배포하거나, ' +
-                            '개발 환경 테스트 시 REQUIRE_RELEASE_TAG=false로 실행하세요.'
+                            'main Release PR 머지 후 생성된 태그 커밋을 빌드하거나, ' +
+                            '개발 브랜치 테스트 시 REQUIRE_RELEASE_TAG=false로 실행하세요.'
                         )
                     }
 
@@ -410,6 +481,7 @@ pipeline {
             steps {
                 script {
                     if (!fileExists('CHANGELOG.md')) {
+                        markPipelineFailed('변경 로그 읽기')
                         error('저장소 루트에 CHANGELOG.md 파일이 없습니다.')
                     }
 
@@ -438,6 +510,7 @@ pipeline {
                 dir('backend') {
                     script {
                         if (!fileExists('gradlew') && !fileExists('gradlew.bat')) {
+                            markPipelineFailed('백엔드 빌드')
                             error('backend/gradlew가 없습니다. Gradle wrapper 위치를 확인하세요.')
                         }
 
@@ -551,6 +624,7 @@ pipeline {
                             """
                         }
 
+                        markPipelineFailed('배포 후 헬스체크')
                         error("배포 후 health check 실패: ${env.HEALTH_CHECK_TARGET}")
                     }
                 }
@@ -559,18 +633,19 @@ pipeline {
     }
 
     post {
-        success {
-            script { notifyTelegramSummary('success') }
-            echo '배포 파이프라인이 성공적으로 완료되었습니다.'
-        }
-        failure {
-            script { notifyTelegramSummary('failure') }
-            echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
-        }
-        aborted {
-            script { notifyTelegramSummary('aborted') }
-        }
         always {
+            script {
+                def result = currentBuild.currentResult
+                if (result == 'SUCCESS') {
+                    notifyTelegramSummary('success')
+                    echo '배포 파이프라인이 성공적으로 완료되었습니다.'
+                } else if (result == 'FAILURE') {
+                    notifyTelegramSummary('failure')
+                    echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
+                } else if (result == 'ABORTED') {
+                    notifyTelegramSummary('aborted')
+                }
+            }
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
             archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: true
         }
