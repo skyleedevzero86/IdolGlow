@@ -87,6 +87,7 @@ pipeline {
     agent any
 
     options {
+        timestamps()
         disableConcurrentBuilds()
     }
 
