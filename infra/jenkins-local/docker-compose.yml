@@ -22,6 +22,10 @@ services:
       GITHUB_BRANCH: "${GITHUB_BRANCH:-*/main}"
       JENKINS_JOB_NAME: "${JENKINS_JOB_NAME:-IdolGlow}"
       JENKINS_SCM_POLL: "${JENKINS_SCM_POLL:-H/2 * * * *}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-}"
+      TELEGRAM_CREDENTIALS_TOKEN_ID: "${TELEGRAM_CREDENTIALS_TOKEN_ID:-telegram-bot-token}"
+      TELEGRAM_CREDENTIALS_CHAT_ID: "${TELEGRAM_CREDENTIALS_CHAT_ID:-telegram-chat-id}"
     volumes:
       - jenkins_home:/var/jenkins_home
       - type: bind

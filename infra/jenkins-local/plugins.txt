@@ -8,3 +8,4 @@ matrix-auth
 credentials-binding
 ws-cleanup
 locale
+timestamper
