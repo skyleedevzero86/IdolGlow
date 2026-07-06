@@ -32,7 +32,6 @@ infra/jenkins-local/start-jenkins.ps1
 infra/up.ps1
 infra/up.sh
 .idea/
-infra/jenkins-local/
 infra/jenkins-local/deploy-local.ps1
 infra/jenkins-local/deploy-local.sh
 backend/.editorconfig
