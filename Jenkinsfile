@@ -83,6 +83,112 @@ def defaultHealthCheckUrl(String deployEnv) {
     }
 }
 
+def escapeTelegramHtml(String text) {
+    if (text == null) {
+        return ''
+    }
+
+    return text
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+}
+
+def truncateTelegramText(String text, int maxLength = 3200) {
+    if (text == null || text.length() <= maxLength) {
+        return text ?: ''
+    }
+
+    return text.substring(0, maxLength - 3) + '...'
+}
+
+def resolveGitBranch() {
+    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'unknown'
+    return branch.replaceFirst(/^origin\//, '')
+}
+
+def resolveGitCommitShort() {
+    if (isUnix()) {
+        return sh(
+            script: 'git rev-parse --short HEAD 2>/dev/null || echo unknown',
+            returnStdout: true
+        ).trim()
+    }
+
+    return bat(
+        script: '@git rev-parse --short HEAD 2>nul || echo unknown',
+        returnStdout: true
+    ).trim()
+}
+
+def sendTelegramMessage(String message) {
+    if (!params.SEND_TELEGRAM) {
+        return
+    }
+
+    def payload = truncateTelegramText(message)
+    writeFile file: 'telegram-message.txt', text: payload, encoding: 'UTF-8'
+
+    withCredentials([
+        string(credentialsId: 'telegram-bot-token', variable: 'TG_TOKEN'),
+        string(credentialsId: 'telegram-chat-id', variable: 'TG_CHAT'),
+    ]) {
+        if (isUnix()) {
+            sh '''
+                curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+                  -d chat_id="${TG_CHAT}" \
+                  -d parse_mode="HTML" \
+                  --data-urlencode text@telegram-message.txt
+            '''
+        } else {
+            bat '''
+                curl -fsS -X POST "https://api.telegram.org/bot%TG_TOKEN%/sendMessage" ^
+                  -d chat_id="%TG_CHAT%" ^
+                  -d parse_mode=HTML ^
+                  --data-urlencode text@telegram-message.txt
+            '''
+        }
+    }
+}
+
+def notifyTelegramBuild(String emoji, String statusLabel, String stageLabel = '', boolean includeReleaseNotes = false) {
+    if (!params.SEND_TELEGRAM) {
+        return
+    }
+
+    try {
+        def commit = resolveGitCommitShort()
+        def branch = escapeTelegramHtml(resolveGitBranch())
+        def tag = escapeTelegramHtml(env.RELEASE_TAG ?: '(없음)')
+        def section = escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION)
+        def frontend = escapeTelegramHtml(env.FRONTEND_DIR ?: '(없음)')
+        def stageLine = stageLabel?.trim()
+            ? "단계: <code>${escapeTelegramHtml(stageLabel)}</code>\n"
+            : ''
+        def healthLine = env.HEALTH_CHECK_TARGET?.trim()
+            ? "Health: <code>${escapeTelegramHtml(env.HEALTH_CHECK_TARGET)}</code>\n"
+            : ''
+        def notesBlock = ''
+
+        if (includeReleaseNotes && env.RELEASE_NOTES?.trim()) {
+            notesBlock = "\n<b>CHANGELOG</b>\n<pre>${escapeTelegramHtml(truncateTelegramText(env.RELEASE_NOTES, 1500))}</pre>"
+        }
+
+        def message = """${emoji} <b>IdolGlow ${escapeTelegramHtml(statusLabel)}</b>
+${stageLine}환경: <code>${escapeTelegramHtml(params.DEPLOY_ENV)}</code>
+브랜치: <code>${branch}</code>
+커밋: <code>${commit}</code>
+태그: <code>${tag}</code>
+CHANGELOG: <code>${section}</code>
+프론트: <code>${frontend}</code>
+${healthLine}빌드: <a href="${env.BUILD_URL}">#${env.BUILD_NUMBER}</a>${notesBlock}"""
+
+        sendTelegramMessage(message)
+    } catch (Exception telegramError) {
+        echo "Telegram 알림 전송 실패 (빌드는 계속): ${telegramError.message}"
+    }
+}
+
 pipeline {
     agent any
 
@@ -132,6 +238,11 @@ pipeline {
             defaultValue: '/deployments',
             description: '로컬 배포 산출물을 둘 디렉터리입니다.'
         )
+        booleanParam(
+            name: 'SEND_TELEGRAM',
+            defaultValue: true,
+            description: 'true이면 파이프라인 시작·실패·완료 시 Telegram으로 상태를 전송합니다. Jenkins Credentials(telegram-bot-token, telegram-chat-id)가 필요합니다.'
+        )
     }
 
     environment {
@@ -155,6 +266,8 @@ pipeline {
                     if (env.RELEASE_TAG) {
                         echo "Git 태그 감지: ${env.RELEASE_TAG}"
                     }
+
+                    notifyTelegramBuild('🚀', '파이프라인 시작', '체크아웃')
                 }
             }
         }
@@ -180,6 +293,11 @@ pipeline {
                     }
                 }
             }
+            post {
+                failure {
+                    script { notifyTelegramBuild('❌', '릴리즈 검증 실패', '릴리즈 검증') }
+                }
+            }
         }
 
         stage('변경 로그 읽기') {
@@ -203,6 +321,9 @@ pipeline {
                 success {
                     archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: false
                 }
+                failure {
+                    script { notifyTelegramBuild('❌', 'CHANGELOG 읽기 실패', '변경 로그 읽기') }
+                }
             }
         }
 
@@ -224,6 +345,11 @@ pipeline {
                             bat 'gradlew.bat clean kaptKotlin test detekt ktlintCheck bootJar --no-daemon'
                         }
                     }
+                }
+            }
+            post {
+                failure {
+                    script { notifyTelegramBuild('❌', '백엔드 빌드 실패', '백엔드 빌드') }
                 }
             }
         }
@@ -251,6 +377,11 @@ pipeline {
                     }
                 }
             }
+            post {
+                failure {
+                    script { notifyTelegramBuild('❌', '프론트엔드 빌드 실패', '프론트엔드 빌드') }
+                }
+            }
         }
 
         stage('운영 배포 승인') {
@@ -258,7 +389,10 @@ pipeline {
                 expression { params.DEPLOY_ENV == 'prod' }
             }
             steps {
-                input message: '운영 환경에 배포하시겠습니까?', ok: '배포 승인'
+                script {
+                    notifyTelegramBuild('⏸️', '운영 배포 승인 대기', '운영 배포 승인')
+                    input message: '운영 환경에 배포하시겠습니까?', ok: '배포 승인'
+                }
             }
         }
 
@@ -282,6 +416,14 @@ pipeline {
                             powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\deploy-local.ps1 -DeployEnv ${params.DEPLOY_ENV} -WorkspaceDir ${env.REPO_ROOT} -ReleaseNotesFile ${env.REPO_ROOT}\\changelog-release-notes.txt
                         """
                     }
+                }
+            }
+            post {
+                success {
+                    script { notifyTelegramBuild('📦', '배포 완료', '배포') }
+                }
+                failure {
+                    script { notifyTelegramBuild('❌', '배포 실패', '배포') }
                 }
             }
         }
@@ -328,15 +470,25 @@ pipeline {
                     }
                 }
             }
+            post {
+                failure {
+                    script { notifyTelegramBuild('❌', '헬스체크 실패 (롤백 시도됨)', '배포 후 헬스체크') }
+                }
+            }
         }
     }
 
     post {
         success {
+            script { notifyTelegramBuild('✅', '파이프라인 성공', '', true) }
             echo '배포 파이프라인이 성공적으로 완료되었습니다.'
         }
         failure {
+            script { notifyTelegramBuild('❌', '파이프라인 실패', '', false) }
             echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
+        }
+        aborted {
+            script { notifyTelegramBuild('⏹️', '파이프라인 중단', '') }
         }
         always {
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
