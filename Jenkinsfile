@@ -151,39 +151,152 @@ def sendTelegramMessage(String message) {
     }
 }
 
-def notifyTelegramBuild(String emoji, String statusLabel, String stageLabel = '', boolean includeReleaseNotes = false) {
+def resolveFailureGuide(String failedStage) {
+    switch (failedStage) {
+        case '릴리즈 검증':
+            return [
+                headline: '배포 전 검사에서 중단',
+                reason: '정식 버전 태그(v*)가 없습니다. release-please가 main에 생성한 태그가 필요합니다.',
+                impact: '서버에 새 버전은 반영되지 않았습니다. (빌드·배포 미실행)',
+                action: '개발 테스트: Jenkins에서 REQUIRE_RELEASE_TAG=false 로 재실행\n정식 배포: main 머지 → Release PR → v* 태그 생성 후 재실행',
+            ]
+        case '변경 로그 읽기':
+            return [
+                headline: '변경 이력(CHANGELOG) 확인 실패',
+                reason: "CHANGELOG.md에서 '${env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION}' 섹션을 찾지 못했습니다.",
+                impact: '서버에 새 버전은 반영되지 않았습니다. (빌드·배포 미실행)',
+                action: 'CHANGELOG.md 섹션명을 확인하거나, Jenkins 파라미터 CHANGELOG_SECTION을 수정하세요.',
+            ]
+        case '백엔드 빌드':
+            return [
+                headline: '백엔드 빌드 실패',
+                reason: '백엔드 컴파일·테스트·코드 검사 중 오류가 발생했습니다.',
+                impact: '서버에 새 버전은 반영되지 않았습니다. (배포 미실행)',
+                action: 'Jenkins 빌드 로그에서 Gradle 오류를 확인하고 backend 코드를 수정하세요.',
+            ]
+        case '프론트엔드 빌드':
+            return [
+                headline: '프론트엔드 빌드 실패',
+                reason: '프론트엔드 설치(pnpm) 또는 빌드 중 오류가 발생했습니다.',
+                impact: '서버에 새 버전은 반영되지 않았습니다. (배포 미실행)',
+                action: "Jenkins 빌드 로그를 확인하세요. (프론트 경로: ${env.FRONTEND_DIR ?: '미감지'})",
+            ]
+        case '배포':
+            return [
+                headline: '배포 스크립트 실패',
+                reason: '배포 스크립트 실행 중 오류가 발생했습니다.',
+                impact: '새 버전 배포에 실패했습니다. 이전 버전이 유지될 수 있습니다.',
+                action: 'Jenkins 빌드 로그와 deploy-local 스크립트 출력을 확인하세요.',
+            ]
+        case '배포 후 헬스체크':
+            return [
+                headline: '배포 후 서비스 검증 실패',
+                reason: "배포는 시도됐으나 health check(${env.HEALTH_CHECK_TARGET ?: '미설정'})에 실패했습니다.",
+                impact: '이전 배포본으로 롤백을 시도했습니다. 서비스 상태를 확인하세요.',
+                action: '애플리케이션 기동 로그와 HEALTH_CHECK_URL 설정을 확인하세요.',
+            ]
+        default:
+            return [
+                headline: '파이프라인 실패',
+                reason: failedStage ? "'${failedStage}' 단계에서 오류가 발생했습니다." : '알 수 없는 단계에서 오류가 발생했습니다.',
+                impact: '서버 반영 여부는 실패 단계에 따라 다릅니다. 아래 로그를 확인하세요.',
+                action: 'Jenkins 빌드 로그에서 ERROR 메시지를 확인하세요.',
+            ]
+    }
+}
+
+def buildTelegramContextBlock(boolean includeReleaseNotes = false) {
+    def branch = escapeTelegramHtml(resolveGitBranch())
+    def tag = escapeTelegramHtml(env.RELEASE_TAG ?: '(없음)')
+    def section = escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION)
+    def frontend = escapeTelegramHtml(env.FRONTEND_DIR ?: '(없음)')
+    def commit = resolveGitCommitShort()
+    def notesBlock = ''
+
+    if (includeReleaseNotes && env.RELEASE_NOTES?.trim()) {
+        notesBlock = "\n<b>📝 변경 내용</b>\n<pre>${escapeTelegramHtml(truncateTelegramText(env.RELEASE_NOTES, 1200))}</pre>"
+    }
+
+    return """<b>📎 참고</b>
+환경: <code>${escapeTelegramHtml(params.DEPLOY_ENV)}</code> | 브랜치: <code>${branch}</code>
+커밋: <code>${commit}</code> | 태그: <code>${tag}</code>
+CHANGELOG: <code>${section}</code> | 프론트: <code>${frontend}</code>
+<a href="${env.BUILD_URL}">🔗 상세 로그 (#${env.BUILD_NUMBER})</a>${notesBlock}"""
+}
+
+def notifyTelegramSummary(String outcome) {
     if (!params.SEND_TELEGRAM) {
         return
     }
 
     try {
-        def commit = resolveGitCommitShort()
-        def branch = escapeTelegramHtml(resolveGitBranch())
-        def tag = escapeTelegramHtml(env.RELEASE_TAG ?: '(없음)')
-        def section = escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION)
-        def frontend = escapeTelegramHtml(env.FRONTEND_DIR ?: '(없음)')
-        def stageLine = stageLabel?.trim()
-            ? "단계: <code>${escapeTelegramHtml(stageLabel)}</code>\n"
-            : ''
-        def healthLine = env.HEALTH_CHECK_TARGET?.trim()
-            ? "Health: <code>${escapeTelegramHtml(env.HEALTH_CHECK_TARGET)}</code>\n"
-            : ''
-        def notesBlock = ''
+        def message = ''
 
-        if (includeReleaseNotes && env.RELEASE_NOTES?.trim()) {
-            notesBlock = "\n<b>CHANGELOG</b>\n<pre>${escapeTelegramHtml(truncateTelegramText(env.RELEASE_NOTES, 1500))}</pre>"
+        if (outcome == 'success') {
+            def healthStatus = (params.RUN_HEALTH_CHECK || params.DEPLOY_ENV == 'prod') && env.HEALTH_CHECK_TARGET?.trim()
+                ? "헬스체크: <code>${escapeTelegramHtml(env.HEALTH_CHECK_TARGET)}</code> 통과"
+                : '헬스체크: 건너뜀'
+            def versionLine = env.RELEASE_TAG?.trim()
+                ? "버전: <code>${escapeTelegramHtml(env.RELEASE_TAG)}</code>"
+                : "CHANGELOG: <code>${escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION)}</code>"
+
+            message = """✅ <b>IdolGlow 배포 완료</b>
+
+<b>📋 요약</b>
+<code>${escapeTelegramHtml(params.DEPLOY_ENV)}</code> 환경에 새 버전이 반영되었습니다.
+
+${versionLine}
+백엔드: ${params.RUN_BACKEND_BUILD ? '빌드 완료' : '건너뜀'} | 프론트: ${params.RUN_FRONTEND_BUILD && env.FRONTEND_DIR?.trim() ? '빌드 완료' : '건너뜀'}
+${healthStatus}
+
+${buildTelegramContextBlock(true)}"""
+        } else if (outcome == 'failure') {
+            def failedStage = env.STAGE_NAME ?: ''
+            def guide = resolveFailureGuide(failedStage)
+
+            message = """❌ <b>IdolGlow 배포 중단</b>
+
+<b>📋 요약</b>
+자동 배포가 시작됐으나 <b>${escapeTelegramHtml(failedStage ?: '알 수 없음')}</b> 단계에서 중단되었습니다.
+
+<b>🔍 원인</b>
+${escapeTelegramHtml(guide.reason)}
+
+<b>⚠️ 영향</b>
+${escapeTelegramHtml(guide.impact)}
+
+<b>✅ 다음 조치 (개발팀)</b>
+<pre>${escapeTelegramHtml(guide.action)}</pre>
+
+${buildTelegramContextBlock(false)}"""
+        } else if (outcome == 'aborted') {
+            message = """⏹️ <b>IdolGlow 배포 중단됨</b>
+
+<b>📋 요약</b>
+사용자 또는 시스템에 의해 파이프라인이 중단되었습니다.
+
+<b>⚠️ 영향</b>
+중단 시점에 따라 서버 반영이 없거나 일부만 진행됐을 수 있습니다.
+
+<b>✅ 다음 조치</b>
+Jenkins에서 중단 사유를 확인하고 필요 시 다시 실행하세요.
+
+${buildTelegramContextBlock(false)}"""
+        } else if (outcome == 'approval_wait') {
+            message = """⏸️ <b>IdolGlow 운영 배포 승인 대기</b>
+
+<b>📋 요약</b>
+운영(prod) 환경 배포 전 <b>관리자 승인</b>이 필요합니다.
+
+<b>✅ 다음 조치</b>
+Jenkins UI에서 이 빌드를 열고 「배포 승인」을 눌러 주세요.
+
+${buildTelegramContextBlock(false)}"""
         }
 
-        def message = """${emoji} <b>IdolGlow ${escapeTelegramHtml(statusLabel)}</b>
-${stageLine}환경: <code>${escapeTelegramHtml(params.DEPLOY_ENV)}</code>
-브랜치: <code>${branch}</code>
-커밋: <code>${commit}</code>
-태그: <code>${tag}</code>
-CHANGELOG: <code>${section}</code>
-프론트: <code>${frontend}</code>
-${healthLine}빌드: <a href="${env.BUILD_URL}">#${env.BUILD_NUMBER}</a>${notesBlock}"""
-
-        sendTelegramMessage(message)
+        if (message) {
+            sendTelegramMessage(message)
+        }
     } catch (Exception telegramError) {
         echo "Telegram 알림 전송 실패 (빌드는 계속): ${telegramError.message}"
     }
@@ -241,7 +354,7 @@ pipeline {
         booleanParam(
             name: 'SEND_TELEGRAM',
             defaultValue: true,
-            description: 'true이면 파이프라인 시작·실패·완료 시 Telegram으로 상태를 전송합니다. Jenkins Credentials(telegram-bot-token, telegram-chat-id)가 필요합니다.'
+            description: 'true이면 파이프라인 완료·실패·승인 대기 시 Telegram으로 요약 알림 1통을 전송합니다.'
         )
     }
 
@@ -266,8 +379,6 @@ pipeline {
                     if (env.RELEASE_TAG) {
                         echo "Git 태그 감지: ${env.RELEASE_TAG}"
                     }
-
-                    notifyTelegramBuild('🚀', '파이프라인 시작', '체크아웃')
                 }
             }
         }
@@ -293,11 +404,6 @@ pipeline {
                     }
                 }
             }
-            post {
-                failure {
-                    script { notifyTelegramBuild('❌', '릴리즈 검증 실패', '릴리즈 검증') }
-                }
-            }
         }
 
         stage('변경 로그 읽기') {
@@ -321,9 +427,6 @@ pipeline {
                 success {
                     archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: false
                 }
-                failure {
-                    script { notifyTelegramBuild('❌', 'CHANGELOG 읽기 실패', '변경 로그 읽기') }
-                }
             }
         }
 
@@ -345,11 +448,6 @@ pipeline {
                             bat 'gradlew.bat clean kaptKotlin test detekt ktlintCheck bootJar --no-daemon'
                         }
                     }
-                }
-            }
-            post {
-                failure {
-                    script { notifyTelegramBuild('❌', '백엔드 빌드 실패', '백엔드 빌드') }
                 }
             }
         }
@@ -377,11 +475,6 @@ pipeline {
                     }
                 }
             }
-            post {
-                failure {
-                    script { notifyTelegramBuild('❌', '프론트엔드 빌드 실패', '프론트엔드 빌드') }
-                }
-            }
         }
 
         stage('운영 배포 승인') {
@@ -390,7 +483,7 @@ pipeline {
             }
             steps {
                 script {
-                    notifyTelegramBuild('⏸️', '운영 배포 승인 대기', '운영 배포 승인')
+                    notifyTelegramSummary('approval_wait')
                     input message: '운영 환경에 배포하시겠습니까?', ok: '배포 승인'
                 }
             }
@@ -416,14 +509,6 @@ pipeline {
                             powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\deploy-local.ps1 -DeployEnv ${params.DEPLOY_ENV} -WorkspaceDir ${env.REPO_ROOT} -ReleaseNotesFile ${env.REPO_ROOT}\\changelog-release-notes.txt
                         """
                     }
-                }
-            }
-            post {
-                success {
-                    script { notifyTelegramBuild('📦', '배포 완료', '배포') }
-                }
-                failure {
-                    script { notifyTelegramBuild('❌', '배포 실패', '배포') }
                 }
             }
         }
@@ -470,25 +555,20 @@ pipeline {
                     }
                 }
             }
-            post {
-                failure {
-                    script { notifyTelegramBuild('❌', '헬스체크 실패 (롤백 시도됨)', '배포 후 헬스체크') }
-                }
-            }
         }
     }
 
     post {
         success {
-            script { notifyTelegramBuild('✅', '파이프라인 성공', '', true) }
+            script { notifyTelegramSummary('success') }
             echo '배포 파이프라인이 성공적으로 완료되었습니다.'
         }
         failure {
-            script { notifyTelegramBuild('❌', '파이프라인 실패', '', false) }
+            script { notifyTelegramSummary('failure') }
             echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
         }
         aborted {
-            script { notifyTelegramBuild('⏹️', '파이프라인 중단', '') }
+            script { notifyTelegramSummary('aborted') }
         }
         always {
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
