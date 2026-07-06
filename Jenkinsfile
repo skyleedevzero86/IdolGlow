@@ -102,25 +102,54 @@ def truncateTelegramText(String text, int maxLength = 3200) {
     return text.substring(0, maxLength - 3) + '...'
 }
 
+def escapeTelegramHtmlAttr(String text) {
+    if (text == null) {
+        return ''
+    }
+
+    return escapeTelegramHtml(text).replace('"', '&quot;')
+}
+
+def stripTelegramHtml(String html) {
+    if (html == null) {
+        return ''
+    }
+
+    return html
+        .replaceAll(/<br\s*\/?>/, '\n')
+        .replaceAll(/<[^>]+>/, '')
+        .replace('&amp;', '&')
+        .replace('&lt;', '<')
+        .replace('&gt;', '>')
+        .replace('&quot;', '"')
+}
+
+def resolveChangelogSectionParam() {
+    def section = params.CHANGELOG_SECTION?.trim()
+    return section ? section : 'latest-release'
+}
+
+def resolveDeployEnvParam() {
+    def deployEnv = params.DEPLOY_ENV?.trim()
+    return deployEnv ? deployEnv : 'dev'
+}
+
 def resolveGitBranch() {
     def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'unknown'
     return branch.replaceFirst(/^origin\//, '')
 }
 
 def shouldRequireReleaseTag() {
-    if (params.DEPLOY_ENV == 'prod') {
+    def deployEnv = resolveDeployEnvParam()
+    if (deployEnv == 'prod') {
         return true
     }
 
-    if (!params.REQUIRE_RELEASE_TAG) {
-        return false
-    }
-
-    if (env.TAG_NAME?.trim()) {
+    if (deployEnv == 'staging' && params.REQUIRE_RELEASE_TAG) {
         return true
     }
 
-    return resolveGitBranch() == 'main'
+    return false
 }
 
 def fetchGitTagsForReleaseDetection() {
@@ -157,25 +186,48 @@ def sendTelegramMessage(String message, boolean finalSummary = false) {
 
     def payload = truncateTelegramText(message)
     writeFile file: 'telegram-message.txt', text: payload, encoding: 'UTF-8'
+    writeFile file: 'telegram-message-plain.txt', text: stripTelegramHtml(payload), encoding: 'UTF-8'
 
     withCredentials([
         string(credentialsId: 'telegram-bot-token', variable: 'TG_TOKEN'),
         string(credentialsId: 'telegram-chat-id', variable: 'TG_CHAT'),
     ]) {
+        def sent = false
         if (isUnix()) {
-            sh '''
-                curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-                  -F chat_id="${TG_CHAT}" \
-                  -F parse_mode="HTML" \
-                  -F text=@telegram-message.txt
-            '''
+            def htmlExit = sh(
+                script: '''
+                    curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+                      -F chat_id="${TG_CHAT}" \
+                      -F parse_mode="HTML" \
+                      -F text=@telegram-message.txt
+                ''',
+                returnStatus: true
+            )
+            if (htmlExit == 0) {
+                sent = true
+            } else {
+                echo "Telegram HTML 전송 실패(exit=${htmlExit}), plain text로 재시도합니다."
+                sh '''
+                    curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+                      -F chat_id="${TG_CHAT}" \
+                      -F text=@telegram-message-plain.txt
+                '''
+                sent = true
+            }
         } else {
             bat '''
                 curl -fsS -X POST "https://api.telegram.org/bot%TG_TOKEN%/sendMessage" ^
                   -F chat_id="%TG_CHAT%" ^
                   -F parse_mode=HTML ^
-                  -F text=@telegram-message.txt
+                  -F text=@telegram-message.txt ^
+                  || curl -fsS -X POST "https://api.telegram.org/bot%TG_TOKEN%/sendMessage" ^
+                  -F chat_id="%TG_CHAT%" ^
+                  -F text=@telegram-message-plain.txt
             '''
+            sent = true
+        }
+        if (!sent) {
+            error('Telegram 메시지 전송에 실패했습니다.')
         }
     }
 
@@ -214,13 +266,11 @@ def resolveFailureGuide(String failedStage) {
         case '릴리즈 검증':
             return [
                 headline: '배포 전 검사에서 중단',
-                reason: resolveGitBranch() == 'main'
-                    ? 'main 브랜치 빌드인데 이 커밋에 release-please 태그(v*)가 없습니다. Release PR 머지 커밋에서만 배포하세요.'
-                    : '이 브랜치/커밋에 릴리즈 태그(v*)가 없습니다.',
+                reason: resolveDeployEnvParam() == 'prod'
+                    ? '운영(prod) 배포인데 이 커밋에 release-please 태그(v*)가 없습니다.'
+                    : 'staging 배포인데 이 커밋에 release-please 태그(v*)가 없습니다.',
                 impact: '서버에 새 버전은 반영되지 않았습니다. (빌드·배포 미실행)',
-                action: resolveGitBranch() == 'main'
-                    ? 'GitHub Release PR 머지 후 생성된 v* 태그 커밋을 빌드하세요.\n개발 테스트: REQUIRE_RELEASE_TAG=false 또는 chor/dev 브랜치에서 빌드'
-                    : '정식 배포: main Release PR → v* 태그\n개발 테스트: REQUIRE_RELEASE_TAG=false',
+                action: 'GitHub Release PR 머지 후 생성된 v* 태그 커밋을 빌드하세요.\n개발 테스트: DEPLOY_ENV=dev 로 실행 (태그 불필요)',
             ]
         case '변경 로그 읽기':
             return [
@@ -232,9 +282,9 @@ def resolveFailureGuide(String failedStage) {
         case '백엔드 빌드':
             return [
                 headline: '백엔드 빌드 실패',
-                reason: '백엔드 컴파일·테스트·코드 검사 중 오류가 발생했습니다.',
+                reason: '백엔드 컴파일·테스트·코드 검사 중 오류가 발생했습니다. (gradle-wrapper.jar 누락 시 저장소에 wrapper 파일이 커밋됐는지 확인)',
                 impact: '서버에 새 버전은 반영되지 않았습니다. (배포 미실행)',
-                action: 'Jenkins 빌드 로그에서 Gradle 오류를 확인하고 backend 코드를 수정하세요.',
+                action: 'Jenkins 빌드 로그에서 Gradle 오류를 확인하고 backend/gradle/wrapper 를 커밋했는지 확인하세요.',
             ]
         case '프론트엔드 빌드':
             return [
@@ -270,7 +320,7 @@ def resolveFailureGuide(String failedStage) {
 def buildTelegramContextBlock(boolean includeReleaseNotes = false) {
     def branch = escapeTelegramHtml(resolveGitBranch())
     def tag = escapeTelegramHtml(env.RELEASE_TAG ?: '(없음)')
-    def section = escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION)
+    def section = escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam())
     def frontend = escapeTelegramHtml(env.FRONTEND_DIR ?: '(없음)')
     def commit = resolveGitCommitShort()
     def notesBlock = ''
@@ -280,10 +330,10 @@ def buildTelegramContextBlock(boolean includeReleaseNotes = false) {
     }
 
     return """<b>📎 참고</b>
-환경: <code>${escapeTelegramHtml(params.DEPLOY_ENV)}</code> | 브랜치: <code>${branch}</code>
+환경: <code>${escapeTelegramHtml(resolveDeployEnvParam())}</code> | 브랜치: <code>${branch}</code>
 커밋: <code>${commit}</code> | 태그: <code>${tag}</code>
 CHANGELOG: <code>${section}</code> | 프론트: <code>${frontend}</code>
-<a href="${env.BUILD_URL}">🔗 상세 로그 (#${env.BUILD_NUMBER})</a>${notesBlock}"""
+<a href="${escapeTelegramHtmlAttr(env.BUILD_URL)}">상세 로그 (#${env.BUILD_NUMBER})</a>${notesBlock}"""
 }
 
 def notifyTelegramSummary(String outcome) {
@@ -295,24 +345,24 @@ def notifyTelegramSummary(String outcome) {
         def message = ''
 
         if (outcome == 'success') {
-            def healthStatus = (params.RUN_HEALTH_CHECK || params.DEPLOY_ENV == 'prod') && env.HEALTH_CHECK_TARGET?.trim()
+            def healthStatus = (params.RUN_HEALTH_CHECK || resolveDeployEnvParam() == 'prod') && env.HEALTH_CHECK_TARGET?.trim()
                 ? "헬스체크: <code>${escapeTelegramHtml(env.HEALTH_CHECK_TARGET)}</code> 통과"
                 : '헬스체크: 건너뜀'
             def versionLine = env.RELEASE_TAG?.trim()
                 ? "버전: <code>${escapeTelegramHtml(env.RELEASE_TAG)}</code>"
-                : "CHANGELOG: <code>${escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: params.CHANGELOG_SECTION)}</code>"
+                : "CHANGELOG: <code>${escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam())}</code>"
 
             message = """✅ <b>IdolGlow 배포 완료</b>
 
 <b>📋 요약</b>
-<code>${escapeTelegramHtml(params.DEPLOY_ENV)}</code> 환경에 새 버전이 반영되었습니다.
+<code>${escapeTelegramHtml(resolveDeployEnvParam())}</code> 환경에 새 버전이 반영되었습니다.
 
 ${versionLine}
 백엔드: ${params.RUN_BACKEND_BUILD ? '빌드 완료' : '건너뜀'} | 프론트: ${params.RUN_FRONTEND_BUILD && env.FRONTEND_DIR?.trim() ? '빌드 완료' : '건너뜀'}
 ${healthStatus}
 
 ${buildTelegramContextBlock(true)}
-<i>알림 summary-v3 · 빌드 #${env.BUILD_NUMBER}</i>"""
+<i>알림 summary-v4 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'failure') {
             def failedStage = resolveFailedStageName()
             def guide = resolveFailureGuide(failedStage)
@@ -320,7 +370,7 @@ ${buildTelegramContextBlock(true)}
             message = """❌ <b>IdolGlow 배포 중단</b>
 
 <b>📋 요약</b>
-자동 배포가 시작됐으나 <b>${escapeTelegramHtml(failedStage)}</b> 단계에서 중단되었습니다.
+자동 배포가 시작됐으나 <code>${escapeTelegramHtml(failedStage)}</code> 단계에서 중단되었습니다.
 
 <b>🔍 원인</b>
 ${escapeTelegramHtml(guide.reason)}
@@ -332,7 +382,7 @@ ${escapeTelegramHtml(guide.impact)}
 ${formatTelegramActionLines(guide.action)}
 
 ${buildTelegramContextBlock(false)}
-<i>알림 summary-v3 · 빌드 #${env.BUILD_NUMBER}</i>"""
+<i>알림 summary-v4 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'aborted') {
             message = """⏹️ <b>IdolGlow 배포 중단됨</b>
 
@@ -388,8 +438,8 @@ pipeline {
         )
         booleanParam(
             name: 'REQUIRE_RELEASE_TAG',
-            defaultValue: true,
-            description: 'true이면 main(또는 태그 빌드)에서 v* 태그를 요구합니다. chor/dev 등 개발 브랜치는 자동으로 완화됩니다. prod는 항상 강제됩니다.'
+            defaultValue: false,
+            description: 'true이면 staging/prod에서 v* 태그를 요구합니다. dev(main/chor/dev)는 태그 없이 빌드·배포 가능. prod는 항상 태그 강제.'
         )
         booleanParam(
             name: 'RUN_BACKEND_BUILD',
@@ -447,7 +497,7 @@ pipeline {
                     if (env.RELEASE_TAG) {
                         echo "Git 태그 감지: ${env.RELEASE_TAG}"
                     } else {
-                        echo "Git 태그 없음 (브랜치: ${resolveGitBranch()}, 태그 검증: ${shouldRequireReleaseTag()})"
+                        echo "Git 태그 없음 (브랜치: ${resolveGitBranch()}, 환경: ${resolveDeployEnvParam()}, 태그 검증: ${shouldRequireReleaseTag()})"
                     }
                 }
             }
@@ -461,8 +511,8 @@ pipeline {
                         markPipelineFailed('릴리즈 검증')
                         error(
                             'release-please 태그(v*)가 없습니다. ' +
-                            'main Release PR 머지 후 생성된 태그 커밋을 빌드하거나, ' +
-                            '개발 브랜치 테스트 시 REQUIRE_RELEASE_TAG=false로 실행하세요.'
+                            '운영/스테이징 배포는 Release PR 머지 후 v* 태그 커밋이 필요합니다. ' +
+                            '개발 테스트는 DEPLOY_ENV=dev 로 실행하세요.'
                         )
                     }
 
@@ -470,7 +520,7 @@ pipeline {
                         env.EFFECTIVE_CHANGELOG_SECTION = resolveChangelogSectionFromTag(env.RELEASE_TAG)
                         echo "CHANGELOG 섹션을 태그 기준으로 사용합니다: ${env.EFFECTIVE_CHANGELOG_SECTION}"
                     } else {
-                        env.EFFECTIVE_CHANGELOG_SECTION = params.CHANGELOG_SECTION
+                        env.EFFECTIVE_CHANGELOG_SECTION = resolveChangelogSectionParam()
                         echo "CHANGELOG 섹션을 파라미터 기준으로 사용합니다: ${env.EFFECTIVE_CHANGELOG_SECTION}"
                     }
                 }
@@ -492,7 +542,7 @@ pipeline {
                     writeFile file: 'changelog-release-notes.txt', text: releaseNotes, encoding: 'UTF-8'
 
                     echo "=== 변경 로그 (${env.EFFECTIVE_CHANGELOG_SECTION}) ===\n${releaseNotes}"
-                    currentBuild.description = "${params.DEPLOY_ENV} / ${env.EFFECTIVE_CHANGELOG_SECTION}"
+                    currentBuild.description = "${resolveDeployEnvParam()} / ${env.EFFECTIVE_CHANGELOG_SECTION}"
                 }
             }
             post {
@@ -512,6 +562,14 @@ pipeline {
                         if (!fileExists('gradlew') && !fileExists('gradlew.bat')) {
                             markPipelineFailed('백엔드 빌드')
                             error('backend/gradlew가 없습니다. Gradle wrapper 위치를 확인하세요.')
+                        }
+
+                        if (!fileExists('gradle/wrapper/gradle-wrapper.jar')) {
+                            markPipelineFailed('백엔드 빌드')
+                            error(
+                                'backend/gradle/wrapper/gradle-wrapper.jar 가 없습니다. ' +
+                                'Gradle wrapper 파일을 저장소에 커밋했는지 확인하세요.'
+                            )
                         }
 
                         if (isUnix()) {
