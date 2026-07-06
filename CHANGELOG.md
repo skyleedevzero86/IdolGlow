@@ -4,6 +4,23 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.6.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.5.0...v0.6.0) (2026-07-06)
+
+
+### Features
+
+* 코드정리 ([a090632](https://github.com/skyleedevzero86/IdolGlow/commit/a090632b43c66e060ad9edd9428db747086453eb))
+
+
+### Bug Fixes
+
+* **#13:** consolidate Jenkins Telegram summary notification ([6e75cfe](https://github.com/skyleedevzero86/IdolGlow/commit/6e75cfec2743de90964b5acdc1fb30ecc4340924))
+* Jenkins Telegram 요약 알림 1통 통합 및 infra 연동 ([e823692](https://github.com/skyleedevzero86/IdolGlow/commit/e823692a7869cab0fa1d9ca68d636ae8952e0e51))
+* Jenkins Timestamper 플러그인 추가 및 timestamps() 복원 ([b656995](https://github.com/skyleedevzero86/IdolGlow/commit/b6569955f2a8db70f040aedb8ce405f0f4b6e3d6))
+* 인프라 방지 제거 ([26b2a74](https://github.com/skyleedevzero86/IdolGlow/commit/26b2a742afee97ecb76adde726532995139c6da5))
+* 젠킨스 알림발송을위한 테스트 ([e534079](https://github.com/skyleedevzero86/IdolGlow/commit/e534079ebcc846aca843002e2cce5c4087a5257a))
+* 젠킨스파일 수정 ([47c4de4](https://github.com/skyleedevzero86/IdolGlow/commit/47c4de43ca41de3d35a57dfff5cf50aa5687a5c5))
+
 ## [0.5.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.4.0...v0.5.0) (2026-06-20)
 
 
