@@ -53,5 +53,6 @@ class AdminProductReviewController(
     @PostMapping("/{reviewId}/unhide")
     fun unhideReview(
         @PathVariable reviewId: Long,
-    ): ResponseEntity<AdminProductReviewSummaryResponse> = ResponseEntity.ok(adminProductReviewService.unhideReview(reviewId).toWebResponse())
+    ): ResponseEntity<AdminProductReviewSummaryResponse> =
+        ResponseEntity.ok(adminProductReviewService.unhideReview(reviewId).toWebResponse())
 }
