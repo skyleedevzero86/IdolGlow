@@ -54,8 +54,7 @@ class AuthenticatedPrincipalResolver(
         return null
     }
 
-    fun resolveRequired(): AuthenticatedPrincipal =
-        resolveOrNull() ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
+    fun resolveRequired(): AuthenticatedPrincipal = resolveOrNull() ?: throw CustomException(AuthExceptionType.UNAUTHENTICATED)
 
     fun requireUserId(): Long {
         val principal = resolveRequired()

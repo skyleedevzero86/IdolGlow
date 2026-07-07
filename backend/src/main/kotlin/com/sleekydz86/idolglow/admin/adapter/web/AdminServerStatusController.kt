@@ -22,5 +22,6 @@ class AdminServerStatusController(
     @Operation(summary = "서버 상태 조회")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
-    fun getStatus(): ResponseEntity<AdminServerStatusResponse> = ResponseEntity.ok(adminServerStatusService.getServerStatus().toWebResponse())
+    fun getStatus(): ResponseEntity<AdminServerStatusResponse> =
+        ResponseEntity.ok(adminServerStatusService.getServerStatus().toWebResponse())
 }

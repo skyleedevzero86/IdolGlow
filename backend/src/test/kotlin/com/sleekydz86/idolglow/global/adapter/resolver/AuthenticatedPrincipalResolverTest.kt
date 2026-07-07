@@ -2,7 +2,6 @@ package com.sleekydz86.idolglow.global.adapter.resolver
 
 import com.sleekydz86.idolglow.global.adapter.security.AuthChannel
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
-import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
@@ -98,7 +97,9 @@ class AuthenticatedPrincipalResolverTest {
         User(
             id = id,
             email = email,
-            nickname = com.sleekydz86.idolglow.user.user.domain.vo.Nickname("tester"),
+            nickname =
+                com.sleekydz86.idolglow.user.user.domain.vo
+                    .Nickname("tester"),
             role = UserRole.USER,
         )
 }

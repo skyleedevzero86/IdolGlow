@@ -129,7 +129,6 @@ tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 
 detekt {
     toolVersion = "2.0.0-alpha.1"
-    config.setFrom(files("$projectDir/config/detekt/detekt.yml"))
     buildUponDefaultConfig = true
     parallel = true
     baseline = file("$projectDir/config/detekt/baseline.xml")

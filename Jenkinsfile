@@ -282,8 +282,9 @@ def resolveFailedStageName() {
         return env.PIPELINE_FAILED_STAGE.trim()
     }
 
-    if (env.STAGE_NAME?.trim()) {
-        return env.STAGE_NAME.trim()
+    def stageName = env.STAGE_NAME?.trim()
+    if (stageName && stageName != 'Declarative: Post Actions') {
+        return stageName
     }
 
     return '알 수 없음'
@@ -607,11 +608,16 @@ pipeline {
                             )
                         }
 
-                        if (isUnix()) {
-                            sh 'chmod +x gradlew || true'
-                            sh './gradlew bootJar test detekt ktlintCheck --build-cache --parallel'
-                        } else {
-                            bat 'gradlew.bat bootJar test detekt ktlintCheck --build-cache --parallel'
+                        try {
+                            if (isUnix()) {
+                                sh 'chmod +x gradlew || true'
+                                sh './gradlew bootJar test detekt runKtlintCheckOverMainSourceSet --build-cache --parallel'
+                            } else {
+                                bat 'gradlew.bat bootJar test detekt runKtlintCheckOverMainSourceSet --build-cache --parallel'
+                            }
+                        } catch (Exception buildError) {
+                            markPipelineFailed('백엔드 빌드')
+                            throw buildError
                         }
                     }
                 }
