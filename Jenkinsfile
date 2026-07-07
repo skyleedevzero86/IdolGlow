@@ -73,14 +73,10 @@ def resolveChangelogSectionFromTag(String tag) {
 }
 
 def defaultHealthCheckUrl(String deployEnv) {
-    switch (deployEnv) {
-        case 'staging':
-            return 'https://staging.example.com/actuator/health'
-        case 'dev':
-            return 'http://localhost:8080/actuator/health'
-        default:
-            return ''
+    if (deployEnv == 'staging') {
+        return 'https://staging.example.com/actuator/health'
     }
+    return ''
 }
 
 def escapeTelegramHtml(String text) {
@@ -174,6 +170,32 @@ def resolveGitCommitShort() {
     ).trim()
 }
 
+def withTelegramCredentials(Closure body) {
+    try {
+        withCredentials([
+            string(credentialsId: 'telegram-bot-token', variable: 'TG_TOKEN'),
+            string(credentialsId: 'telegram-chat-id', variable: 'TG_CHAT'),
+        ]) {
+            body(env.TG_TOKEN, env.TG_CHAT)
+        }
+    } catch (Exception credentialError) {
+        echo "Telegram Credentials 미사용: ${credentialError.message}"
+        def token = ''
+        def chat = ''
+        if (isUnix()) {
+            token = sh(script: 'printf %s "${TELEGRAM_BOT_TOKEN}"', returnStdout: true).trim()
+            chat = sh(script: 'printf %s "${TELEGRAM_CHAT_ID}"', returnStdout: true).trim()
+        } else {
+            token = bat(script: '@echo %TELEGRAM_BOT_TOKEN%', returnStdout: true).trim()
+            chat = bat(script: '@echo %TELEGRAM_CHAT_ID%', returnStdout: true).trim()
+        }
+        if (!token || !chat) {
+            error('Telegram 설정이 없습니다. TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 를 확인하세요.')
+        }
+        body(token, chat)
+    }
+}
+
 def sendTelegramMessage(String message, boolean finalSummary = false) {
     if (!params.SEND_TELEGRAM) {
         return
@@ -185,49 +207,59 @@ def sendTelegramMessage(String message, boolean finalSummary = false) {
     }
 
     def payload = truncateTelegramText(message)
-    writeFile file: 'telegram-message.txt', text: payload, encoding: 'UTF-8'
     writeFile file: 'telegram-message-plain.txt', text: stripTelegramHtml(payload), encoding: 'UTF-8'
 
-    withCredentials([
-        string(credentialsId: 'telegram-bot-token', variable: 'TG_TOKEN'),
-        string(credentialsId: 'telegram-chat-id', variable: 'TG_CHAT'),
-    ]) {
-        def sent = false
+    withTelegramCredentials { String token, String chatId ->
+        def htmlJson = groovy.json.JsonOutput.toJson([
+            chat_id: chatId,
+            text: payload,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true,
+        ])
+        writeFile file: 'telegram-payload.json', text: htmlJson, encoding: 'UTF-8'
+
+        def htmlExit = 1
         if (isUnix()) {
-            def htmlExit = sh(
-                script: '''
-                    curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-                      -F chat_id="${TG_CHAT}" \
-                      -F parse_mode="HTML" \
-                      -F text=@telegram-message.txt
-                ''',
+            htmlExit = sh(
+                script: """
+                    curl -fsS -X POST "https://api.telegram.org/bot${token}/sendMessage" \
+                      -H 'Content-Type: application/json; charset=utf-8' \
+                      --data-binary @telegram-payload.json
+                """,
                 returnStatus: true
             )
-            if (htmlExit == 0) {
-                sent = true
-            } else {
-                echo "Telegram HTML 전송 실패(exit=${htmlExit}), plain text로 재시도합니다."
-                sh '''
-                    curl -fsS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-                      -F chat_id="${TG_CHAT}" \
-                      -F text=@telegram-message-plain.txt
-                '''
-                sent = true
-            }
         } else {
-            bat '''
-                curl -fsS -X POST "https://api.telegram.org/bot%TG_TOKEN%/sendMessage" ^
-                  -F chat_id="%TG_CHAT%" ^
-                  -F parse_mode=HTML ^
-                  -F text=@telegram-message.txt ^
-                  || curl -fsS -X POST "https://api.telegram.org/bot%TG_TOKEN%/sendMessage" ^
-                  -F chat_id="%TG_CHAT%" ^
-                  -F text=@telegram-message-plain.txt
-            '''
-            sent = true
+            htmlExit = bat(
+                script: """
+                    curl -fsS -X POST "https://api.telegram.org/bot${token}/sendMessage" ^
+                      -H "Content-Type: application/json; charset=utf-8" ^
+                      --data-binary @telegram-payload.json
+                """,
+                returnStatus: true
+            )
         }
-        if (!sent) {
-            error('Telegram 메시지 전송에 실패했습니다.')
+
+        if (htmlExit != 0) {
+            echo "Telegram HTML 전송 실패(exit=${htmlExit}), plain text로 재시도합니다."
+            def plainJson = groovy.json.JsonOutput.toJson([
+                chat_id: chatId,
+                text: stripTelegramHtml(payload),
+                disable_web_page_preview: true,
+            ])
+            writeFile file: 'telegram-payload-plain.json', text: plainJson, encoding: 'UTF-8'
+            if (isUnix()) {
+                sh """
+                    curl -fsS -X POST "https://api.telegram.org/bot${token}/sendMessage" \
+                      -H 'Content-Type: application/json; charset=utf-8' \
+                      --data-binary @telegram-payload-plain.json
+                """
+            } else {
+                bat """
+                    curl -fsS -X POST "https://api.telegram.org/bot${token}/sendMessage" ^
+                      -H "Content-Type: application/json; charset=utf-8" ^
+                      --data-binary @telegram-payload-plain.json
+                """
+            }
         }
     }
 
@@ -302,10 +334,12 @@ def resolveFailureGuide(String failedStage) {
             ]
         case '배포 후 헬스체크':
             return [
-                headline: '배포 후 서비스 검증 실패',
-                reason: "배포는 시도됐으나 health check(${env.HEALTH_CHECK_TARGET ?: '미설정'})에 실패했습니다.",
-                impact: '이전 배포본으로 롤백을 시도했습니다. 서비스 상태를 확인하세요.',
-                action: '애플리케이션 기동 로그와 HEALTH_CHECK_URL 설정을 확인하세요.',
+                headline: '배포 후 검증 실패',
+                reason: env.HEALTH_CHECK_TARGET?.trim()
+                    ? "HTTP health check(${env.HEALTH_CHECK_TARGET})에 실패했습니다."
+                    : '배포 산출물 검증에 실패했습니다. backend JAR 또는 deploy-info.txt 가 없습니다.',
+                impact: 'HTTP 검증 실패 시 이전 배포본으로 롤백을 시도했습니다.',
+                action: '배포 로그와 /deployments/{env}/latest 를 확인하세요. HTTP 검증은 HEALTH_CHECK_URL 에 실제 서비스 URL을 설정하세요.',
             ]
         default:
             return [
@@ -345,9 +379,9 @@ def notifyTelegramSummary(String outcome) {
         def message = ''
 
         if (outcome == 'success') {
-            def healthStatus = (params.RUN_HEALTH_CHECK || resolveDeployEnvParam() == 'prod') && env.HEALTH_CHECK_TARGET?.trim()
+            def healthStatus = env.HEALTH_CHECK_TARGET?.trim()
                 ? "헬스체크: <code>${escapeTelegramHtml(env.HEALTH_CHECK_TARGET)}</code> 통과"
-                : '헬스체크: 건너뜀'
+                : '헬스체크: 배포 산출물 검증 통과'
             def versionLine = env.RELEASE_TAG?.trim()
                 ? "버전: <code>${escapeTelegramHtml(env.RELEASE_TAG)}</code>"
                 : "CHANGELOG: <code>${escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam())}</code>"
@@ -362,7 +396,7 @@ ${versionLine}
 ${healthStatus}
 
 ${buildTelegramContextBlock(true)}
-<i>알림 summary-v4 · 빌드 #${env.BUILD_NUMBER}</i>"""
+<i>알림 summary-v5 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'failure') {
             def failedStage = resolveFailedStageName()
             def guide = resolveFailureGuide(failedStage)
@@ -382,7 +416,7 @@ ${escapeTelegramHtml(guide.impact)}
 ${formatTelegramActionLines(guide.action)}
 
 ${buildTelegramContextBlock(false)}
-<i>알림 summary-v4 · 빌드 #${env.BUILD_NUMBER}</i>"""
+<i>알림 summary-v5 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'aborted') {
             message = """⏹️ <b>IdolGlow 배포 중단됨</b>
 
@@ -474,6 +508,7 @@ pipeline {
     }
 
     environment {
+        GRADLE_USER_HOME = "${env.JENKINS_HOME}/.gradle-user"
         RELEASE_NOTES = ''
         FRONTEND_DIR = ''
         REPO_ROOT = ''
@@ -574,9 +609,9 @@ pipeline {
 
                         if (isUnix()) {
                             sh 'chmod +x gradlew || true'
-                            sh './gradlew clean kaptKotlin test detekt ktlintCheck bootJar --no-daemon'
+                            sh './gradlew bootJar test detekt ktlintCheck --build-cache --parallel'
                         } else {
-                            bat 'gradlew.bat clean kaptKotlin test detekt ktlintCheck bootJar --no-daemon'
+                            bat 'gradlew.bat bootJar test detekt ktlintCheck --build-cache --parallel'
                         }
                     }
                 }
@@ -593,6 +628,7 @@ pipeline {
                         if (isUnix()) {
                             sh 'node -v'
                             sh 'corepack enable'
+                            sh 'corepack prepare pnpm@9.15.4 --activate || true'
                             sh 'pnpm -v'
                             sh 'pnpm install --frozen-lockfile'
                             sh 'pnpm build'
@@ -623,7 +659,8 @@ pipeline {
         stage('배포') {
             steps {
                 script {
-                    echo "배포 대상 환경: ${params.DEPLOY_ENV}"
+                    def deployEnv = resolveDeployEnvParam()
+                    echo "배포 대상 환경: ${deployEnv}"
                     echo "릴리즈 태그: ${env.RELEASE_TAG ?: '(없음)'}"
                     echo "릴리즈 노트:\n${env.RELEASE_NOTES}"
 
@@ -631,13 +668,13 @@ pipeline {
                         sh """
                             export DEPLOY_ROOT='${params.DEPLOY_ROOT}'
                             export BUILD_ID='${env.BUILD_TAG}'
-                            bash infra/jenkins-local/deploy-local.sh '${params.DEPLOY_ENV}' '${env.REPO_ROOT}' '${env.REPO_ROOT}/changelog-release-notes.txt'
+                            bash infra/jenkins-local/deploy-local.sh '${deployEnv}' '${env.REPO_ROOT}' '${env.REPO_ROOT}/changelog-release-notes.txt'
                         """
                     } else {
                         bat """
                             set DEPLOY_ROOT=${params.DEPLOY_ROOT}
                             set BUILD_ID=${env.BUILD_TAG}
-                            powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\deploy-local.ps1 -DeployEnv ${params.DEPLOY_ENV} -WorkspaceDir ${env.REPO_ROOT} -ReleaseNotesFile ${env.REPO_ROOT}\\changelog-release-notes.txt
+                            powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\deploy-local.ps1 -DeployEnv ${deployEnv} -WorkspaceDir ${env.REPO_ROOT} -ReleaseNotesFile ${env.REPO_ROOT}\\changelog-release-notes.txt
                         """
                     }
                 }
@@ -645,45 +682,46 @@ pipeline {
         }
 
         stage('배포 후 헬스체크') {
-            when {
-                expression { params.RUN_HEALTH_CHECK || params.DEPLOY_ENV == 'prod' }
-            }
             steps {
                 script {
-                    env.HEALTH_CHECK_TARGET = params.HEALTH_CHECK_URL?.trim()
-                        ? params.HEALTH_CHECK_URL.trim()
-                        : defaultHealthCheckUrl(params.DEPLOY_ENV)
+                    def deployEnv = resolveDeployEnvParam()
+                    def deployRoot = params.DEPLOY_ROOT
 
-                    if (!env.HEALTH_CHECK_TARGET) {
-                        echo 'Health check URL이 없어 검증을 건너뜁니다. prod 운영 시 HEALTH_CHECK_URL을 설정하세요.'
+                    if (isUnix()) {
+                        sh """
+                            export DEPLOY_ROOT='${deployRoot}'
+                            bash infra/jenkins-local/verify-deploy.sh '${deployEnv}'
+                        """
+                    } else {
+                        markPipelineFailed('배포 후 헬스체크')
+                        error('배포 산출물 검증은 Linux Jenkins 에이전트에서 실행하세요.')
+                    }
+
+                    def httpUrl = params.HEALTH_CHECK_URL?.trim()
+                    if (!httpUrl && (params.RUN_HEALTH_CHECK || deployEnv == 'prod')) {
+                        httpUrl = defaultHealthCheckUrl(deployEnv)
+                    }
+
+                    if (!httpUrl) {
+                        echo '배포 산출물 검증 완료 (HTTP health check URL 없음)'
                         return
                     }
 
-                    echo "Health check URL: ${env.HEALTH_CHECK_TARGET}"
+                    env.HEALTH_CHECK_TARGET = httpUrl
+                    echo "HTTP health check URL: ${httpUrl}"
 
                     try {
-                        if (isUnix()) {
-                            sh "curl -fsS --retry 5 --retry-delay 3 --retry-connrefused '${env.HEALTH_CHECK_TARGET}'"
-                        } else {
-                            bat "curl -fsS --retry 5 --retry-delay 3 --retry-connrefused \"${env.HEALTH_CHECK_TARGET}\""
-                        }
+                        sh "curl -fsS --retry 5 --retry-delay 3 --retry-connrefused '${httpUrl}'"
                     } catch (Exception healthCheckError) {
-                        echo "Health check 실패. 이전 배포본으로 롤백을 시도합니다."
+                        echo "HTTP health check 실패. 이전 배포본으로 롤백을 시도합니다."
 
-                        if (isUnix()) {
-                            sh """
-                                export DEPLOY_ROOT='${params.DEPLOY_ROOT}'
-                                bash infra/jenkins-local/rollback-local.sh '${params.DEPLOY_ENV}'
-                            """
-                        } else {
-                            bat """
-                                set DEPLOY_ROOT=${params.DEPLOY_ROOT}
-                                powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\rollback-local.ps1 -DeployEnv ${params.DEPLOY_ENV}
-                            """
-                        }
+                        sh """
+                            export DEPLOY_ROOT='${deployRoot}'
+                            bash infra/jenkins-local/rollback-local.sh '${deployEnv}'
+                        """
 
                         markPipelineFailed('배포 후 헬스체크')
-                        error("배포 후 health check 실패: ${env.HEALTH_CHECK_TARGET}")
+                        error("배포 후 HTTP health check 실패: ${httpUrl}")
                     }
                 }
             }

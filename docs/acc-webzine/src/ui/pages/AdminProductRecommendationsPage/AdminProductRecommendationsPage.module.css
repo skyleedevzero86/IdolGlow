@@ -1,0 +1,217 @@
+/* docs/samples/portal-admin-form.css 내용을 .root에 인라인 — samples 경로 @import 없음 */
+.root {
+  --portal-admin-sheet-border: #e8e8e8;
+  --portal-admin-sheet-bg: #ffffff;
+  --portal-admin-panel-divider: #dddddd;
+  --portal-admin-control-border: #cccccc;
+  --portal-admin-control-bg: #ffffff;
+  --portal-admin-control-text: #111111;
+  --portal-admin-label: #111111;
+  --portal-admin-muted: #555555;
+  --portal-admin-primary-btn: #222222;
+  --portal-admin-primary-btn-text: #ffffff;
+}
+
+:global(html[data-theme='dark']) .root {
+  --portal-admin-sheet-border: #334155;
+  --portal-admin-sheet-bg: #0f172a;
+  --portal-admin-panel-divider: #334155;
+  --portal-admin-control-border: #334155;
+  --portal-admin-control-bg: #111827;
+  --portal-admin-control-text: #e2e8f0;
+  --portal-admin-label: #f8fafc;
+  --portal-admin-muted: #94a3b8;
+  --portal-admin-primary-btn: #e2e8f0;
+  --portal-admin-primary-btn-text: #0f172a;
+}
+
+.container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+.sheet {
+  background: var(--portal-admin-sheet-bg, #ffffff);
+  border: 1px solid var(--portal-admin-sheet-border, #e8e8e8);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.panel {
+  margin: 0;
+  padding: 1.15rem 1.25rem 1.25rem;
+  border-bottom: 1px solid var(--portal-admin-panel-divider, #dddddd);
+}
+
+.panel:last-of-type {
+  border-bottom: none;
+}
+
+.panelTitle {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--portal-admin-label, #111111);
+}
+
+.panelDesc {
+  margin: 0 0 0.85rem;
+  font-size: 0.8125rem;
+  color: var(--portal-admin-muted, #555555);
+  line-height: 1.55;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--portal-admin-label, #111111);
+}
+
+.input,
+.select,
+.textarea {
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: var(--portal-admin-control-bg, #ffffff);
+  color: var(--portal-admin-control-text, #111111);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.875rem;
+  border-radius: 0;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.input {
+  min-width: 6rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: 1px solid var(--portal-admin-primary-btn, #222222);
+  background: var(--portal-admin-primary-btn, #222222);
+  color: var(--portal-admin-primary-btn-text, #ffffff);
+}
+
+.secondaryButton {
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: var(--portal-admin-control-bg, #ffffff);
+  color: var(--portal-admin-control-text, #111111);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #b42318;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 0.35rem 0 0;
+}
+
+.message {
+  color: #0f766e;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 0.35rem 0 0;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.th,
+.td {
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.th {
+  background: var(--portal-admin-control-bg, #f9fafb);
+  font-weight: 700;
+  color: var(--portal-admin-label, #111111);
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.productPicker {
+  margin-top: 0.65rem;
+  padding: 0.65rem;
+  border: 1px dashed var(--portal-admin-control-border, #cccccc);
+}
+
+.pickerList {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.pickerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.miniButton {
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: var(--portal-admin-control-bg, #ffffff);
+  color: var(--portal-admin-control-text, #111111);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:global(html[data-theme='dark']) .th {
+  background: #111827;
+}
+
+:global(html[data-theme='dark']) .error {
+  color: #fecaca;
+}
+
+:global(html[data-theme='dark']) .message {
+  color: #5eead4;
+}

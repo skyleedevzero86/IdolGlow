@@ -1,0 +1,364 @@
+.shellPanel {
+  border-radius: 0;
+}
+
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  width: 100%;
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-text-primary, #0f172a);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.select,
+.searchInput {
+  min-height: 2.35rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.35rem;
+  background: var(--color-bg-elevated, #fff);
+  color: var(--color-text-primary, #111);
+  box-sizing: border-box;
+}
+
+.select {
+  min-width: 7.5rem;
+}
+
+.searchWrap {
+  flex: 1 1 200px;
+  margin-left: auto;
+  position: relative;
+}
+
+.searchInput {
+  width: 100%;
+  padding-left: 2.1rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  line-height: 0;
+}
+
+.suggest {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: 14rem;
+  overflow-y: auto;
+  background: var(--color-bg-elevated, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.35rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.suggestItem {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-primary, #111);
+}
+
+.suggestItem:hover,
+.suggestItem:focus-visible {
+  background: #f1f5f9;
+  outline: none;
+}
+
+.suggestMeta {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+.rail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 4.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  margin-bottom: 1.1rem;
+}
+
+.railSide {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.railNavBtn {
+  margin: 0;
+  padding: 0.2rem 0.3rem;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  text-align: inherit;
+  box-sizing: border-box;
+}
+
+.railNavBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.railNavBtn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.railNavBtn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.railSidePrev {
+  justify-content: flex-start;
+}
+
+.railSideNext {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.railArrow {
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
+.railName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.railCenter {
+  flex: 0 0 auto;
+}
+
+.pill {
+  min-width: 8.5rem;
+  padding: 0.55rem 1rem 0.45rem;
+  background: #fff;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.pillTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.pillBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pillBadgeLine {
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.25rem;
+  color: #fff;
+}
+
+.pillBadgeName {
+  color: #334155;
+  font-weight: 700;
+}
+
+.aiCard {
+  padding: 1rem 1.1rem 1.15rem;
+  border-radius: 0.65rem;
+  background: linear-gradient(180deg, #e0f2fe 0%, #dbeafe 100%);
+  border: 1px solid #bae6fd;
+  margin-bottom: 0.85rem;
+}
+
+.aiHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.aiBadge {
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #06b6d4;
+  color: #fff;
+}
+
+.aiTitle {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0c4a6e;
+}
+
+.aiList {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #0f172a;
+}
+
+.aiLink {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0369a1;
+  text-decoration: none;
+}
+
+.aiLink:hover {
+  text-decoration: underline;
+}
+
+.bottomBar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.45rem;
+  background: var(--color-bg-elevated, #fff);
+}
+
+.bottomIcon {
+  flex-shrink: 0;
+  color: #16a34a;
+  line-height: 0;
+}
+
+.bottomText {
+  flex: 1 1 auto;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #334155);
+  min-width: 0;
+}
+
+.bottomArrow {
+  flex-shrink: 0;
+  color: #94a3b8;
+  line-height: 0;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #b91c1c;
+}
+
+:global(html[data-theme='dark']) .title {
+  color: #f1f5f9;
+}
+
+:global(html[data-theme='dark']) .select,
+:global(html[data-theme='dark']) .searchInput {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+:global(html[data-theme='dark']) .suggest {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .suggestItem:hover,
+:global(html[data-theme='dark']) .suggestItem:focus-visible {
+  background: #1e293b;
+}
+
+:global(html[data-theme='dark']) .aiCard {
+  background: linear-gradient(180deg, #0c4a6e 0%, #0e7490 100%);
+  border-color: #155e75;
+}
+
+:global(html[data-theme='dark']) .aiTitle {
+  color: #e0f2fe;
+}
+
+:global(html[data-theme='dark']) .aiList {
+  color: #f1f5f9;
+}
+
+:global(html[data-theme='dark']) .aiLink {
+  color: #7dd3fc;
+}
+
+:global(html[data-theme='dark']) .bottomBar {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .bottomText {
+  color: #e2e8f0;
+}

@@ -1,0 +1,525 @@
+.panel {
+  padding: 0;
+  border-radius: 0;
+}
+
+.dayRailWrap {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dayArrow {
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 0;
+  background: #fff;
+  font-size: 1.2rem;
+}
+
+.dayRail {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.dayBtn,
+.dayBtnActive {
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  background: #fff;
+  color: #4b5563;
+  padding: 0.35rem 0.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.72rem;
+}
+
+.dayBtn strong,
+.dayBtnActive strong {
+  font-size: 0.95rem;
+}
+
+.dayBtnActive {
+  background: #06b6d4;
+  color: #fff;
+  border-color: #06b6d4;
+}
+
+.dayBtnSun span,
+.dayBtnSun strong {
+  color: #dc2626;
+}
+
+.calendarField {
+  position: relative;
+  justify-self: end;
+}
+
+.calendarTrigger {
+  width: 2.3rem;
+  height: 2.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d4d4d8;
+  border-radius: 0;
+  background: #fff;
+  color: #1f2937;
+  padding: 0;
+  cursor: pointer;
+}
+
+.calendarTrigger:hover {
+  border-color: #a1a1aa;
+  background: #fafafa;
+}
+
+.calendarGlyph {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.calendarPopover {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 40;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  padding: 0.65rem;
+  max-width: min(96vw, 58rem);
+  max-height: min(85vh, 32rem);
+  overflow: auto;
+}
+
+.monthRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: flex-end;
+}
+
+.monthBlock {
+  flex: 1 1 11rem;
+  min-width: 10.5rem;
+}
+
+.monthTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.35rem;
+}
+
+.monthWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.monthWeekday {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.12rem;
+}
+
+.monthCell {
+  border: none;
+  background: transparent;
+  font-size: 0.72rem;
+  height: 1.65rem;
+  color: #374151;
+  cursor: pointer;
+  padding: 0;
+}
+
+.monthCell:hover:not(.monthCellEmpty):not(.monthCellActive) {
+  background: #f3f4f6;
+}
+
+.monthCellEmpty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.monthCellActive {
+  background: #06b6d4;
+  color: #fff;
+  font-weight: 700;
+}
+
+.monthCellSun:not(.monthCellActive) {
+  color: #dc2626;
+}
+
+.filterBox {
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  padding: 0.55rem;
+  margin-bottom: 0.8rem;
+}
+
+.filterBox summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4b5563;
+}
+
+.filterGrid {
+  margin-top: 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.searchInput,
+.searchSelect {
+  border: 1px solid #d4d4d8;
+  border-radius: 0;
+  background: #fff;
+  height: 2rem;
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+}
+
+.filterActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.55rem;
+}
+
+.filterResetBtn {
+  border: 1px solid #d4d4d8;
+  border-radius: 0;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.filterResetBtn::after {
+  content: "검색";
+  font-size: 0.78rem;
+}
+
+.filterResetBtn:hover {
+  background: #f3f4f6;
+  border-color: #a1a1aa;
+}
+
+.filterActions > span.filterModeBadge {
+  display: none;
+}
+
+.filterModeBadge {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0e7490;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.filterModeBadge:hover {
+  background: #cffafe;
+  border-color: #67e8f9;
+}
+
+.currentDate {
+  margin: 0.6rem 0;
+  color: #111827;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.searchModeNote {
+  font-weight: 500;
+  font-size: 0.82rem;
+  color: #0e7490;
+}
+
+.error {
+  margin: 0.3rem 0 0.7rem;
+  color: #b91c1c;
+  font-size: 0.84rem;
+}
+
+.status {
+  margin: 0.3rem 0 0.7rem;
+  color: #6b7280;
+  font-size: 0.84rem;
+}
+
+.cardGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2.25rem;
+  row-gap: 0;
+}
+
+.eventCard {
+  border-bottom: 1px solid #e5e7eb;
+  min-width: 0;
+  padding: 1rem 0 1.35rem;
+}
+
+.cardButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px;
+  align-items: start;
+  gap: 1.15rem;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cardText {
+  min-width: 0;
+  padding-top: 0.1rem;
+}
+
+.cardText h3 {
+  margin: 0 0 0.25rem;
+  color: #111827;
+  display: -webkit-box;
+  font-size: 0.94rem;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cardText p {
+  margin: 0.15rem 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #9ca3af;
+}
+
+.place {
+  color: #9ca3af !important;
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cardThumb {
+  width: 90px;
+  height: 106px;
+  overflow: hidden;
+  border-radius: 0;
+  justify-self: end;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+
+.cardThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 0.7rem;
+}
+
+.cardLinks {
+  margin-top: 0.65rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cardLinks a,
+.cardLinks button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: #0f766e;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cardLinks a:hover,
+.cardLinks button:hover {
+  text-decoration: underline;
+}
+
+.moreWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.moreButton {
+  width: min(360px, 100%);
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  background: #fff;
+  height: 2.4rem;
+  font-size: 0.9rem;
+}
+
+:global(html[data-theme='dark']) .panel {
+  background: #111827;
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .dayArrow,
+:global(html[data-theme='dark']) .dayBtn,
+:global(html[data-theme='dark']) .calendarTrigger,
+:global(html[data-theme='dark']) .calendarPopover,
+:global(html[data-theme='dark']) .searchInput,
+:global(html[data-theme='dark']) .searchSelect,
+:global(html[data-theme='dark']) .filterResetBtn,
+:global(html[data-theme='dark']) .moreButton {
+  border-color: #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .searchInput::placeholder {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .searchSelect:disabled {
+  background: #1f2937;
+  color: #94a3b8;
+  opacity: 1;
+}
+
+:global(html[data-theme='dark']) .dayArrow:hover,
+:global(html[data-theme='dark']) .calendarTrigger:hover,
+:global(html[data-theme='dark']) .filterResetBtn:hover,
+:global(html[data-theme='dark']) .moreButton:hover {
+  border-color: #475569;
+  background: #1e293b;
+}
+
+:global(html[data-theme='dark']) .dayBtnActive,
+:global(html[data-theme='dark']) .monthCellActive {
+  border-color: #06b6d4;
+  background: #06b6d4;
+  color: #ffffff;
+}
+
+:global(html[data-theme='dark']) .dayBtnSun span,
+:global(html[data-theme='dark']) .dayBtnSun strong,
+:global(html[data-theme='dark']) .monthCellSun:not(.monthCellActive) {
+  color: #fb7185;
+}
+
+:global(html[data-theme='dark']) .monthTitle,
+:global(html[data-theme='dark']) .monthCell,
+:global(html[data-theme='dark']) .currentDate,
+:global(html[data-theme='dark']) .cardText h3 {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .monthWeekday,
+:global(html[data-theme='dark']) .filterBox summary,
+:global(html[data-theme='dark']) .status,
+:global(html[data-theme='dark']) .cardText p,
+:global(html[data-theme='dark']) .place {
+  color: #94a3b8 !important;
+}
+
+:global(html[data-theme='dark']) .monthCell:hover:not(.monthCellEmpty):not(.monthCellActive) {
+  background: #1e293b;
+}
+
+:global(html[data-theme='dark']) .filterBox,
+:global(html[data-theme='dark']) .eventCard {
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .filterModeBadge {
+  border-color: rgba(103, 232, 249, 0.5);
+  background: rgba(8, 145, 178, 0.18);
+  color: #67e8f9;
+}
+
+:global(html[data-theme='dark']) .filterModeBadge:hover {
+  border-color: #67e8f9;
+  background: rgba(8, 145, 178, 0.28);
+}
+
+:global(html[data-theme='dark']) .searchModeNote,
+:global(html[data-theme='dark']) .cardLinks button,
+:global(html[data-theme='dark']) .cardLinks a {
+  color: #5eead4;
+}
+
+:global(html[data-theme='dark']) .cardThumb,
+:global(html[data-theme='dark']) .thumbFallback {
+  background: #0f172a;
+  color: #64748b;
+}
+
+:global(html[data-theme='dark']) .error {
+  color: #fca5a5;
+}
+
+@media (max-width: 960px) {
+  .dayRail {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .dayRailWrap {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .calendarField {
+    grid-column: 2 / span 1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 720px) {
+  .filterGrid,
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

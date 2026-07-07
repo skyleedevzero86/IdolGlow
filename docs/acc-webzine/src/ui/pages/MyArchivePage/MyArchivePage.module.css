@@ -1,0 +1,122 @@
+.flatToolbar {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.archivePanel {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.tabNav {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--spacing-lg);
+}
+
+.tabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-md) 0 0;
+}
+
+.tab,
+.tabActive {
+  display: inline-block;
+  padding: 0.35rem 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover,
+.tab:focus-visible {
+  color: var(--color-text-primary);
+}
+
+.tabActive {
+  color: var(--color-accent, #c41e3a);
+  border-bottom-color: var(--color-accent, #c41e3a);
+}
+
+.panelBody {
+  padding: var(--spacing-lg);
+}
+
+.panelTitle {
+  margin: 0 0 var(--spacing-md);
+  color: #0f172a;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.archiveEmpty {
+  min-height: 14rem;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.placeholder {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+:global(html[data-theme='dark']) .flatToolbar,
+:global(html[data-theme='dark']) .archivePanel {
+  background: #111827;
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .tabNav {
+  border-bottom-color: #334155;
+}
+
+:global(html[data-theme='dark']) .tab {
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .tab:hover,
+:global(html[data-theme='dark']) .tab:focus-visible {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .tabActive {
+  color: #ff4057;
+  border-bottom-color: #ff4057;
+}
+
+:global(html[data-theme='dark']) .panelTitle {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .archiveEmpty {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+:global(html[data-theme='dark']) .placeholder {
+  color: #cbd5e1;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
