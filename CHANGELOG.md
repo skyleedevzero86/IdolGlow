@@ -35,6 +35,30 @@
 - MinIO 버킷 공개 정책 JSON 반환 시 문자열이 깨지던 문제를 수정했습니다.
 - 웹진 모듈 구조 변경 후 백엔드 `classes` 컴파일이 통과하도록 정리했습니다.
 
+## [0.6.1] - 2026-07-08
+
+### Added
+
+- Next.js 기반 `frontend` 프로젝트를 저장소에 포함했습니다.
+
+### Changed
+
+- Jenkins Telegram 알림에 릴리즈 버전·프론트 경로를 표시하도록 개선했습니다.
+- release-please manifest·`version.txt`·Git 태그 버전을 `v0.6.1` 기준으로 동기화했습니다.
+- 프론트엔드 CI 빌드를 위해 `pnpm-lock.yaml` 추적 및 TypeScript 설정을 정리했습니다.
+
+## [0.6.0] - 2026-06-20
+
+### Changed
+
+- Jenkins 파이프라인 및 Gradle 캐시 경로를 정리했습니다.
+
+## [0.5.0] - 2026-06-20
+
+### Changed
+
+- 백엔드 빌드·배포 파이프라인 안정화 작업을 반영했습니다.
+
 ## [2026-03-28]
 
 ### Fixed

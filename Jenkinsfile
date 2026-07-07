@@ -15,6 +15,11 @@ def extractSectionByName(String changelog, String sectionName) {
 }
 
 def extractLatestReleaseSection(String changelog) {
+    def semverMatcher = (changelog =~ /(?m)^## \[(\d+\.\d+\.\d+)\]/)
+    if (semverMatcher.find()) {
+        return extractSectionByName(changelog, semverMatcher.group(1))
+    }
+
     def matcher = (changelog =~ /(?m)^## \[([^\]]+)\]/)
     while (matcher.find()) {
         def sectionName = matcher.group(1)
@@ -76,6 +81,113 @@ def resolveGitTag() {
         script: '@git describe --tags --exact-match 2>nul',
         returnStdout: true
     ).trim()
+}
+
+def resolveLatestGitTag() {
+    if (isUnix()) {
+        return sh(
+            script: 'git describe --tags --abbrev=0 2>/dev/null || true',
+            returnStdout: true
+        ).trim()
+    }
+
+    return bat(
+        script: '@git describe --tags --abbrev=0 2>nul',
+        returnStdout: true
+    ).trim()
+}
+
+def resolveReleasePleaseManifestVersion() {
+    if (!fileExists('.github/.release-please-manifest.json')) {
+        return ''
+    }
+
+    def manifestText = readFile(file: '.github/.release-please-manifest.json', encoding: 'UTF-8')
+    def matcher = (manifestText =~ /"\.":\s*"([^"]+)"/)
+    return matcher.find() ? matcher.group(1).trim() : ''
+}
+
+def normalizeReleaseVersionLabel(String version) {
+    if (!version?.trim()) {
+        return ''
+    }
+
+    def normalized = version.trim()
+    return normalized.startsWith('v') ? normalized : "v${normalized}"
+}
+
+def resolveReleaseVersionForDisplay() {
+    def exactTag = env.RELEASE_TAG?.trim()
+    if (exactTag) {
+        return normalizeReleaseVersionLabel(exactTag)
+    }
+
+    def manifestVersion = resolveReleasePleaseManifestVersion()
+    if (manifestVersion) {
+        return normalizeReleaseVersionLabel(manifestVersion)
+    }
+
+    if (fileExists('version.txt')) {
+        def versionFile = readFile(file: 'version.txt', encoding: 'UTF-8').trim()
+        if (versionFile) {
+            return normalizeReleaseVersionLabel(versionFile)
+        }
+    }
+
+    return normalizeReleaseVersionLabel(resolveLatestGitTag())
+}
+
+def readPipelineContextProperty(String key) {
+    if (!fileExists('pipeline-context.properties')) {
+        return ''
+    }
+
+    def lines = readFile(file: 'pipeline-context.properties', encoding: 'UTF-8').split('\n')
+    for (line in lines) {
+        if (line.startsWith("${key}=")) {
+            return line.substring(key.length() + 1).trim()
+        }
+    }
+
+    return ''
+}
+
+def resolveFrontendDirForDisplay() {
+    def frontendDir = env.FRONTEND_DIR?.trim()
+    if (frontendDir) {
+        return frontendDir
+    }
+
+    frontendDir = readPipelineContextProperty('FRONTEND_DIR')
+    if (frontendDir) {
+        return frontendDir
+    }
+
+    return resolveFrontendDir()
+}
+
+def refreshPipelineContextFile() {
+    def frontendDir = resolveFrontendDir()
+    if (frontendDir) {
+        env.FRONTEND_DIR = frontendDir
+    }
+
+    def exactTag = resolveGitTag()
+    if (exactTag) {
+        env.RELEASE_TAG = exactTag
+    }
+
+    env.RELEASE_VERSION = resolveReleaseVersionForDisplay()
+
+    writeFile(
+        file: 'pipeline-context.properties',
+        text: """FRONTEND_DIR=${frontendDir}
+RELEASE_TAG=${env.RELEASE_TAG ?: ''}
+RELEASE_VERSION=${env.RELEASE_VERSION ?: ''}
+EFFECTIVE_CHANGELOG_SECTION=${env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam()}
+""",
+        encoding: 'UTF-8'
+    )
 }
 
 def resolveChangelogSectionFromTag(String tag) {
@@ -358,26 +470,28 @@ def resolveFailedStageName() {
         return stageName
     }
 
-    try {
-        def logText = currentBuild.rawBuild.getLog(8000).join('\n')
-        def matchers = [
-            (logText =~ /Stage "(.+?)" failed/),
-            (logText =~ /Stage '(.+?)' failed/),
-        ]
-        for (matcher in matchers) {
-            if (matcher.find()) {
-                return matcher.group(1)
-            }
-        }
-    } catch (Exception ignored) {
-        echo "실패 stage 로그 파싱 생략: ${ignored.message}"
+    if (fileExists('.pipeline-failed-stage')) {
+        return readFile(file: '.pipeline-failed-stage', encoding: 'UTF-8').trim()
     }
 
     return '알 수 없음'
 }
 
+def captureFailureStageIfMissing() {
+    if (env.PIPELINE_FAILED_STAGE?.trim()) {
+        return
+    }
+
+    def stageName = env.STAGE_NAME?.trim()
+    if (stageName && stageName != 'Declarative: Post Actions') {
+        env.PIPELINE_FAILED_STAGE = stageName
+        writeFile file: '.pipeline-failed-stage', text: stageName, encoding: 'UTF-8'
+    }
+}
+
 def markPipelineFailed(String stageName) {
     env.PIPELINE_FAILED_STAGE = stageName
+    writeFile file: '.pipeline-failed-stage', text: stageName, encoding: 'UTF-8'
 }
 
 def backendGradleFlags() {
@@ -501,9 +615,10 @@ def resolveFailureGuide(String failedStage) {
 
 def buildTelegramContextBlock(boolean includeReleaseNotes = false) {
     def branch = escapeTelegramHtml(resolveGitBranch())
-    def tag = escapeTelegramHtml(env.RELEASE_TAG ?: '(없음)')
+    def tag = escapeTelegramHtml(resolveReleaseVersionForDisplay() ?: '(없음)')
     def section = escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam())
-    def frontend = escapeTelegramHtml(env.FRONTEND_DIR ?: '(없음)')
+    def frontendDir = resolveFrontendDirForDisplay()
+    def frontend = escapeTelegramHtml(frontendDir ?: '(없음)')
     def commit = resolveGitCommitShort()
     def notesBlock = ''
 
@@ -513,7 +628,7 @@ def buildTelegramContextBlock(boolean includeReleaseNotes = false) {
 
     return """<b>📎 참고</b>
 환경: <code>${escapeTelegramHtml(resolveDeployEnvParam())}</code> | 브랜치: <code>${branch}</code>
-커밋: <code>${commit}</code> | 태그: <code>${tag}</code>
+커밋: <code>${commit}</code> | 릴리즈: <code>${tag}</code>
 CHANGELOG: <code>${section}</code> | 프론트: <code>${frontend}</code>
 <a href="${escapeTelegramHtmlAttr(env.BUILD_URL)}">상세 로그 (#${env.BUILD_NUMBER})</a>${notesBlock}"""
 }
@@ -530,17 +645,18 @@ def notifyTelegramSummary(String outcome) {
             def healthStatus = env.HEALTH_CHECK_TARGET?.trim()
                 ? "헬스체크: <code>${escapeTelegramHtml(env.HEALTH_CHECK_TARGET)}</code> 통과"
                 : '헬스체크: 배포 산출물 검증 통과'
-            def versionLine = env.RELEASE_TAG?.trim()
-                ? "버전: <code>${escapeTelegramHtml(env.RELEASE_TAG)}</code>"
+            def versionLine = resolveReleaseVersionForDisplay()?.trim()
+                ? "릴리즈: <code>${escapeTelegramHtml(resolveReleaseVersionForDisplay())}</code>"
                 : "CHANGELOG: <code>${escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam())}</code>"
 
+            def frontendDir = resolveFrontendDirForDisplay()
             message = """✅ <b>IdolGlow 배포 완료</b>
 
 <b>📋 요약</b>
 <code>${escapeTelegramHtml(resolveDeployEnvParam())}</code> 환경에 새 버전이 반영되었습니다.
 
 ${versionLine}
-백엔드: ${params.RUN_BACKEND_BUILD ? '빌드 완료' : '건너뜀'} | 프론트: ${params.RUN_FRONTEND_BUILD && env.FRONTEND_DIR?.trim() ? '빌드 완료' : '건너뜀'}
+백엔드: ${params.RUN_BACKEND_BUILD ? '빌드 완료' : '건너뜀'} | 프론트: ${params.RUN_FRONTEND_BUILD && frontendDir ? "빌드 완료 (${frontendDir})" : '건너뜀'}
 ${healthStatus}
 
 ${buildTelegramContextBlock(true)}
@@ -662,6 +778,7 @@ pipeline {
         FRONTEND_DIR = ''
         REPO_ROOT = ''
         RELEASE_TAG = ''
+        RELEASE_VERSION = ''
         EFFECTIVE_CHANGELOG_SECTION = ''
         HEALTH_CHECK_TARGET = ''
         RESOLVED_GIT_BRANCH = ''
@@ -679,8 +796,10 @@ pipeline {
                     env.FRONTEND_DIR = resolveFrontendDir()
                     env.RESOLVED_GIT_BRANCH = normalizeBranchName(resolveGitBranchFromGit())
                     env.RELEASE_TAG = resolveGitTag()
+                    refreshPipelineContextFile()
 
                     echo "Git 브랜치: ${resolveGitBranch()} (BRANCH_NAME=${env.BRANCH_NAME ?: '-'}, GIT_BRANCH=${env.GIT_BRANCH ?: '-'}, git=${env.RESOLVED_GIT_BRANCH ?: '-'})"
+                    echo "릴리즈 버전: ${env.RELEASE_VERSION ?: '(없음)'} | 프론트: ${env.FRONTEND_DIR ?: '(없음)'}"
                     if (env.RELEASE_TAG) {
                         echo "Git 태그 감지: ${env.RELEASE_TAG}"
                     } else {
@@ -704,12 +823,16 @@ pipeline {
                     }
 
                     if (env.RELEASE_TAG) {
-                        env.EFFECTIVE_CHANGELOG_SECTION = resolveChangelogSectionFromTag(env.RELEASE_TAG)
-                        echo "CHANGELOG 섹션을 태그 기준으로 사용합니다: ${env.EFFECTIVE_CHANGELOG_SECTION}"
+                        def changelogSection = resolveChangelogSectionFromTag(env.RELEASE_TAG)
+                        env.EFFECTIVE_CHANGELOG_SECTION = changelogSection
+                        echo "CHANGELOG 섹션을 태그 기준으로 사용합니다: ${changelogSection}"
                     } else {
-                        env.EFFECTIVE_CHANGELOG_SECTION = resolveChangelogSectionParam()
-                        echo "CHANGELOG 섹션을 파라미터 기준으로 사용합니다: ${env.EFFECTIVE_CHANGELOG_SECTION}"
+                        def changelogSection = resolveChangelogSectionParam()
+                        env.EFFECTIVE_CHANGELOG_SECTION = changelogSection
+                        echo "CHANGELOG 섹션을 파라미터 기준으로 사용합니다: ${changelogSection}"
                     }
+
+                    refreshPipelineContextFile()
                 }
             }
         }
@@ -923,8 +1046,14 @@ pipeline {
     }
 
     post {
+        failure {
+            script {
+                captureFailureStageIfMissing()
+            }
+        }
         always {
             script {
+                refreshPipelineContextFile()
                 def result = currentBuild.currentResult
                 if (result == 'SUCCESS') {
                     notifyTelegramSummary('success')
