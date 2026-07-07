@@ -1,0 +1,132 @@
+/**
+ *  — 헤더 하단 인라인 검색 (srch_form_wrap / total_search_box)
+ */
+
+.wrap {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.totalSearchBox {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.form {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 52px 0 16px;
+  font-size: var(--font-size-base);
+  color: #111;
+  background: #fff;
+  border: 1px solid #111;
+  border-radius: 0;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #999;
+}
+
+.input:focus {
+  border-color: #0d47a1;
+  box-shadow: 0 0 0 1px #0d47a1;
+}
+
+.submit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #0d47a1;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.submit:hover,
+.submit:focus-visible {
+  opacity: 0.85;
+}
+
+.submit svg {
+  width: 22px;
+  height: 22px;
+}
+
+.popularWord {
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.popularWord dt {
+  margin: 0 0 10px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: #0d47a1;
+}
+
+.popularWord dd {
+  margin: 0;
+}
+
+.wordList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wordLink {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: #333;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+}
+
+.wordLink:hover,
+.wordLink:focus-visible {
+  color: #0d47a1;
+  text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+  .wrap {
+    padding: 0 var(--spacing-md);
+  }
+}
