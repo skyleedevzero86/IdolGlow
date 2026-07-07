@@ -48,7 +48,7 @@ def resolveFrontendDir() {
 }
 
 def installFrontendDependencies(String frontendDir = 'frontend') {
-    if (fileExists("${frontendDir}/pnpm-lock.yaml")) {
+    if (fileExists('pnpm-lock.yaml')) {
         if (isUnix()) {
             sh 'pnpm install --frozen-lockfile'
         } else {
@@ -922,7 +922,30 @@ pipeline {
             }
             steps {
                 script {
-                    if (!env.FRONTEND_DIR?.trim()) {
+                    if (isUnix()) {
+                        sh '''
+                            echo "=== frontend debug ==="
+                            pwd
+                            ls -la
+                            ls -la frontend || true
+                            test -f frontend/package.json && echo "frontend/package.json OK" || echo "frontend/package.json MISSING"
+                            test -f frontend/pnpm-lock.yaml && echo "frontend/pnpm-lock.yaml OK" || echo "frontend/pnpm-lock.yaml MISSING"
+                        '''
+                    } else {
+                        bat '''
+                            echo === frontend debug ===
+                            cd
+                            dir
+                            if exist frontend\\package.json (echo frontend/package.json OK) else (echo frontend/package.json MISSING)
+                            if exist frontend\\pnpm-lock.yaml (echo frontend/pnpm-lock.yaml OK) else (echo frontend/pnpm-lock.yaml MISSING)
+                        '''
+                    }
+
+                    def frontendDir = resolveFrontendDir()
+                    env.FRONTEND_DIR = frontendDir
+                    refreshPipelineContextFile()
+
+                    if (!frontendDir?.trim()) {
                         markPipelineFailed('프론트엔드 빌드')
                         error(
                             'frontend/package.json을 찾을 수 없습니다. ' +
@@ -930,21 +953,21 @@ pipeline {
                         )
                     }
 
-                    dir("${env.FRONTEND_DIR}") {
+                    dir(frontendDir) {
                         try {
                             if (isUnix()) {
                                 sh 'node -v'
                                 sh 'corepack enable'
                                 sh 'corepack prepare pnpm@9.15.4 --activate || true'
                                 sh 'pnpm -v'
-                                installFrontendDependencies(env.FRONTEND_DIR)
+                                installFrontendDependencies(frontendDir)
                                 sh 'pnpm build'
                             } else {
                                 bat 'node -v'
                                 bat 'corepack enable'
                                 bat 'corepack prepare pnpm@9.15.4 --activate || true'
                                 bat 'pnpm -v'
-                                installFrontendDependencies(env.FRONTEND_DIR)
+                                installFrontendDependencies(frontendDir)
                                 bat 'pnpm build'
                             }
                         } catch (Exception frontendBuildError) {
