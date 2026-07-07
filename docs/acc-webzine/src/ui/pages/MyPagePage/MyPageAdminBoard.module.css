@@ -1,0 +1,346 @@
+@import '../../../../../samples/portal-admin-form.css';
+
+/* 관리자 /mypage 대시보드: 그림자·큰 라운드·그라데이션·알록달록 배경 없음 */
+.dashboard {
+  --mypage-ink: #1a1a2e;
+  --mypage-muted: #5c5c76;
+  --mypage-border: var(--portal-admin-sheet-border, #e2e4eb);
+  --mypage-surface: var(--portal-admin-sheet-bg, #ffffff);
+  --mypage-subtle: #f6f6f8;
+  display: grid;
+  gap: 16px;
+}
+
+:global(html[data-theme='dark']) .dashboard {
+  --mypage-ink: #f8fafc;
+  --mypage-muted: #94a3b8;
+  --mypage-border: #334155;
+  --mypage-surface: #0f172a;
+  --mypage-subtle: #111827;
+}
+
+.heroCard {
+  position: relative;
+  overflow: visible;
+  border-radius: 0 !important;
+  border: 1px solid var(--portal-admin-sheet-border, #d9dce3) !important;
+  background-color: var(--portal-admin-sheet-bg, #ffffff) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.heroCard::after {
+  content: none;
+}
+
+.heroHeader {
+  position: relative;
+  z-index: 1;
+}
+
+.heroTitle,
+.heroSubtitle,
+.heroStatus,
+.heroStatValue,
+.heroStatLabel {
+  color: var(--mypage-ink) !important;
+}
+
+.heroTitle {
+  font-size: clamp(1.5rem, 3vw, 2rem) !important;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  color: var(--mypage-muted) !important;
+  opacity: 1;
+}
+
+.heroStatus {
+  position: relative;
+  z-index: 1;
+  color: var(--mypage-muted) !important;
+  opacity: 1;
+}
+
+.heroStats {
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.heroStatCard {
+  border: 1px solid var(--mypage-border) !important;
+  background: var(--mypage-subtle) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+}
+
+.heroStatLabel {
+  color: var(--mypage-muted) !important;
+  opacity: 1;
+}
+
+.heroStatValue {
+  font-size: 1.35rem !important;
+  color: var(--mypage-ink) !important;
+}
+
+.topGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.9fr);
+  gap: 16px;
+}
+
+.panel,
+.shortcutCard,
+.guideCard,
+.infoCard {
+  position: relative;
+  overflow: visible;
+  border-radius: 0;
+  border: 1px solid var(--mypage-border);
+  background: var(--mypage-surface);
+  box-shadow: none;
+}
+
+.panel {
+  padding: 18px;
+}
+
+.panelHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.panelTitle,
+.shortcutTitle,
+.guideTitle,
+.infoTitle {
+  margin: 0;
+  color: var(--mypage-ink);
+  line-height: 1.2;
+}
+
+.panelTitle {
+  font-size: 1.05rem;
+}
+
+.panelDescription,
+.shortcutDescription,
+.guideDescription,
+.infoDescription {
+  margin: 8px 0 0;
+  color: var(--mypage-muted);
+  line-height: 1.55;
+}
+
+.panelMeta {
+  padding: 6px 10px;
+  border-radius: 0;
+  background: var(--mypage-subtle);
+  color: var(--mypage-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--mypage-border);
+}
+
+.shortcutGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.shortcutCard {
+  padding: 16px;
+  min-height: 0;
+}
+
+.shortcutTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shortcutTitle {
+  font-size: 0.98rem;
+}
+
+.shortcutButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 2.1rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0;
+  background: var(--mypage-surface);
+  border: 1px solid var(--mypage-border);
+  color: var(--mypage-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.shortcutButton:hover {
+  text-decoration: none;
+  background: var(--mypage-subtle);
+}
+
+:global(html[data-theme='dark']) .shortcutButton {
+  color: #e2e8f0;
+}
+
+.shortcutDescription {
+  margin-top: 12px;
+}
+
+.summaryPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.summaryBoard {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.summaryMetrics,
+.guideList,
+.infoGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.summaryMetrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.summaryMetricCard {
+  padding: 16px;
+  border-radius: 0;
+  background: var(--mypage-subtle);
+  border: 1px solid var(--mypage-border);
+  box-shadow: none;
+}
+
+.summaryMetricLabel {
+  display: block;
+  color: var(--mypage-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.summaryMetricValue {
+  display: block;
+  margin-top: 8px;
+  color: var(--mypage-ink);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.summaryMetricHelper {
+  margin: 8px 0 0;
+  color: var(--mypage-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.guideCard,
+.infoCard {
+  padding: 16px;
+}
+
+.guideTitle,
+.infoTitle {
+  font-size: 0.98rem;
+}
+
+.bottomPanel {
+  padding-top: 18px;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.infoBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 0;
+  background: var(--mypage-subtle);
+  color: var(--mypage-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--mypage-border);
+}
+
+:global(html[data-theme='dark']) .heroCard,
+:global(html[data-theme='dark']) .panel,
+:global(html[data-theme='dark']) .shortcutCard,
+:global(html[data-theme='dark']) .guideCard,
+:global(html[data-theme='dark']) .infoCard,
+:global(html[data-theme='dark']) .summaryMetricCard,
+:global(html[data-theme='dark']) .heroStatCard,
+:global(html[data-theme='dark']) .panelMeta,
+:global(html[data-theme='dark']) .infoBadge {
+  border-color: #334155 !important;
+  background: #0f172a !important;
+}
+
+:global(html[data-theme='dark']) .heroStatCard,
+:global(html[data-theme='dark']) .summaryMetricCard,
+:global(html[data-theme='dark']) .panelMeta,
+:global(html[data-theme='dark']) .infoBadge {
+  background: #111827 !important;
+}
+
+.infoGrid {
+  position: relative;
+  z-index: 1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+@media (max-width: 1180px) {
+  .topGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .heroStats,
+  .shortcutGrid,
+  .summaryMetrics,
+  .infoGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .panelHeader,
+  .shortcutTop {
+    flex-direction: column;
+  }
+
+  .shortcutButton {
+    width: 100%;
+  }
+}

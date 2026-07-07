@@ -1,0 +1,140 @@
+.main {
+  width: 100%;
+  padding: 2rem 0;
+}
+
+.section {
+  width: 100%;
+}
+
+.wrap {
+  width: min(1100px, 100% - 2.25rem);
+  margin: 0 auto;
+}
+
+.articleSign {
+  text-align: center;
+}
+
+.articleSign p {
+  margin: 0;
+  color: #2d5bff;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0.75rem 0 0;
+  color: #0f172a;
+  font-size: 3.3rem;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.content {
+  margin-top: 2rem;
+  border-top: 1px solid #98a2b3;
+  border-bottom: 1px solid #98a2b3;
+  padding: 2.2rem 0;
+}
+
+.markdown {
+  font-size: 1.25rem;
+  color: #0f172a;
+  line-height: 1.8;
+}
+
+.markdown :global(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown :global(p),
+.markdown :global(div) {
+  margin: 0.5rem 0;
+}
+
+.tagRow {
+  margin-top: 1.75rem;
+  text-align: center;
+  color: #0f172a;
+}
+
+.tag {
+  display: inline-block;
+  margin: 0 0.35rem;
+}
+
+.articleBottom {
+  padding: 1.45rem 0 0.35rem;
+  display: flex;
+  justify-content: center;
+}
+
+.backList a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 8rem;
+  height: 2.85rem;
+  border-radius: 0.6rem;
+  background: #000000;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+:global(html[data-theme='dark']) .main,
+:global(body[data-theme='dark']) .main,
+:global(html.dark) .main,
+:global(body.dark) .main,
+:global(html.dark-mode) .main,
+:global(body.dark-mode) .main {
+  background: #0f1117;
+}
+
+:global(html[data-theme='dark']) .title,
+:global(body[data-theme='dark']) .title,
+:global(html.dark) .title,
+:global(body.dark) .title,
+:global(html.dark-mode) .title,
+:global(body.dark-mode) .title {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .content,
+:global(body[data-theme='dark']) .content,
+:global(html.dark) .content,
+:global(body.dark) .content,
+:global(html.dark-mode) .content,
+:global(body.dark-mode) .content {
+  border-top-color: #334155;
+  border-bottom-color: #334155;
+}
+
+:global(html[data-theme='dark']) .markdown,
+:global(body[data-theme='dark']) .markdown,
+:global(html.dark) .markdown,
+:global(body.dark) .markdown,
+:global(html.dark-mode) .markdown,
+:global(body.dark-mode) .markdown {
+  color: #d0d7e2;
+}
+
+:global(html[data-theme='dark']) .markdown :global(a),
+:global(body[data-theme='dark']) .markdown :global(a),
+:global(html.dark) .markdown :global(a),
+:global(body.dark) .markdown :global(a),
+:global(html.dark-mode) .markdown :global(a),
+:global(body.dark-mode) .markdown :global(a) {
+  color: #93c5fd;
+}
+
+:global(html[data-theme='dark']) .tagRow,
+:global(body[data-theme='dark']) .tagRow,
+:global(html.dark) .tagRow,
+:global(body.dark) .tagRow,
+:global(html.dark-mode) .tagRow,
+:global(body.dark-mode) .tagRow {
+  color: #cbd5e1;
+}

@@ -15,14 +15,16 @@
 #Rapid Application Development File
 rad.json
 *.sh
+!infra/jenkins-local/*.sh
 *.ps1
+!infra/jenkins-local/*.ps1
 #Translation Base-file
 *.g.xlf
 #License-file
 *.flf
 #Test results file
 TestResults.xml
-docs/
+docs/*
 frontend/
 .run/
 infra/jenkins-local/.env
@@ -32,7 +34,7 @@ infra/jenkins-local/start-jenkins.ps1
 infra/up.ps1
 infra/up.sh
 .idea/
-infra/jenkins-local/deploy-local.ps1
-infra/jenkins-local/deploy-local.sh
-backend/.editorconfig
-backend/config/
+backend/gradle/*
+!backend/gradle/wrapper/
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/gradle/wrapper/gradle-wrapper.properties
