@@ -571,7 +571,7 @@ pipeline {
     }
 
     environment {
-        GRADLE_USER_HOME = "${env.JENKINS_HOME}/.gradle-user"
+        GRADLE_USER_HOME = "/var/jenkins_home/.gradle"
         RELEASE_NOTES = ''
         FRONTEND_DIR = ''
         REPO_ROOT = ''
