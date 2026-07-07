@@ -1,0 +1,759 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:AdminExportService.kt:AdminExportService$f.contains(',') || f.contains('"') || f.contains('\n') || f.contains('\r')</ID>
+    <ID>ComplexCondition:ProductDiscoveryService.kt:ProductDiscoveryService$survey != null &amp;&amp; visitStart != null &amp;&amp; visitEnd != null &amp;&amp; tripDayCount &gt; 0</ID>
+    <ID>ComplexCondition:SignupController.kt:SignupController$(scheme == "http" &amp;&amp; port == 80) || (scheme == "https" &amp;&amp; port == 443)</ID>
+    <ID>ComplexCondition:TourFestivalApiClient.kt:CodeItem$noLcls &amp;&amp; effectiveRegnCd != null &amp;&amp; trimmedCode != null &amp;&amp; trimmedCode != effectiveRegnCd</ID>
+    <ID>CyclomaticComplexMethod:ClasspathSubwayPageEnrichmentAdapter.kt:ClasspathSubwayPageEnrichmentAdapter$private fun build( def: DefaultBlockDto, ov: OverrideBlockDto?, stationName: String, ): SubwayPageEnrichment</ID>
+    <ID>CyclomaticComplexMethod:GlowWeatherQueryService.kt:GlowWeatherQueryService$private fun buildRecommendations( region: GlowWeatherRegion, current: CurrentWeatherResponse, forecast: List&lt;GlowWeatherForecastDay&gt;, monthlySummary: GlowWeatherMonthlySummary, outlookSummary: String?, ): List&lt;GlowWeatherRecommendation&gt;</ID>
+    <ID>CyclomaticComplexMethod:GlowWeatherQueryService.kt:GlowWeatherQueryService$private fun buildWindGuide( region: GlowWeatherRegion, now: ZonedDateTime, current: CurrentWeatherResponse, forecast: List&lt;GlowWeatherForecastDay&gt;, ): GlowWeatherWindGuide</ID>
+    <ID>CyclomaticComplexMethod:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$override fun fetchMidLandForecast( regionId: String, tmFc: LocalDateTime, ): MidLandForecastSnapshot?</ID>
+    <ID>CyclomaticComplexMethod:ProductDiscoveryService.kt:ProductDiscoveryService$fun findRecommendedProducts( userId: Long, size: Int, ): List&lt;ProductRankingResponse&gt;</ID>
+    <ID>CyclomaticComplexMethod:TossWebhookService.kt:TossWebhookService$fun handleSignedPayload(rawBody: String)</ID>
+    <ID>CyclomaticComplexMethod:TourFestivalApiClient.kt:CodeItem$fun toDomain(parentRegnCd: String? = null): CodeEntry</ID>
+    <ID>CyclomaticComplexMethod:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
+    <ID>CyclomaticComplexMethod:UserSurveyFormService.kt:UserSurveyFormService$fun submitCurrentForm( userId: Long, command: SubmitSurveyResponseCommand, ): SurveySubmissionResponse</ID>
+    <ID>FunctionNaming:ProductReviewReportJpaRepository.kt:ProductReviewReportJpaRepository$fun existsByReview_IdAndReporterUserId( reviewId: Long, reporterUserId: Long, ): Boolean</ID>
+    <ID>FunctionNaming:WebzineArticleJpaRepository.kt:WebzineArticleJpaRepository$fun existsByIssue_IdAndSlug( issueId: Long, slug: String, ): Boolean</ID>
+    <ID>FunctionNaming:WebzineArticleJpaRepository.kt:WebzineArticleJpaRepository$fun findByIssue_IdAndSlug( issueId: Long, slug: String, ): WebzineArticle?</ID>
+    <ID>FunctionOnlyReturningConstant:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$private fun pgSearchPredicate(): String</ID>
+    <ID>FunctionOnlyReturningConstant:ProductGraphQlController.kt:ProductGraphQlController$@QueryMapping fun health(): String</ID>
+    <ID>LargeClass:EventInfoController.kt:EventInfoController</ID>
+    <ID>LongMethod:AdminServerStatusService.kt:AdminServerStatusService$fun getServerStatus(): AdminServerStatusResult</ID>
+    <ID>LongMethod:AdminServerStatusService.kt:AdminServerStatusService$private fun minioStatus(): AdminInfrastructureStatusResult</ID>
+    <ID>LongMethod:AnthropicSubwayStationSummaryClient.kt:AnthropicSubwayStationSummaryClient$fun generate( lineId: String, lineName: String, stationCd: String, stationDisplayName: String, ): LlmSubwayStationSummary?</ID>
+    <ID>LongMethod:AnthropicSurveyRecommendationClient.kt:AnthropicSurveyRecommendationClient$fun generate( titleFallback: String, subtitleFallback: String, narrativeFallback: String, answerHighlights: List&lt;String&gt;, attractions: List&lt;TourAttraction&gt;, ): LlmSurveyRecommendation?</ID>
+    <ID>LongMethod:GlowWeatherQueryService.kt:GlowWeatherQueryService$fun dashboard(regionId: String?): GlowWeatherDashboardResponse</ID>
+    <ID>LongMethod:GlowWeatherQueryService.kt:GlowWeatherQueryService$private fun buildRecommendations( region: GlowWeatherRegion, current: CurrentWeatherResponse, forecast: List&lt;GlowWeatherForecastDay&gt;, monthlySummary: GlowWeatherMonthlySummary, outlookSummary: String?, ): List&lt;GlowWeatherRecommendation&gt;</ID>
+    <ID>LongMethod:GlowWeatherQueryService.kt:GlowWeatherQueryService$private fun buildWindGuide( region: GlowWeatherRegion, now: ZonedDateTime, current: CurrentWeatherResponse, forecast: List&lt;GlowWeatherForecastDay&gt;, ): GlowWeatherWindGuide</ID>
+    <ID>LongMethod:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$private fun fetchByUrl(url: String): List&lt;DepartureCongestion&gt;</ID>
+    <ID>LongMethod:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$@Transactional override fun run(args: ApplicationArguments)</ID>
+    <ID>LongMethod:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$@Transactional override fun run(args: ApplicationArguments)</ID>
+    <ID>LongMethod:OpenAiSubwayStationSummaryClient.kt:OpenAiSubwayStationSummaryClient$fun generate( lineId: String, lineName: String, stationCd: String, stationDisplayName: String, ): LlmSubwayStationSummary?</ID>
+    <ID>LongMethod:OpenAiSurveyRecommendationClient.kt:OpenAiSurveyRecommendationClient$fun generate( titleFallback: String, subtitleFallback: String, narrativeFallback: String, answerHighlights: List&lt;String&gt;, attractions: List&lt;TourAttraction&gt;, ): LlmSurveyRecommendation?</ID>
+    <ID>LongMethod:PaymentDocumentService.kt:PaymentDocumentService$fun exportPaymentsXlsx(payments: List&lt;Payment&gt;): ByteArray</ID>
+    <ID>LongMethod:PaymentRefundService.kt:PaymentRefundService$fun refundBeforeReservationCancel( payment: Payment, reservation: Reservation, cancelReason: String, requestedBy: RefundRequestedBy, )</ID>
+    <ID>LongMethod:ProductDiscoveryQueryRepository.kt:ProductDiscoveryQueryRepository$fun findPersonalizedCandidateProductIds( signalTags: List&lt;String&gt;, visitStart: LocalDate?, visitEnd: LocalDate?, placeKeywords: List&lt;String&gt;, now: LocalDateTime, limit: Int, ): List&lt;Long&gt;</ID>
+    <ID>LongMethod:ProductDiscoveryService.kt:ProductDiscoveryService$fun findRecommendedProducts( userId: Long, size: Int, ): List&lt;ProductRankingResponse&gt;</ID>
+    <ID>LongMethod:ProductQueryRepository.kt:ProductQueryRepository$fun hydrateForBrowse( orderedIds: List&lt;Long&gt;, wishCounts: Map&lt;Long, Long&gt;, reviewMetrics: Map&lt;Long, ReviewMetricRow&gt;, nearLatitude: BigDecimal?, nearLongitude: BigDecimal?, ): List&lt;ProductPagingQueryResponse&gt;</ID>
+    <ID>LongMethod:ProductSearchQueryRepository.kt:ProductSearchQueryRepository$private fun filterWhereClause( c: ProductSearchCriteria, params: MutableMap&lt;String, Any&gt;, ): String</ID>
+    <ID>LongMethod:SeoulOpenapiSubwaySearchAdapter.kt:SeoulOpenapiSubwaySearchAdapter$override fun searchByStationName(stationName: String): List&lt;SubwayExternalSearchHit&gt;</ID>
+    <ID>LongMethod:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$fun composeNewsletter(event: NewsletterDispatchRequestedEvent): ComposedSubscriptionEmail</ID>
+    <ID>LongMethod:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$fun composeWebzineIssue(event: WebzineIssueDispatchRequestedEvent): ComposedSubscriptionEmail</ID>
+    <ID>LongMethod:SurveyRecommendationService.kt:SurveyRecommendationService$fun generate( userId: Long, submissionId: Long, useLlm: Boolean, ): SurveyRecommendationResponse</ID>
+    <ID>LongMethod:TossPaymentConfirmService.kt:TossPaymentConfirmService$fun confirm( userId: Long, paymentKey: String, orderId: String, amount: BigDecimal, idempotencyKey: String?, traceId: String?, ): Payment</ID>
+    <ID>LongMethod:TossWebhookService.kt:TossWebhookService$fun handleSignedPayload(rawBody: String)</ID>
+    <ID>LongMethod:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
+    <ID>LongMethod:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$@Transactional override fun run(args: ApplicationArguments)</ID>
+    <ID>LoopWithTooManyJumpStatements:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$for</ID>
+    <ID>LoopWithTooManyJumpStatements:SubwayQueryApplicationService.kt:SubwayQueryApplicationService$for</ID>
+    <ID>MagicNumber:AdminAuditService.kt:AdminAuditService$2000</ID>
+    <ID>MagicNumber:AdminEventService.kt:AdminEventService$1000</ID>
+    <ID>MagicNumber:AdminEventService.kt:AdminEventService$50</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$3</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$4</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$5</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$6</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$7</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$8</ID>
+    <ID>MagicNumber:AdminExportService.kt:AdminExportService$9</ID>
+    <ID>MagicNumber:AdminGemmaChatRequest.kt:AdminGemmaChatRequest$2048</ID>
+    <ID>MagicNumber:AdminGraphQlController.kt:AdminGraphQlController$100</ID>
+    <ID>MagicNumber:AdminGraphQlController.kt:AdminGraphQlController$50</ID>
+    <ID>MagicNumber:AdminIssueSummaryResponse.kt:AdminIssueSummaryResponse.Companion$6</ID>
+    <ID>MagicNumber:AdminOperationsAnalyticsService.kt:AdminOperationsAnalyticsService$3</ID>
+    <ID>MagicNumber:AdminOperationsController.kt:AdminOperationsController$23</ID>
+    <ID>MagicNumber:AdminOperationsController.kt:AdminOperationsController$59</ID>
+    <ID>MagicNumber:AdminOperationsController.kt:AdminOperationsController$999_000_000</ID>
+    <ID>MagicNumber:AdminPaymentRefundController.kt:AdminPaymentRefundController$200</ID>
+    <ID>MagicNumber:AdminProductReviewService.kt:AdminProductReviewService$50</ID>
+    <ID>MagicNumber:AdminReservationController.kt:AdminReservationController$100</ID>
+    <ID>MagicNumber:AdminReservationController.kt:AdminReservationController$50</ID>
+    <ID>MagicNumber:AdminServerStatusService.kt:AdminServerStatusService$100.0</ID>
+    <ID>MagicNumber:AdminSubscriptionOverviewResponseSupport.kt:7</ID>
+    <ID>MagicNumber:AdminUserService.kt:AdminUserService$20</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$100.0</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$1000</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$20</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$2500</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$30</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$40</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$4000</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$55.0</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$75.0</ID>
+    <ID>MagicNumber:AirportCrowdQueryService.kt:AirportCrowdQueryService$90.0</ID>
+    <ID>MagicNumber:AsyncConfig.kt:AsyncConfig$100</ID>
+    <ID>MagicNumber:AsyncConfig.kt:AsyncConfig$4</ID>
+    <ID>MagicNumber:AsyncConfig.kt:AsyncConfig$50</ID>
+    <ID>MagicNumber:AuthExceptionType.kt:AuthExceptionType.INVALID_AUTH_PRINCIPAL$401</ID>
+    <ID>MagicNumber:AuthExceptionType.kt:AuthExceptionType.INVALID_REFRESH_CSRF$403</ID>
+    <ID>MagicNumber:AuthExceptionType.kt:AuthExceptionType.INVALID_REFRESH_TOKEN$401</ID>
+    <ID>MagicNumber:AuthExceptionType.kt:AuthExceptionType.INVALID_TOKEN_TYPE$401</ID>
+    <ID>MagicNumber:AuthExceptionType.kt:AuthExceptionType.UNAUTHENTICATED$401</ID>
+    <ID>MagicNumber:AuthExceptionType.kt:AuthExceptionType.USER_NOT_FOUND$404</ID>
+    <ID>MagicNumber:AuthVerificationAuditService.kt:AuthVerificationAuditService$100</ID>
+    <ID>MagicNumber:AuthVerificationAuditService.kt:AuthVerificationAuditService$500</ID>
+    <ID>MagicNumber:AuthVerificationAuditService.kt:AuthVerificationAuditService$64</ID>
+    <ID>MagicNumber:AuthenticationService.kt:AuthenticationService$1000</ID>
+    <ID>MagicNumber:BnrAdminService.kt:BnrAdminService$100</ID>
+    <ID>MagicNumber:CreateProductCommand.kt:CreateProductCommand$16</ID>
+    <ID>MagicNumber:CreateProductCommand.kt:CreateProductCommand$9</ID>
+    <ID>MagicNumber:CreateProductReviewRequest.kt:CreateProductReviewRequest$5</ID>
+    <ID>MagicNumber:CreateReservationSlotsRequest.kt:CreateReservationSlotsRequest$10</ID>
+    <ID>MagicNumber:CreateReservationSlotsRequest.kt:CreateReservationSlotsRequest$15</ID>
+    <ID>MagicNumber:CreateReservationSlotsRequest.kt:CreateReservationSlotsRequest$16</ID>
+    <ID>MagicNumber:CreateReservationSlotsRequest.kt:CreateReservationSlotsRequest$9</ID>
+    <ID>MagicNumber:CultureInfoApiClient.kt:CultureInfoApiClient$1000</ID>
+    <ID>MagicNumber:CultureInfoApiClient.kt:CultureInfoApiClient$200</ID>
+    <ID>MagicNumber:CultureInfoApiClient.kt:CultureInfoApiClient$3</ID>
+    <ID>MagicNumber:CultureInfoApiClient.kt:CultureInfoApiClient$401</ID>
+    <ID>MagicNumber:CultureInfoApiClient.kt:CultureInfoApiClient$502</ID>
+    <ID>MagicNumber:DelegatingSubwayPageEnrichmentAdapter.kt:DelegatingSubwayPageEnrichmentAdapter$3</ID>
+    <ID>MagicNumber:EventInfoController.kt:EventInfoController$31</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$126.9815</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$126.9826</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$126.9838</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$126.9850</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$37.5628</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$37.5632</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$37.5635</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$37.5640</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$4</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$6</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$83</ID>
+    <ID>MagicNumber:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$90</ID>
+    <ID>MagicNumber:ExchangeRateQueryService.kt:ExchangeRateQueryService$6</ID>
+    <ID>MagicNumber:FestivalEventQueryService.kt:FestivalEventQueryService$100</ID>
+    <ID>MagicNumber:GemmaApiResponse.kt:GemmaApiResponse$200</ID>
+    <ID>MagicNumber:GemmaApiResponse.kt:GemmaApiResponse$299</ID>
+    <ID>MagicNumber:GemmaChatService.kt:GemmaChatService$2048</ID>
+    <ID>MagicNumber:GemmaExceptionType.kt:GemmaExceptionType.GEMMA_DISABLED$503</ID>
+    <ID>MagicNumber:GemmaExceptionType.kt:GemmaExceptionType.GEMMA_EMPTY_RESPONSE$502</ID>
+    <ID>MagicNumber:GemmaExceptionType.kt:GemmaExceptionType.GEMMA_PROVIDER_UNAVAILABLE$503</ID>
+    <ID>MagicNumber:GlowAlertQueryService.kt:24</ID>
+    <ID>MagicNumber:GlowAlertQueryService.kt:60</ID>
+    <ID>MagicNumber:GlowAlertQueryService.kt:7</ID>
+    <ID>MagicNumber:GlowAlertQueryService.kt:GlowAlertQueryService$20</ID>
+    <ID>MagicNumber:GlowClimateWindRepository.kt:GlowClimateWindRepository$12</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$0.5</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$10</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$10.0</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$11</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$12</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$13</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$14</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$17</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$18</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$20</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$23</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$24.0</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$27.0</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$3</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$30</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$31</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$4</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$4.0</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$45</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$5</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$6</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$60</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$7</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$8</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$8.0</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$9</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$9.0</ID>
+    <ID>MagicNumber:GlowWeatherQueryService.kt:GlowWeatherQueryService$90</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$101</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$105</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$108</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$109</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$112</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$119</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$126.5312</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$126.5601</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$126.7052</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$126.8526</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$126.9780</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$127.0286</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$127.1480</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$127.3845</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$127.4890</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$127.7298</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$128.6014</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$128.8761</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$129.0756</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$129.3114</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$131</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$133</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$143</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$146</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$152</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$156</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$159</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$184</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$189</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$33.2541</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$33.4996</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$35.1595</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$35.1796</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$35.5384</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$35.8242</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$35.8714</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$36.3504</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$36.6424</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$37.2636</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$37.4563</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$37.5665</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$37.7519</ID>
+    <ID>MagicNumber:GlowWeatherRegions.kt:GlowWeatherRegions$37.8813</ID>
+    <ID>MagicNumber:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$1000</ID>
+    <ID>MagicNumber:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$300</ID>
+    <ID>MagicNumber:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$401</ID>
+    <ID>MagicNumber:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$502</ID>
+    <ID>MagicNumber:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$1000</ID>
+    <ID>MagicNumber:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$14</ID>
+    <ID>MagicNumber:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$300</ID>
+    <ID>MagicNumber:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$401</ID>
+    <ID>MagicNumber:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$502</ID>
+    <ID>MagicNumber:IncheonParkingCongestionApiClient.kt:IncheonParkingCongestionApiClient$1000</ID>
+    <ID>MagicNumber:IncheonParkingCongestionApiClient.kt:IncheonParkingCongestionApiClient$300</ID>
+    <ID>MagicNumber:IncheonParkingCongestionApiClient.kt:IncheonParkingCongestionApiClient$401</ID>
+    <ID>MagicNumber:IncheonParkingCongestionApiClient.kt:IncheonParkingCongestionApiClient$502</ID>
+    <ID>MagicNumber:IncheonPassengerForecastApiClient.kt:IncheonPassengerForecastApiClient$10000</ID>
+    <ID>MagicNumber:IncheonPassengerForecastApiClient.kt:IncheonPassengerForecastApiClient$300</ID>
+    <ID>MagicNumber:IncheonPassengerForecastApiClient.kt:IncheonPassengerForecastApiClient$401</ID>
+    <ID>MagicNumber:IncheonPassengerForecastApiClient.kt:IncheonPassengerForecastApiClient$502</ID>
+    <ID>MagicNumber:JasyptConfig.kt:JasyptConfig$1000</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$10</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$200</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$4</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$5</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$6</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$7</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$8</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$9</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$900</ID>
+    <ID>MagicNumber:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$900.0</ID>
+    <ID>MagicNumber:KmaGridConverter.kt:KmaGridConverter$0.25</ID>
+    <ID>MagicNumber:KmaGridConverter.kt:KmaGridConverter$0.5</ID>
+    <ID>MagicNumber:KmaGridConverter.kt:KmaGridConverter$1.5</ID>
+    <ID>MagicNumber:KmaGridConverter.kt:KmaGridConverter$180.0</ID>
+    <ID>MagicNumber:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$100</ID>
+    <ID>MagicNumber:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$8</ID>
+    <ID>MagicNumber:LlmSubwayStationSummary.kt:LlmSubwayStationSummary$3</ID>
+    <ID>MagicNumber:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$15</ID>
+    <ID>MagicNumber:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$3</ID>
+    <ID>MagicNumber:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$5</ID>
+    <ID>MagicNumber:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$7</ID>
+    <ID>MagicNumber:MbrdEditorBootstrapService.kt:MbrdEditorBootstrapService$25</ID>
+    <ID>MagicNumber:MbrdEditorBootstrapService.kt:MbrdEditorBootstrapService$8</ID>
+    <ID>MagicNumber:MbrdEditorEmbeddingEncoder.kt:MbrdEditorEmbeddingEncoder$0.5</ID>
+    <ID>MagicNumber:MbrdEditorEmbeddingEncoder.kt:MbrdEditorEmbeddingEncoder$16</ID>
+    <ID>MagicNumber:MimAdminService.kt:MimAdminService$100</ID>
+    <ID>MagicNumber:MyPagePaymentService.kt:MyPagePaymentService$200</ID>
+    <ID>MagicNumber:MypagePromoService.kt:MypagePromoService$99</ID>
+    <ID>MagicNumber:NaverDirectionsClient.kt:NaverDirectionsClient$12</ID>
+    <ID>MagicNumber:NaverDirectionsClient.kt:NaverDirectionsClient$60_000.0</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$10</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$18</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$2026</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$24</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$3</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$31</ID>
+    <ID>MagicNumber:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$4</ID>
+    <ID>MagicNumber:NewsletterAdminService.kt:NewsletterAdminService$20</ID>
+    <ID>MagicNumber:Nickname.kt:Nickname.Companion$10</ID>
+    <ID>MagicNumber:NoticePeriodDateTimeParser.kt:NoticePeriodDateTimeParser$23</ID>
+    <ID>MagicNumber:NoticePeriodDateTimeParser.kt:NoticePeriodDateTimeParser$59</ID>
+    <ID>MagicNumber:NotificationStreamService.kt:NotificationStreamService$20</ID>
+    <ID>MagicNumber:OpenAiSubwayStationSummaryClient.kt:OpenAiSubwayStationSummaryClient$500</ID>
+    <ID>MagicNumber:OperationsAnalyticsRateSupport.kt:4</ID>
+    <ID>MagicNumber:OptionQueryService.kt:OptionQueryService$50</ID>
+    <ID>MagicNumber:ParkingCongestionResponse.kt:ParkingCongestionResponse.Companion$10.0</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$1.4f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$10</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$100f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$10f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$11</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$11f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$12</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$12f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$13</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$14</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$15</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$16</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$18f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$3</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$3.6f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$36f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$4</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$40f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$5</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$6</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$7</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$8</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$8f</ID>
+    <ID>MagicNumber:PaymentDocumentService.kt:PaymentDocumentService$9</ID>
+    <ID>MagicNumber:PaymentManagementGraphQlController.kt:PaymentManagementGraphQlController$200</ID>
+    <ID>MagicNumber:PersonalizedRecommendationScorer.kt:PersonalizedRecommendationScorer$5.0</ID>
+    <ID>MagicNumber:PersonalizedRecommendationScorer.kt:PersonalizedRecommendationScorer$8</ID>
+    <ID>MagicNumber:PlatformAuthProperties.kt:PlatformAuthProperties.Jwt$30</ID>
+    <ID>MagicNumber:PlatformAuthProperties.kt:PlatformAuthProperties.Jwt$5</ID>
+    <ID>MagicNumber:PlatformAuthProperties.kt:PlatformAuthProperties.PasswordRules$12</ID>
+    <ID>MagicNumber:PlatformAuthProperties.kt:PlatformAuthProperties.PasswordRules$5</ID>
+    <ID>MagicNumber:PlatformJwtAuthenticationFilter.kt:PlatformJwtAuthenticationFilter$7</ID>
+    <ID>MagicNumber:PlatformUser.kt:PlatformUser$14</ID>
+    <ID>MagicNumber:PlatformUser.kt:PlatformUser$3</ID>
+    <ID>MagicNumber:PlatformUser.kt:PlatformUser$30</ID>
+    <ID>MagicNumber:PlatformUser.kt:PlatformUser$5</ID>
+    <ID>MagicNumber:ProductCommandService.kt:ProductCommandService$12</ID>
+    <ID>MagicNumber:ProductController.kt:ProductController$20</ID>
+    <ID>MagicNumber:ProductController.kt:ProductController$50</ID>
+    <ID>MagicNumber:ProductDiscoveryController.kt:ProductDiscoveryController$50</ID>
+    <ID>MagicNumber:ProductDiscoveryGraphQlController.kt:ProductDiscoveryGraphQlController$10</ID>
+    <ID>MagicNumber:ProductDiscoveryGraphQlController.kt:ProductDiscoveryGraphQlController$50</ID>
+    <ID>MagicNumber:ProductDiscoveryQueryRepository.kt:ProductDiscoveryQueryRepository$5</ID>
+    <ID>MagicNumber:ProductDiscoveryService.kt:ProductDiscoveryService$10</ID>
+    <ID>MagicNumber:ProductRecommendationController.kt:ProductRecommendationController$20</ID>
+    <ID>MagicNumber:ProductRecommendationService.kt:ProductRecommendationService$200</ID>
+    <ID>MagicNumber:ProductRecommendationService.kt:ProductRecommendationService$50</ID>
+    <ID>MagicNumber:ProductReview.kt:ProductReview$80</ID>
+    <ID>MagicNumber:ProductReviewTrustCommandService.kt:ProductReviewTrustCommandService$200</ID>
+    <ID>MagicNumber:ProductTourAttractionQueryService.kt:ProductTourAttractionQueryService$1000</ID>
+    <ID>MagicNumber:PupAdminService.kt:PupAdminService$100</ID>
+    <ID>MagicNumber:PupAdminService.kt:PupAdminService$5</ID>
+    <ID>MagicNumber:RefreshTokenCookieSupporter.kt:RefreshTokenCookieSupporter$1000</ID>
+    <ID>MagicNumber:RefreshTokenCookieSupporter.kt:RefreshTokenCookieSupporter$14</ID>
+    <ID>MagicNumber:RefreshTokenCookieSupporter.kt:RefreshTokenCookieSupporter$24</ID>
+    <ID>MagicNumber:RefreshTokenCookieSupporter.kt:RefreshTokenCookieSupporter$60</ID>
+    <ID>MagicNumber:RefreshTokenCookieSupporter.kt:RefreshTokenCookieSupporter$60L</ID>
+    <ID>MagicNumber:ReservationSlot.kt:ReservationSlot$15</ID>
+    <ID>MagicNumber:ReservationSlot.kt:ReservationSlot$9</ID>
+    <ID>MagicNumber:ScheduleGraphQlController.kt:ScheduleGraphQlController$50</ID>
+    <ID>MagicNumber:ScheduleIcsWriter.kt:ScheduleIcsWriter$0x80</ID>
+    <ID>MagicNumber:ScheduleIcsWriter.kt:ScheduleIcsWriter$0xC0</ID>
+    <ID>MagicNumber:ScheduleIcsWriter.kt:ScheduleIcsWriter$0xff</ID>
+    <ID>MagicNumber:ScheduleIcsWriter.kt:ScheduleIcsWriter$74</ID>
+    <ID>MagicNumber:ScheduleIcsWriter.kt:ScheduleIcsWriter$75</ID>
+    <ID>MagicNumber:SecurityConfig.kt:SecurityConfig$3600</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11110</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11140</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11170</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11200</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11215</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11230</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11260</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11290</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11305</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11320</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11350</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11380</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11410</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11440</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11470</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11500</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11530</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11545</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11560</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11590</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11620</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11650</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11680</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11710</ID>
+    <ID>MagicNumber:SeoulDistrictTourCodeMapper.kt:SeoulDistrictTourCodeMapper$11740</ID>
+    <ID>MagicNumber:SeoulOpenapiSubwaySearchAdapter.kt:SeoulOpenapiSubwaySearchAdapter$100</ID>
+    <ID>MagicNumber:SeoulOpenapiSubwaySearchAdapter.kt:SeoulOpenapiSubwaySearchAdapter$5</ID>
+    <ID>MagicNumber:SeoulSjwPerformApiClient.kt:SeoulSjwPerformApiClient$1000</ID>
+    <ID>MagicNumber:SeoulSjwPerformApiClient.kt:SeoulSjwPerformApiClient$30</ID>
+    <ID>MagicNumber:SignupController.kt:SignupController$300</ID>
+    <ID>MagicNumber:SignupController.kt:SignupController$443</ID>
+    <ID>MagicNumber:SignupController.kt:SignupController$80</ID>
+    <ID>MagicNumber:SignupService.kt:SignupService$72</ID>
+    <ID>MagicNumber:SignupService.kt:SignupService$8</ID>
+    <ID>MagicNumber:SignupVerificationService.kt:SignupVerificationService$5</ID>
+    <ID>MagicNumber:SiteContentQueryService.kt:SiteContentQueryService$5</ID>
+    <ID>MagicNumber:SubscriptionDispatchSchedule.kt:SubscriptionDispatchSchedule.Companion$23</ID>
+    <ID>MagicNumber:SubscriptionDispatchSchedule.kt:SubscriptionDispatchSchedule.Companion$59</ID>
+    <ID>MagicNumber:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$5</ID>
+    <ID>MagicNumber:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$6</ID>
+    <ID>MagicNumber:SubscriptionService.kt:SubscriptionService$20</ID>
+    <ID>MagicNumber:SubwayQueryApplicationService.kt:SubwayQueryApplicationService$3</ID>
+    <ID>MagicNumber:SubwayQueryApplicationService.kt:SubwayQueryApplicationService$30</ID>
+    <ID>MagicNumber:SurveyRecommendationService.kt:SurveyRecommendationService$20</ID>
+    <ID>MagicNumber:SurveyRecommendationService.kt:SurveyRecommendationService$3</ID>
+    <ID>MagicNumber:SurveyRecommendationService.kt:SurveyRecommendationService$5</ID>
+    <ID>MagicNumber:TossApiResponse.kt:TossApiResponse$200</ID>
+    <ID>MagicNumber:TossApiResponse.kt:TossApiResponse$299</ID>
+    <ID>MagicNumber:TourApiClient.kt:TourApiClient$100</ID>
+    <ID>MagicNumber:TourApiClient.kt:TourApiClient$1000</ID>
+    <ID>MagicNumber:TourApiClient.kt:TourApiClient$300</ID>
+    <ID>MagicNumber:TourApiClient.kt:TourApiClient$50</ID>
+    <ID>MagicNumber:TourApiClient.kt:TourApiClient$502</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.DISTRICT_NOT_SUPPORTED$400</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.INVALID_BASE_YM$400</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.PRODUCT_LOCATION_NOT_FOUND$400</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.PRODUCT_NOT_FOUND$404</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.TOUR_API_BAD_RESPONSE$502</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.TOUR_API_CALL_FAILED$502</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.TOUR_API_ERROR$502</ID>
+    <ID>MagicNumber:TourAttractionExceptionType.kt:TourAttractionExceptionType.TOUR_API_KEY_MISSING$500</ID>
+    <ID>MagicNumber:TourFestivalApiClient.kt:TourFestivalApiClient$300</ID>
+    <ID>MagicNumber:TourFestivalApiClient.kt:TourFestivalApiClient$502</ID>
+    <ID>MagicNumber:UpdateProductReviewRequest.kt:UpdateProductReviewRequest$5</ID>
+    <ID>MagicNumber:User.kt:User$5</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.CURRENT_PASSWORD_INCORRECT$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.EMAIL_ALREADY_REGISTERED$409</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.INVALID_EMAIL$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.INVALID_NICKNAME$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.INVALID_PROFILE_IMAGE_URL$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.NICKNAME_ALREADY_REGISTERED$409</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.PASSWORD_CHANGE_NOT_SUPPORTED$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.PROFILE_IMAGE_INVALID_TYPE$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.PROFILE_IMAGE_STORAGE_UNAVAILABLE$503</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.PROFILE_IMAGE_TOO_LARGE$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.SIGNUP_PASSWORD_POLICY$400</ID>
+    <ID>MagicNumber:UserExceptionType.kt:UserExceptionType.SIGNUP_PASSWORD_REQUIRED$400</ID>
+    <ID>MagicNumber:UserRepositoryImpl.kt:UserRepositoryImpl$50</ID>
+    <ID>MagicNumber:UserService.kt:UserService$500</ID>
+    <ID>MagicNumber:UserService.kt:UserService$72</ID>
+    <ID>MagicNumber:UserService.kt:UserService$8</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$10</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$11</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$12</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$2025</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$2026</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$3</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$97</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$98</ID>
+    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$99</ID>
+    <ID>MagicNumber:WebzineAdminService.kt:WebzineAdminService$20</ID>
+    <ID>MagicNumber:WebzineAdminService.kt:WebzineAdminService$6</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$0.3</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$11.25</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$110</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$140</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$16</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$160</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$180</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$20</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$200</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$22.5</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$230</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$250</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$270</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$290</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$320</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$340</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$360</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$50</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$70</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$90</ID>
+    <ID>MagicNumber:WindDirection.kt:WindDirection$99</ID>
+    <ID>MagicNumber:WishController.kt:WishController$20</ID>
+    <ID>MagicNumber:WishController.kt:WishController$50</ID>
+    <ID>MagicNumber:WishGraphQlController.kt:WishGraphQlController$50</ID>
+    <ID>MatchingDeclarationName:NewsletterAdminCommands.kt:UpsertNewsletterCommand</ID>
+    <ID>MatchingDeclarationName:SubscriptionResponses.kt:SubscriptionRegistrationResponse</ID>
+    <ID>MaxLineLength:AdminBnrController.kt:AdminBnrController$)</ID>
+    <ID>MaxLineLength:AdminCatalogController.kt:AdminCatalogController$)</ID>
+    <ID>MaxLineLength:AdminEventController.kt:AdminEventController$)</ID>
+    <ID>MaxLineLength:AdminEventResults.kt:fun</ID>
+    <ID>MaxLineLength:AdminGemmaController.kt:AdminGemmaController$description = "OpenAI 호환 /chat/completions 엔드포인트로 Gemma 모델을 호출합니다. 텍스트만 보내거나 imageUrl을 함께 보내 멀티모달 요청을 할 수 있습니다."</ID>
+    <ID>MaxLineLength:AdminMimController.kt:AdminMimController$)</ID>
+    <ID>MaxLineLength:AdminNewsletterController.kt:AdminNewsletterController$)</ID>
+    <ID>MaxLineLength:AdminOperationsController.kt:AdminOperationsController$.</ID>
+    <ID>MaxLineLength:AdminOperationsController.kt:AdminOperationsController$fun</ID>
+    <ID>MaxLineLength:AdminOperationsController.kt:AdminOperationsController$val bytes = adminExportService.exportReservationsCsv(visitDateFrom, visitDateTo).toByteArray(StandardCharsets.UTF_8)</ID>
+    <ID>MaxLineLength:AdminPaymentRefundController.kt:AdminPaymentRefundController$)</ID>
+    <ID>MaxLineLength:AdminPaymentService.kt:AdminPaymentService$failedCount = list.count { it.status == PaymentStatus.FAILED || it.status == PaymentStatus.EXPIRED }.toLong()</ID>
+    <ID>MaxLineLength:AdminPupController.kt:AdminPupController$)</ID>
+    <ID>MaxLineLength:AdminReservationController.kt:AdminReservationController$)</ID>
+    <ID>MaxLineLength:AdminReservationService.kt:AdminReservationService$val recentReservationEntities = adminReservationQueryRepository.findRecentReservations(fromDate, toDate, recentSize)</ID>
+    <ID>MaxLineLength:AdminReservationService.kt:AdminReservationService$val reservationCounts = adminReservationQueryRepository.countReservationDashboard(LocalDate.now(), fromDate, toDate)</ID>
+    <ID>MaxLineLength:AdminSubscriptionController.kt:AdminSubscriptionController$ResponseEntity.ok(subscriptionAdminUseCase.upsertDispatchSchedule(request.toCommand(contentType)).subscriptionToWebResponse())</ID>
+    <ID>MaxLineLength:AdminSubscriptionOverviewResponseSupport.kt:internal</ID>
+    <ID>MaxLineLength:AdminSurveyFormController.kt:AdminSurveyFormController$)</ID>
+    <ID>MaxLineLength:AdminSurveyFormService.kt:AdminSurveyFormService$fun</ID>
+    <ID>MaxLineLength:AdminSurveyFormService.kt:AdminSurveyFormService$require</ID>
+    <ID>MaxLineLength:AdminUserController.kt:AdminUserController$)</ID>
+    <ID>MaxLineLength:AdminWebzineIssueController.kt:AdminWebzineIssueController$)</ID>
+    <ID>MaxLineLength:ApplicationLayerUiDtoBaselineTest.kt:ApplicationLayerUiDtoBaselineTest$"application 계층의 UI DTO 참조는 기준값을 초과할 수 없습니다 (기준=$BASELINE_UI_DTO_VIOLATION_FILE_COUNT, 실제=${위반목록.size})"</ID>
+    <ID>MaxLineLength:ArchitectureSourceScanner.kt:ArchitectureSourceScanner$"""import\s+com\.sleekydz86\.idolglow\.[\w.]*\.(domain\.\w+Repository|infrastructure\.\w*(Jpa)?Repository)\b"""</ID>
+    <ID>MaxLineLength:AuthController.kt:AuthController$@CookieValue(value = RefreshTokenCookieSupporter.REFRESH_CSRF_COOKIE, required = false) refreshCsrfToken: String?</ID>
+    <ID>MaxLineLength:AuthController.kt:AuthController$@RequestHeader(value = RefreshTokenCookieSupporter.REFRESH_CSRF_HEADER, required = false) refreshCsrfHeader: String?</ID>
+    <ID>MaxLineLength:AuthGraphQlController.kt:AuthGraphQlController$)</ID>
+    <ID>MaxLineLength:AuthenticatedPrincipalResolver.kt:AuthenticatedPrincipalResolver$fun resolveRequired(): AuthenticatedPrincipal</ID>
+    <ID>MaxLineLength:CultureInfoApiClient.kt:CultureInfoApiClient$val img = m["thumbnail"]?.ifBlank { null } ?: m["posterimg"]?.ifBlank { null } ?: m["firstimage"]?.ifBlank { null }</ID>
+    <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$SubscriptionAudience.NEWSLETTER -&gt; emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedNewslettersTrue()</ID>
+    <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$SubscriptionAudience.WEBZINE_ISSUE -&gt; emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedIssuesTrue()</ID>
+    <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$override fun findByEmail(email: String): EmailSubscription?</ID>
+    <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$override fun save(subscription: EmailSubscription): EmailSubscription</ID>
+    <ID>MaxLineLength:EventInfoController.kt:EventInfoController$private</ID>
+    <ID>MaxLineLength:ExchangeAlertController.kt:ExchangeAlertController$description = "목표 환율·통화 조건으로 환전 알림을 생성합니다. `/exchange-alerts`, `/mypage/exchange-alerts`, `/api/exchange-alerts` 경로를 모두 지원합니다."</ID>
+    <ID>MaxLineLength:GlowAlertController.kt:GlowAlertController$ResponseEntity.ok(GlowAlertUnreadCountResponse(glowAlertQueryService.countUnread(authenticatedUserIdResolver.resolveOrNull())))</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$deg != null -&gt; WindDirection.to16Point(deg).takeIf { it != "-" } ?: climateCell.dir.trim().uppercase()</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$fromShort.copy(regionName = regionName, date = date, dateLabel = date.format(DATE_LABEL), dayLabel = dayLabel(date))</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$precipitationTypeLabel(ptyCode) ?: if ((fallbackDay.precipitationChance ?: 0) &gt;= 60) "비 가능성 높음" else "강수 없음"</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$subtitle = if ((tomorrow?.precipitationChance ?: 0) &gt;= 60) "내일 일정이라면 우산이나 방수 아이템이 있으면 편해요." else "짧은 외출이라면 가볍게 움직여도 괜찮아요."</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$val maxTemp = grouped["TMX"].orEmpty().firstNotNullOfOrNull { it.value.toDoubleOrNull() } ?: tmpValues.maxOrNull()</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$val midLand = runCatching { glowWeatherDataPort.fetchMidLandForecast(region.midLandRegionId, midBase) }.getOrNull()</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$val midTemp = runCatching { glowWeatherDataPort.fetchMidTemperature(region.midTemperatureRegionId, midBase) }.getOrNull()</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$val minTemp = grouped["TMN"].orEmpty().firstNotNullOfOrNull { it.value.toDoubleOrNull() } ?: tmpValues.minOrNull()</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$val outlook = runCatching { glowWeatherDataPort.fetchMidOutlook(region.midForecastStationId, midBase) }.getOrNull()</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$val temperature = value("T1H")?.toDoubleOrNull() ?: fallbackDay.minTempC?.plus(fallbackDay.maxTempC ?: 0.0)?.div(2.0)</ID>
+    <ID>MaxLineLength:GlowWeatherQueryService.kt:GlowWeatherQueryService$windDirectionLabel = WindDirection.to16Point(base.windDirectionDeg).takeIf { it != "-" } ?: fallback.windDirectionLabel</ID>
+    <ID>MaxLineLength:GlowWeatherRegions.kt:GlowWeatherRegions$fun find(regionId: String?): GlowWeatherRegion</ID>
+    <ID>MaxLineLength:GraphQlInputSupport.kt:fun String.toGraphQlIdLong(fieldName: String): Long</ID>
+    <ID>MaxLineLength:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("AIRPORT_ARRIVALS_CONGESTION_SERVICE_KEY=")</ID>
+    <ID>MaxLineLength:IncheonPassengerForecastApiClient.kt:IncheonPassengerForecastApiClient$val trimmed = rawServiceKey.trim().removePrefix("serviceKey=").removePrefix("AIRPORT_PASSENGER_FORECAST_SERVICE_KEY=")</ID>
+    <ID>MaxLineLength:JasyptConfig.kt:JasyptConfig$private fun readSpringProperty(name: String): String?</ID>
+    <ID>MaxLineLength:JwtTokenUtil.kt:JwtTokenUtil$fun generateRefreshToken(email: String): String</ID>
+    <ID>MaxLineLength:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$"기상청 날씨 API 401(미인증). endpoint={}. KMA_WEATHER_SERVICE_KEY 값·인코딩을 확인하세요. {}분간 호출을 생략하고 폴백 대시보드를 사용합니다."</ID>
+    <ID>MaxLineLength:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$"${UriUtils.encodeQueryParam(k, StandardCharsets.UTF_8)}=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"</ID>
+    <ID>MaxLineLength:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvgc55oqyCgDe0etT2gGO0-TVO4aTJJo2ZCMXSIjb48AjGSchKAsofP_ExwitaeDfhSMU85Zongk3oLNBfgnFhLaG8qBKDF2IAA6hq3Q&amp;s=10"</ID>
+    <ID>MaxLineLength:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$url = "https://i.namu.wiki/i/16EvgURhGL60lzie4kEN-z_tVzwlMsvcf_kPlY3aShL4kfg9Jng2QvB_72EJGFn2l2aNHBl8FjJLxZmRGaNqFQ.webp"</ID>
+    <ID>MaxLineLength:LocalProfileMySqlDataWarmer.kt:LocalProfileMySqlDataWarmer$url = "https://img4.daumcdn.net/thumb/R658x0.q70/?fname=https://t1.daumcdn.net/news/202504/30/xportsnews/20250430200826062kfst.jpg"</ID>
+    <ID>MaxLineLength:LoginUserArgumentResolver.kt:LoginUserArgumentResolver$override fun supportsParameter(parameter: MethodParameter): Boolean</ID>
+    <ID>MaxLineLength:MbrdEditorEmbeddingEncoder.kt:MbrdEditorEmbeddingEncoder$private fun normalize(content: String): String</ID>
+    <ID>MaxLineLength:MbrdEditorLiveSyncMessage.kt:MbrdEditorLiveSyncMessage$fun toCommand(): MbrdEditorLiveSyncCommand</ID>
+    <ID>MaxLineLength:MbrdEditorLiveSyncService.kt:MbrdEditorLiveSyncService$private fun normalizeStatus(status: String?): String</ID>
+    <ID>MaxLineLength:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$" WHERE id &lt;&gt; :id AND publication_status = :status AND updated_at &lt; :updatedAt ORDER BY updated_at DESC LIMIT 1"</ID>
+    <ID>MaxLineLength:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$" WHERE id &lt;&gt; :id AND publication_status = :status AND updated_at &gt; :updatedAt ORDER BY updated_at ASC LIMIT 1"</ID>
+    <ID>MaxLineLength:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$return "SELECT COUNT(*) FROM editor_documents WHERE publication_status = :status AND " + textSearchPredicate()</ID>
+    <ID>MaxLineLength:MyPageController.kt:MyPageController$)</ID>
+    <ID>MaxLineLength:MyPagePaymentController.kt:MyPagePaymentController$)</ID>
+    <ID>MaxLineLength:MyPaymentController.kt:MyPaymentController$)</ID>
+    <ID>MaxLineLength:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$imageUrl = "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$imageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$imageUrl = "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$imageUrl = "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:NewsletterAdminDataInitializer.kt:NewsletterAdminDataInitializer$imageUrl = "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:NotificationController.kt:NotificationController$)</ID>
+    <ID>MaxLineLength:NotificationController.kt:NotificationController$@ApiResponses(value = [ApiResponse(responseCode = "200", content = [Content(mediaType = MediaType.TEXT_EVENT_STREAM_VALUE)])])</ID>
+    <ID>MaxLineLength:NotificationController.kt:NotificationController$@Parameter(description = "알림 타입 필터", example = "PAYMENT_FAILED") @RequestParam(required = false) type: NotificationType?</ID>
+    <ID>MaxLineLength:NotificationController.kt:NotificationController$value = [ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = NotificationResponse::class))])]</ID>
+    <ID>MaxLineLength:NotificationController.kt:NotificationController$value = [ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = UnreadCountResponse::class))])]</ID>
+    <ID>MaxLineLength:NotificationGraphQlController.kt:NotificationGraphQlController$fun</ID>
+    <ID>MaxLineLength:NotificationPreferenceController.kt:NotificationPreferenceController$)</ID>
+    <ID>MaxLineLength:NotificationPreferenceController.kt:NotificationPreferenceController$content = [Content(array = ArraySchema(schema = Schema(implementation = NotificationPreferenceResponse::class)))]</ID>
+    <ID>MaxLineLength:NotificationPreferenceRepositoryImpl.kt:NotificationPreferenceRepositoryImpl$override fun findAllByUserId(userId: Long): List&lt;NotificationPreference&gt;</ID>
+    <ID>MaxLineLength:NotificationPreferenceRepositoryImpl.kt:NotificationPreferenceRepositoryImpl$override fun save(preference: NotificationPreference): NotificationPreference</ID>
+    <ID>MaxLineLength:NotificationQueryService.kt:NotificationQueryService$fun countUnread(userId: Long): UnreadCountResponse</ID>
+    <ID>MaxLineLength:NotificationRepositoryImpl.kt:NotificationRepositoryImpl$)</ID>
+    <ID>MaxLineLength:NotificationRepositoryImpl.kt:NotificationRepositoryImpl$override fun countUnreadByUserId(userId: Long): Long</ID>
+    <ID>MaxLineLength:NotificationRepositoryImpl.kt:NotificationRepositoryImpl$override fun findAllByUserId(userId: Long): List&lt;Notification&gt;</ID>
+    <ID>MaxLineLength:OAuth2SuccessHandler.kt:OAuth2SuccessHandler$"OAuth2 사용자 정보(principal) 형식이 올바르지 않습니다. (실제 타입: ${(oauthToken.principal as Any?)?.javaClass?.name})"</ID>
+    <ID>MaxLineLength:PasswordRecoveryServiceTest.kt:PasswordRecoveryServiceTest$jwt.secret = "defaultSecretKeyForPhase1TestsOnly123456789012345678901234567890123456789012345678901234567890"</ID>
+    <ID>MaxLineLength:PaymentDocumentService.kt:PaymentDocumentService$addRow("방문일시", "${payment.reservation.visitDate} ${payment.reservation.visitStartTime} ~ ${payment.reservation.visitEndTime}")</ID>
+    <ID>MaxLineLength:PaymentRefundService.kt:PaymentRefundService$logType = if (response.isSuccess2xx) PaymentLogType.CANCEL_RESPONSE else PaymentLogType.CANCEL_ERROR</ID>
+    <ID>MaxLineLength:PaymentRepositoryImpl.kt:PaymentRepositoryImpl$override fun findByOrderIdForUpdate(orderId: String): Payment?</ID>
+    <ID>MaxLineLength:PaymentRepositoryImpl.kt:PaymentRepositoryImpl$override fun findByPaymentReference(paymentReference: String): Payment?</ID>
+    <ID>MaxLineLength:PaymentRepositoryImpl.kt:PaymentRepositoryImpl$override fun findByReservationId(reservationId: Long): Payment?</ID>
+    <ID>MaxLineLength:PlatformAuthController.kt:PlatformAuthController$)</ID>
+    <ID>MaxLineLength:PlatformPasswordValidationService.kt:PlatformPasswordValidationService$fun validatePassword(password: String): PasswordPolicyValidator.PasswordValidationResult</ID>
+    <ID>MaxLineLength:PlatformUser.kt:PlatformUser.Companion.Builder$fun lastPasswordChangeDate(lastPasswordChangeDate: LocalDate?)</ID>
+    <ID>MaxLineLength:PlatformUser.kt:PlatformUser.Companion.Builder$fun passwordChangedAt(passwordChangedAt: LocalDateTime?)</ID>
+    <ID>MaxLineLength:PlatformUserAccountAdapter.kt:PlatformUserAccountAdapter$override fun findById(id: Long): Optional&lt;PlatformUser&gt;</ID>
+    <ID>MaxLineLength:ProductController.kt:ProductController$)</ID>
+    <ID>MaxLineLength:ProductCreatedGraphQlResponse.kt:ProductCreatedGraphQlResponse.Companion$fun from(productId: Long): ProductCreatedGraphQlResponse</ID>
+    <ID>MaxLineLength:ProductDiscoveryController.kt:ProductDiscoveryController$)</ID>
+    <ID>MaxLineLength:ProductDiscoveryController.kt:ProductDiscoveryController$content = [Content(array = ArraySchema(schema = Schema(implementation = ProductRankingResponse::class)))]</ID>
+    <ID>MaxLineLength:ProductLocationRepositoryImpl.kt:ProductLocationRepositoryImpl$override fun findByProductId(productId: Long): ProductLocation?</ID>
+    <ID>MaxLineLength:ProductLocationRepositoryImpl.kt:ProductLocationRepositoryImpl$override fun save(productLocation: ProductLocation): ProductLocation</ID>
+    <ID>MaxLineLength:ProductPagingQueryResponse.kt:ProductPagingQueryResponse.Companion$location: ProductLocationSummaryResponse? = product.productLocation?.let { ProductLocationSummaryResponse.from(it) }</ID>
+    <ID>MaxLineLength:ProductRecommendationController.kt:ProductRecommendationController$)</ID>
+    <ID>MaxLineLength:ProductReviewRepositoryImpl.kt:ProductReviewRepositoryImpl$override fun existsByReservationId(reservationId: Long): Boolean</ID>
+    <ID>MaxLineLength:ProductReviewRepositoryImpl.kt:ProductReviewRepositoryImpl$override fun findByProductId(productId: Long): List&lt;ProductReview&gt;</ID>
+    <ID>MaxLineLength:ProductTourAttractionApi.kt:ProductTourAttractionApi$value = """{"name":"INVALID_BASE_YM","message":"base_ym 형식이 올바르지 않습니다. YYYYMM 형식을 사용해 주세요.","errorCode":"INVALID_BASE_YM"}"""</ID>
+    <ID>MaxLineLength:ProductTourAttractionQueryService.kt:ProductTourAttractionQueryService$.</ID>
+    <ID>MaxLineLength:ReservationCommandService.kt:ReservationCommandService$private</ID>
+    <ID>MaxLineLength:ReservationJpaRepository.kt:ReservationJpaRepository$"select r.id from Reservation r where r.status = :status and r.expiresAt is not null and r.expiresAt &lt;= :now order by r.expiresAt asc"</ID>
+    <ID>MaxLineLength:ReservationJpaRepository.kt:ReservationJpaRepository$@Query("SELECT r.id FROM Reservation r WHERE r.status = 'PENDING' AND r.expiresAt &gt; :now AND r.expiresAt &lt;= :threshold")</ID>
+    <ID>MaxLineLength:ReservationRepositoryImpl.kt:ReservationRepositoryImpl$override fun findByIdWithSlotAndProduct(id: Long): Reservation?</ID>
+    <ID>MaxLineLength:ReservationSlotRepositoryImpl.kt:ReservationSlotRepositoryImpl$override fun findByIdForUpdate(slotId: Long): ReservationSlot?</ID>
+    <ID>MaxLineLength:ReservationSlotWaitlistService.kt:ReservationSlotWaitlistService$val entries = reservationSlotWaitlistJpaRepository.findAllByReservationSlotIdOrderByCreatedAtAsc(reservationSlotId)</ID>
+    <ID>MaxLineLength:ScheduleController.kt:ScheduleController$)</ID>
+    <ID>MaxLineLength:ScheduleQueryRepository.kt:ScheduleQueryRepository$appendLine(" and (s.startAt &lt; :cursorStartAt or (s.startAt = :cursorStartAt and s.id &lt; :cursorId))")</ID>
+    <ID>MaxLineLength:SecurityConfig.kt:SecurityConfig$auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()</ID>
+    <ID>MaxLineLength:SecurityConfig.kt:SecurityConfig$auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()</ID>
+    <ID>MaxLineLength:SeoulSjwPerformApiClient.kt:SeoulSjwPerformApiClient$private fun parseDate(value: String): LocalDate?</ID>
+    <ID>MaxLineLength:SignupController.kt:SignupController$description = "회원가입 폼에서 이메일 중복·형식을 검사합니다. `available=true`이면 사용 가능, 불가 시 `code`에 사유(BLANK, INVALID_FORMAT, TAKEN 등)가 올 수 있습니다."</ID>
+    <ID>MaxLineLength:SignupController.kt:SignupController$signupService.loadByEmail(request.email.trim().lowercase()) ?: return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))</ID>
+    <ID>MaxLineLength:SignupVerificationService.kt:SignupVerificationService$plainTextBody = "가입한 아이디가 맞으면 확인 링크를 눌러 주세요.\n맞지 않으면 거부 링크를 눌러 계정을 정지할 수 있습니다.\n확인:$confirmUrl\n거부:$denyUrl"</ID>
+    <ID>MaxLineLength:SiteContentController.kt:SiteContentController$override</ID>
+    <ID>MaxLineLength:SubscriptionDispatchScheduleSupport.kt:internal</ID>
+    <ID>MaxLineLength:SubscriptionDispatchScheduler.kt:SubscriptionDispatchScheduler$newsletterRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordNewsletterDispatch)</ID>
+    <ID>MaxLineLength:SubscriptionDispatchScheduler.kt:SubscriptionDispatchScheduler$webzineIssueRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordWebzineIssueDispatch)</ID>
+    <ID>MaxLineLength:SubscriptionService.kt:SubscriptionService$override</ID>
+    <ID>MaxLineLength:SubwayStationSummaryLlmRouter.kt:SubwayStationSummaryLlmRouter$"openai", "gpt" -&gt; openAiSubwayStationSummaryClient.generate(lineId, lineName, stationCd, stationDisplayName)</ID>
+    <ID>MaxLineLength:SubwayWebMapper.kt:SubwayWebMapper$fun toLineDto(line: SubwayLine): SubwayLineDto</ID>
+    <ID>MaxLineLength:SurveyFormController.kt:SurveyFormController$ResponseEntity.status(HttpStatus.CREATED).body(userSurveyFormService.submitCurrentForm(userId, request.toCommand()))</ID>
+    <ID>MaxLineLength:SurveyFormGraphQlController.kt:SurveyFormGraphQlController$fun</ID>
+    <ID>MaxLineLength:TossPaymentController.kt:TossPaymentController$@Operation(summary = "토스 결제 승인", description = "paymentKey·orderId·amount로 승인 API를 호출하고 DB에 반영합니다. Idempotency-Key 권장.")</ID>
+    <ID>MaxLineLength:TossWebhookController.kt:TossWebhookController$description = "토스가 PAYMENT_STATUS_CHANGED 등 이벤트를 POST합니다. 본문은 JSON 원문 문자열이며, tosspayments-webhook-signature·tosspayments-webhook-transmission-time 헤더로 서명을 검증합니다. 검증 실패 시 401, 성공 시 200이며 결제·예약 반영은 검증 후 수행됩니다."</ID>
+    <ID>MaxLineLength:TossWebhookController.kt:TossWebhookController$value = """{"eventType":"PAYMENT_STATUS_CHANGED","createdAt":"2022-01-01T00:00:00.000000","data":{"paymentKey":"...","orderId":"...","status":"DONE"}}"""</ID>
+    <ID>MaxLineLength:TourFestivalApiClient.kt:CodeItem$?:</ID>
+    <ID>MaxLineLength:TourFestivalApiClient.kt:TourFestivalApiClient$log.warn("관광(축제) API HTTP 오류. endpoint={}, status={}, body={}", endpoint, response.statusCode.value(), response.body.take(300))</ID>
+    <ID>MaxLineLength:UserSurveyFormService.kt:UserSurveyFormService$fun</ID>
+    <ID>MaxLineLength:UserSurveyRepositoryImpl.kt:UserSurveyRepositoryImpl$override fun findByUserId(userId: Long): UserSurvey?</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$body = "정광희 작가에게 파편은 고정관념의 틀을 벗어나기 위한 의도적인 행위의 산물이다.\n\n작품은 파편이 흩어지는 순간 오히려 다른 가능성이 열린다는 감각을 전한다."</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$coverImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$coverImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:WebzineAdminService.kt:WebzineAdminService$override fun findIssue(issueSlug: String): AdminIssueVolumeResponse</ID>
+    <ID>MaxLineLength:WebzineIssueRepositoryImpl.kt:WebzineIssueRepositoryImpl$override fun findBySlugWithArticles(slug: String): WebzineIssue?</ID>
+    <ID>NestedBlockDepth:PlatformJwtAuthenticationFilter.kt:PlatformJwtAuthenticationFilter$override fun doFilterInternal( request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain, )</ID>
+    <ID>ObjectPropertyNaming:ControllerDirectRepositoryBaselineTest.kt:ControllerDirectRepositoryBaselineTest.Companion$private const val 기준_위반_파일_수 = 0</ID>
+    <ID>RethrowCaughtException:SignupService.kt:SignupService$throw e</ID>
+    <ID>ReturnCount:AdminServerStatusService.kt:AdminServerStatusService$private fun minioStatus(): AdminInfrastructureStatusResult</ID>
+    <ID>ReturnCount:AdminSubscriptionOverviewResponseSupport.kt:internal fun SubscriptionDispatchSchedule.nextDispatchDateTime(now: LocalDateTime = LocalDateTime.now()): LocalDateTime?</ID>
+    <ID>ReturnCount:AggregateImageQueryService.kt:AggregateImageQueryService$private fun publicImageUrlOrNull(url: String): String?</ID>
+    <ID>ReturnCount:AnthropicSubwayStationSummaryClient.kt:AnthropicSubwayStationSummaryClient$fun generate( lineId: String, lineName: String, stationCd: String, stationDisplayName: String, ): LlmSubwayStationSummary?</ID>
+    <ID>ReturnCount:AnthropicSurveyRecommendationClient.kt:AnthropicSurveyRecommendationClient$fun generate( titleFallback: String, subtitleFallback: String, narrativeFallback: String, answerHighlights: List&lt;String&gt;, attractions: List&lt;TourAttraction&gt;, ): LlmSurveyRecommendation?</ID>
+    <ID>ReturnCount:AuthenticatedPrincipalResolver.kt:AuthenticatedPrincipalResolver$fun resolveOrNull(): AuthenticatedPrincipal?</ID>
+    <ID>ReturnCount:CultureInfoApiClient.kt:CultureInfoApiClient$fun detail(seq: String): FestivalCommonDetail?</ID>
+    <ID>ReturnCount:CultureInfoApiClient.kt:CultureInfoApiClient$fun listArea2Events( fromYyyyMMdd: String, toYyyyMMdd: String, serviceTp: String, sortStdr: Int, pageNo: Int, numOfrows: Int, ): List&lt;FestivalEvent&gt;</ID>
+    <ID>ReturnCount:CultureInfoApiClient.kt:CultureInfoApiClient$fun listRealm2Events( fromYyyyMMdd: String, toYyyyMMdd: String, serviceTp: String, realmCode: String?, sortStdr: Int, pageNo: Int, numOfrows: Int, ): List&lt;FestivalEvent&gt;</ID>
+    <ID>ReturnCount:CultureInfoApiClient.kt:CultureInfoApiClient$private fun fetchPeriodLikeItems( operation: String, encodedKey: String, pageNo: Int, numOfrows: Int, extra: () -&gt; Map&lt;String, String&gt;, ): List&lt;Element&gt;</ID>
+    <ID>ReturnCount:CultureInfoApiClient.kt:CultureInfoApiClient$private fun fetchXml(url: String): String?</ID>
+    <ID>ReturnCount:CultureInfoApiClient.kt:CultureInfoApiClient$private fun mapCultureItem( el: Element, serviceTp: String, sourceRoot: String, ): FestivalEvent?</ID>
+    <ID>ReturnCount:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$private fun krwPerOneUnit(rate: ExchangeRateQuote): BigDecimal?</ID>
+    <ID>ReturnCount:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$private fun loadBranchRows(currency: String): List&lt;ExchangeBranch&gt;</ID>
+    <ID>ReturnCount:ExchangeRateQueryService.kt:ExchangeRateQueryService$fun getDailyRates(searchDate: LocalDate?): List&lt;ExchangeRateQuote&gt;</ID>
+    <ID>ReturnCount:GlowAlertQueryService.kt:GlowAlertQueryService$fun markRead( alertId: Long, userId: Long? = null, ): Boolean</ID>
+    <ID>ReturnCount:GlowWeatherQueryService.kt:GlowWeatherQueryService$private fun buildWindGuide( region: GlowWeatherRegion, now: ZonedDateTime, current: CurrentWeatherResponse, forecast: List&lt;GlowWeatherForecastDay&gt;, ): GlowWeatherWindGuide</ID>
+    <ID>ReturnCount:IncheonAirportApiAuthCooldown.kt:IncheonAirportApiAuthCooldown$fun isBlocked(apiName: String): Boolean</ID>
+    <ID>ReturnCount:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$override fun fetchCurrent( terminal: String?, airport: String?, pageNo: Int, numOfRows: Int, ): List&lt;ArrivalCongestion&gt;</ID>
+    <ID>ReturnCount:IncheonArrivalsCongestionApiClient.kt:IncheonArrivalsCongestionApiClient$private fun fetchByUrl(url: String): List&lt;ArrivalCongestion&gt;</ID>
+    <ID>ReturnCount:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$override fun fetchCurrent( terminalId: String?, gateId: String?, pageNo: Int, numOfRows: Int, ): List&lt;DepartureCongestion&gt;</ID>
+    <ID>ReturnCount:IncheonDepartureCongestionApiClient.kt:IncheonDepartureCongestionApiClient$private fun fetchByUrl(url: String): List&lt;DepartureCongestion&gt;</ID>
+    <ID>ReturnCount:IncheonParkingCongestionApiClient.kt:IncheonParkingCongestionApiClient$override fun fetchCurrent( pageNo: Int, numOfRows: Int, ): List&lt;ParkingCongestion&gt;</ID>
+    <ID>ReturnCount:IncheonParkingCongestionApiClient.kt:IncheonParkingCongestionApiClient$private fun fetchByUrl(url: String): List&lt;ParkingCongestion&gt;</ID>
+    <ID>ReturnCount:IncheonPassengerForecastApiClient.kt:IncheonPassengerForecastApiClient$override fun fetch( selectDate: Int, pageNo: Int, numOfRows: Int, ): List&lt;PassengerForecast&gt;</ID>
+    <ID>ReturnCount:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$private fun fetchItems( endpoint: String, params: Map&lt;String, String&gt;, ): List&lt;JsonNode&gt;</ID>
+    <ID>ReturnCount:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$private fun toShortForecastSnapshot(item: JsonNode): ShortForecastSnapshot?</ID>
+    <ID>ReturnCount:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$fun areaStats( stDate: String, edDate: String, ): List&lt;KopisAreaStat&gt;</ID>
+    <ID>ReturnCount:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$fun detailPerformance(mt20id: String): FestivalEvent?</ID>
+    <ID>ReturnCount:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$fun listFestivals( stDate: String, edDate: String, page: Int, rows: Int, ): List&lt;FestivalEvent&gt;</ID>
+    <ID>ReturnCount:KopisPerformanceApiClient.kt:KopisPerformanceApiClient$fun listPerformances( stDate: String, edDate: String, page: Int, rows: Int, signguCode: String? = "11", prfState: String? = "02", ): List&lt;FestivalEvent&gt;</ID>
+    <ID>ReturnCount:KoreaEximExchangeRateClient.kt:KoreaEximExchangeRateClient$override fun fetchDailyRates(searchDate: LocalDate?): List&lt;ExchangeRateQuote&gt;</ID>
+    <ID>ReturnCount:KoreaEximExchangeRateClient.kt:KoreaEximExchangeRateClient$private fun toDomain(row: KoreaEximRowJson): ExchangeRateQuote?</ID>
+    <ID>ReturnCount:MbrdEditorBootstrapService.kt:MbrdEditorBootstrapService$private fun resolveUrlSlug( requestedUrlSlug: String?, title: String, documentId: MbrdDocumentId, publicationStatus: MbrdDocumentPublicationStatus, ): String?</ID>
+    <ID>ReturnCount:MbrdEditorImageController.kt:MbrdEditorImageController$@Operation(summary = "이미지 업로드") @PostMapping @ResponseStatus(HttpStatus.CREATED) fun uploadImage( @RequestPart("file") file: MultipartFile, ): MbrdEditorImageUploadPayload</ID>
+    <ID>ReturnCount:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$private fun countSql( searching: Boolean, usePgSearch: Boolean, ): String</ID>
+    <ID>ReturnCount:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$private fun isPgSearchAvailable(): Boolean</ID>
+    <ID>ReturnCount:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$private fun selectPageSql( searching: Boolean, usePgSearch: Boolean, ): String</ID>
+    <ID>ReturnCount:NaverDirectionsClient.kt:NaverDirectionsClient$fun drivingDurationMinutes( startLng: Double, startLat: Double, goalLng: Double, goalLat: Double, ): Int?</ID>
+    <ID>ReturnCount:NaverDirectionsClient.kt:NaverDirectionsClient$private fun parseDurationMs( json: String, optionKey: String, ): Long?</ID>
+    <ID>ReturnCount:NoticePeriodDateTimeParser.kt:NoticePeriodDateTimeParser$fun isWithinPeriod( noticeStartDate: String?, noticeEndDate: String?, now: LocalDateTime, ): Boolean</ID>
+    <ID>ReturnCount:NoticePeriodDateTimeParser.kt:NoticePeriodDateTimeParser$fun parse(raw: String?): LocalDateTime?</ID>
+    <ID>ReturnCount:OpenAiSubwayStationSummaryClient.kt:OpenAiSubwayStationSummaryClient$fun generate( lineId: String, lineName: String, stationCd: String, stationDisplayName: String, ): LlmSubwayStationSummary?</ID>
+    <ID>ReturnCount:OpenAiSurveyRecommendationClient.kt:OpenAiSurveyRecommendationClient$fun generate( titleFallback: String, subtitleFallback: String, narrativeFallback: String, answerHighlights: List&lt;String&gt;, attractions: List&lt;TourAttraction&gt;, ): LlmSurveyRecommendation?</ID>
+    <ID>ReturnCount:OptionRepositoryImpl.kt:OptionRepositoryImpl$override fun findWithSearch( q: String?, pageable: Pageable, ): Page&lt;Option&gt;</ID>
+    <ID>ReturnCount:PasswordRecoveryService.kt:PasswordRecoveryService$@Transactional fun issueTemporaryPassword( email: String, ipAddress: String, ): Boolean</ID>
+    <ID>ReturnCount:PasswordRecoveryService.kt:PasswordRecoveryService$@Transactional(readOnly = true) fun sendAccountIdReminder( email: String, ipAddress: String, ): Boolean</ID>
+    <ID>ReturnCount:PaymentViewPolicyService.kt:PaymentViewPolicyService$fun userCancelDeadline(payment: Payment): LocalDateTime?</ID>
+    <ID>ReturnCount:PlatformJwtAuthenticationFilter.kt:PlatformJwtAuthenticationFilter$private fun extractTokenFromRequest(request: HttpServletRequest): String?</ID>
+    <ID>ReturnCount:ProductBrowseRequestParser.kt:ProductBrowseRequestParser$private fun parseBigDecimal( label: String, raw: String?, ): BigDecimal?</ID>
+    <ID>ReturnCount:ProductBrowseRequestParser.kt:ProductBrowseRequestParser$private fun parseVisitDate(raw: String?): LocalDate?</ID>
+    <ID>ReturnCount:ProductDiscoveryService.kt:ProductDiscoveryService$fun findRecommendedProducts( userId: Long, size: Int, ): List&lt;ProductRankingResponse&gt;</ID>
+    <ID>ReturnCount:ProductSearchQueryRepository.kt:ProductSearchQueryRepository$private fun geoWhereClause( c: ProductSearchCriteria, params: MutableMap&lt;String, Any&gt;, ): String</ID>
+    <ID>ReturnCount:ReservationPaymentService.kt:ReservationPaymentService$fun finalizeAfterGatewaySuccess(payment: Payment): Payment</ID>
+    <ID>ReturnCount:ReservationSlotWaitlistService.kt:ReservationSlotWaitlistService$fun notifyWaitersForReleasedSlot(reservationSlotId: Long)</ID>
+    <ID>ReturnCount:SeoulOpenapiSubwaySearchAdapter.kt:SeoulOpenapiSubwaySearchAdapter$override fun searchByStationName(stationName: String): List&lt;SubwayExternalSearchHit&gt;</ID>
+    <ID>ReturnCount:SeoulSjwPerformApiClient.kt:SeoulSjwPerformApiClient$fun detail(performIdx: String): FestivalEvent?</ID>
+    <ID>ReturnCount:SeoulSjwPerformApiClient.kt:SeoulSjwPerformApiClient$fun list( pageNo: Int, numOfRows: Int, ): List&lt;FestivalEvent&gt;</ID>
+    <ID>ReturnCount:SeoulSjwPerformApiClient.kt:SeoulSjwPerformApiClient$private fun fetchSjwEnvelope(path: String): SjwEnvelope?</ID>
+    <ID>ReturnCount:SeoulSjwPerformApiClient.kt:SjwRow$fun toDomain(): FestivalEvent?</ID>
+    <ID>ReturnCount:SignupService.kt:SignupService$fun checkEmailField(raw: String): SignupFieldCheckResult</ID>
+    <ID>ReturnCount:SignupService.kt:SignupService$fun checkNicknameField(raw: String): SignupFieldCheckResult</ID>
+    <ID>ReturnCount:SignupService.kt:SignupService$private fun normalizeEmail(raw: String): String?</ID>
+    <ID>ReturnCount:SignupVerificationService.kt:SignupVerificationService$@Transactional fun confirmPostSignupAccount( tokenValue: String, decision: String, ipAddress: String, ): Boolean</ID>
+    <ID>ReturnCount:SignupVerificationService.kt:SignupVerificationService$@Transactional fun confirmSignupEmailVerification( tokenValue: String, ipAddress: String, ): Boolean</ID>
+    <ID>ReturnCount:SiteContentQueryService.kt:SiteContentQueryService$private fun toAssetUrl(imagePath: String?): String?</ID>
+    <ID>ReturnCount:SpcdeInfoApiClient.kt:SpcdeInfoApiClient$private fun fetch( operation: String, solYear: String, solMonth: String, source: String, ): List&lt;SpecialDayInfo&gt;</ID>
+    <ID>ReturnCount:SubscriptionDispatchSchedule.kt:SubscriptionDispatchSchedule$fun shouldTriggerAt(now: LocalDateTime): Boolean</ID>
+    <ID>ReturnCount:TossPaymentConfirmService.kt:TossPaymentConfirmService$fun confirm( userId: Long, paymentKey: String, orderId: String, amount: BigDecimal, idempotencyKey: String?, traceId: String?, ): Payment</ID>
+    <ID>ReturnCount:TossWebhookService.kt:TossWebhookService$fun handleSignedPayload(rawBody: String)</ID>
+    <ID>ReturnCount:TourApiClient.kt:TourApiClient$override fun fetchAreaBasedAttractions( baseYm: String, areaCode: Int, signguCode: Int, size: Int, ): List&lt;TourAttraction&gt;</ID>
+    <ID>ReturnCount:TourFestivalApiClient.kt:FestivalItem$fun toDomain(): FestivalEvent?</ID>
+    <ID>ReturnCount:TourFestivalApiClient.kt:TourFestivalApiClient$private fun extractItemNodes(itemsNode: JsonNode): List&lt;JsonNode&gt;</ID>
+    <ID>ReturnCount:TourFestivalApiClient.kt:TourFestivalApiClient$private inline fun &lt;reified T&gt; fetchList( endpoint: String, encodedServiceKey: String, params: Map&lt;String, String&gt;, ): List&lt;T&gt;</ID>
+    <ID>ReturnCount:UserSurveyQueryService.kt:UserSurveyQueryService$fun findUserSurveyIfPresent(userId: Long): UserSurveyResponse?</ID>
+    <ID>ReturnCount:WindDirection.kt:WindDirection$fun to16Point( degrees: Int?, windSpeedMps: Double? = null, ): String</ID>
+    <ID>SwallowedException:IdempotencyAspect.kt:IdempotencyAspect$ex: ExecutionException</ID>
+    <ID>SwallowedException:KeyExpressionResolver.kt:KeyExpressionResolver$ex: Exception</ID>
+    <ID>SwallowedException:MbrdEditorImageController.kt:MbrdEditorImageController$ex: IllegalArgumentException</ID>
+    <ID>ThrowsCount:AccountRecoveryService.kt:AccountRecoveryService$@Transactional fun resetPassword(request: PasswordResetRequest): AccountRecoveryResponse</ID>
+    <ID>ThrowsCount:AuthService.kt:AuthService$@Transactional fun reissue(refreshToken: String): TokenResponse</ID>
+    <ID>ThrowsCount:AuthenticationService.kt:AuthenticationService$@Transactional fun refresh(request: RefreshTokenRequest): JwtToken</ID>
+    <ID>ThrowsCount:GemmaChatService.kt:GemmaChatService$fun chat(command: GemmaChatCommand): GemmaChatResult</ID>
+    <ID>ThrowsCount:IdempotencyAspect.kt:IdempotencyAspect$@Around("@annotation(idempotent)") fun around( joinPoint: ProceedingJoinPoint, idempotent: Idempotent, ): Any?</ID>
+    <ID>ThrowsCount:JwtTokenUtil.kt:JwtTokenUtil$fun getUserInfoFromRecoveryToken(token: String): String</ID>
+    <ID>ThrowsCount:PasswordRecoveryService.kt:PasswordRecoveryService$@Transactional fun loginWithPassword( email: String, password: String, ): PasswordLoginResult</ID>
+    <ID>ThrowsCount:PaymentRefundService.kt:PaymentRefundService$fun adminRetryLastFailedRefund(paymentId: Long): PaymentRefund</ID>
+    <ID>ThrowsCount:SignupService.kt:SignupService$@Transactional fun signup( email: String, rawNickname: String, password: String, subscribeToUpdates: Boolean = false, ): TokenResponse</ID>
+    <ID>ThrowsCount:SubwayQueryApplicationService.kt:SubwayQueryApplicationService$override fun getStationPage( lineId: String, stationCd: String, ): SubwayStationPageResult</ID>
+    <ID>ThrowsCount:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
+    <ID>ThrowsCount:UserService.kt:UserService$private fun applyProfileImageUrl( user: User, raw: String, )</ID>
+    <ID>ThrowsCount:UserSurveyFormService.kt:UserSurveyFormService$fun submitCurrentForm( userId: Long, command: SubmitSurveyResponseCommand, ): SurveySubmissionResponse</ID>
+    <ID>TooGenericExceptionCaught:AnthropicSubwayStationSummaryClient.kt:AnthropicSubwayStationSummaryClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AnthropicSurveyRecommendationClient.kt:AnthropicSurveyRecommendationClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AuthenticationService.kt:AuthenticationService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GemmaApiClient.kt:GemmaApiClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:IdempotencyAspect.kt:IdempotencyAspect$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:JwtTokenUtil.kt:JwtTokenUtil$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:KeyExpressionResolver.kt:KeyExpressionResolver$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:KoreaEximExchangeRateClient.kt:KoreaEximExchangeRateClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MbrdEditorImageController.kt:MbrdEditorImageController$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:MinioBucketInitializer.kt:MinioBucketInitializer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NaverDirectionsClient.kt:NaverDirectionsClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OpenAiSubwayStationSummaryClient.kt:OpenAiSubwayStationSummaryClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OpenAiSurveyRecommendationClient.kt:OpenAiSurveyRecommendationClient$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:PlatformAuthController.kt:PlatformAuthController$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:PlatformJwtAuthenticationFilter.kt:PlatformJwtAuthenticationFilter$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SeoulOpenapiSubwaySearchAdapter.kt:SeoulOpenapiSubwaySearchAdapter$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SubscriptionDispatchMailService.kt:SubscriptionDispatchMailService$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:TossPaymentsApiClient.kt:TossPaymentsApiClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TourApiClient.kt:TourApiClient$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:UserProfileImageService.kt:UserProfileImageService$e: Exception</ID>
+    <ID>TooManyFunctions:AdminGraphQlController.kt:AdminGraphQlController</ID>
+    <ID>TooManyFunctions:AdminOperationsController.kt:AdminOperationsController</ID>
+    <ID>TooManyFunctions:AdminServerStatusService.kt:AdminServerStatusService</ID>
+    <ID>TooManyFunctions:AdminSurveyFormService.kt:AdminSurveyFormService</ID>
+    <ID>TooManyFunctions:AdminWebzineIssueController.kt:AdminWebzineIssueController</ID>
+    <ID>TooManyFunctions:BnrRepositoryImpl.kt:BnrRepositoryImpl : BnrRepository</ID>
+    <ID>TooManyFunctions:CultureInfoApiClient.kt:CultureInfoApiClient</ID>
+    <ID>TooManyFunctions:EventInfoController.kt:EventInfoController</ID>
+    <ID>TooManyFunctions:GlowWeatherQueryService.kt:GlowWeatherQueryService</ID>
+    <ID>TooManyFunctions:JwtProvider.kt:JwtProvider</ID>
+    <ID>TooManyFunctions:JwtTokenUtil.kt:JwtTokenUtil</ID>
+    <ID>TooManyFunctions:KmaGlowWeatherClient.kt:KmaGlowWeatherClient : GlowWeatherDataPort</ID>
+    <ID>TooManyFunctions:MbrdEditorBootstrapService.kt:MbrdEditorBootstrapService</ID>
+    <ID>TooManyFunctions:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository : MbrdEditorDocumentRepository</ID>
+    <ID>TooManyFunctions:MimRepositoryImpl.kt:MimRepositoryImpl : MimRepository</ID>
+    <ID>TooManyFunctions:PlatformUser.kt:PlatformUser.Companion$Builder</ID>
+    <ID>TooManyFunctions:PupRepositoryImpl.kt:PupRepositoryImpl : PupRepository</ID>
+    <ID>TooManyFunctions:Reservation.kt:Reservation : BaseEntity</ID>
+    <ID>TooManyFunctions:ReservationCommandService.kt:ReservationCommandService</ID>
+    <ID>TooManyFunctions:TourFestivalApiClient.kt:TourFestivalApiClient : FestivalEventExternalQueryPort</ID>
+    <ID>TooManyFunctions:User.kt:User</ID>
+    <ID>TooManyFunctions:WebzineAdminService.kt:WebzineAdminService : WebzineAdminUseCase</ID>
+    <ID>UnusedParameter:GlowWeatherQueryService.kt:GlowWeatherQueryService$current: CurrentWeatherResponse</ID>
+    <ID>VariableNaming:ApplicationLayerUiDtoBaselineTest.kt:ApplicationLayerUiDtoBaselineTest$val 위반목록 = ArchitectureSourceScanner.application계층UiDto위반목록(sourceRoot)</ID>
+    <ID>VariableNaming:ControllerDirectRepositoryBaselineTest.kt:ControllerDirectRepositoryBaselineTest$val 위반목록 = ArchitectureSourceScanner.controllerRepository직접참조목록(sourceRoot)</ID>
+    <ID>VariableNaming:PackagePathAlignmentBaselineTest.kt:PackagePathAlignmentBaselineTest$val 불일치목록 = ArchitectureSourceScanner.패키지경로불일치목록(sourceRoot)</ID>
+    <ID>WildcardImport:UserSurvey.kt:import jakarta.persistence.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

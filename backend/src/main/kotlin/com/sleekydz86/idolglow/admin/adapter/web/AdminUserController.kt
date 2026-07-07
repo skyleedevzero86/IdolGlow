@@ -38,7 +38,8 @@ class AdminUserController(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) role: UserRole?,
         @RequestParam(required = false) accountStatus: UserAccountStatus?,
-    ): ResponseEntity<AdminUserPageResponse> = ResponseEntity.ok(adminUserService.findUsers(keyword, role, accountStatus, page, size).toWebResponse())
+    ): ResponseEntity<AdminUserPageResponse> =
+        ResponseEntity.ok(adminUserService.findUsers(keyword, role, accountStatus, page, size).toWebResponse())
 
     @Operation(summary = "회원 역할 변경")
     @SecurityRequirement(name = "bearerAuth")
@@ -54,7 +55,8 @@ class AdminUserController(
     fun updateStatus(
         @PathVariable userId: Long,
         @RequestBody request: UpdateAdminUserStatusRequest,
-    ): ResponseEntity<AdminUserSummaryResponse> = ResponseEntity.ok(adminUserService.updateUserStatus(userId, request.accountStatus).toWebResponse())
+    ): ResponseEntity<AdminUserSummaryResponse> =
+        ResponseEntity.ok(adminUserService.updateUserStatus(userId, request.accountStatus).toWebResponse())
 
     @Operation(summary = "회원 잠금 해제")
     @SecurityRequirement(name = "bearerAuth")
