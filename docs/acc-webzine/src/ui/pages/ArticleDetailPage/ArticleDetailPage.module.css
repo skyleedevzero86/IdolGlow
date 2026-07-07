@@ -1,0 +1,254 @@
+/**
+ * ArticleDetailPage Styles
+ */
+
+.main {
+  min-height: 100vh;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 50vh;
+  min-height: 300px;
+  max-height: 500px;
+  overflow: hidden;
+}
+
+.heroImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+}
+
+.heroContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-2xl);
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+}
+
+.categoryBadge {
+  display: inline-flex;
+  padding: var(--spacing-xs) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-light);
+  background-color: var(--color-accent);
+  border-radius: var(--radius-full);
+}
+
+.heroTitle {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-light);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-md);
+  max-width: 800px;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-3xl) var(--spacing-lg);
+}
+
+.content {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-primary);
+}
+
+.content h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--spacing-2xl);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+}
+
+.content h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+}
+
+.content p {
+  margin-bottom: var(--spacing-lg);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) 0;
+  border-top: 1px solid var(--color-border-light);
+  margin-top: var(--spacing-2xl);
+}
+
+.tag {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-full);
+}
+
+.tag::before {
+  content: '#';
+}
+
+/* 이전/다음 글 네비게이션 */
+.navigation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--transition-fast);
+}
+
+.navItem:hover,
+.navItem:focus {
+  background-color: var(--color-border-light);
+}
+
+.navItemNext {
+  text-align: right;
+}
+
+.navLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.navTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.navEmpty {
+  visibility: hidden;
+}
+
+/* 에러/로딩 상태 */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: var(--spacing-lg);
+  text-align: center;
+}
+
+.errorTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.errorText {
+  color: var(--color-text-secondary);
+}
+
+.backButton {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-light);
+  background-color: var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: background-color var(--transition-fast);
+}
+
+.backButton:hover,
+.backButton:focus {
+  background-color: var(--color-accent-hover);
+}
+
+/* 반응형 */
+@media (max-width: 767px) {
+  .hero {
+    height: 40vh;
+  }
+
+  .heroContent {
+    padding: var(--spacing-lg);
+  }
+
+  .heroTitle {
+    font-size: var(--font-size-2xl);
+  }
+
+  .heroMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .container {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .content {
+    font-size: var(--font-size-base);
+  }
+
+  .navigation {
+    grid-template-columns: 1fr;
+  }
+
+  .navItemNext {
+    text-align: left;
+  }
+}

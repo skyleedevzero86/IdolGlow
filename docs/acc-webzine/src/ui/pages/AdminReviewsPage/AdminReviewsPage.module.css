@@ -1,0 +1,425 @@
+@import '../../../../../samples/portal-admin-form.css';
+
+.panel {
+  background: var(--portal-admin-sheet-bg, #ffffff);
+  border: 1px solid var(--portal-admin-sheet-border, #e8e8e8);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--portal-admin-panel-divider, #dddddd);
+}
+
+.panelTitle {
+  margin: 0;
+  color: #111111;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.panelBody {
+  padding: 1rem 1.15rem 1.15rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.95rem;
+}
+
+.searchForm {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.45rem;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchInput {
+  min-width: 0;
+  flex: 1;
+  min-height: 2.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: var(--portal-admin-control-bg, #ffffff);
+  color: var(--portal-admin-control-text, #111111);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.select {
+  min-height: 2.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  font-size: 0.875rem;
+  background: var(--portal-admin-control-bg, #ffffff);
+  color: var(--portal-admin-control-text, #111111);
+}
+
+.searchButton,
+.secondaryButton {
+  min-height: 2.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.searchButton {
+  border-color: var(--portal-admin-primary-btn, #222222);
+  background: var(--portal-admin-primary-btn, #222222);
+  color: var(--portal-admin-primary-btn-text, #ffffff);
+}
+
+.secondaryButton {
+  border-color: var(--portal-admin-control-border, #cccccc);
+  background: #ffffff;
+  color: #222222;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.card {
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  border-radius: 0;
+  padding: 0.8rem;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.titleRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.productName {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+.metaLine {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--portal-admin-muted, #555555);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0 0.5rem;
+  border-radius: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: #ffffff;
+  color: #333333;
+}
+
+.chipDanger {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.rating {
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.content {
+  margin: 0.45rem 0 0.6rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #111111;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 0;
+  overflow: hidden;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: #ffffff;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actionPrimary {
+  min-height: 2.2rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: #ffffff;
+  color: #222222;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actionPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionDanger {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.actionSuccess {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.95rem;
+  flex-wrap: wrap;
+}
+
+.pageBtn {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: #333333;
+}
+
+.pageBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: #f4f4f4;
+  border-color: #222222;
+  color: #111111;
+  font-weight: 700;
+}
+
+.paginationInfo {
+  margin: 0.8rem 0 0;
+  width: 100%;
+  color: var(--portal-admin-muted, #555555);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  text-align: right;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  padding: 1rem;
+  box-shadow: none;
+}
+
+.modal h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.modal p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: rgba(15, 23, 42, 0.65);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  font-size: 0.875rem;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.empty {
+  padding: 1.4rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--portal-admin-muted, #555555);
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  border-radius: 0;
+}
+
+:global(html[data-theme='dark']) .panel {
+  background: #111827;
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .panelHeader {
+  border-bottom-color: #334155;
+}
+
+:global(html[data-theme='dark']) .panelTitle,
+:global(html[data-theme='dark']) .productName,
+:global(html[data-theme='dark']) .content,
+:global(html[data-theme='dark']) .modal h3 {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .searchInput,
+:global(html[data-theme='dark']) .select,
+:global(html[data-theme='dark']) .textarea {
+  border-color: #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .searchInput::placeholder {
+  color: #64748b;
+}
+
+:global(html[data-theme='dark']) .secondaryButton,
+:global(html[data-theme='dark']) .card,
+:global(html[data-theme='dark']) .chip,
+:global(html[data-theme='dark']) .thumb,
+:global(html[data-theme='dark']) .actionPrimary,
+:global(html[data-theme='dark']) .pageBtn,
+:global(html[data-theme='dark']) .modal,
+:global(html[data-theme='dark']) .empty {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .chipDanger,
+:global(html[data-theme='dark']) .actionDanger {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(127, 29, 29, 0.28);
+  color: #fecaca;
+}
+
+:global(html[data-theme='dark']) .actionSuccess {
+  border-color: rgba(74, 222, 128, 0.48);
+  background: rgba(20, 83, 45, 0.28);
+  color: #bbf7d0;
+}
+
+:global(html[data-theme='dark']) .pageBtnActive {
+  border-color: #94a3b8;
+  background: #1e293b;
+  color: #ffffff;
+}
+
+:global(html[data-theme='dark']) .metaLine,
+:global(html[data-theme='dark']) .paginationInfo,
+:global(html[data-theme='dark']) .modal p {
+  color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .searchForm {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .searchForm,
+  .modalActions,
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchButton,
+  .secondaryButton,
+  .actionPrimary {
+    width: 100%;
+  }
+
+  .paginationInfo {
+    text-align: left;
+    white-space: normal;
+  }
+}

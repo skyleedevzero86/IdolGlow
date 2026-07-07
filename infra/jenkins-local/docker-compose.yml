@@ -34,8 +34,15 @@ services:
       - type: bind
         source: ${JENKINS_DEPLOY_HOST_PATH}
         target: /deployments
+      - type: bind
+        source: ${IDOLGLOW_WORKSPACE}/.gradle-user
+        target: /var/jenkins_home/.gradle-user
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/login >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8080/login >/dev/null || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 10
