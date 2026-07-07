@@ -294,6 +294,59 @@ def markPipelineFailed(String stageName) {
     env.PIPELINE_FAILED_STAGE = stageName
 }
 
+def backendGradleFlags() {
+    return '--build-cache --console=plain --stacktrace --info --profile --no-parallel'
+}
+
+def resolveBackendBootJarGoals() {
+    if (resolveDeployEnvParam() == 'prod' || env.RELEASE_TAG?.trim()) {
+        return 'clean bootJar'
+    }
+    if (resolveDeployEnvParam() == 'staging') {
+        return 'clean bootJar'
+    }
+    return 'bootJar'
+}
+
+def shouldRunBackendBootJar() {
+    if (env.RELEASE_TAG?.trim()) {
+        return true
+    }
+    return resolveDeployEnvParam() in ['staging', 'prod']
+}
+
+def verifyBackendGradleWrapper() {
+    if (!fileExists('backend/gradlew') && !fileExists('backend/gradlew.bat')) {
+        markPipelineFailed('백엔드 JAR 빌드')
+        error('backend/gradlew가 없습니다. Gradle wrapper 위치를 확인하세요.')
+    }
+    if (!fileExists('backend/gradle/wrapper/gradle-wrapper.jar')) {
+        markPipelineFailed('백엔드 JAR 빌드')
+        error(
+            'backend/gradle/wrapper/gradle-wrapper.jar 가 없습니다. ' +
+            'Gradle wrapper 파일을 저장소에 커밋했는지 확인하세요.'
+        )
+    }
+}
+
+def runBackendGradle(String stageLabel, String goals, int timeoutMinutes = 20) {
+    try {
+        dir('backend') {
+            timeout(time: timeoutMinutes, unit: 'MINUTES') {
+                if (isUnix()) {
+                    sh 'chmod +x gradlew || true'
+                    sh "./gradlew ${goals} ${backendGradleFlags()}"
+                } else {
+                    bat "gradlew.bat ${goals} ${backendGradleFlags()}"
+                }
+            }
+        }
+    } catch (Exception buildError) {
+        markPipelineFailed(stageLabel)
+        throw buildError
+    }
+}
+
 def resolveFailureGuide(String failedStage) {
     switch (failedStage) {
         case '릴리즈 검증':
@@ -312,6 +365,14 @@ def resolveFailureGuide(String failedStage) {
                 impact: '서버에 새 버전은 반영되지 않았습니다. (빌드·배포 미실행)',
                 action: 'CHANGELOG.md 섹션명을 확인하거나, Jenkins 파라미터 CHANGELOG_SECTION을 수정하세요.',
             ]
+        case '백엔드 JAR 빌드':
+        case '백엔드 테스트':
+        case '백엔드 Detekt':
+        case '백엔드 Ktlint':
+        case '백엔드 bootJar':
+        case '백엔드 test':
+        case '백엔드 detekt':
+        case '백엔드 ktlint':
         case '백엔드 빌드':
             return [
                 headline: '백엔드 빌드 실패',
@@ -458,6 +519,7 @@ pipeline {
     options {
         timestamps()
         disableConcurrentBuilds()
+        skipDefaultCheckout(true)
     }
 
     parameters {
@@ -588,38 +650,56 @@ pipeline {
             }
         }
 
-        stage('백엔드 빌드') {
+        stage('백엔드 JAR 빌드') {
+            when {
+                expression {
+                    params.RUN_BACKEND_BUILD &&
+                        fileExists('backend/build.gradle.kts') &&
+                        shouldRunBackendBootJar()
+                }
+            }
+            steps {
+                script {
+                    verifyBackendGradleWrapper()
+                    runBackendGradle('백엔드 JAR 빌드', resolveBackendBootJarGoals(), 30)
+                }
+            }
+        }
+
+        stage('백엔드 테스트') {
             when {
                 expression { params.RUN_BACKEND_BUILD && fileExists('backend/build.gradle.kts') }
             }
             steps {
-                dir('backend') {
-                    script {
-                        if (!fileExists('gradlew') && !fileExists('gradlew.bat')) {
-                            markPipelineFailed('백엔드 빌드')
-                            error('backend/gradlew가 없습니다. Gradle wrapper 위치를 확인하세요.')
-                        }
+                script {
+                    runBackendGradle('백엔드 테스트', 'test', 20)
+                }
+            }
+        }
 
-                        if (!fileExists('gradle/wrapper/gradle-wrapper.jar')) {
-                            markPipelineFailed('백엔드 빌드')
-                            error(
-                                'backend/gradle/wrapper/gradle-wrapper.jar 가 없습니다. ' +
-                                'Gradle wrapper 파일을 저장소에 커밋했는지 확인하세요.'
-                            )
-                        }
+        stage('백엔드 Detekt') {
+            when {
+                expression { params.RUN_BACKEND_BUILD && fileExists('backend/build.gradle.kts') }
+            }
+            steps {
+                script {
+                    runBackendGradle('백엔드 Detekt', 'detekt', 15)
+                }
+            }
+        }
 
-                        try {
-                            if (isUnix()) {
-                                sh 'chmod +x gradlew || true'
-                                sh './gradlew bootJar test detekt runKtlintCheckOverMainSourceSet --build-cache --parallel'
-                            } else {
-                                bat 'gradlew.bat bootJar test detekt runKtlintCheckOverMainSourceSet --build-cache --parallel'
-                            }
-                        } catch (Exception buildError) {
-                            markPipelineFailed('백엔드 빌드')
-                            throw buildError
-                        }
-                    }
+        stage('백엔드 Ktlint') {
+            when {
+                expression { params.RUN_BACKEND_BUILD && fileExists('backend/build.gradle.kts') }
+            }
+            steps {
+                script {
+                    runBackendGradle('백엔드 Ktlint', 'runKtlintCheckOverMainSourceSet', 15)
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'backend/build/reports/profile/*.html', allowEmptyArchive: true
                 }
             }
         }
@@ -750,6 +830,7 @@ pipeline {
             }
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
             archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'backend/build/reports/profile/*.html', allowEmptyArchive: true
         }
     }
 }

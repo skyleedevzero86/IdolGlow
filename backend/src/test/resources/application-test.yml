@@ -1,0 +1,76 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:idolglow-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+        show_sql: false
+  graphql:
+    graphiql:
+      enabled: false
+  mail:
+    host: 127.0.0.1
+    port: 3025
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - email
+              - profile
+
+app:
+  oauth2:
+    redirect-uri: http://localhost:3000/auth/callback
+  security:
+    allowed-origins: http://localhost:3000
+  public-base-url: http://localhost:8080
+  mail:
+    enabled: false
+  storage:
+    minio:
+      enabled: false
+  auth:
+    test-login:
+      enabled: true
+
+platform:
+  auth:
+    enabled: false
+    jwt:
+      secret: defaultSecretKeyForPhase1TestsOnly123456789012345678901234567890123456789012345678901234567890
+
+payment:
+  mock:
+    webhook-secret: test-mock-webhook-secret
+
+jasypt:
+  encryptor:
+    password: test-only
+
+logging:
+  level:
+    root: WARN
+    com.sleekydz86.idolglow: INFO

@@ -11,6 +11,8 @@ gradle/*
 !**/src/main/**/build/
 application-*.yml
 application.yml
+!src/test/resources/application-test.yml
+!src/test/resources/application.yml
 
 ### STS ###
 .apt_generated

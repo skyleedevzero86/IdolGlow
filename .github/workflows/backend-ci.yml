@@ -33,5 +33,10 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Compile, test, detekt, ktlint
-        run: ./gradlew clean kaptKotlin test detekt runKtlintCheckOverMainSourceSet --no-daemon
+      - name: Quality gate (PR)
+        if: github.event_name == 'pull_request'
+        run: ./gradlew test detekt runKtlintCheckOverMainSourceSet --build-cache --parallel --console=plain
+
+      - name: Build and quality gate (main)
+        if: github.event_name == 'push'
+        run: ./gradlew bootJar test detekt runKtlintCheckOverMainSourceSet --build-cache --parallel --console=plain

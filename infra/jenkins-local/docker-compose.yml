@@ -34,9 +34,7 @@ services:
       - type: bind
         source: ${JENKINS_DEPLOY_HOST_PATH}
         target: /deployments
-      - type: bind
-        source: ${IDOLGLOW_WORKSPACE}/.gradle-user
-        target: /var/jenkins_home/.gradle-user
+      - gradle_cache:/var/jenkins_home/.gradle-user
     healthcheck:
       test:
         [
@@ -50,3 +48,4 @@ services:
 
 volumes:
   jenkins_home:
+  gradle_cache:

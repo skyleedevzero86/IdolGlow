@@ -13,6 +13,10 @@ fi
 
 BACKEND_JAR="$(find "${BACKEND_DIR}" -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' 2>/dev/null | sort | tail -n 1 || true)"
 if [[ -z "${BACKEND_JAR}" ]]; then
+  if [[ "${DEPLOY_ENV}" == "dev" ]]; then
+    echo "dev 환경: 백엔드 JAR 없음 — bootJar 미실행 빌드로 간주하고 검증을 통과합니다."
+    exit 0
+  fi
   echo "배포된 백엔드 JAR이 없습니다: ${BACKEND_DIR}" >&2
   exit 1
 fi
