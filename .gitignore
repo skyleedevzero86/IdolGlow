@@ -13,7 +13,6 @@ rad.json
 *.flf
 TestResults.xml
 docs/*
-frontend/
 .run/
 .gradle-user/*
 infra/jenkins-local/.env
