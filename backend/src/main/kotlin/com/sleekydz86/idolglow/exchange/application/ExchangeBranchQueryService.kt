@@ -1,6 +1,5 @@
 package com.sleekydz86.idolglow.exchange.application
 
-import com.sleekydz86.idolglow.exchange.application.dto.CreateExchangeAlertCommand
 import com.sleekydz86.idolglow.exchange.application.dto.ExchangeBranchResult
 import com.sleekydz86.idolglow.exchange.domain.ExchangeBranch
 import com.sleekydz86.idolglow.exchange.infrastructure.ExchangeBranchJpaRepository

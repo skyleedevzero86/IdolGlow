@@ -65,7 +65,8 @@ class AdminCatalogController(
     fun createSlots(
         @PathVariable productId: Long,
         @Valid @RequestBody request: CreateReservationSlotsRequest,
-    ): ResponseEntity<List<AdminReservationSlotResponse>> = ResponseEntity.ok(adminCatalogService.createSlots(productId, request.toCommand()))
+    ): ResponseEntity<List<AdminReservationSlotResponse>> =
+        ResponseEntity.ok(adminCatalogService.createSlots(productId, request.toCommand()))
 
     @Operation(summary = "상품 수정")
     @PutMapping("/products/{productId}")

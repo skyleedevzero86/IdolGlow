@@ -28,11 +28,12 @@ class AdminAuthVerificationController(
         @RequestParam(required = false) keyword: String?,
     ): ResponseEntity<AuthVerificationAuditLogPageResponse> =
         ResponseEntity.ok(
-            authVerificationAuditService.findPage(
-                page = page,
-                size = size,
-                verificationType = verificationType,
-                keyword = keyword,
-            ).toWebResponse(),
+            authVerificationAuditService
+                .findPage(
+                    page = page,
+                    size = size,
+                    verificationType = verificationType,
+                    keyword = keyword,
+                ).toWebResponse(),
         )
 }

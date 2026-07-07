@@ -34,4 +34,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Compile, test, detekt, ktlint
-        run: ./gradlew clean kaptKotlin test detekt ktlintCheck --no-daemon
+        run: ./gradlew clean kaptKotlin test detekt runKtlintCheckOverMainSourceSet --no-daemon

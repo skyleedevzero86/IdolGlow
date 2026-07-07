@@ -2,7 +2,6 @@ package com.sleekydz86.idolglow.admin.adapter.web
 
 import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminSubscriptionOverviewResponse
 import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminSubscriptionScheduleResponse
-import com.sleekydz86.idolglow.admin.adapter.web.dto.toWebResponse as subscriptionToWebResponse
 import com.sleekydz86.idolglow.admin.adapter.web.request.UpsertSubscriptionDispatchScheduleRequest
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import com.sleekydz86.idolglow.admin.adapter.web.dto.toWebResponse as subscriptionToWebResponse
 
 @Tag(
     name = "관리자 구독·발송",
@@ -45,12 +45,13 @@ class AdminSubscriptionController(
         @RequestParam(defaultValue = "10") dispatchSize: Int,
     ): ResponseEntity<AdminSubscriptionOverviewResponse> =
         ResponseEntity.ok(
-            subscriptionAdminUseCase.findOverview(
-                subscriberPage = subscriberPage,
-                subscriberSize = subscriberSize,
-                dispatchPage = dispatchPage,
-                dispatchSize = dispatchSize,
-            ).subscriptionToWebResponse(),
+            subscriptionAdminUseCase
+                .findOverview(
+                    subscriberPage = subscriberPage,
+                    subscriberSize = subscriberSize,
+                    dispatchPage = dispatchPage,
+                    dispatchSize = dispatchSize,
+                ).subscriptionToWebResponse(),
         )
 
     @Operation(summary = "예약 발송 스케줄 저장")
