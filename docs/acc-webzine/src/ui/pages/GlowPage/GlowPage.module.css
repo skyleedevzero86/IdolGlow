@@ -1,8 +1,0 @@
-.glowPage {
-  width: 100%;
-}
-
-.glowMain {
-  min-height: 100vh;
-  padding: var(--spacing-2xl) 0;
-}
