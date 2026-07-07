@@ -29,3 +29,4 @@ backend/gradle/*
 !backend/gradle/wrapper/gradle-wrapper.properties
 docs_backup/
 docs/
+docs/acc-webzine/
