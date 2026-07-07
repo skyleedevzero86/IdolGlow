@@ -126,9 +126,66 @@ def resolveDeployEnvParam() {
     return deployEnv ? deployEnv : 'dev'
 }
 
+def normalizeBranchName(String branch) {
+    if (!branch?.trim()) {
+        return ''
+    }
+
+    return branch.trim()
+        .replaceFirst(/^origin\//, '')
+        .replaceFirst(/^refs\/heads\//, '')
+        .replaceFirst(/^refs\/tags\//, '')
+        .replaceFirst(/~.*$/, '')
+}
+
+def resolveGitBranchFromGit() {
+    if (isUnix()) {
+        return sh(
+            script: '''
+                set +e
+                branch="$(git symbolic-ref -q --short HEAD 2>/dev/null)"
+                if [ -n "$branch" ]; then
+                  echo "$branch"
+                  exit 0
+                fi
+                branch="$(git branch -r --contains HEAD 2>/dev/null | sed 's/^[* ]*//' | head -1)"
+                branch="${branch#origin/}"
+                if [ -n "$branch" ]; then
+                  echo "$branch"
+                  exit 0
+                fi
+                git name-rev --name-only HEAD 2>/dev/null | sed 's/^remotes\\/origin\\///;s/~.*$//'
+            ''',
+            returnStdout: true
+        ).trim()
+    }
+
+    return bat(
+        script: '''
+            @for /f "delims=" %%b in ('git symbolic-ref -q --short HEAD 2^>nul') do @echo %%b&goto :done
+            @for /f "delims=" %%b in ('git branch -r --contains HEAD 2^>nul') do @set REMOTE=%%b&goto :remote
+            @goto :done
+            :remote
+            @echo %REMOTE:origin/=%
+            :done
+        ''',
+        returnStdout: true
+    ).trim()
+}
+
 def resolveGitBranch() {
-    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: 'unknown'
-    return branch.replaceFirst(/^origin\//, '')
+    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: env.RESOLVED_GIT_BRANCH
+    branch = normalizeBranchName(branch)
+    if (branch) {
+        return branch
+    }
+
+    branch = normalizeBranchName(resolveGitBranchFromGit())
+    if (branch && branch != 'HEAD') {
+        return branch
+    }
+
+    return 'unknown'
 }
 
 def shouldRequireReleaseTag() {
@@ -281,6 +338,21 @@ def resolveFailedStageName() {
     def stageName = env.STAGE_NAME?.trim()
     if (stageName && stageName != 'Declarative: Post Actions') {
         return stageName
+    }
+
+    try {
+        def logText = currentBuild.rawBuild.getLog(8000).join('\n')
+        def matchers = [
+            (logText =~ /Stage "(.+?)" failed/),
+            (logText =~ /Stage '(.+?)' failed/),
+        ]
+        for (matcher in matchers) {
+            if (matcher.find()) {
+                return matcher.group(1)
+            }
+        }
+    } catch (Exception ignored) {
+        echo "실패 stage 로그 파싱 생략: ${ignored.message}"
     }
 
     return '알 수 없음'
@@ -574,6 +646,7 @@ pipeline {
         RELEASE_TAG = ''
         EFFECTIVE_CHANGELOG_SECTION = ''
         HEALTH_CHECK_TARGET = ''
+        RESOLVED_GIT_BRANCH = ''
         PIPELINE_FAILED_STAGE = ''
         TELEGRAM_FINAL_SUMMARY_SENT = 'false'
     }
@@ -586,8 +659,10 @@ pipeline {
                     fetchGitTagsForReleaseDetection()
                     env.REPO_ROOT = pwd()
                     env.FRONTEND_DIR = resolveFrontendDir()
+                    env.RESOLVED_GIT_BRANCH = normalizeBranchName(resolveGitBranchFromGit())
                     env.RELEASE_TAG = resolveGitTag()
 
+                    echo "Git 브랜치: ${resolveGitBranch()} (BRANCH_NAME=${env.BRANCH_NAME ?: '-'}, GIT_BRANCH=${env.GIT_BRANCH ?: '-'}, git=${env.RESOLVED_GIT_BRANCH ?: '-'})"
                     if (env.RELEASE_TAG) {
                         echo "Git 태그 감지: ${env.RELEASE_TAG}"
                     } else {
@@ -715,19 +790,24 @@ pipeline {
                     }
 
                     dir("${env.FRONTEND_DIR}") {
-                        if (isUnix()) {
-                            sh 'node -v'
-                            sh 'corepack enable'
-                            sh 'corepack prepare pnpm@9.15.4 --activate || true'
-                            sh 'pnpm -v'
-                            sh 'pnpm install --frozen-lockfile'
-                            sh 'pnpm build'
-                        } else {
-                            bat 'node -v'
-                            bat 'corepack enable'
-                            bat 'pnpm -v'
-                            bat 'pnpm install --frozen-lockfile'
-                            bat 'pnpm build'
+                        try {
+                            if (isUnix()) {
+                                sh 'node -v'
+                                sh 'corepack enable'
+                                sh 'corepack prepare pnpm@9.15.4 --activate || true'
+                                sh 'pnpm -v'
+                                sh 'pnpm install --frozen-lockfile'
+                                sh 'pnpm build'
+                            } else {
+                                bat 'node -v'
+                                bat 'corepack enable'
+                                bat 'pnpm -v'
+                                bat 'pnpm install --frozen-lockfile'
+                                bat 'pnpm build'
+                            }
+                        } catch (Exception frontendBuildError) {
+                            markPipelineFailed('프론트엔드 빌드')
+                            throw frontendBuildError
                         }
                     }
                 }

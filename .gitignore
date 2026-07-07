@@ -20,7 +20,6 @@ infra/jenkins-local/.env
 infra/jenkins-local/deployments/
 infra/jenkins-local/init.groovy.d/02-create-pipeline-job.groovy
 infra/jenkins-local/start-jenkins.ps1
-
 .idea/
 backend/gradle/*
 !backend/gradle/wrapper/
@@ -30,3 +29,8 @@ docs_backup/*
 docs/*
 .env
 .ps1
+infra/.env
+infra/.env.*
+infra/.envexample
+infra/.env.example
+infra/jenkins-local/*.ps1
