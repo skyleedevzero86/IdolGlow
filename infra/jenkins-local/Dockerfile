@@ -19,6 +19,10 @@ RUN apt-get update \
 ENV JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
+RUN mkdir -p /var/jenkins_home/.gradle /deployments/dev /deployments/staging /deployments/prod \
+    && chown -R jenkins:jenkins /var/jenkins_home/.gradle /deployments \
+    && chmod -R 775 /deployments
+
 USER jenkins
 
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt

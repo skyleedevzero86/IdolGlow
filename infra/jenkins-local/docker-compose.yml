@@ -34,7 +34,7 @@ services:
       - type: bind
         source: ${JENKINS_DEPLOY_HOST_PATH}
         target: /deployments
-      - gradle_cache:/var/jenkins_home/.gradle-user
+      - gradle_cache:/var/jenkins_home/.gradle
     healthcheck:
       test:
         [

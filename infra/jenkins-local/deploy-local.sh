@@ -13,11 +13,6 @@ resolve_frontend_dir() {
     return
   fi
 
-  if [[ -f "${WORKSPACE_DIR}/docs/acc-webzine/package.json" ]]; then
-    echo "${WORKSPACE_DIR}/docs/acc-webzine"
-    return
-  fi
-
   echo ""
 }
 

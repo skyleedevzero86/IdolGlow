@@ -39,10 +39,6 @@ def resolveFrontendDir() {
         return 'frontend'
     }
 
-    if (fileExists('docs/acc-webzine/package.json')) {
-        return 'docs/acc-webzine'
-    }
-
     return ''
 }
 
@@ -556,7 +552,7 @@ pipeline {
         string(
             name: 'HEALTH_CHECK_URL',
             defaultValue: '',
-            description: '배포 후 검증할 health endpoint. 비우면 dev/staging은 환경 기본값, prod는 HEALTH_CHECK_URL을 Jenkins에 설정해야 검증합니다.'
+            description: '배포 후 검증할 health endpoint (예: http://host.docker.internal:9090/health/check). 비우면 산출물 검증만 수행합니다. prod에서 HTTP 검증을 하려면 URL을 설정하세요.'
         )
         string(
             name: 'DEPLOY_ROOT',
@@ -571,7 +567,7 @@ pipeline {
     }
 
     environment {
-        GRADLE_USER_HOME = "/var/jenkins_home/.gradle"
+        GRADLE_USER_HOME = "${env.JENKINS_HOME}/.gradle"
         RELEASE_NOTES = ''
         FRONTEND_DIR = ''
         REPO_ROOT = ''
@@ -706,11 +702,19 @@ pipeline {
 
         stage('프론트엔드 빌드') {
             when {
-                expression { params.RUN_FRONTEND_BUILD && env.FRONTEND_DIR?.trim() }
+                expression { params.RUN_FRONTEND_BUILD }
             }
             steps {
-                dir("${env.FRONTEND_DIR}") {
-                    script {
+                script {
+                    if (!env.FRONTEND_DIR?.trim()) {
+                        markPipelineFailed('프론트엔드 빌드')
+                        error(
+                            'frontend/package.json을 찾을 수 없습니다. ' +
+                            'frontend 프로젝트와 build 스크립트가 있는지 확인하세요.'
+                        )
+                    }
+
+                    dir("${env.FRONTEND_DIR}") {
                         if (isUnix()) {
                             sh 'node -v'
                             sh 'corepack enable'

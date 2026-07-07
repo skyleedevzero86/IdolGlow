@@ -145,7 +145,7 @@ services:
       dockerfile: infra/docker/frontend/Dockerfile
       target: ${FRONTEND_TARGET:-static}
       args:
-        FRONTEND_DIR: ${FRONTEND_DIR:-docs/acc-webzine}
+        FRONTEND_DIR: ${FRONTEND_DIR:-frontend}
     container_name: idolglow-frontend
     restart: unless-stopped
     profiles: ["app"]
