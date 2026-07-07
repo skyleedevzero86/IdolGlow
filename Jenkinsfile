@@ -42,6 +42,24 @@ def resolveFrontendDir() {
     return ''
 }
 
+def installFrontendDependencies(String frontendDir = 'frontend') {
+    if (fileExists("${frontendDir}/pnpm-lock.yaml")) {
+        if (isUnix()) {
+            sh 'pnpm install --frozen-lockfile'
+        } else {
+            bat 'pnpm install --frozen-lockfile'
+        }
+        return
+    }
+
+    echo 'pnpm-lock.yaml이 없습니다. frozen-lockfile 없이 install을 실행합니다. (lockfile 커밋 권장)'
+    if (isUnix()) {
+        sh 'pnpm install'
+    } else {
+        bat 'pnpm install'
+    }
+}
+
 def resolveGitTag() {
     if (env.TAG_NAME?.trim()) {
         return env.TAG_NAME.trim()
@@ -796,13 +814,14 @@ pipeline {
                                 sh 'corepack enable'
                                 sh 'corepack prepare pnpm@9.15.4 --activate || true'
                                 sh 'pnpm -v'
-                                sh 'pnpm install --frozen-lockfile'
+                                installFrontendDependencies(env.FRONTEND_DIR)
                                 sh 'pnpm build'
                             } else {
                                 bat 'node -v'
                                 bat 'corepack enable'
+                                bat 'corepack prepare pnpm@9.15.4 --activate || true'
                                 bat 'pnpm -v'
-                                bat 'pnpm install --frozen-lockfile'
+                                installFrontendDependencies(env.FRONTEND_DIR)
                                 bat 'pnpm build'
                             }
                         } catch (Exception frontendBuildError) {
@@ -810,6 +829,11 @@ pipeline {
                             throw frontendBuildError
                         }
                     }
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'frontend/.next/**', allowEmptyArchive: true
                 }
             }
         }

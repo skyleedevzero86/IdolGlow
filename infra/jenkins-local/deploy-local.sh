@@ -19,6 +19,16 @@ resolve_frontend_dir() {
 resolve_frontend_build_dir() {
   local frontend_dir="$1"
 
+  if [[ -d "${frontend_dir}/.next/standalone" ]]; then
+    echo "${frontend_dir}/.next/standalone"
+    return
+  fi
+
+  if [[ -d "${frontend_dir}/out" ]]; then
+    echo "${frontend_dir}/out"
+    return
+  fi
+
   if [[ -d "${frontend_dir}/dist" ]]; then
     echo "${frontend_dir}/dist"
     return
