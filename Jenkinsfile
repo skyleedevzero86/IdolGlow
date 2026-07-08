@@ -166,11 +166,62 @@ def resolveFrontendDirForDisplay() {
     return resolveFrontendDir()
 }
 
+def resolveRepoRoot() {
+    def fromEnv = env.REPO_ROOT?.trim()
+    if (fromEnv && fromEnv != 'null') {
+        return fromEnv
+    }
+
+    def fromFile = readPipelineContextProperty('REPO_ROOT')
+    if (fromFile?.trim() && fromFile != 'null') {
+        return fromFile.trim()
+    }
+
+    return pwd()
+}
+
+def ensureDeployRoot(String preferredRoot = '') {
+    def requested = preferredRoot?.trim() ?: params.DEPLOY_ROOT?.trim() ?: '/var/jenkins_home/deployments'
+    if (!isUnix()) {
+        return requested
+    }
+
+    def resolved = sh(
+        script: "bash infra/jenkins-local/ensure-deploy-root.sh '${requested}'",
+        returnStdout: true
+    ).trim()
+
+    if (!resolved) {
+        markPipelineFailed('배포')
+        error("쓰기 가능한 DEPLOY_ROOT를 찾을 수 없습니다. 요청 경로: ${requested}")
+    }
+
+    if (resolved != requested) {
+        echo "DEPLOY_ROOT 자동 전환: ${requested} -> ${resolved}"
+    }
+
+    env.DEPLOY_ROOT_RESOLVED = resolved
+    return resolved
+}
+
+def shouldRunHttpHealthCheck(String deployEnv) {
+    if (params.HEALTH_CHECK_URL?.trim()) {
+        return true
+    }
+    if (params.RUN_HEALTH_CHECK) {
+        return true
+    }
+    return deployEnv == 'prod' && defaultHealthCheckUrl(deployEnv)?.trim()
+}
+
 def refreshPipelineContextFile() {
     def frontendDir = resolveFrontendDir()
     if (frontendDir) {
         env.FRONTEND_DIR = frontendDir
     }
+
+    def repoRoot = resolveRepoRoot()
+    env.REPO_ROOT = repoRoot
 
     def exactTag = resolveGitTag()
     if (exactTag) {
@@ -182,9 +233,11 @@ def refreshPipelineContextFile() {
     writeFile(
         file: 'pipeline-context.properties',
         text: """FRONTEND_DIR=${frontendDir}
+REPO_ROOT=${repoRoot}
 RELEASE_TAG=${env.RELEASE_TAG ?: ''}
 RELEASE_VERSION=${env.RELEASE_VERSION ?: ''}
 EFFECTIVE_CHANGELOG_SECTION=${env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam()}
+DEPLOY_ROOT_RESOLVED=${env.DEPLOY_ROOT_RESOLVED ?: ''}
 """,
         encoding: 'UTF-8'
     )
@@ -601,7 +654,7 @@ def resolveFailureGuide(String failedStage) {
                     ? "HTTP health check(${env.HEALTH_CHECK_TARGET})에 실패했습니다."
                     : '배포 산출물 검증에 실패했습니다. backend JAR 또는 deploy-info.txt 가 없습니다.',
                 impact: 'HTTP 검증 실패 시 이전 배포본으로 롤백을 시도했습니다.',
-                action: '배포 로그와 /deployments/{env}/latest 를 확인하세요. HTTP 검증은 HEALTH_CHECK_URL 에 실제 서비스 URL을 설정하세요.',
+                action: '배포 로그와 DEPLOY_ROOT/{env}/latest 를 확인하세요. HTTP 검증은 HEALTH_CHECK_URL 에 실제 서비스 URL을 설정하세요.',
             ]
         default:
             return [
@@ -762,8 +815,8 @@ pipeline {
         )
         string(
             name: 'DEPLOY_ROOT',
-            defaultValue: '/deployments',
-            description: '로컬 배포 산출물을 둘 디렉터리입니다.'
+            defaultValue: '/var/jenkins_home/deployments',
+            description: '로컬 배포 산출물을 둘 디렉터리입니다. Docker Jenkins에서는 /var/jenkins_home/deployments 권장. 쓰기 불가 시 자동으로 해당 경로로 폴백합니다.'
         )
         booleanParam(
             name: 'SEND_TELEGRAM',
@@ -777,6 +830,7 @@ pipeline {
         RELEASE_NOTES = ''
         FRONTEND_DIR = ''
         REPO_ROOT = ''
+        DEPLOY_ROOT_RESOLVED = ''
         RELEASE_TAG = ''
         RELEASE_VERSION = ''
         EFFECTIVE_CHANGELOG_SECTION = ''
@@ -990,8 +1044,12 @@ pipeline {
             }
             steps {
                 script {
+                    def deployRoot = ensureDeployRoot()
+                    echo "운영 배포 승인 대기 | DEPLOY_ROOT=${deployRoot} | BUILD=${env.BUILD_TAG}"
                     notifyTelegramSummary('approval_wait')
-                    input message: '운영 환경에 배포하시겠습니까?', ok: '배포 승인'
+                    timeout(time: 1, unit: 'HOURS') {
+                        input message: "운영(prod) 환경에 배포하시겠습니까?\n\n환경: prod\n빌드: ${env.BUILD_TAG}\n배포 경로: ${deployRoot}", ok: '배포 승인'
+                    }
                 }
             }
         }
@@ -1000,21 +1058,43 @@ pipeline {
             steps {
                 script {
                     def deployEnv = resolveDeployEnvParam()
+                    def repoRoot = resolveRepoRoot()
+                    def deployRoot = ensureDeployRoot()
+                    def releaseNotesFile = "${repoRoot}/changelog-release-notes.txt"
+
                     echo "배포 대상 환경: ${deployEnv}"
+                    echo "REPO_ROOT: ${repoRoot}"
+                    echo "DEPLOY_ROOT: ${deployRoot}"
                     echo "릴리즈 태그: ${env.RELEASE_TAG ?: '(없음)'}"
                     echo "릴리즈 노트:\n${env.RELEASE_NOTES}"
 
+                    if (!fileExists("${repoRoot}/infra/jenkins-local/deploy-local.sh")) {
+                        markPipelineFailed('배포')
+                        error("배포 스크립트를 찾을 수 없습니다: ${repoRoot}/infra/jenkins-local/deploy-local.sh")
+                    }
+
+                    if (!fileExists(releaseNotesFile)) {
+                        markPipelineFailed('배포')
+                        error("릴리즈 노트 파일이 없습니다: ${releaseNotesFile}")
+                    }
+
+                    refreshPipelineContextFile()
+
                     if (isUnix()) {
-                        sh """
-                            export DEPLOY_ROOT='${params.DEPLOY_ROOT}'
-                            export BUILD_ID='${env.BUILD_TAG}'
-                            bash infra/jenkins-local/deploy-local.sh '${deployEnv}' '${env.REPO_ROOT}' '${env.REPO_ROOT}/changelog-release-notes.txt'
-                        """
+                        sh 'chmod +x infra/jenkins-local/deploy-local.sh infra/jenkins-local/ensure-deploy-root.sh || true'
+                        withEnv([
+                            "DEPLOY_ROOT=${deployRoot}",
+                            "BUILD_ID=${env.BUILD_TAG}",
+                        ]) {
+                            sh """
+                                bash '${repoRoot}/infra/jenkins-local/deploy-local.sh' '${deployEnv}' '${repoRoot}' '${releaseNotesFile}'
+                            """
+                        }
                     } else {
                         bat """
-                            set DEPLOY_ROOT=${params.DEPLOY_ROOT}
+                            set DEPLOY_ROOT=${deployRoot}
                             set BUILD_ID=${env.BUILD_TAG}
-                            powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\deploy-local.ps1 -DeployEnv ${deployEnv} -WorkspaceDir ${env.REPO_ROOT} -ReleaseNotesFile ${env.REPO_ROOT}\\changelog-release-notes.txt
+                            powershell -ExecutionPolicy Bypass -File infra\\jenkins-local\\deploy-local.ps1 -DeployEnv ${deployEnv} -WorkspaceDir ${repoRoot} -ReleaseNotesFile ${releaseNotesFile}
                         """
                     }
                 }
@@ -1025,25 +1105,26 @@ pipeline {
             steps {
                 script {
                     def deployEnv = resolveDeployEnvParam()
-                    def deployRoot = params.DEPLOY_ROOT
+                    def deployRoot = env.DEPLOY_ROOT_RESOLVED?.trim() ?: ensureDeployRoot()
 
                     if (isUnix()) {
-                        sh """
-                            export DEPLOY_ROOT='${deployRoot}'
-                            bash infra/jenkins-local/verify-deploy.sh '${deployEnv}'
-                        """
+                        withEnv(["DEPLOY_ROOT=${deployRoot}"]) {
+                            sh """
+                                bash infra/jenkins-local/verify-deploy.sh '${deployEnv}'
+                            """
+                        }
                     } else {
                         markPipelineFailed('배포 후 헬스체크')
                         error('배포 산출물 검증은 Linux Jenkins 에이전트에서 실행하세요.')
                     }
 
                     def httpUrl = params.HEALTH_CHECK_URL?.trim()
-                    if (!httpUrl && (params.RUN_HEALTH_CHECK || deployEnv == 'prod')) {
-                        httpUrl = defaultHealthCheckUrl(deployEnv)
+                    if (!httpUrl && shouldRunHttpHealthCheck(deployEnv)) {
+                        httpUrl = defaultHealthCheckUrl(deployEnv)?.trim()
                     }
 
                     if (!httpUrl) {
-                        echo '배포 산출물 검증 완료 (HTTP health check URL 없음)'
+                        echo "배포 산출물 검증 완료 (HTTP health check 생략 — HEALTH_CHECK_URL 미설정)"
                         return
                     }
 
@@ -1055,10 +1136,11 @@ pipeline {
                     } catch (Exception healthCheckError) {
                         echo "HTTP health check 실패. 이전 배포본으로 롤백을 시도합니다."
 
-                        sh """
-                            export DEPLOY_ROOT='${deployRoot}'
-                            bash infra/jenkins-local/rollback-local.sh '${deployEnv}'
-                        """
+                        withEnv(["DEPLOY_ROOT=${deployRoot}"]) {
+                            sh """
+                                bash infra/jenkins-local/rollback-local.sh '${deployEnv}' || true
+                            """
+                        }
 
                         markPipelineFailed('배포 후 헬스체크')
                         error("배포 후 HTTP health check 실패: ${httpUrl}")
