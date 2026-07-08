@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DEPLOY_ENV="${1:-dev}"
-DEPLOY_ROOT="${DEPLOY_ROOT:-/deployments}"
+DEPLOY_ROOT="${DEPLOY_ROOT:-/var/jenkins_home/deployments}"
 
 LATEST_DIR="${DEPLOY_ROOT}/${DEPLOY_ENV}/latest"
 PREVIOUS_DIR="${DEPLOY_ROOT}/${DEPLOY_ENV}/previous"

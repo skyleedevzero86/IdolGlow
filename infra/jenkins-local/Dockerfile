@@ -19,9 +19,11 @@ RUN apt-get update \
 ENV JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-RUN mkdir -p /var/jenkins_home/.gradle /deployments/dev /deployments/staging /deployments/prod \
-    && chown -R jenkins:jenkins /var/jenkins_home/.gradle /deployments \
-    && chmod -R 775 /deployments
+RUN mkdir -p /var/jenkins_home/.gradle \
+        /var/jenkins_home/deployments/dev /var/jenkins_home/deployments/staging /var/jenkins_home/deployments/prod \
+        /deployments/dev /deployments/staging /deployments/prod \
+    && chown -R jenkins:jenkins /var/jenkins_home/.gradle /var/jenkins_home/deployments /deployments \
+    && chmod -R 775 /var/jenkins_home/deployments /deployments
 
 USER jenkins
 

@@ -1,11 +1,25 @@
-#!/usr/bin/env bash
+
 set -euo pipefail
 
 DEPLOY_ENV="${1:-dev}"
 WORKSPACE_DIR="${2:-$PWD}"
 RELEASE_NOTES_FILE="${3:-$WORKSPACE_DIR/changelog-release-notes.txt}"
-DEPLOY_ROOT="${DEPLOY_ROOT:-/deployments}"
+DEPLOY_ROOT="${DEPLOY_ROOT:-/var/jenkins_home/deployments}"
 BUILD_ID="${BUILD_ID:-manual-$(date +%Y%m%d%H%M%S)}"
+
+if [[ -z "${WORKSPACE_DIR}" || "${WORKSPACE_DIR}" == "null" ]]; then
+  WORKSPACE_DIR="$(pwd)"
+fi
+
+if [[ -z "${RELEASE_NOTES_FILE}" || "${RELEASE_NOTES_FILE}" == "null" ]]; then
+  RELEASE_NOTES_FILE="${WORKSPACE_DIR}/changelog-release-notes.txt"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if ! DEPLOY_ROOT="$("${SCRIPT_DIR}/ensure-deploy-root.sh" "${DEPLOY_ROOT}")"; then
+  exit 1
+fi
+export DEPLOY_ROOT
 
 resolve_frontend_dir() {
   if [[ -f "${WORKSPACE_DIR}/frontend/package.json" ]]; then
