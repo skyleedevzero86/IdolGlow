@@ -27,6 +27,7 @@ backend/gradle/*
 docs_backup/*
 docs/*
 .env
+backend/.env
 .ps1
 infra/.env
 infra/.env.*
