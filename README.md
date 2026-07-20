@@ -283,7 +283,7 @@ $env:ENCRYPT_KEY="your-encrypt-key"
 
 ## 환경 변수 예시
 
-로컬 실행 시 최소한 아래 값들을 확인하는 것이 좋습니다.
+로컬 실행 시 최소한 아래 값들을 확인하는 것이 좋습니다
 
 - `ENCRYPT_KEY`
 - `APP_SECURITY_ALLOWED_ORIGINS`
