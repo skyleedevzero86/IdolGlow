@@ -2,53 +2,48 @@ name: Telegram Commit Notification
 
 on:
   push:
-    branches:
-      - "**"
 
 permissions:
   contents: read
 
 jobs:
   notify-telegram:
-    name: Send Telegram notification
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send commit information
+      - name: Send Telegram commit notification
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GITHUB_EVENT_FILE: ${{ github.event_path }}
         run: |
           python3 <<'PYTHON'
           import html
           import json
           import os
-          import sys
-          import urllib.error
           import urllib.request
 
           token = os.environ.get("TELEGRAM_BOT_TOKEN")
           chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-          event_file = os.environ.get("GITHUB_EVENT_FILE")
 
           if not token:
               raise RuntimeError(
-                  "TELEGRAM_BOT_TOKEN GitHub Secret이 없습니다."
+                  "TELEGRAM_BOT_TOKEN secret이 비어 있습니다."
               )
 
           if not chat_id:
               raise RuntimeError(
-                  "TELEGRAM_CHAT_ID GitHub Secret이 없습니다."
+                  "TELEGRAM_CHAT_ID secret이 비어 있습니다."
               )
 
-          with open(event_file, "r", encoding="utf-8") as file:
+          # GitHub Actions가 기본 제공하는 push 이벤트 JSON 파일
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+
+          with open(event_path, "r", encoding="utf-8") as file:
               event = json.load(file)
 
           repository = event["repository"]["full_name"]
           repository_url = event["repository"]["html_url"]
-          ref = event.get("ref", "")
-          branch = ref.removeprefix("refs/heads/")
+          branch = event["ref"].removeprefix("refs/heads/")
 
           sender = (
               event.get("sender", {}).get("login")
@@ -59,119 +54,62 @@ jobs:
           commits = event.get("commits", [])
           compare_url = event.get("compare", "")
 
-          max_display_commits = 15
-          displayed_commits = commits[:max_display_commits]
-
-          escaped_repository = html.escape(repository)
-          escaped_repository_url = html.escape(
-              repository_url,
-              quote=True
-          )
-          escaped_branch = html.escape(branch)
-          escaped_sender = html.escape(sender)
-
           lines = [
               "🚀 <b>GitHub Push</b>",
               "",
-              f"👤 작성자: <b>{escaped_sender}</b>",
-              (
-                  f'📦 저장소: '
-                  f'<a href="{escaped_repository_url}">'
-                  f'{escaped_repository}</a>'
-              ),
-              (
-                  f"🌿 브랜치: <code>{escaped_branch}</code>"
-              ),
-              (
-                  f"📝 커밋: <b>{len(commits)}개</b>"
-              ),
+              f"👤 작성자: <b>{html.escape(sender)}</b>",
+              f"📦 저장소: <b>{html.escape(repository)}</b>",
+              f"🌿 브랜치: <code>{html.escape(branch)}</code>",
+              f"📝 커밋: <b>{len(commits)}개</b>",
               ""
           ]
 
-          if displayed_commits:
-              for commit in displayed_commits:
-                  commit_id = commit.get("id", "")
-                  short_id = commit_id[:7]
+          for commit in commits[:20]:
+              commit_id = commit["id"]
+              short_id = commit_id[:7]
 
-                  message = (
-                      commit.get("message", "")
-                      .splitlines()[0]
-                      .strip()
-                  )
-
-                  if not message:
-                      message = "(커밋 메시지 없음)"
-
-                  commit_url = (
-                      commit.get("url")
-                      or f"{repository_url}/commit/{commit_id}"
-                  )
-
-                  escaped_short_id = html.escape(short_id)
-                  escaped_message = html.escape(message)
-                  escaped_commit_url = html.escape(
-                      commit_url,
-                      quote=True
-                  )
-
-                  lines.append(
-                      (
-                          f'• <a href="{escaped_commit_url}">'
-                          f'<code>{escaped_short_id}</code>'
-                          f'</a> {escaped_message}'
-                      )
-                  )
-          else:
-              lines.append(
-                  "• 브랜치 상태가 변경됐지만 커밋 목록은 없습니다."
+              message = (
+                  commit.get("message", "")
+                  .splitlines()[0]
+                  .strip()
               )
 
-          remaining_count = (
-              len(commits) - len(displayed_commits)
-          )
+              commit_url = (
+                  f"{repository_url}/commit/{commit_id}"
+              )
 
-          if remaining_count > 0:
-              lines.extend([
-                  "",
-                  f"… 외 {remaining_count}개 커밋"
-              ])
+              lines.append(
+                  f'• <a href="{html.escape(commit_url)}">'
+                  f'<code>{html.escape(short_id)}</code></a> '
+                  f'{html.escape(message)}'
+              )
+
+          if len(commits) > 20:
+              lines.append(
+                  f"\n… 외 {len(commits) - 20}개 커밋"
+              )
 
           if compare_url:
-              escaped_compare_url = html.escape(
-                  compare_url,
-                  quote=True
-              )
-
               lines.extend([
                   "",
-                  (
-                      f'🔎 <a href="{escaped_compare_url}">'
-                      f'전체 변경 내용 보기</a>'
-                  )
+                  f'🔎 <a href="{html.escape(compare_url)}">'
+                  "전체 변경 내용 보기</a>"
               ])
 
-          text = "\n".join(lines)
-
-          # Telegram 제한보다 약간 작게 잘라 안전하게 전송한다.
-          if len(text) > 4000:
-              text = text[:3950] + "\n\n… 메시지가 길어 일부 생략됨"
+          message = "\n".join(lines)
 
           payload = {
               "chat_id": chat_id,
-              "text": text,
+              "text": message,
               "parse_mode": "HTML",
-              "link_preview_options": {
-                  "is_disabled": True
-              }
+              "disable_web_page_preview": True
           }
 
-          api_url = (
-              f"https://api.telegram.org/"
-              f"bot{token}/sendMessage"
-          )
-
           request = urllib.request.Request(
-              api_url,
+              url=(
+                  f"https://api.telegram.org/"
+                  f"bot{token}/sendMessage"
+              ),
               data=json.dumps(payload).encode("utf-8"),
               headers={
                   "Content-Type": "application/json"
@@ -179,42 +117,18 @@ jobs:
               method="POST"
           )
 
-          try:
-              with urllib.request.urlopen(
-                  request,
-                  timeout=20
-              ) as response:
-                  body = response.read().decode("utf-8")
-                  result = json.loads(body)
-
-              if not result.get("ok"):
-                  raise RuntimeError(
-                      f"Telegram API 오류: {result}"
-                  )
-
-              print(
-                  "Telegram commit notification sent."
+          with urllib.request.urlopen(
+              request,
+              timeout=20
+          ) as response:
+              result = json.loads(
+                  response.read().decode("utf-8")
               )
 
-          except urllib.error.HTTPError as error:
-              response_body = (
-                  error.read()
-                  .decode("utf-8", errors="replace")
+          if not result.get("ok"):
+              raise RuntimeError(
+                  f"Telegram API 오류: {result}"
               )
 
-              print(
-                  f"Telegram HTTP 오류: "
-                  f"{error.code} {response_body}",
-                  file=sys.stderr
-              )
-
-              raise
-
-          except urllib.error.URLError as error:
-              print(
-                  f"Telegram 연결 오류: {error}",
-                  file=sys.stderr
-              )
-
-              raise
+          print("메세지 발송이 성곡되었습니다.")
           PYTHON
