@@ -1,0 +1,657 @@
+name: Discord Commit Notification
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  notify-discord:
+    name: Send Discord commit notification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send rolling 2-hour commit notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          python3 <<'PYTHON'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          from collections import Counter
+          from datetime import datetime, timedelta, timezone
+
+          AGGREGATION_HOURS = 2
+          MAX_DISPLAY_COMMITS = 10
+          COMMITS_PER_PAGE = 100
+          MAX_API_PAGES = 5
+          KST = timezone(timedelta(hours=9))
+
+
+          discord_webhook_url = os.environ.get(
+              "DISCORD_WEBHOOK_URL",
+              ""
+          ).strip()
+
+          github_token = os.environ.get(
+              "GITHUB_TOKEN",
+              ""
+          ).strip()
+
+          github_event_path = os.environ.get(
+              "GITHUB_EVENT_PATH",
+              ""
+          ).strip()
+
+          github_repository = os.environ.get(
+              "GITHUB_REPOSITORY",
+              ""
+          ).strip()
+
+
+          if not discord_webhook_url:
+              raise RuntimeError(
+                  "DISCORD_WEBHOOK_URL Secret이 비어 있습니다."
+              )
+
+          if not github_token:
+              raise RuntimeError(
+                  "GITHUB_TOKEN이 비어 있습니다."
+              )
+
+          if not github_event_path:
+              raise RuntimeError(
+                  "GITHUB_EVENT_PATH가 비어 있습니다."
+              )
+
+          if not github_repository:
+              raise RuntimeError(
+                  "GITHUB_REPOSITORY가 비어 있습니다."
+              )
+
+
+          def clean_text(value):
+              """
+              Discord Markdown과 멘션이 의도치 않게
+              작동하는 것을 막는다.
+              """
+
+              text = str(value or "")
+
+              return (
+                  text
+                  .replace("`", "'")
+                  .replace("@", "@\u200b")
+              )
+
+
+          def truncate(value, max_length):
+              text = clean_text(value).strip()
+
+              if len(text) <= max_length:
+                  return text
+
+              return text[:max_length - 1] + "…"
+
+
+          def first_line(value):
+              text = str(value or "").strip()
+
+              if not text:
+                  return "(커밋 메시지 없음)"
+
+              return text.splitlines()[0].strip()
+
+
+          def parse_datetime(value):
+              if not value:
+                  return None
+
+              try:
+                  return datetime.fromisoformat(
+                      value.replace(
+                          "Z",
+                          "+00:00"
+                      )
+                  )
+
+              except ValueError:
+                  return None
+
+
+          def format_kst_time(value):
+              parsed = parse_datetime(value)
+
+              if parsed is None:
+                  return ""
+
+              return parsed.astimezone(
+                  KST
+              ).strftime(
+                  "%m-%d %H:%M"
+              )
+
+
+          def get_commit_author(commit_data):
+
+              linked_author = (
+                  commit_data.get("author")
+                  or {}
+              )
+
+              github_login = linked_author.get(
+                  "login"
+              )
+
+              if github_login:
+                  return github_login
+
+              git_commit = (
+                  commit_data.get("commit")
+                  or {}
+              )
+
+              git_author = (
+                  git_commit.get("author")
+                  or {}
+              )
+
+              return (
+                  git_author.get("name")
+                  or "unknown"
+              )
+
+
+          def get_commit_date(commit_data):
+              git_commit = (
+                  commit_data.get("commit")
+                  or {}
+              )
+
+              author_data = (
+                  git_commit.get("author")
+                  or {}
+              )
+
+              committer_data = (
+                  git_commit.get("committer")
+                  or {}
+              )
+
+              return (
+                  author_data.get("date")
+                  or committer_data.get("date")
+                  or ""
+              )
+
+
+          def github_api_get(url):
+              request = urllib.request.Request(
+                  url=url,
+                  headers={
+                      "Accept": (
+                          "application/vnd.github+json"
+                      ),
+                      "Authorization": (
+                          f"Bearer {github_token}"
+                      ),
+                      "User-Agent": (
+                          "github-actions-discord-notify"
+                      )
+                  },
+                  method="GET"
+              )
+
+              try:
+                  with urllib.request.urlopen(
+                      request,
+                      timeout=30
+                  ) as response:
+                      return json.loads(
+                          response.read().decode(
+                              "utf-8"
+                          )
+                      )
+
+              except urllib.error.HTTPError as error:
+                  body = error.read().decode(
+                      "utf-8",
+                      errors="replace"
+                  )
+
+                  raise RuntimeError(
+                      "GitHub API 호출 실패: "
+                      f"HTTP {error.code} {body}"
+                  ) from error
+
+              except urllib.error.URLError as error:
+                  raise RuntimeError(
+                      f"GitHub API 연결 실패: {error}"
+                  ) from error
+
+
+          def fetch_recent_commits(
+              repository,
+              branch,
+              since_value
+          ):
+
+              commits_by_sha = {}
+
+              for page in range(
+                  1,
+                  MAX_API_PAGES + 1
+              ):
+                  query = urllib.parse.urlencode({
+                      "sha": branch,
+                      "since": since_value,
+                      "per_page": COMMITS_PER_PAGE,
+                      "page": page
+                  })
+
+                  api_url = (
+                      "https://api.github.com/repos/"
+                      f"{repository}/commits?{query}"
+                  )
+
+                  page_commits = github_api_get(
+                      api_url
+                  )
+
+                  if not isinstance(
+                      page_commits,
+                      list
+                  ):
+                      raise RuntimeError(
+                          "GitHub Commit API 응답이 "
+                          "배열 형식이 아닙니다."
+                      )
+
+                  for commit_data in page_commits:
+                      sha = commit_data.get(
+                          "sha",
+                          ""
+                      )
+
+                      if sha:
+                          commits_by_sha[sha] = (
+                              commit_data
+                          )
+
+                  if len(page_commits) < COMMITS_PER_PAGE:
+                      break
+
+              recent_commits = list(
+                  commits_by_sha.values()
+              )
+
+              recent_commits.sort(
+                  key=get_commit_date,
+                  reverse=True
+              )
+
+              return recent_commits
+
+
+          def send_discord_message(payload):
+              separator = (
+                  "&"
+                  if "?" in discord_webhook_url
+                  else "?"
+              )
+
+              request_url = (
+                  discord_webhook_url
+                  + separator
+                  + "wait=true"
+              )
+
+              request = urllib.request.Request(
+                  url=request_url,
+                  data=json.dumps(
+                      payload
+                  ).encode("utf-8"),
+                  headers={
+                      "Content-Type": "application/json"
+                  },
+                  method="POST"
+              )
+
+              try:
+                  with urllib.request.urlopen(
+                      request,
+                      timeout=30
+                  ) as response:
+                      body = response.read().decode(
+                          "utf-8"
+                      )
+
+                      print(
+                          "Discord response status:",
+                          response.status
+                      )
+
+                      return body
+
+              except urllib.error.HTTPError as error:
+                  body = error.read().decode(
+                      "utf-8",
+                      errors="replace"
+                  )
+
+                  raise RuntimeError(
+                      "Discord Webhook 호출 실패: "
+                      f"HTTP {error.code} {body}"
+                  ) from error
+
+              except urllib.error.URLError as error:
+                  raise RuntimeError(
+                      f"Discord 연결 실패: {error}"
+                  ) from error
+
+          with open(
+              github_event_path,
+              "r",
+              encoding="utf-8"
+          ) as event_file:
+              event = json.load(event_file)
+
+          if event.get("deleted"):
+              print(
+                  "Branch deletion event. "
+                  "Notification skipped."
+              )
+              sys.exit(0)
+
+
+          ref = event.get(
+              "ref",
+              ""
+          )
+
+          if not ref.startswith("refs/heads/"):
+              print(
+                  "This is not a branch push. "
+                  "Notification skipped."
+              )
+              sys.exit(0)
+
+
+          branch = ref.removeprefix(
+              "refs/heads/"
+          )
+
+
+          push_actor = (
+              event.get(
+                  "sender",
+                  {}
+              ).get("login")
+              or event.get(
+                  "pusher",
+                  {}
+              ).get("name")
+              or "unknown"
+          )
+
+
+          current_push_commits = event.get(
+              "commits",
+              []
+          )
+
+
+          repository_data = event.get(
+              "repository",
+              {}
+          )
+
+          repository_url = (
+              repository_data.get("html_url")
+              or (
+                  "https://github.com/"
+                  f"{github_repository}"
+              )
+          )
+
+
+          compare_url = (
+              event.get("compare")
+              or repository_url
+          )
+
+          now_utc = datetime.now(
+              timezone.utc
+          )
+
+          since_utc = now_utc - timedelta(
+              hours=AGGREGATION_HOURS
+          )
+
+          since_value = since_utc.strftime(
+              "%Y-%m-%dT%H:%M:%SZ"
+          )
+
+
+          recent_commits = fetch_recent_commits(
+              repository=github_repository,
+              branch=branch,
+              since_value=since_value
+          )
+
+          author_counts = Counter()
+
+          for commit_data in recent_commits:
+              author_name = get_commit_author(
+                  commit_data
+              )
+
+              author_counts[author_name] += 1
+
+
+          total_commit_count = len(
+              recent_commits
+          )
+
+          current_push_count = len(
+              current_push_commits
+          )
+
+          author_lines = []
+
+          for author_name, count in (
+              author_counts.most_common()
+          ):
+              author_lines.append(
+                  f"• **{clean_text(author_name)}**: "
+                  f"{count}개"
+              )
+
+          author_summary = (
+              "\n".join(author_lines)
+              if author_lines
+              else "작성자 정보 없음"
+          )
+
+          author_summary = truncate(
+              author_summary,
+              1024
+          )
+
+          commit_lines = []
+
+          for commit_data in recent_commits[
+              :MAX_DISPLAY_COMMITS
+          ]:
+              sha = commit_data.get(
+                  "sha",
+                  ""
+              )
+
+              short_sha = sha[:7]
+
+              commit_info = (
+                  commit_data.get("commit")
+                  or {}
+              )
+
+              commit_message = truncate(
+                  first_line(
+                      commit_info.get("message")
+                  ),
+                  70
+              )
+
+              author_name = get_commit_author(
+                  commit_data
+              )
+
+              commit_time = format_kst_time(
+                  get_commit_date(commit_data)
+              )
+
+              commit_url = (
+                  commit_data.get("html_url")
+                  or (
+                      f"{repository_url}/commit/"
+                      f"{sha}"
+                  )
+              )
+
+              line = (
+                  f"[`{short_sha}`]({commit_url}) "
+                  f"{commit_message}\n"
+                  f"└ {clean_text(author_name)}"
+              )
+
+              if commit_time:
+                  line += (
+                      f" · {commit_time}"
+                  )
+
+              commit_lines.append(line)
+
+
+          if not commit_lines:
+              commit_lines.append(
+                  "최근 집계 범위에 커밋이 없습니다."
+              )
+
+
+          remaining_count = (
+              total_commit_count
+              - len(commit_lines)
+          )
+
+          if remaining_count > 0:
+              commit_lines.append(
+                  f"… 외 {remaining_count}개 커밋"
+              )
+
+
+          commit_summary = truncate(
+              "\n".join(commit_lines),
+              1024
+          )
+
+          payload = {
+              "username": "GitHub Commit Bot",
+
+              # @everyone 등의 멘션 방지
+              "allowed_mentions": {
+                  "parse": []
+              },
+
+              "embeds": [
+                  {
+                      "title": "🚀 GitHub 커밋 알림",
+                      "url": compare_url,
+
+                      "description": (
+                          f"📦 **{clean_text(github_repository)}**\n"
+                          f"🌿 `{clean_text(branch)}`\n"
+                          f"🚚 Push 실행자: "
+                          f"**{clean_text(push_actor)}**"
+                      ),
+
+                      "color": 5763719,
+
+                      "fields": [
+                          {
+                              "name": "⏱ 최근 2시간 집계",
+                              "value": (
+                                  f"누적 커밋: "
+                                  f"**{total_commit_count}개**\n"
+                                  f"이번 Push: "
+                                  f"**{current_push_count}개**"
+                              ),
+                              "inline": False
+                          },
+                          {
+                              "name": "👥 커밋 작성자별 집계",
+                              "value": author_summary,
+                              "inline": False
+                          },
+                          {
+                              "name": "📝 최근 커밋 목록",
+                              "value": commit_summary,
+                              "inline": False
+                          }
+                      ],
+
+                      "footer": {
+                          "text": (
+                              "집계 기준: 현재 브랜치의 "
+                              "최근 2시간 커밋"
+                          )
+                      },
+
+                      "timestamp": now_utc.isoformat()
+                  }
+              ]
+          }
+
+
+          send_discord_message(
+              payload
+          )
+
+
+          print(
+              "Discord notification sent successfully."
+          )
+
+          print(
+              f"Repository={github_repository}"
+          )
+
+          print(
+              f"Branch={branch}"
+          )
+
+          print(
+              f"PushActor={push_actor}"
+          )
+
+          print(
+              f"CurrentPushCount={current_push_count}"
+          )
+
+          print(
+              f"RollingCommitCount={total_commit_count}"
+          )
+
+          print(
+              f"AuthorCounts={dict(author_counts)}"
+          )
+          PYTHON
