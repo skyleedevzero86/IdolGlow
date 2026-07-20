@@ -32,6 +32,7 @@ jobs:
 
           AGGREGATION_HOURS = 2
           MAX_DISPLAY_COMMITS = 10
+          MAX_DISPLAY_FILES = 12
           COMMITS_PER_PAGE = 100
           MAX_API_PAGES = 5
           KST = timezone(timedelta(hours=9))
@@ -57,10 +58,22 @@ jobs:
               raise RuntimeError("DISCORD_WEBHOOK_URL 끝의 /github를 제거하세요.")
 
           def clean_text(value):
-              return str(value or "").replace("`", "'").replace("@", "@\u200b")
+              return (
+                  str(value or "")
+                  .replace("\\", "\\\\")
+                  .replace("`", "'")
+                  .replace("@", "@\u200b")
+              )
+
+          def clean_link_label(value):
+              return (
+                  clean_text(value)
+                  .replace("[", "\\[")
+                  .replace("]", "\\]")
+              )
 
           def truncate(value, max_length):
-              text = clean_text(value).strip()
+              text = str(value or "").strip()
 
               if len(text) <= max_length:
                   return text
@@ -92,9 +105,7 @@ jobs:
               if parsed is None:
                   return ""
 
-              return parsed.astimezone(KST).strftime(
-                  "%m-%d %H:%M"
-              )
+              return parsed.astimezone(KST).strftime("%m-%d %H:%M")
 
           def get_commit_author(commit_data):
               linked_author = commit_data.get("author") or {}
@@ -138,7 +149,6 @@ jobs:
                       return json.loads(
                           response.read().decode("utf-8")
                       )
-
               except urllib.error.HTTPError as error:
                   body = error.read().decode(
                       "utf-8",
@@ -149,23 +159,15 @@ jobs:
                       f"GitHub API 호출 실패: "
                       f"HTTP {error.code} {body}"
                   ) from error
-
               except urllib.error.URLError as error:
                   raise RuntimeError(
                       f"GitHub API 연결 실패: {error}"
                   ) from error
 
-          def fetch_recent_commits(
-              repository,
-              branch,
-              since_value
-          ):
+          def fetch_recent_commits(repository, branch, since_value):
               commits_by_sha = {}
 
-              for page in range(
-                  1,
-                  MAX_API_PAGES + 1
-              ):
+              for page in range(1, MAX_API_PAGES + 1):
                   query = urllib.parse.urlencode({
                       "sha": branch,
                       "since": since_value,
@@ -182,8 +184,7 @@ jobs:
 
                   if not isinstance(page_commits, list):
                       raise RuntimeError(
-                          "GitHub Commit API 응답이 "
-                          "배열 형식이 아닙니다."
+                          "GitHub Commit API 응답이 배열 형식이 아닙니다."
                       )
 
                   for commit_data in page_commits:
@@ -195,16 +196,68 @@ jobs:
                   if len(page_commits) < COMMITS_PER_PAGE:
                       break
 
-              recent_commits = list(
-                  commits_by_sha.values()
-              )
-
+              recent_commits = list(commits_by_sha.values())
               recent_commits.sort(
                   key=get_commit_date,
                   reverse=True
               )
 
               return recent_commits
+
+          def fetch_changed_files(repository, before_sha, after_sha, current_push_commits):
+              zero_sha = "0" * 40
+
+              if (
+                  before_sha
+                  and after_sha
+                  and before_sha != zero_sha
+                  and after_sha != zero_sha
+              ):
+                  compare_url = (
+                      f"https://api.github.com/repos/{repository}/compare/"
+                      f"{urllib.parse.quote(before_sha, safe='')}"
+                      f"...{urllib.parse.quote(after_sha, safe='')}"
+                  )
+
+                  try:
+                      compare_data = github_api_get(compare_url)
+                      files = compare_data.get("files") or []
+
+                      if files:
+                          return files
+                  except RuntimeError as error:
+                      print(f"Compare API fallback: {error}")
+
+              commit_shas = [
+                  item.get("id")
+                  for item in current_push_commits
+                  if item.get("id")
+              ]
+
+              if not commit_shas and after_sha and after_sha != zero_sha:
+                  commit_shas = [after_sha]
+
+              files_by_name = {}
+
+              for sha in commit_shas[:20]:
+                  commit_url = (
+                      f"https://api.github.com/repos/{repository}/commits/"
+                      f"{urllib.parse.quote(sha, safe='')}"
+                  )
+
+                  try:
+                      commit_data = github_api_get(commit_url)
+                  except RuntimeError as error:
+                      print(f"Commit files fallback skipped: {error}")
+                      continue
+
+                  for file_data in commit_data.get("files") or []:
+                      filename = file_data.get("filename")
+
+                      if filename:
+                          files_by_name[filename] = file_data
+
+              return list(files_by_name.values())
 
           with open(
               github_event_path,
@@ -214,58 +267,49 @@ jobs:
               event = json.load(event_file)
 
           if event.get("deleted"):
-              print(
-                  "Branch deletion event. "
-                  "Notification skipped."
-              )
+              print("Branch deletion event. Notification skipped.")
               sys.exit(0)
 
           ref = event.get("ref", "")
 
           if not ref.startswith("refs/heads/"):
-              print(
-                  "This is not a branch push. "
-                  "Notification skipped."
-              )
+              print("This is not a branch push. Notification skipped.")
               sys.exit(0)
 
           branch = ref.removeprefix("refs/heads/")
 
+          sender_data = event.get("sender") or {}
           push_actor = (
-              (event.get("sender") or {}).get("login")
+              sender_data.get("login")
               or (event.get("pusher") or {}).get("name")
               or "unknown"
           )
 
-          current_push_commits = (
-              event.get("commits")
-              or []
-          )
-
-          repository_data = (
-              event.get("repository")
-              or {}
-          )
+          current_push_commits = event.get("commits") or []
+          repository_data = event.get("repository") or {}
 
           repository_url = (
               repository_data.get("html_url")
               or f"https://github.com/{github_repository}"
           )
 
-          compare_url = (
-              event.get("compare")
-              or repository_url
+          before_sha = event.get("before") or ""
+          after_sha = event.get("after") or ""
+          compare_url = event.get("compare") or repository_url
+
+          branch_url = (
+              f"{repository_url}/tree/"
+              f"{urllib.parse.quote(branch, safe='/')}"
+          )
+
+          actor_url = (
+              sender_data.get("html_url")
+              or f"https://github.com/{urllib.parse.quote(push_actor, safe='')}"
           )
 
           now_utc = datetime.now(timezone.utc)
-
-          since_utc = now_utc - timedelta(
-              hours=AGGREGATION_HOURS
-          )
-
-          since_value = since_utc.strftime(
-              "%Y-%m-%dT%H:%M:%SZ"
-          )
+          since_utc = now_utc - timedelta(hours=AGGREGATION_HOURS)
+          since_value = since_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
           recent_commits = fetch_recent_commits(
               repository=github_repository,
@@ -273,61 +317,50 @@ jobs:
               since_value=since_value
           )
 
+          changed_files = fetch_changed_files(
+              repository=github_repository,
+              before_sha=before_sha,
+              after_sha=after_sha,
+              current_push_commits=current_push_commits
+          )
+
           author_counts = Counter(
               get_commit_author(item)
               for item in recent_commits
           )
 
-          total_commit_count = len(
-              recent_commits
-          )
-
-          current_push_count = len(
-              current_push_commits
-          )
+          total_commit_count = len(recent_commits)
+          current_push_count = len(current_push_commits)
 
           author_lines = [
-              (
-                  f"• **{clean_text(author_name)}**: "
-                  f"{count}개"
-              )
-              for author_name, count
-              in author_counts.most_common()
+              f"• **{clean_link_label(author_name)}**: {count}개"
+              for author_name, count in author_counts.most_common()
           ]
 
           author_summary = truncate(
-              (
-                  "\n".join(author_lines)
-                  if author_lines
-                  else "작성자 정보 없음"
-              ),
+              "\n".join(author_lines)
+              if author_lines
+              else "작성자 정보 없음",
               1024
           )
 
-          display_commits = recent_commits[
-              :MAX_DISPLAY_COMMITS
-          ]
-
+          display_commits = recent_commits[:MAX_DISPLAY_COMMITS]
           commit_lines = []
 
           for commit_data in display_commits:
               sha = commit_data.get("sha", "")
               short_sha = sha[:7]
-
-              commit_info = (
-                  commit_data.get("commit")
-                  or {}
-              )
+              commit_info = commit_data.get("commit") or {}
 
               commit_message = truncate(
-                  first_line(
-                      commit_info.get("message")
+                  clean_text(
+                      first_line(commit_info.get("message"))
                   ),
                   70
               )
 
-              author_name = get_commit_author(
-                  commit_data
+              author_name = clean_text(
+                  get_commit_author(commit_data)
               )
 
               commit_time = format_kst_time(
@@ -336,16 +369,13 @@ jobs:
 
               commit_url = (
                   commit_data.get("html_url")
-                  or (
-                      f"{repository_url}/commit/"
-                      f"{sha}"
-                  )
+                  or f"{repository_url}/commit/{sha}"
               )
 
               line = (
                   f"[`{short_sha}`]({commit_url}) "
                   f"{commit_message}\n"
-                  f"└ {clean_text(author_name)}"
+                  f"└ {author_name}"
               )
 
               if commit_time:
@@ -354,23 +384,98 @@ jobs:
               commit_lines.append(line)
 
           if not commit_lines:
-              commit_lines.append(
-                  "최근 집계 범위에 커밋이 없습니다."
-              )
+              commit_lines.append("최근 집계 범위에 커밋이 없습니다.")
 
-          remaining_count = (
-              total_commit_count
-              - len(display_commits)
+          remaining_commit_count = (
+              total_commit_count - len(display_commits)
           )
 
-          if remaining_count > 0:
+          if remaining_commit_count > 0:
               commit_lines.append(
-                  f"… 외 {remaining_count}개 커밋"
+                  f"… 외 {remaining_commit_count}개 커밋"
               )
 
           commit_summary = truncate(
               "\n".join(commit_lines),
               1024
+          )
+
+          status_icons = {
+              "added": "➕",
+              "modified": "📝",
+              "removed": "🗑️",
+              "renamed": "🔄",
+              "copied": "📄",
+              "changed": "🛠️",
+              "unchanged": "▫️"
+          }
+
+          display_files = changed_files[:MAX_DISPLAY_FILES]
+          file_lines = []
+
+          for file_data in display_files:
+              filename = file_data.get("filename") or "(파일명 없음)"
+              previous_filename = file_data.get("previous_filename")
+              status = file_data.get("status") or "changed"
+              icon = status_icons.get(status, "📄")
+
+              target_sha = after_sha
+
+              if status == "removed" and before_sha:
+                  target_sha = before_sha
+
+              encoded_filename = urllib.parse.quote(
+                  filename,
+                  safe="/"
+              )
+
+              if target_sha and target_sha != "0" * 40:
+                  file_url = (
+                      f"{repository_url}/blob/{target_sha}/"
+                      f"{encoded_filename}"
+                  )
+              else:
+                  file_url = compare_url
+
+              label = truncate(
+                  clean_link_label(filename),
+                  120
+              )
+
+              line = f"{icon} [`{label}`]({file_url})"
+
+              if previous_filename:
+                  previous_label = truncate(
+                      clean_text(previous_filename),
+                      80
+                  )
+                  line += f"\n└ 이전 경로: `{previous_label}`"
+
+              file_lines.append(line)
+
+          if not file_lines:
+              file_lines.append("이번 Push에서 변경 파일을 확인하지 못했습니다.")
+
+          remaining_file_count = len(changed_files) - len(display_files)
+
+          if remaining_file_count > 0:
+              file_lines.append(
+                  f"… 외 {remaining_file_count}개 파일"
+              )
+
+          file_summary = truncate(
+              "\n".join(file_lines),
+              1024
+          )
+
+          description = (
+              f"📦 [{clean_link_label(github_repository)}]"
+              f"({repository_url})\n"
+              f"🌿 [`{clean_link_label(branch)}`]"
+              f"({branch_url})\n"
+              f"🚚 Push 실행자: "
+              f"[**{clean_link_label(push_actor)}**]"
+              f"({actor_url})"
           )
 
           payload = {
@@ -382,12 +487,7 @@ jobs:
                   {
                       "title": "🚀 GitHub 커밋 알림",
                       "url": compare_url,
-                      "description": (
-                          f"📦 **{clean_text(github_repository)}**\n"
-                          f"🌿 `{clean_text(branch)}`\n"
-                          f"🚚 Push 실행자: "
-                          f"**{clean_text(push_actor)}**"
-                      ),
+                      "description": description,
                       "color": 5763719,
                       "fields": [
                           {
@@ -399,7 +499,9 @@ jobs:
                                   f"누적 커밋: "
                                   f"**{total_commit_count}개**\n"
                                   f"이번 Push: "
-                                  f"**{current_push_count}개**"
+                                  f"**{current_push_count}개**\n"
+                                  f"변경 파일: "
+                                  f"**{len(changed_files)}개**"
                               ),
                               "inline": False
                           },
@@ -411,6 +513,11 @@ jobs:
                           {
                               "name": "📝 최근 커밋 목록",
                               "value": commit_summary,
+                              "inline": False
+                          },
+                          {
+                              "name": "📂 이번 Push 변경 파일",
+                              "value": file_summary,
                               "inline": False
                           }
                       ],
@@ -441,6 +548,7 @@ jobs:
           print(f"PushActor={push_actor}")
           print(f"CurrentPushCount={current_push_count}")
           print(f"RollingCommitCount={total_commit_count}")
+          print(f"ChangedFileCount={len(changed_files)}")
           print(f"AuthorCounts={dict(author_counts)}")
           PYTHON
 
