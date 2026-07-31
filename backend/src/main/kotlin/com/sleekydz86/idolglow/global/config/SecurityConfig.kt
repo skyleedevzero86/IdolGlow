@@ -71,6 +71,8 @@ class SecurityConfig(
                 auth.requestMatchers("/health/check").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
+                auth.requestMatchers(HttpMethod.POST, "/search-keywords").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tourist-attractions").permitAll()
