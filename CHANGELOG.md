@@ -4,6 +4,20 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.9.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.8.0...v0.9.0) (2026-10-16)
+
+
+### Features
+
+* Discord 활동 알림과 릴리즈·CI·MTTR 운영 알림 연동 [#29](https://github.com/skyleedevzero86/IdolGlow/issues/29) ([615bb25](https://github.com/skyleedevzero86/IdolGlow/commit/615bb255d186b869c6631b4a253459a75f8e05be))
+* GitHub PR·이슈·CI·릴리즈 다른버전 추가 ([726e56d](https://github.com/skyleedevzero86/IdolGlow/commit/726e56dab6f9542a7e7708c5544e04787495d5fb))
+* 릴리즈 배포 버전 검증·CI 상태·MTTR 알림을 Telegram/Discord에 추가 ([3563a44](https://github.com/skyleedevzero86/IdolGlow/commit/3563a443ca3d55383425cc5163666334ff6b45a3))
+
+
+### Refactoring
+
+* 빌링 기본값을 BillingDefaults로 맞추고 결제 테스트 검증을 강화 ([d71e0fb](https://github.com/skyleedevzero86/IdolGlow/commit/d71e0fb70698b07b5b706900a9f54c44392f5a85))
+
 ## [0.8.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.7.1...v0.8.0) (2026-10-16)
 
 
