@@ -39,13 +39,25 @@ class TossBillingMethod(
     var authenticatedAt: LocalDateTime? = null,
     @Column(nullable = false)
     var active: Boolean = true,
+    @Column(name = "is_default", nullable = false)
+    var isDefault: Boolean = false,
 ) : BaseEntity() {
     fun replaceBillingKey(plain: String) {
         billingKey = plain
         billingKeyHash = BillingKeyCrypto.sha256Hex(plain)
     }
 
+    fun markAsDefault() {
+        isDefault = true
+        active = true
+    }
+
+    fun clearDefault() {
+        isDefault = false
+    }
+
     fun deactivate() {
         active = false
+        isDefault = false
     }
 }

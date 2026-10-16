@@ -10,4 +10,5 @@ data class IssueTossBillingKeyRequest(
     @field:NotBlank
     @field:Size(max = 100)
     val customerKey: String,
+    val setAsDefault: Boolean = true,
 )

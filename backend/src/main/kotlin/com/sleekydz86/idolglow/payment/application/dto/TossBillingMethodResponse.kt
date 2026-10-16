@@ -11,6 +11,7 @@ data class TossBillingMethodResponse(
     val cardType: String?,
     val ownerType: String?,
     val active: Boolean,
+    val isDefault: Boolean,
     val authenticatedAt: LocalDateTime?,
 ) {
     companion object {
@@ -23,6 +24,7 @@ data class TossBillingMethodResponse(
                 cardType = entity.cardType,
                 ownerType = entity.ownerType,
                 active = entity.active,
+                isDefault = entity.isDefault,
                 authenticatedAt = entity.authenticatedAt,
             )
     }

@@ -3,8 +3,11 @@ package com.sleekydz86.idolglow.payment.application
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
+import com.sleekydz86.idolglow.payment.domain.TossBillingChargeAttempt
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
+import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscriptionStatus
+import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
@@ -23,6 +26,7 @@ import java.util.UUID
 class BillingChargeExecutor(
     private val subscriptionRepository: TossBillingSubscriptionJpaRepository,
     private val chargeRepository: TossBillingChargeJpaRepository,
+    private val attemptRepository: TossBillingChargeAttemptJpaRepository,
     private val methodRepository: TossBillingMethodJpaRepository,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val userRepository: UserRepository,
@@ -51,6 +55,15 @@ class BillingChargeExecutor(
         return finalizeWithToss(charge.id, LocalDateTime.now())
     }
 
+    fun retryFailedCharge(
+        chargeId: Long,
+        method: TossBillingMethod,
+        now: LocalDateTime = LocalDateTime.now(),
+    ): TossBillingCharge {
+        prepareRetry(chargeId, method)
+        return finalizeWithToss(chargeId, now, method)
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun preparePeriodCharge(
         subscriptionId: Long,
@@ -73,6 +86,7 @@ class BillingChargeExecutor(
         if (existing != null) {
             if (existing.status == TossBillingChargeStatus.FAILED) {
                 existing.clearFailureForRetry()
+                existing.billingMethod = subscription.billingMethod
             }
             return PreparedCharge(charge = existing, alreadyDone = false)
         }
@@ -117,9 +131,26 @@ class BillingChargeExecutor(
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun prepareRetry(
+        chargeId: Long,
+        method: TossBillingMethod,
+    ) {
+        val charge =
+            chargeRepository.findById(chargeId).orElseThrow {
+                IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
+            }
+        require(charge.status == TossBillingChargeStatus.FAILED) {
+            "실패한 회차만 다른 카드로 재결제할 수 있습니다. status=${charge.status}"
+        }
+        charge.clearFailureForRetry()
+        charge.billingMethod = method
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun finalizeWithToss(
         chargeId: Long,
         now: LocalDateTime,
+        methodOverride: TossBillingMethod? = null,
     ): TossBillingCharge {
         val charge =
             chargeRepository.findById(chargeId).orElseThrow {
@@ -136,20 +167,35 @@ class BillingChargeExecutor(
             }
         }
 
+        val method = methodOverride ?: charge.billingMethod
+        charge.billingMethod = method
+
+        val attemptNo = (attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(chargeId)?.attemptNo ?: 0) + 1
+        val tossOrderId = attemptOrderId(charge.orderId, attemptNo)
+        val attempt =
+            attemptRepository.save(
+                TossBillingChargeAttempt(
+                    chargeId = charge.id,
+                    billingMethod = method,
+                    attemptNo = attemptNo,
+                    tossOrderId = tossOrderId,
+                    status = TossBillingChargeStatus.PENDING,
+                ),
+            )
+
         val user =
             userRepository.findById(charge.userId)
                 ?: throw IllegalArgumentException("사용자를 찾을 수 없습니다. userId=${charge.userId}")
-        val method = charge.billingMethod
         val response =
             tossPaymentsApiClient.chargeBilling(
                 billingKey = method.billingKey,
                 customerKey = method.customerKey,
                 amount = charge.amount,
-                orderId = charge.orderId,
+                orderId = tossOrderId,
                 orderName = charge.orderName,
                 customerEmail = user.email,
                 customerName = user.nickname.value,
-                idempotencyKey = "billing-charge-${charge.orderId}",
+                idempotencyKey = "billing-charge-$tossOrderId",
             )
 
         val subscription =
@@ -157,6 +203,7 @@ class BillingChargeExecutor(
 
         if (!response.isSuccess2xx || response.json == null) {
             val message = response.json?.path("message")?.asText(null) ?: response.rawBody ?: "자동결제 승인 실패"
+            attempt.markFailed(message, response.rawBody)
             charge.markFailed(message, response.rawBody)
             subscription?.markChargeFailed(now)
             notifyChargeFailed(charge.userId, message)
@@ -164,11 +211,9 @@ class BillingChargeExecutor(
         }
 
         val paymentKey = response.json.path("paymentKey").asText(null)
-        charge.markDone(
-            paymentKey,
-            response.rawBody,
-            parseDateTime(response.json.path("approvedAt").asText(null)) ?: now,
-        )
+        val approvedAt = parseDateTime(response.json.path("approvedAt").asText(null)) ?: now
+        attempt.markDone(paymentKey, response.rawBody, approvedAt)
+        charge.markDone(paymentKey, response.rawBody, approvedAt)
         subscription?.markCharged(now)
         return charge
     }
@@ -177,25 +222,34 @@ class BillingChargeExecutor(
         charge: TossBillingCharge,
         now: LocalDateTime,
     ): TossBillingCharge? {
-        val remote = tossPaymentsApiClient.getPaymentByOrderId(charge.orderId)
-        if (!remote.isSuccess2xx || remote.json == null) {
-            return null
+        val latest = attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)
+        val orderIds =
+            buildList {
+                if (latest != null) add(latest.tossOrderId)
+                add(charge.orderId)
+            }.distinct()
+
+        for (orderId in orderIds) {
+            val remote = tossPaymentsApiClient.getPaymentByOrderId(orderId)
+            if (!remote.isSuccess2xx || remote.json == null) {
+                continue
+            }
+            val status = remote.json.path("status").asText(null)
+            if (status != "DONE") {
+                continue
+            }
+            val paymentKey = remote.json.path("paymentKey").asText(null)
+            val approvedAt = parseDateTime(remote.json.path("approvedAt").asText(null)) ?: now
+            latest?.takeIf { it.tossOrderId == orderId && it.status == TossBillingChargeStatus.PENDING }
+                ?.markDone(paymentKey, remote.rawBody, approvedAt)
+            charge.markDone(paymentKey, remote.rawBody, approvedAt)
+            charge.subscriptionId
+                ?.let { subscriptionRepository.findWithBillingMethodById(it) }
+                ?.markCharged(now)
+            log.info("PENDING 회차를 토스 조회로 확정했습니다. orderId={}", orderId)
+            return charge
         }
-        val status = remote.json.path("status").asText(null)
-        if (status != "DONE") {
-            return null
-        }
-        val paymentKey = remote.json.path("paymentKey").asText(null)
-        charge.markDone(
-            paymentKey,
-            remote.rawBody,
-            parseDateTime(remote.json.path("approvedAt").asText(null)) ?: now,
-        )
-        charge.subscriptionId
-            ?.let { subscriptionRepository.findWithBillingMethodById(it) }
-            ?.markCharged(now)
-        log.info("PENDING 회차를 토스 조회로 확정했습니다. orderId={}", charge.orderId)
-        return charge
+        return null
     }
 
     private fun notifyChargeFailed(
@@ -207,7 +261,7 @@ class BillingChargeExecutor(
                 userId = userId,
                 type = NotificationType.PAYMENT_FAILED,
                 title = "Glow Pass 결제 실패",
-                message = "자동결제에 실패했습니다. 카드를 확인해 주세요. ($message)",
+                message = "자동결제에 실패했습니다. 다른 카드로 다시 결제할 수 있습니다. ($message)",
                 link = "/billing",
             )
         }.onFailure { error ->
@@ -233,5 +287,10 @@ class BillingChargeExecutor(
             subscriptionId: Long,
             dueAt: LocalDateTime,
         ): String = "sub-$subscriptionId-${dueAt.format(PERIOD_FORMAT)}"
+
+        fun attemptOrderId(
+            cycleOrderId: String,
+            attemptNo: Int,
+        ): String = "$cycleOrderId-a$attemptNo"
     }
 }

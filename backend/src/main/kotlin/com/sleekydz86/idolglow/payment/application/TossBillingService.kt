@@ -3,15 +3,18 @@ package com.sleekydz86.idolglow.payment.application
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.application.dto.ChargeTossBillingRequest
 import com.sleekydz86.idolglow.payment.application.dto.IssueTossBillingKeyRequest
+import com.sleekydz86.idolglow.payment.application.dto.RetryTossBillingChargeRequest
 import com.sleekydz86.idolglow.payment.application.dto.StartTossBillingSubscriptionRequest
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingChargeResponse
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingClientConfigResponse
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingMethodResponse
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingOverviewResponse
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingSubscriptionResponse
+import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
 import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscription
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscriptionStatus
+import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingDueClaimRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
@@ -31,6 +34,7 @@ class TossBillingService(
     private val methodRepository: TossBillingMethodJpaRepository,
     private val subscriptionRepository: TossBillingSubscriptionJpaRepository,
     private val chargeRepository: TossBillingChargeJpaRepository,
+    private val attemptRepository: TossBillingChargeAttemptJpaRepository,
     private val dueClaimRepository: TossBillingDueClaimRepository,
     private val billingChargeExecutor: BillingChargeExecutor,
     @Lazy private val self: TossBillingService,
@@ -54,17 +58,26 @@ class TossBillingService(
 
     @Transactional(readOnly = true)
     fun overview(userId: Long): TossBillingOverviewResponse {
-        val method = methodRepository.findByUserIdAndActiveTrue(userId)
+        val methods = methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId)
+        val defaultMethod = methods.firstOrNull { it.isDefault } ?: methods.firstOrNull()
         val subscription =
             subscriptionRepository
                 .findByUserIdAndPlanCode(userId, PLAN_MONTHLY)
                 ?.also { it.finalizeCanceledIfEnded() }
                 ?.takeIf { it.status != TossBillingSubscriptionStatus.CANCELED }
         val charges = chargeRepository.findAllByUserIdOrderByIdDesc(userId).take(20)
+        val attemptsByCharge =
+            attemptRepository
+                .findAllByChargeIdInOrderByChargeIdAscAttemptNoAsc(charges.map { it.id })
+                .groupBy { it.chargeId }
         return TossBillingOverviewResponse(
-            method = method?.let(TossBillingMethodResponse::from),
+            method = defaultMethod?.let(TossBillingMethodResponse::from),
+            methods = methods.map(TossBillingMethodResponse::from),
             subscription = subscription?.let(TossBillingSubscriptionResponse::from),
-            charges = charges.map(TossBillingChargeResponse::from),
+            charges =
+                charges.map { charge ->
+                    TossBillingChargeResponse.from(charge, attemptsByCharge[charge.id].orEmpty())
+                },
         )
     }
 
@@ -104,7 +117,11 @@ class TossBillingService(
             json.path("billingKey").asText(null)?.trim()
                 ?: throw IllegalStateException("빌링키 응답이 비어 있습니다.")
         val card = json.path("card")
-        methodRepository.findByUserIdAndActiveTrue(userId)?.deactivate()
+        val existingActive = methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId)
+        val makeDefault = request.setAsDefault || existingActive.isEmpty()
+        if (makeDefault) {
+            existingActive.forEach { it.clearDefault() }
+        }
 
         val saved =
             methodRepository.save(
@@ -118,9 +135,60 @@ class TossBillingService(
                     ownerType = card.path("ownerType").asText(null),
                     authenticatedAt = parseDateTime(json.path("authenticatedAt").asText(null)),
                     active = true,
+                    isDefault = makeDefault,
                 ),
             )
+
+        if (makeDefault) {
+            subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)?.let { sub ->
+                if (sub.status != TossBillingSubscriptionStatus.CANCELED) {
+                    sub.billingMethod = saved
+                }
+            }
+        }
         return TossBillingMethodResponse.from(saved)
+    }
+
+    @Transactional
+    fun setDefaultMethod(
+        userId: Long,
+        methodId: Long,
+    ): TossBillingMethodResponse {
+        val method =
+            methodRepository.findByIdAndUserIdAndActiveTrue(methodId, userId)
+                ?: throw IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
+        methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).forEach { it.clearDefault() }
+        method.markAsDefault()
+        subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)?.let { sub ->
+            if (sub.status != TossBillingSubscriptionStatus.CANCELED) {
+                sub.billingMethod = method
+            }
+        }
+        return TossBillingMethodResponse.from(method)
+    }
+
+    @Transactional
+    fun deactivateMethod(
+        userId: Long,
+        methodId: Long,
+    ): TossBillingMethodResponse {
+        val method =
+            methodRepository.findByIdAndUserIdAndActiveTrue(methodId, userId)
+                ?: throw IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
+        val wasDefault = method.isDefault
+        method.deactivate()
+        if (wasDefault) {
+            val next = methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).firstOrNull()
+            next?.markAsDefault()
+            subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)?.let { sub ->
+                if (sub.status != TossBillingSubscriptionStatus.CANCELED) {
+                    if (next != null) {
+                        sub.billingMethod = next
+                    }
+                }
+            }
+        }
+        return TossBillingMethodResponse.from(method)
     }
 
     @Transactional
@@ -130,7 +198,10 @@ class TossBillingService(
     ): Long? {
         val paused = subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY) ?: return null
         if (paused.status != TossBillingSubscriptionStatus.PAUSED) {
-            paused.billingMethod = methodRepository.findById(methodId).orElse(paused.billingMethod)
+            val method = methodRepository.findById(methodId).orElse(null)
+            if (method != null && method.isDefault) {
+                paused.billingMethod = method
+            }
             return null
         }
         val method =
@@ -163,7 +234,7 @@ class TossBillingService(
     ): Long {
         requireEnabled()
         val method =
-            methodRepository.findByUserIdAndActiveTrue(userId)
+            resolveDefaultMethod(userId)
                 ?: throw IllegalArgumentException("등록된 결제 수단이 없습니다. 먼저 카드를 등록하세요.")
 
         val amount = if (request.amount > 0) request.amount else defaultAmount
@@ -237,7 +308,57 @@ class TossBillingService(
                 amount = context.amount,
                 orderName = context.orderName,
             )
-        return TossBillingChargeResponse.from(charge)
+        return self.chargeResponse(charge.id)
+    }
+
+    fun retryFailedCharge(
+        userId: Long,
+        chargeId: Long,
+        request: RetryTossBillingChargeRequest,
+    ): TossBillingChargeResponse {
+        val method = self.prepareRetryContext(userId, chargeId, request)
+        billingChargeExecutor.retryFailedCharge(chargeId, method)
+        return self.chargeResponse(chargeId)
+    }
+
+    @Transactional
+    fun prepareRetryContext(
+        userId: Long,
+        chargeId: Long,
+        request: RetryTossBillingChargeRequest,
+    ): TossBillingMethod {
+        requireEnabled()
+        val charge =
+            chargeRepository.findById(chargeId).orElseThrow {
+                IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
+            }
+        require(charge.userId == userId) { "본인 결제 회차만 재결제할 수 있습니다. chargeId=$chargeId" }
+        require(charge.status == TossBillingChargeStatus.FAILED) {
+            "실패한 회차만 다른 카드로 재결제할 수 있습니다. status=${charge.status}"
+        }
+        val method =
+            methodRepository.findByIdAndUserIdAndActiveTrue(request.methodId, userId)
+                ?: throw IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=${request.methodId}")
+        if (request.setAsDefault) {
+            methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).forEach { it.clearDefault() }
+            method.markAsDefault()
+            subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)?.let { sub ->
+                if (sub.status != TossBillingSubscriptionStatus.CANCELED) {
+                    sub.billingMethod = method
+                }
+            }
+        }
+        return method
+    }
+
+    @Transactional(readOnly = true)
+    fun chargeResponse(chargeId: Long): TossBillingChargeResponse {
+        val charge =
+            chargeRepository.findById(chargeId).orElseThrow {
+                IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
+            }
+        val attempts = attemptRepository.findAllByChargeIdOrderByAttemptNoAsc(chargeId)
+        return TossBillingChargeResponse.from(charge, attempts)
     }
 
     @Transactional(readOnly = true)
@@ -247,7 +368,7 @@ class TossBillingService(
     ): OneOffChargeContext {
         requireEnabled()
         val method =
-            methodRepository.findByUserIdAndActiveTrue(userId)
+            resolveDefaultMethod(userId)
                 ?: throw IllegalArgumentException("등록된 결제 수단이 없습니다.")
         val subscription = subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)
         val amount = if (request.amount > 0) request.amount else (subscription?.amount ?: defaultAmount)
@@ -274,6 +395,11 @@ class TossBillingService(
             billingChargeExecutor.chargeSubscription(subscriptionId)
             true
         }.getOrDefault(false)
+
+    private fun resolveDefaultMethod(userId: Long): TossBillingMethod? {
+        return methodRepository.findByUserIdAndActiveTrueAndIsDefaultTrue(userId)
+            ?: methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).firstOrNull()
+    }
 
     private fun requireEnabled() {
         require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다. payment.toss.enabled=true 로 설정하세요." }

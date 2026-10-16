@@ -26,7 +26,7 @@ class TossBillingCharge(
     var subscriptionId: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "billing_method_id", nullable = false)
-    val billingMethod: TossBillingMethod,
+    var billingMethod: TossBillingMethod,
     @Column(name = "order_id", nullable = false, length = 200)
     val orderId: String,
     @Column(name = "order_name", nullable = false, length = 200)
