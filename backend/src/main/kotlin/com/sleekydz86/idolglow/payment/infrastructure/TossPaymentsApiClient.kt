@@ -6,7 +6,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
+import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriUtils
 import tools.jackson.databind.ObjectMapper
 import java.nio.charset.StandardCharsets
@@ -40,6 +40,11 @@ class TossPaymentsApiClient(
         return get(path)
     }
 
+    fun getPaymentByOrderId(orderId: String): TossApiResponse {
+        val encoded = UriUtils.encodePathSegment(orderId, StandardCharsets.UTF_8)
+        return get("/v1/payments/orders/$encoded")
+    }
+
     fun cancel(
         paymentKey: String,
         cancelReason: String,
@@ -56,6 +61,46 @@ class TossPaymentsApiClient(
                 }
             }
         return post(path, objectMapper.writeValueAsString(body), idempotencyKey)
+    }
+
+    fun issueBillingKey(
+        authKey: String,
+        customerKey: String,
+    ): TossApiResponse {
+        val body =
+            objectMapper.createObjectNode().apply {
+                put("authKey", authKey)
+                put("customerKey", customerKey)
+            }
+        return post("/v1/billing/authorizations/issue", objectMapper.writeValueAsString(body), null)
+    }
+
+    fun chargeBilling(
+        billingKey: String,
+        customerKey: String,
+        amount: Long,
+        orderId: String,
+        orderName: String,
+        customerEmail: String?,
+        customerName: String?,
+        idempotencyKey: String?,
+    ): TossApiResponse {
+        val encoded = UriUtils.encodePathSegment(billingKey, StandardCharsets.UTF_8)
+        val body =
+            objectMapper.createObjectNode().apply {
+                put("customerKey", customerKey)
+                put("amount", amount)
+                put("orderId", orderId)
+                put("orderName", orderName)
+                if (!customerEmail.isNullOrBlank()) {
+                    put("customerEmail", customerEmail)
+                }
+                if (!customerName.isNullOrBlank()) {
+                    put("customerName", customerName)
+                }
+                put("taxFreeAmount", 0)
+            }
+        return post("/v1/billing/$encoded", objectMapper.writeValueAsString(body), idempotencyKey)
     }
 
     private fun get(path: String): TossApiResponse {
@@ -75,6 +120,10 @@ class TossPaymentsApiClient(
             val text = entity.body ?: ""
             val node = runCatching { objectMapper.readTree(text) }.getOrNull()
             TossApiResponse(entity.statusCode.value(), node, text, null)
+        } catch (e: RestClientResponseException) {
+            val text = e.responseBodyAsString
+            val node = runCatching { objectMapper.readTree(text) }.getOrNull()
+            TossApiResponse(e.statusCode.value(), node, text, e)
         } catch (e: Exception) {
             TossApiResponse(0, null, e.message, e)
         }
@@ -106,6 +155,10 @@ class TossPaymentsApiClient(
             val text = entity.body ?: ""
             val node = runCatching { objectMapper.readTree(text) }.getOrNull()
             TossApiResponse(entity.statusCode.value(), node, text, null)
+        } catch (e: RestClientResponseException) {
+            val text = e.responseBodyAsString
+            val node = runCatching { objectMapper.readTree(text) }.getOrNull()
+            TossApiResponse(e.statusCode.value(), node, text, e)
         } catch (e: Exception) {
             TossApiResponse(0, null, e.message, e)
         }

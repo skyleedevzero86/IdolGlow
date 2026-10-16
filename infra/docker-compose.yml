@@ -123,6 +123,8 @@ services:
       MINIO_PUBLIC_READ_WEBZINE_OBJECTS: "true"
       APP_PUBLIC_BASE_URL: http://localhost:9090
       MOCK_PAYMENT_WEBHOOK_SECRET: ${MOCK_PAYMENT_WEBHOOK_SECRET:-dev-mock-webhook-secret}
+      TOSS_BILLING_CRYPTO_SECRET: ${TOSS_BILLING_CRYPTO_SECRET:-idolglow-local-billing-crypto-secret}
+      TOSS_BILLING_SCHEDULER_ENABLED: ${TOSS_BILLING_SCHEDULER_ENABLED:-true}
     depends_on:
       postgres:
         condition: service_healthy

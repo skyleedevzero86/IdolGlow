@@ -14,7 +14,7 @@ class SearchKeywordService(
 ) {
     @Transactional(readOnly = true)
     fun findPopular(limit: Int): List<PopularSearchKeywordResponse> {
-        val size = limit.coerceIn(1, 20)
+        val size = limit.coerceIn(1, 60)
         return searchKeywordStatJpaRepository
             .findPopular(PageRequest.of(0, size))
             .map { PopularSearchKeywordResponse(keyword = it.keyword, searchCount = it.searchCount) }

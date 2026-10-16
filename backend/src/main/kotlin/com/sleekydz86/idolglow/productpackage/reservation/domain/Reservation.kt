@@ -36,6 +36,8 @@ class Reservation(
     var visitEndTime: LocalTime,
     @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
     var totalPrice: BigDecimal,
+    @Column(name = "membership_discount", nullable = false, precision = 15, scale = 2)
+    var membershipDiscount: BigDecimal = BigDecimal.ZERO,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: ReservationStatus = ReservationStatus.PREBOOK,
