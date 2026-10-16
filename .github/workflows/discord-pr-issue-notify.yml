@@ -1,0 +1,435 @@
+name: Discord GitHub Activity Notification
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+      - ready_for_review
+      - converted_to_draft
+      - review_requested
+      - review_request_removed
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+  pull_request_review_comment:
+    types:
+      - created
+  issues:
+    types:
+      - opened
+      - reopened
+      - closed
+      - assigned
+      - labeled
+  issue_comment:
+    types:
+      - created
+  release:
+    types:
+      - published
+  create:
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  notify-discord:
+    name: Send Discord GitHub activity notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+
+          python3 <<'PYTHON'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+
+          discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+          event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+          repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+          server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
+
+          if not discord_webhook_url:
+              raise RuntimeError("DISCORD_WEBHOOK_URL Secret이 비어 있습니다.")
+          if discord_webhook_url.endswith("/github"):
+              raise RuntimeError("DISCORD_WEBHOOK_URL 끝의 /github를 제거하세요.")
+          if not event_path:
+              raise RuntimeError("GITHUB_EVENT_PATH가 비어 있습니다.")
+          if not repository:
+              raise RuntimeError("GITHUB_REPOSITORY가 비어 있습니다.")
+
+          def clean_text(value):
+              return (
+                  str(value or "")
+                  .replace("\\", "\\\\")
+                  .replace("`", "'")
+                  .replace("@", "@\u200b")
+              )
+
+          def clean_link_label(value):
+              return (
+                  clean_text(value)
+                  .replace("[", "\\[")
+                  .replace("]", "\\]")
+              )
+
+          def clip(value, limit=500):
+              text = str(value or "").strip()
+              if len(text) <= limit:
+                  return text
+              return text[: limit - 1].rstrip() + "…"
+
+          def actor_login(payload):
+              return (payload.get("sender") or {}).get("login") or "unknown"
+
+          def md_link(label, url):
+              safe_label = clean_link_label(label)
+              safe_url = str(url or "").strip()
+              if not safe_url:
+                  return f"**{safe_label}**"
+              return f"[{safe_label}]({safe_url})"
+
+          def truncate_field(value, limit=1000):
+              text = str(value or "").strip()
+              if len(text) <= limit:
+                  return text
+              return text[: limit - 1].rstrip() + "…"
+
+          COLOR_INFO = 5793266
+          COLOR_SUCCESS = 5763719
+          COLOR_WARN = 16776960
+          COLOR_DANGER = 15548997
+          COLOR_PURPLE = 10181046
+
+          with open(event_path, "r", encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          action = str(event.get("action") or "")
+          title = "GitHub 알림"
+          url = ""
+          color = COLOR_INFO
+          fields = []
+          description_parts = [
+              f"저장소: `{clean_text(repository)}`",
+          ]
+
+          if event_name == "pull_request":
+              pr = event.get("pull_request") or {}
+              number = pr.get("number") or event.get("number")
+              pr_title = pr.get("title") or "(제목 없음)"
+              html_url = pr.get("html_url") or ""
+              head_ref = (pr.get("head") or {}).get("ref") or "-"
+              base_ref = (pr.get("base") or {}).get("ref") or "-"
+              author = actor_login(event)
+              draft = "예" if pr.get("draft") else "아니오"
+              merged = bool(pr.get("merged"))
+
+              action_label = {
+                  "opened": "열림",
+                  "synchronize": "동기화(커밋 추가)",
+                  "reopened": "다시 열림",
+                  "closed": "머지됨" if merged else "닫힘(미머지)",
+                  "ready_for_review": "리뷰 준비됨",
+                  "converted_to_draft": "Draft로 전환",
+                  "review_requested": "리뷰 요청",
+                  "review_request_removed": "리뷰 요청 취소",
+              }.get(action, action or "변경")
+
+              title = "🔀 GitHub PR 알림"
+              url = html_url
+              color = COLOR_SUCCESS if merged else COLOR_INFO
+              if action == "closed" and not merged:
+                  color = COLOR_WARN
+              description_parts.extend(
+                  [
+                      f"이벤트: **{clean_text(action_label)}**",
+                      f"PR: {md_link(f'#{number} {pr_title}', html_url)}",
+                      f"작성자: `{clean_text(author)}`",
+                      f"브랜치: `{clean_text(head_ref)}` → `{clean_text(base_ref)}`",
+                      f"Draft: {clean_text(draft)}",
+                  ]
+              )
+
+              if action == "review_requested":
+                  requested = event.get("requested_reviewer") or event.get("requested_team") or {}
+                  target = requested.get("login") or requested.get("name") or "-"
+                  description_parts.append(f"리뷰어: `{clean_text(target)}`")
+
+              if action in ("opened", "reopened", "ready_for_review"):
+                  body = clip(pr.get("body") or "")
+                  if body:
+                      fields.append(
+                          {
+                              "name": "설명",
+                              "value": truncate_field(clean_text(body)),
+                              "inline": False,
+                          }
+                      )
+
+          elif event_name == "pull_request_review":
+              review = event.get("review") or {}
+              pr = event.get("pull_request") or {}
+              number = pr.get("number")
+              pr_title = pr.get("title") or "(제목 없음)"
+              html_url = review.get("html_url") or pr.get("html_url") or ""
+              state = str(review.get("state") or "").lower()
+              state_label = {
+                  "approved": "승인",
+                  "changes_requested": "변경 요청",
+                  "commented": "코멘트 리뷰",
+                  "dismissed": "리뷰 Dismiss",
+              }.get(state, state or action or "리뷰")
+              action_label = "리뷰 제출" if action == "submitted" else "리뷰 취소"
+              author = actor_login(event)
+
+              title = "📝 GitHub PR 리뷰 알림"
+              url = html_url
+              color = {
+                  "approved": COLOR_SUCCESS,
+                  "changes_requested": COLOR_DANGER,
+                  "dismissed": COLOR_WARN,
+              }.get(state, COLOR_PURPLE)
+              description_parts.extend(
+                  [
+                      f"이벤트: **{clean_text(action_label)}** · {clean_text(state_label)}",
+                      f"PR: {md_link(f'#{number} {pr_title}', html_url)}",
+                      f"리뷰어: `{clean_text(author)}`",
+                  ]
+              )
+              body = clip(review.get("body") or "")
+              if body:
+                  fields.append(
+                      {
+                          "name": "내용",
+                          "value": truncate_field(clean_text(body)),
+                          "inline": False,
+                      }
+                  )
+
+          elif event_name == "pull_request_review_comment":
+              comment = event.get("comment") or {}
+              pr = event.get("pull_request") or {}
+              number = pr.get("number")
+              pr_title = pr.get("title") or "(제목 없음)"
+              html_url = comment.get("html_url") or pr.get("html_url") or ""
+              author = actor_login(event)
+              path = comment.get("path") or "-"
+
+              title = "💬 GitHub PR 코드 댓글"
+              url = html_url
+              color = COLOR_PURPLE
+              description_parts.extend(
+                  [
+                      f"PR: {md_link(f'#{number} {pr_title}', html_url)}",
+                      f"작성자: `{clean_text(author)}`",
+                      f"파일: `{clean_text(path)}`",
+                  ]
+              )
+              body = clip(comment.get("body") or "", 700)
+              if body:
+                  fields.append(
+                      {
+                          "name": "댓글",
+                          "value": truncate_field(clean_text(body)),
+                          "inline": False,
+                      }
+                  )
+
+          elif event_name == "issues":
+              issue = event.get("issue") or {}
+              number = issue.get("number")
+              issue_title = issue.get("title") or "(제목 없음)"
+              html_url = issue.get("html_url") or ""
+              author = actor_login(event)
+              action_label = {
+                  "opened": "생성",
+                  "reopened": "다시 열림",
+                  "closed": "닫힘",
+                  "assigned": "담당자 지정",
+                  "labeled": "라벨 추가",
+              }.get(action, action or "변경")
+
+              title = "🎫 GitHub 이슈 알림"
+              url = html_url
+              color = COLOR_SUCCESS if action == "opened" else COLOR_INFO
+              if action == "closed":
+                  color = COLOR_WARN
+              description_parts.extend(
+                  [
+                      f"이벤트: **{clean_text(action_label)}**",
+                      f"이슈: {md_link(f'#{number} {issue_title}', html_url)}",
+                      f"작성자: `{clean_text(author)}`",
+                  ]
+              )
+
+              if action == "assigned":
+                  assignee = (event.get("assignee") or {}).get("login") or "-"
+                  description_parts.append(f"담당자: `{clean_text(assignee)}`")
+
+              if action == "labeled":
+                  label = (event.get("label") or {}).get("name") or "-"
+                  description_parts.append(f"라벨: `{clean_text(label)}`")
+
+              if action in ("opened", "reopened"):
+                  body = clip(issue.get("body") or "")
+                  if body:
+                      fields.append(
+                          {
+                              "name": "내용",
+                              "value": truncate_field(clean_text(body)),
+                              "inline": False,
+                          }
+                      )
+
+          elif event_name == "issue_comment":
+              issue = event.get("issue") or {}
+              comment = event.get("comment") or {}
+              number = issue.get("number")
+              issue_title = issue.get("title") or "(제목 없음)"
+              html_url = comment.get("html_url") or issue.get("html_url") or ""
+              author = actor_login(event)
+              is_pr = bool(issue.get("pull_request"))
+              target_label = "PR" if is_pr else "이슈"
+
+              title = "💬 GitHub 댓글 알림"
+              url = html_url
+              color = COLOR_PURPLE
+              description_parts.extend(
+                  [
+                      f"대상: {clean_text(target_label)} "
+                      f"{md_link(f'#{number} {issue_title}', html_url)}",
+                      f"작성자: `{clean_text(author)}`",
+                  ]
+              )
+              body = clip(comment.get("body") or "", 700)
+              if body:
+                  fields.append(
+                      {
+                          "name": "댓글",
+                          "value": truncate_field(clean_text(body)),
+                          "inline": False,
+                      }
+                  )
+
+          elif event_name == "release":
+              release = event.get("release") or {}
+              name = release.get("name") or release.get("tag_name") or "(릴리즈)"
+              tag = release.get("tag_name") or "-"
+              html_url = release.get("html_url") or ""
+              author = actor_login(event)
+              prerelease = "예" if release.get("prerelease") else "아니오"
+
+              title = "🚀 GitHub 릴리즈 알림"
+              url = html_url
+              color = COLOR_SUCCESS
+              description_parts.extend(
+                  [
+                      "이벤트: **게시됨**",
+                      f"릴리즈: {md_link(name, html_url)}",
+                      f"태그: `{clean_text(tag)}`",
+                      f"작성자: `{clean_text(author)}`",
+                      f"Pre-release: {clean_text(prerelease)}",
+                  ]
+              )
+              body = clip(release.get("body") or "", 700)
+              if body:
+                  fields.append(
+                      {
+                          "name": "노트",
+                          "value": truncate_field(clean_text(body)),
+                          "inline": False,
+                      }
+                  )
+
+          elif event_name == "create":
+              ref_type = str(event.get("ref_type") or "")
+              if ref_type != "tag":
+                  print("브랜치 생성은 커밋 알림으로 충분해 생략합니다.")
+                  sys.exit(0)
+              ref = event.get("ref") or "-"
+              author = actor_login(event)
+              tag_url = f"{server_url}/{repository}/releases/tag/{ref}"
+
+              title = "🏷️ GitHub 태그 알림"
+              url = tag_url
+              color = COLOR_INFO
+              description_parts.extend(
+                  [
+                      f"태그: {md_link(ref, tag_url)}",
+                      f"작성자: `{clean_text(author)}`",
+                  ]
+              )
+
+          else:
+              print(f"지원하지 않는 이벤트: {event_name}")
+              sys.exit(0)
+
+          description = "\n".join(description_parts)
+          if len(description) > 3900:
+              description = description[:3899].rstrip() + "…"
+
+          embed = {
+              "title": title,
+              "description": description,
+              "color": color,
+          }
+          if url:
+              embed["url"] = url
+          if fields:
+              embed["fields"] = fields
+
+          payload = {
+              "username": "GitHub Activity Bot",
+              "allowed_mentions": {"parse": []},
+              "embeds": [embed],
+          }
+
+          with open("/tmp/discord-payload.json", "w", encoding="utf-8") as payload_file:
+              json.dump(payload, payload_file, ensure_ascii=False)
+
+          print(f"Discord activity payload ready. event={event_name} action={action}")
+          PYTHON
+
+          if [[ "$DISCORD_WEBHOOK_URL" == *"?"* ]]; then
+            REQUEST_URL="${DISCORD_WEBHOOK_URL}&wait=true"
+          else
+            REQUEST_URL="${DISCORD_WEBHOOK_URL}?wait=true"
+          fi
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --output /tmp/discord-response.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "Accept: application/json" \
+            --header "User-Agent: DiscordBot (https://github.com/${GITHUB_REPOSITORY}, 1.0)" \
+            --data-binary @/tmp/discord-payload.json \
+            "$REQUEST_URL")
+
+          cat /tmp/discord-response.json || true
+          echo
+          echo "Discord response status: $HTTP_STATUS"
+
+          if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
+            exit 1
+          fi

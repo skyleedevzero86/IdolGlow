@@ -701,6 +701,11 @@ def notifyTelegramSummary(String outcome) {
             def versionLine = resolveReleaseVersionForDisplay()?.trim()
                 ? "릴리즈: <code>${escapeTelegramHtml(resolveReleaseVersionForDisplay())}</code>"
                 : "CHANGELOG: <code>${escapeTelegramHtml(env.EFFECTIVE_CHANGELOG_SECTION ?: resolveChangelogSectionParam())}</code>"
+            def observed = env.DEPLOY_VERSION_OBSERVED?.trim()
+            def expected = env.DEPLOY_VERSION_EXPECTED?.trim()
+            def versionVerifyLine = (observed && expected)
+                ? "배포 버전: 기대 <code>${escapeTelegramHtml(expected)}</code> · 관측 <code>${escapeTelegramHtml(observed)}</code> ✅"
+                : ''
 
             def frontendDir = resolveFrontendDirForDisplay()
             message = """✅ <b>IdolGlow 배포 완료</b>
@@ -709,6 +714,7 @@ def notifyTelegramSummary(String outcome) {
 <code>${escapeTelegramHtml(resolveDeployEnvParam())}</code> 환경에 새 버전이 반영되었습니다.
 
 ${versionLine}
+${versionVerifyLine}
 백엔드: ${params.RUN_BACKEND_BUILD ? '빌드 완료' : '건너뜀'} | 프론트: ${params.RUN_FRONTEND_BUILD && frontendDir ? "빌드 완료 (${frontendDir})" : '건너뜀'}
 ${healthStatus}
 
@@ -1133,6 +1139,30 @@ pipeline {
 
                     try {
                         sh "curl -fsS --retry 5 --retry-delay 3 --retry-connrefused '${httpUrl}'"
+                        def versionUrl = httpUrl.contains('/health/check')
+                            ? httpUrl.replace('/health/check', '/health')
+                            : (httpUrl.endsWith('/health')
+                                ? httpUrl
+                                : httpUrl.replaceAll(/\/?$/, '') + '/health')
+                        def expectedVersion = resolveReleaseVersionForDisplay()?.trim()?.replaceFirst(/^v/, '')
+                        if (expectedVersion && versionUrl) {
+                            def healthJson = sh(
+                                script: "curl -fsS --retry 3 --retry-delay 2 '${versionUrl}'",
+                                returnStdout: true
+                            ).trim()
+                            echo "버전 헬스 응답: ${healthJson}"
+                            def observedMatcher = (healthJson =~ /"version"\s*:\s*"([^"]+)"/)
+                            def observedVersion = observedMatcher.find() ? observedMatcher.group(1).trim().replaceFirst(/^v/, '') : ''
+                            env.DEPLOY_VERSION_OBSERVED = observedVersion
+                            env.DEPLOY_VERSION_EXPECTED = expectedVersion
+                            if (observedVersion && observedVersion != expectedVersion) {
+                                markPipelineFailed('배포 후 헬스체크')
+                                error("배포 버전 불일치: 기대=${expectedVersion}, 관측=${observedVersion}, url=${versionUrl}")
+                            }
+                            if (observedVersion) {
+                                echo "배포 버전 확인 통과: ${observedVersion}"
+                            }
+                        }
                     } catch (Exception healthCheckError) {
                         echo "HTTP health check 실패. 이전 배포본으로 롤백을 시도합니다."
 

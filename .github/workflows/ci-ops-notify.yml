@@ -1,0 +1,371 @@
+name: CI Ops Notify
+
+on:
+  workflow_run:
+    workflows:
+      - Backend CI
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+
+jobs:
+  notify-ci-ops:
+    name: Notify CI status / MTTR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build CI ops message and notify
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          python3 <<'PYTHON'
+          import html
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from datetime import datetime, timezone
+
+
+          telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+          telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+          discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+          github_token = os.environ.get("GITHUB_TOKEN", "").strip()
+          event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
+          repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+          server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
+
+          if not github_token:
+              raise RuntimeError("GITHUB_TOKEN이 비어 있습니다.")
+          if not repository:
+              raise RuntimeError("GITHUB_REPOSITORY가 비어 있습니다.")
+
+          def escape_text(value):
+              return html.escape(str(value or ""))
+
+          def escape_url(value):
+              return html.escape(str(value or ""), quote=True)
+
+          def clean_discord(value):
+              return (
+                  str(value or "")
+                  .replace("\\", "\\\\")
+                  .replace("`", "'")
+                  .replace("@", "@\u200b")
+              )
+
+          def clip(value, limit=500):
+              text = str(value or "").strip()
+              if len(text) <= limit:
+                  return text
+              return text[: limit - 1].rstrip() + "…"
+
+          def parse_dt(value):
+              if not value:
+                  return None
+              try:
+                  return datetime.fromisoformat(value.replace("Z", "+00:00"))
+              except ValueError:
+                  return None
+
+          def format_duration(seconds):
+              total = max(0, int(seconds))
+              hours, rem = divmod(total, 3600)
+              minutes, secs = divmod(rem, 60)
+              if hours > 0:
+                  return f"{hours}시간 {minutes}분"
+              if minutes > 0:
+                  return f"{minutes}분" if secs == 0 else f"{minutes}분 {secs}초"
+              return f"{secs}초"
+
+          def github_api_get(url):
+              request = urllib.request.Request(
+                  url=url,
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "Authorization": f"Bearer {github_token}",
+                      "User-Agent": "github-actions-ci-ops-notify",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+                  method="GET",
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          def send_telegram(message):
+              if not telegram_token or not telegram_chat_id:
+                  print("Telegram Secret 없음 — 스킵")
+                  return
+              payload = {
+                  "chat_id": telegram_chat_id,
+                  "text": message,
+                  "parse_mode": "HTML",
+                  "disable_web_page_preview": True,
+              }
+              request = urllib.request.Request(
+                  url=f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  result = json.loads(response.read().decode("utf-8"))
+              if not result.get("ok"):
+                  raise RuntimeError(f"Telegram 전송 실패: {result}")
+
+          def send_discord(title, description, color, fields=None):
+              if not discord_webhook_url:
+                  print("Discord Secret 없음 — 스킵")
+                  return
+              if discord_webhook_url.endswith("/github"):
+                  raise RuntimeError("DISCORD_WEBHOOK_URL 끝의 /github를 제거하세요.")
+              embed = {
+                  "title": title,
+                  "description": description,
+                  "color": color,
+              }
+              if fields:
+                  embed["fields"] = fields
+              payload = {
+                  "username": "CI Ops Bot",
+                  "allowed_mentions": {"parse": []},
+                  "embeds": [embed],
+              }
+              request_url = (
+                  f"{discord_webhook_url}&wait=true"
+                  if "?" in discord_webhook_url
+                  else f"{discord_webhook_url}?wait=true"
+              )
+              request = urllib.request.Request(
+                  url=request_url,
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={
+                      "Content-Type": "application/json",
+                      "User-Agent": "DiscordBot (https://github.com, 1.0)",
+                  },
+                  method="POST",
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  response.read()
+
+          with open(event_path, "r", encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          run = event.get("workflow_run") or {}
+          conclusion = str(run.get("conclusion") or "unknown")
+          run_id = run.get("id")
+          run_url = run.get("html_url") or ""
+          workflow_name = run.get("name") or "Backend CI"
+          branch = run.get("head_branch") or "-"
+          event_trigger = run.get("event") or "-"
+          head_sha = run.get("head_sha") or ""
+          short_sha = head_sha[:7] if head_sha else "-"
+          actor = ((run.get("actor") or {}).get("login")) or "unknown"
+          head_commit = run.get("head_commit") or {}
+          commit_message = clip((head_commit.get("message") or "").splitlines()[0] if head_commit else "", 120)
+          commit_url = f"{server_url}/{repository}/commit/{head_sha}" if head_sha else ""
+
+          status_icon = {
+              "success": "✅",
+              "failure": "❌",
+              "cancelled": "⏹️",
+              "timed_out": "⏰",
+              "skipped": "⏭️",
+          }.get(conclusion, "ℹ️")
+
+          status_label = {
+              "success": "통과",
+              "failure": "실패",
+              "cancelled": "취소",
+              "timed_out": "타임아웃",
+              "skipped": "스킵",
+          }.get(conclusion, conclusion)
+
+          failed_steps = []
+          detekt_hint = ""
+          owner, _, repo = repository.partition("/")
+
+          if run_id:
+              jobs_url = (
+                  f"https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}/jobs"
+                  f"?per_page=50"
+              )
+              jobs_payload = github_api_get(jobs_url)
+              for job in jobs_payload.get("jobs") or []:
+                  for step in job.get("steps") or []:
+                      if step.get("conclusion") == "failure":
+                          failed_steps.append(
+                              f"{job.get('name') or 'job'} / {step.get('name') or 'step'}"
+                          )
+
+          if head_sha and conclusion == "failure":
+              checks_url = (
+                  f"https://api.github.com/repos/{owner}/{repo}/commits/"
+                  f"{urllib.parse.quote(head_sha)}/check-runs?per_page=50"
+              )
+              try:
+                  checks_payload = github_api_get(checks_url)
+                  blobs = []
+                  for check in checks_payload.get("check_runs") or []:
+                      output = check.get("output") or {}
+                      blobs.append(str(output.get("title") or ""))
+                      blobs.append(str(output.get("summary") or ""))
+                      blobs.append(str(output.get("text") or ""))
+                  joined = "\n".join(blobs)
+                  match = re.search(r"Analysis failed with (\d+) issues", joined, re.I)
+                  if match:
+                      detekt_hint = f":detekt {match.group(1)}건"
+                  else:
+                      match = re.search(r"(\d+)\s+issues?", joined, re.I)
+                      if match and "detekt" in joined.lower():
+                          detekt_hint = f":detekt {match.group(1)}건"
+              except Exception as error:
+                  print(f"check-runs 조회 실패(무시): {error}")
+
+          mttr_line = ""
+          if (
+              conclusion == "success"
+              and branch == "main"
+              and event_trigger == "push"
+              and run_id
+          ):
+              runs_url = (
+                  f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/"
+                  f"backend-ci.yml/runs?branch=main&event=push&per_page=30"
+              )
+              try:
+                  runs_payload = github_api_get(runs_url)
+                  runs = runs_payload.get("workflow_runs") or []
+                  current_started = parse_dt(run.get("run_started_at") or run.get("created_at"))
+                  failure_started = None
+                  for previous in runs:
+                      if previous.get("id") == run_id:
+                          continue
+                      prev_conclusion = previous.get("conclusion")
+                      prev_started = parse_dt(
+                          previous.get("run_started_at") or previous.get("created_at")
+                      )
+                      if prev_started and current_started and prev_started >= current_started:
+                          continue
+                      if prev_conclusion == "success":
+                          break
+                      if prev_conclusion in ("failure", "timed_out", "cancelled"):
+                          failure_started = prev_started
+                  if failure_started and current_started:
+                      recovered_at = parse_dt(run.get("updated_at")) or datetime.now(timezone.utc)
+                      seconds = (recovered_at - failure_started).total_seconds()
+                      if seconds >= 0:
+                          mttr_line = (
+                              "CI 실패 감지부터 복구 커밋 통과까지 "
+                              f"{format_duration(seconds)}"
+                          )
+              except Exception as error:
+                  print(f"MTTR 계산 실패(무시): {error}")
+
+          failed_summary = ", ".join(failed_steps[:5]) if failed_steps else "-"
+          if len(failed_steps) > 5:
+              failed_summary += f" 외 {len(failed_steps) - 5}건"
+
+          detail_bits = []
+          if detekt_hint:
+              detail_bits.append(detekt_hint)
+          if failed_steps:
+              detail_bits.append(failed_summary)
+          detail_text = " · ".join(detail_bits) if detail_bits else "실패 단계 없음"
+
+          headline = f"{status_icon} Backend CI {status_label}"
+          if branch == "main" and conclusion != "success":
+              headline = f"{status_icon} main Backend CI {status_label}"
+
+          tg_lines = [
+              f"<b>{escape_text(headline)}</b>",
+              f"저장소: <code>{escape_text(repository)}</code>",
+              f"워크플로: {escape_text(workflow_name)}",
+              f"결과: {escape_text(status_icon)} {escape_text(status_label)}",
+              f"트리거: <code>{escape_text(event_trigger)}</code>",
+              f"브랜치: <code>{escape_text(branch)}</code>",
+              f"실행자: <code>{escape_text(actor)}</code>",
+          ]
+          if head_sha:
+              tg_lines.append(
+                  f'커밋: <a href="{escape_url(commit_url)}">'
+                  f"<code>{escape_text(short_sha)}</code></a> "
+                  f"{escape_text(commit_message or '(메시지 없음)')}"
+              )
+          if conclusion != "success":
+              tg_lines.append(f"실패 단계: <code>{escape_text(detail_text)}</code>")
+          if mttr_line:
+              tg_lines.append(f"⏱ MTTR: <b>{escape_text(mttr_line)}</b>")
+          if run_url:
+              tg_lines.append(
+                  f'<a href="{escape_url(run_url)}">CI 로그 열기</a>'
+              )
+
+          send_telegram("\n".join(tg_lines))
+
+          discord_fields = []
+          if conclusion != "success":
+              discord_fields.append(
+                  {
+                      "name": "실패 단계",
+                      "value": clean_discord(clip(detail_text, 900)),
+                      "inline": False,
+                  }
+              )
+          if mttr_line:
+              discord_fields.append(
+                  {
+                      "name": "⏱ MTTR",
+                      "value": clean_discord(mttr_line),
+                      "inline": False,
+                  }
+              )
+          if run_url:
+              discord_fields.append(
+                  {
+                      "name": "로그",
+                      "value": f"[CI 로그 열기]({run_url})",
+                      "inline": False,
+                  }
+              )
+
+          discord_desc = "\n".join(
+              [
+                  f"저장소: `{clean_discord(repository)}`",
+                  f"결과: {status_icon} **{clean_discord(status_label)}**",
+                  f"트리거: `{clean_discord(event_trigger)}`",
+                  f"브랜치: `{clean_discord(branch)}`",
+                  f"실행자: `{clean_discord(actor)}`",
+                  (
+                      f"커밋: [`{clean_discord(short_sha)}`]({commit_url}) "
+                      f"{clean_discord(commit_message or '(메시지 없음)')}"
+                      if head_sha
+                      else "커밋: -"
+                  ),
+              ]
+          )
+          color = {
+              "success": 5763719,
+              "failure": 15548997,
+              "cancelled": 9807270,
+              "timed_out": 15105570,
+          }.get(conclusion, 5793266)
+          send_discord(headline, discord_desc, color, discord_fields or None)
+
+          print(
+              f"CI ops notified. conclusion={conclusion} branch={branch} "
+              f"failed_steps={len(failed_steps)} mttr={bool(mttr_line)}"
+          )
+          PYTHON

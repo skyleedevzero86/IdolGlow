@@ -26,7 +26,8 @@ class RootController {
     fun root(): Map<String, String> =
         mapOf(
             "service" to "idolglow-api",
-            "health" to "/health/check",
+            "health" to "/health",
+            "healthCheck" to "/health/check",
             "swaggerUi" to OpenApiPaths.SWAGGER_UI,
             "openApi" to OpenApiPaths.API_DOCS,
         )
