@@ -32,27 +32,16 @@ on:
     types:
       - published
   create:
-  workflow_run:
-    workflows:
-      - Backend CI
-    types:
-      - completed
 
 permissions:
   contents: read
   pull-requests: read
   issues: read
-  actions: read
 
 jobs:
   notify-discord:
     name: Send Discord GitHub activity notification
     runs-on: ubuntu-latest
-    if: >
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'failure' ||
-      github.event.workflow_run.conclusion == 'cancelled' ||
-      github.event.workflow_run.conclusion == 'timed_out'
     steps:
       - name: Notify Discord
         env:
@@ -386,33 +375,6 @@ jobs:
                   [
                       f"태그: {md_link(ref, tag_url)}",
                       f"작성자: `{clean_text(author)}`",
-                  ]
-              )
-
-          elif event_name == "workflow_run":
-              run = event.get("workflow_run") or {}
-              conclusion = str(run.get("conclusion") or "unknown")
-              conclusion_label = {
-                  "failure": "실패",
-                  "cancelled": "취소",
-                  "timed_out": "타임아웃",
-              }.get(conclusion, conclusion)
-              name = run.get("name") or "Workflow"
-              html_url = run.get("html_url") or ""
-              branch = run.get("head_branch") or "-"
-              event_trigger = run.get("event") or "-"
-              actor = ((run.get("actor") or {}).get("login")) or actor_login(event)
-
-              title = "💥 GitHub CI 실패 알림"
-              url = html_url
-              color = COLOR_DANGER
-              description_parts.extend(
-                  [
-                      f"워크플로: {md_link(name, html_url)}",
-                      f"결과: **{clean_text(conclusion_label)}**",
-                      f"트리거: `{clean_text(event_trigger)}`",
-                      f"브랜치: `{clean_text(branch)}`",
-                      f"실행자: `{clean_text(actor)}`",
                   ]
               )
 

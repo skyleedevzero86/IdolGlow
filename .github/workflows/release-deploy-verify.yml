@@ -1,0 +1,229 @@
+name: Release Deploy Verify Notify
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-notify:
+    name: Verify deployed version and notify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify health version and notify Telegram/Discord
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DEPLOY_VERIFY_BASE_URL: ${{ secrets.DEPLOY_VERIFY_BASE_URL }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 <<'PYTHON'
+          import html
+          import json
+          import os
+          import re
+          import time
+          import urllib.error
+          import urllib.request
+
+
+          def normalize_version(value):
+              text = str(value or "").strip()
+              if text.startswith("v") or text.startswith("V"):
+                  return text[1:]
+              return text
+
+
+          def clip(value, limit=700):
+              text = str(value or "").strip()
+              if len(text) <= limit:
+                  return text
+              return text[: limit - 1].rstrip() + "…"
+
+
+          telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+          telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+          discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+          base_url = os.environ.get("DEPLOY_VERIFY_BASE_URL", "").strip().rstrip("/")
+          event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
+          repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+
+          with open(event_path, "r", encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          release = event.get("release") or {}
+          tag = release.get("tag_name") or "-"
+          expected = normalize_version(tag)
+          release_name = release.get("name") or tag
+          release_url = release.get("html_url") or ""
+          author = ((event.get("sender") or {}).get("login")) or "unknown"
+
+          poll_attempts = 20
+          poll_interval_sec = 30
+          health_url = f"{base_url}/health" if base_url else ""
+          check_url = f"{base_url}/health/check" if base_url else ""
+
+          observed_version = ""
+          health_status = ""
+          verify_ok = False
+          verify_skipped = False
+          verify_detail = ""
+          last_error = ""
+
+          if not base_url:
+              verify_skipped = True
+              verify_detail = (
+                  "DEPLOY_VERIFY_BASE_URL Secret이 비어 배포 버전 검증을 건너뛰었습니다. "
+                  "예: http://host:9090"
+              )
+          else:
+              for attempt in range(1, poll_attempts + 1):
+                  try:
+                      request = urllib.request.Request(
+                          health_url,
+                          headers={"User-Agent": "github-actions-release-deploy-verify"},
+                          method="GET",
+                      )
+                      with urllib.request.urlopen(request, timeout=20) as response:
+                          body = response.read().decode("utf-8", errors="replace")
+                          payload = json.loads(body)
+                          observed_version = normalize_version(payload.get("version"))
+                          health_status = str(payload.get("status") or "")
+                          if health_status.upper() == "UP" and observed_version == expected:
+                              verify_ok = True
+                              verify_detail = (
+                                  f"배포 헬스 {health_url} 응답 version={observed_version} "
+                                  f"(기대 {expected}) · 시도 {attempt}/{poll_attempts}"
+                              )
+                              break
+                          last_error = (
+                              f"버전 불일치 또는 상태 비정상: status={health_status} "
+                              f"version={observed_version or '(없음)'} expected={expected}"
+                          )
+                  except Exception as error:
+                      last_error = str(error)
+
+                  if attempt < poll_attempts:
+                      time.sleep(poll_interval_sec)
+
+              if not verify_ok:
+                  verify_detail = (
+                      f"배포 버전 검증 실패: 기대={expected}, "
+                      f"관측={observed_version or '(없음)'}, "
+                      f"마지막 오류={last_error or '응답 없음'}"
+                  )
+
+          if verify_ok:
+              headline = "✅ 릴리즈·배포 버전 확인 통과"
+              emoji_status = "통과"
+          elif verify_skipped:
+              headline = "⚠️ 릴리즈 게시 · 배포 검증 생략"
+              emoji_status = "생략"
+          else:
+              headline = "❌ 릴리즈·배포 버전 불일치"
+              emoji_status = "실패"
+
+          tg_lines = [
+              f"{'🚀' if verify_ok or verify_skipped else '💥'} <b>{html.escape(headline)}</b>",
+              f"저장소: <code>{html.escape(repository)}</code>",
+              (
+                  f'릴리즈: <a href="{html.escape(release_url, quote=True)}">'
+                  f"{html.escape(release_name)}</a>"
+              ),
+              f"태그: <code>{html.escape(tag)}</code>",
+              f"기대 버전: <code>{html.escape(expected)}</code>",
+              f"관측 버전: <code>{html.escape(observed_version or '-')}</code>",
+              f"검증: <b>{html.escape(emoji_status)}</b>",
+              f"작성자: <code>{html.escape(author)}</code>",
+              f"상세: {html.escape(clip(verify_detail))}",
+          ]
+          if check_url:
+              tg_lines.append(
+                  f'헬스: <a href="{html.escape(health_url, quote=True)}">'
+                  f"<code>/health</code></a>"
+              )
+
+          tg_message = "\n".join(tg_lines)
+
+          def send_telegram(message):
+              if not telegram_token or not telegram_chat_id:
+                  print("Telegram Secret 없음 — 스킵")
+                  return
+              payload = {
+                  "chat_id": telegram_chat_id,
+                  "text": message,
+                  "parse_mode": "HTML",
+                  "disable_web_page_preview": True,
+              }
+              request = urllib.request.Request(
+                  url=f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  result = json.loads(response.read().decode("utf-8"))
+              if not result.get("ok"):
+                  raise RuntimeError(f"Telegram 전송 실패: {result}")
+
+          def send_discord(title, description, color):
+              if not discord_webhook_url:
+                  print("Discord Secret 없음 — 스킵")
+                  return
+              if discord_webhook_url.endswith("/github"):
+                  raise RuntimeError("DISCORD_WEBHOOK_URL 끝의 /github를 제거하세요.")
+              payload = {
+                  "username": "Release Deploy Bot",
+                  "allowed_mentions": {"parse": []},
+                  "embeds": [
+                      {
+                          "title": title,
+                          "url": release_url or None,
+                          "description": description,
+                          "color": color,
+                      }
+                  ],
+              }
+              request_url = (
+                  f"{discord_webhook_url}&wait=true"
+                  if "?" in discord_webhook_url
+                  else f"{discord_webhook_url}?wait=true"
+              )
+              request = urllib.request.Request(
+                  url=request_url,
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={
+                      "Content-Type": "application/json",
+                      "User-Agent": "DiscordBot (https://github.com, 1.0)",
+                  },
+                  method="POST",
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  response.read()
+
+          send_telegram(tg_message)
+
+          discord_desc = "\n".join(
+              [
+                  f"저장소: `{repository}`",
+                  f"태그: `{tag}`",
+                  f"기대 버전: `{expected}`",
+                  f"관측 버전: `{observed_version or '-'}`",
+                  f"검증: **{emoji_status}**",
+                  f"작성자: `{author}`",
+                  f"상세: {clip(verify_detail)}",
+              ]
+          )
+          color = 5763719 if verify_ok else (16776960 if verify_skipped else 15548997)
+          send_discord(headline, discord_desc, color)
+
+          print(verify_detail)
+          if not verify_ok and not verify_skipped:
+              raise SystemExit(1)
+          PYTHON

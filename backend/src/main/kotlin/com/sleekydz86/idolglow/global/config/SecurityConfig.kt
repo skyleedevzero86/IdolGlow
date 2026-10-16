@@ -68,7 +68,7 @@ class SecurityConfig(
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }.authorizeHttpRequests { auth ->
                 auth.requestMatchers("/", "/favicon.ico").permitAll()
-                auth.requestMatchers("/health/check").permitAll()
+                auth.requestMatchers("/health", "/health/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
