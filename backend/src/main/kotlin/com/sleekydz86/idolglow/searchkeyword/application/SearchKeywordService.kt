@@ -14,7 +14,7 @@ class SearchKeywordService(
 ) {
     @Transactional(readOnly = true)
     fun findPopular(limit: Int): List<PopularSearchKeywordResponse> {
-        val size = limit.coerceIn(1, 60)
+        val size = limit.coerceIn(1, MAX_POPULAR_LIMIT)
         return searchKeywordStatJpaRepository
             .findPopular(PageRequest.of(0, size))
             .map { PopularSearchKeywordResponse(keyword = it.keyword, searchCount = it.searchCount) }
@@ -38,7 +38,7 @@ class SearchKeywordService(
                 .replace(WHITESPACE, " ")
                 .trim()
                 .lowercase()
-        if (collapsed.isEmpty() || collapsed.length > 100) {
+        if (collapsed.isEmpty() || collapsed.length > MAX_KEYWORD_LENGTH) {
             return null
         }
         return collapsed
@@ -46,5 +46,7 @@ class SearchKeywordService(
 
     companion object {
         private val WHITESPACE = Regex("\\s+")
+        private const val MAX_POPULAR_LIMIT = 60
+        private const val MAX_KEYWORD_LENGTH = 100
     }
 }

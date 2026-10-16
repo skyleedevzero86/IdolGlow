@@ -31,10 +31,27 @@ object BillingKeyCrypto {
     }
 
     fun encrypt(plain: String): String {
-        val key = secretKey ?: return plain
-        if (plain.startsWith(PREFIX)) {
-            return plain
+        val key = secretKey
+        return when {
+            key == null -> plain
+            plain.startsWith(PREFIX) -> plain
+            else -> encryptWithKey(key, plain)
         }
+    }
+
+    fun decrypt(stored: String): String {
+        val key = secretKey
+        return when {
+            key == null -> stored
+            !stored.startsWith(PREFIX) -> stored
+            else -> decryptWithKey(key, stored)
+        }
+    }
+
+    private fun encryptWithKey(
+        key: SecretKeySpec,
+        plain: String,
+    ): String {
         val iv = ByteArray(IV_BYTES).also { SecureRandom().nextBytes(it) }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
@@ -43,11 +60,10 @@ object BillingKeyCrypto {
         return PREFIX + Base64.getEncoder().encodeToString(packed)
     }
 
-    fun decrypt(stored: String): String {
-        val key = secretKey ?: return stored
-        if (!stored.startsWith(PREFIX)) {
-            return stored
-        }
+    private fun decryptWithKey(
+        key: SecretKeySpec,
+        stored: String,
+    ): String {
         val packed = Base64.getDecoder().decode(stored.removePrefix(PREFIX))
         require(packed.size > IV_BYTES) { "빌링키 암호문 형식이 올바르지 않습니다. length=${packed.size}" }
         val iv = packed.copyOfRange(0, IV_BYTES)

@@ -28,6 +28,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 @Service
+@Suppress("TooManyFunctions")
 class TossBillingService(
     private val tossPaymentProperties: TossPaymentProperties,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
@@ -65,7 +66,10 @@ class TossBillingService(
                 .findByUserIdAndPlanCode(userId, PLAN_MONTHLY)
                 ?.also { it.finalizeCanceledIfEnded() }
                 ?.takeIf { it.status != TossBillingSubscriptionStatus.CANCELED }
-        val charges = chargeRepository.findAllByUserIdOrderByIdDesc(userId).take(20)
+        val charges =
+            chargeRepository
+                .findAllByUserIdOrderByIdDesc(userId)
+                .take(BillingDefaults.OVERVIEW_CHARGE_LIMIT)
         val attemptsByCharge =
             attemptRepository
                 .findAllByChargeIdInOrderByChargeIdAscAttemptNoAsc(charges.map { it.id })
@@ -197,23 +201,23 @@ class TossBillingService(
         methodId: Long,
     ): Long? {
         val paused = subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY) ?: return null
-        if (paused.status != TossBillingSubscriptionStatus.PAUSED) {
-            val method = methodRepository.findById(methodId).orElse(null)
-            if (method != null && method.isDefault) {
-                paused.billingMethod = method
+        return if (paused.status != TossBillingSubscriptionStatus.PAUSED) {
+            methodRepository.findById(methodId).orElse(null)?.takeIf { it.isDefault }?.let {
+                paused.billingMethod = it
             }
-            return null
+            null
+        } else {
+            val method =
+                methodRepository.findById(methodId).orElseThrow {
+                    IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
+                }
+            paused.billingMethod = method
+            paused.status = TossBillingSubscriptionStatus.ACTIVE
+            paused.failCount = 0
+            paused.retryAt = null
+            paused.nextBillingAt = LocalDateTime.now()
+            paused.id
         }
-        val method =
-            methodRepository.findById(methodId).orElseThrow {
-                IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
-            }
-        paused.billingMethod = method
-        paused.status = TossBillingSubscriptionStatus.ACTIVE
-        paused.failCount = 0
-        paused.retryAt = null
-        paused.nextBillingAt = LocalDateTime.now()
-        return paused.id
     }
 
     fun startSubscription(
@@ -340,7 +344,9 @@ class TossBillingService(
             methodRepository.findByIdAndUserIdAndActiveTrue(request.methodId, userId)
                 ?: throw IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=${request.methodId}")
         if (request.setAsDefault) {
-            methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).forEach { it.clearDefault() }
+            methodRepository
+                .findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId)
+                .forEach { it.clearDefault() }
             method.markAsDefault()
             subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)?.let { sub ->
                 if (sub.status != TossBillingSubscriptionStatus.CANCELED) {
