@@ -74,7 +74,18 @@ class BillingChargeExecutorTest {
         val result = executor.chargeSubscription(12L, due)
 
         assertEquals(TossBillingChargeStatus.DONE, result.status)
-        verify(exactly = 0) { tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 0) {
+            tossPaymentsApiClient.chargeBilling(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        }
     }
 
     @Test
@@ -89,32 +100,17 @@ class BillingChargeExecutorTest {
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscription = subscription(id = 12L, nextBillingAt = due)
         val orderId = BillingChargeExecutor.periodOrderId(12L, due)
-        val pending =
-            TossBillingCharge(
-                id = 7L,
-                userId = 1L,
-                subscriptionId = 12L,
-                billingMethod = subscription.billingMethod,
-                orderId = orderId,
-                orderName = "Glow Pass",
-                amount = 4900,
-                status = TossBillingChargeStatus.PENDING,
-            )
+        val pending = pendingCharge(7L, orderId, subscription.billingMethod)
         val attemptSlot = slot<TossBillingChargeAttempt>()
-        every { subscriptionRepository.findWithBillingMethodById(12L) } returns subscription
-        every { chargeRepository.findByOrderId(orderId) } returns pending andThen pending
-        every { chargeRepository.findById(7L) } returns Optional.of(pending)
-        every { attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(7L) } returns null
-        every { attemptRepository.save(capture(attemptSlot)) } answers { attemptSlot.captured }
-        every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
+        stubFinalizeDeps(subscription, pending, attemptSlot)
         every {
             tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any())
-        } returns TossApiResponse(400, objectMapper.readTree("""{"message":"한도초과"}"""), """{"message":"한도초과"}""")
-        every { userRepository.findById(1L) } returns
-            mockk {
-                every { email } returns "a@b.com"
-                every { nickname.value } returns "테스터"
-            }
+        } returns
+            TossApiResponse(
+                400,
+                objectMapper.readTree("""{"message":"한도초과"}"""),
+                """{"message":"한도초과"}""",
+            )
 
         subscription.failCount = 2
         runCatching { executor.finalizeWithToss(7L, due) }
@@ -130,18 +126,39 @@ class BillingChargeExecutorTest {
         val due = LocalDateTime.of(2026, 10, 1, 0, 0)
         val cardA = method(id = 3L, billingKey = "bk-a")
         val cardB = method(id = 4L, billingKey = "bk-b")
-        val charge =
-            TossBillingCharge(
-                id = 9L,
-                userId = 1L,
-                subscriptionId = 12L,
-                billingMethod = cardA,
-                orderId = "sub-12-202610",
-                orderName = "Glow Pass",
-                amount = 4900,
-                status = TossBillingChargeStatus.FAILED,
-                failMessage = "한도초과",
-            )
+        val charge = failedCharge(cardA)
+        val attemptSlot = slot<TossBillingChargeAttempt>()
+        stubRetryDeps(charge, cardA, attemptSlot, due)
+
+        executor.retryFailedCharge(9L, cardB, due)
+
+        assertEquals(TossBillingChargeStatus.DONE, charge.status)
+        assertEquals(4L, charge.billingMethod.id)
+        assertEquals(2, attemptSlot.captured.attemptNo)
+        assertEquals("sub-12-202610-a2", attemptSlot.captured.tossOrderId)
+        assertEquals(TossBillingChargeStatus.DONE, attemptSlot.captured.status)
+    }
+
+    private fun stubFinalizeDeps(
+        subscription: TossBillingSubscription,
+        pending: TossBillingCharge,
+        attemptSlot: io.mockk.CapturingSlot<TossBillingChargeAttempt>,
+    ) {
+        every { subscriptionRepository.findWithBillingMethodById(12L) } returns subscription
+        every { chargeRepository.findByOrderId(pending.orderId) } returns pending andThen pending
+        every { chargeRepository.findById(7L) } returns Optional.of(pending)
+        every { attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(7L) } returns null
+        every { attemptRepository.save(capture(attemptSlot)) } answers { attemptSlot.captured }
+        every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
+        every { userRepository.findById(1L) } returns testUser()
+    }
+
+    private fun stubRetryDeps(
+        charge: TossBillingCharge,
+        cardA: TossBillingMethod,
+        attemptSlot: io.mockk.CapturingSlot<TossBillingChargeAttempt>,
+        due: LocalDateTime,
+    ) {
         val previous =
             TossBillingChargeAttempt(
                 id = 1L,
@@ -151,7 +168,6 @@ class BillingChargeExecutorTest {
                 tossOrderId = "sub-12-202610-a1",
                 status = TossBillingChargeStatus.FAILED,
             )
-        val attemptSlot = slot<TossBillingChargeAttempt>()
         every { chargeRepository.findById(9L) } returns Optional.of(charge)
         every { attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(9L) } returns previous
         every { attemptRepository.save(capture(attemptSlot)) } answers { attemptSlot.captured }
@@ -173,22 +189,44 @@ class BillingChargeExecutorTest {
                 objectMapper.readTree("""{"paymentKey":"pay-b","approvedAt":"2026-10-16T12:00:00+09:00"}"""),
                 """{"paymentKey":"pay-b"}""",
             )
-        every { userRepository.findById(1L) } returns
-            mockk {
-                every { email } returns "a@b.com"
-                every { nickname.value } returns "테스터"
-            }
+        every { userRepository.findById(1L) } returns testUser()
         every { subscriptionRepository.findWithBillingMethodById(12L) } returns
             subscription(id = 12L, nextBillingAt = due, method = cardA)
-
-        executor.retryFailedCharge(9L, cardB, due)
-
-        assertEquals(TossBillingChargeStatus.DONE, charge.status)
-        assertEquals(4L, charge.billingMethod.id)
-        assertEquals(2, attemptSlot.captured.attemptNo)
-        assertEquals("sub-12-202610-a2", attemptSlot.captured.tossOrderId)
-        assertEquals(TossBillingChargeStatus.DONE, attemptSlot.captured.status)
     }
+
+    private fun testUser() =
+        mockk<com.sleekydz86.idolglow.user.user.domain.User> {
+            every { email } returns "a@b.com"
+            every { nickname.value } returns "테스터"
+        }
+
+    private fun pendingCharge(
+        id: Long,
+        orderId: String,
+        method: TossBillingMethod,
+    ) = TossBillingCharge(
+        id = id,
+        userId = 1L,
+        subscriptionId = 12L,
+        billingMethod = method,
+        orderId = orderId,
+        orderName = "Glow Pass",
+        amount = 4900,
+        status = TossBillingChargeStatus.PENDING,
+    )
+
+    private fun failedCharge(method: TossBillingMethod) =
+        TossBillingCharge(
+            id = 9L,
+            userId = 1L,
+            subscriptionId = 12L,
+            billingMethod = method,
+            orderId = "sub-12-202610",
+            orderName = "Glow Pass",
+            amount = 4900,
+            status = TossBillingChargeStatus.FAILED,
+            failMessage = "한도초과",
+        )
 
     private fun method(
         id: Long,

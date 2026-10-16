@@ -15,9 +15,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -32,27 +32,31 @@ class TossBillingController(
     @GetMapping("/client-config")
     fun clientConfig(
         @LoginUser userId: Long,
-    ): ResponseEntity<TossBillingClientConfigResponse> = ResponseEntity.ok(tossBillingService.clientConfig(userId))
+    ): ResponseEntity<TossBillingClientConfigResponse> =
+        ResponseEntity.ok(tossBillingService.clientConfig(userId))
 
     @Operation(summary = "내 빌링 현황 조회")
     @GetMapping("/overview")
     fun overview(
         @LoginUser userId: Long,
-    ): ResponseEntity<TossBillingOverviewResponse> = ResponseEntity.ok(tossBillingService.overview(userId))
+    ): ResponseEntity<TossBillingOverviewResponse> =
+        ResponseEntity.ok(tossBillingService.overview(userId))
 
     @Operation(summary = "빌링키 발급")
     @PostMapping("/issue")
     fun issue(
         @LoginUser userId: Long,
         @Valid @RequestBody request: IssueTossBillingKeyRequest,
-    ): ResponseEntity<TossBillingMethodResponse> = ResponseEntity.ok(tossBillingService.issueBillingKey(userId, request))
+    ): ResponseEntity<TossBillingMethodResponse> =
+        ResponseEntity.ok(tossBillingService.issueBillingKey(userId, request))
 
     @Operation(summary = "기본 결제수단 변경")
     @PostMapping("/methods/{methodId}/default")
     fun setDefaultMethod(
         @LoginUser userId: Long,
         @PathVariable methodId: Long,
-    ): ResponseEntity<TossBillingMethodResponse> = ResponseEntity.ok(tossBillingService.setDefaultMethod(userId, methodId))
+    ): ResponseEntity<TossBillingMethodResponse> =
+        ResponseEntity.ok(tossBillingService.setDefaultMethod(userId, methodId))
 
     @Operation(summary = "결제수단 비활성")
     @PostMapping("/methods/{methodId}/deactivate")
@@ -89,7 +93,8 @@ class TossBillingController(
     fun charge(
         @LoginUser userId: Long,
         @Valid @RequestBody request: ChargeTossBillingRequest,
-    ): ResponseEntity<TossBillingChargeResponse> = ResponseEntity.ok(tossBillingService.chargeNow(userId, request))
+    ): ResponseEntity<TossBillingChargeResponse> =
+        ResponseEntity.ok(tossBillingService.chargeNow(userId, request))
 
     @Operation(summary = "실패 회차를 선택한 카드로 재결제")
     @PostMapping("/charges/{chargeId}/retry")

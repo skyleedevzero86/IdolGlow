@@ -62,7 +62,7 @@ class TossBillingCharge(
         raw: String?,
     ) {
         this.status = TossBillingChargeStatus.FAILED
-        this.failMessage = message?.take(500)
+        this.failMessage = message?.take(BillingLimits.FAIL_MESSAGE_MAX_LENGTH)
         this.rawResponse = raw
     }
 

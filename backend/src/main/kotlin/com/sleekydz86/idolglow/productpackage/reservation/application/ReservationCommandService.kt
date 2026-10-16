@@ -322,7 +322,8 @@ class ReservationCommandService(
             }
         if (expectedTotal.compareTo(requestedTotalPrice) != 0) {
             throw IllegalArgumentException(
-                "상품 ${product.id}의 총금액이 일치하지 않습니다. requested=$requestedTotalPrice expected=$expectedTotal member=$member",
+                "상품 ${product.id}의 총금액이 일치하지 않습니다. " +
+                    "requested=$requestedTotalPrice expected=$expectedTotal member=$member",
             )
         }
         val discount = fullPrice.subtract(expectedTotal).max(BigDecimal.ZERO).setScale(2)

@@ -8,7 +8,12 @@ import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
 @Component
-@ConditionalOnProperty(prefix = "payment.toss.billing", name = ["scheduler-enabled"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(
+    prefix = "payment.toss.billing",
+    name = ["scheduler-enabled"],
+    havingValue = "true",
+    matchIfMissing = false,
+)
 class TossBillingScheduler(
     private val tossBillingService: TossBillingService,
 ) {
