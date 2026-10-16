@@ -64,8 +64,8 @@ class BillingChargeExecutorTest {
                 subscriptionId = 12L,
                 billingMethod = subscription.billingMethod,
                 orderId = orderId,
-                orderName = "Glow Pass",
-                amount = 4900,
+                orderName = BillingDefaults.DEFAULT_ORDER_NAME,
+                amount = BillingDefaults.MONTHLY_AMOUNT,
                 status = TossBillingChargeStatus.DONE,
             )
         every { subscriptionRepository.findWithBillingMethodById(12L) } returns subscription
@@ -76,14 +76,14 @@ class BillingChargeExecutorTest {
         assertEquals(TossBillingChargeStatus.DONE, result.status)
         verify(exactly = 0) {
             tossPaymentsApiClient.chargeBilling(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
+                billingKey = any(),
+                customerKey = any(),
+                amount = any(),
+                orderId = any(),
+                orderName = any(),
+                customerEmail = any(),
+                customerName = any(),
+                idempotencyKey = any(),
             )
         }
     }
@@ -104,7 +104,16 @@ class BillingChargeExecutorTest {
         val attemptSlot = slot<TossBillingChargeAttempt>()
         stubFinalizeDeps(subscription, pending, attemptSlot)
         every {
-            tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any())
+            tossPaymentsApiClient.chargeBilling(
+                billingKey = "bk",
+                customerKey = "idolglow-user-1",
+                amount = BillingDefaults.MONTHLY_AMOUNT,
+                orderId = "sub-12-202611-a1",
+                orderName = any(),
+                customerEmail = any(),
+                customerName = any(),
+                idempotencyKey = any(),
+            )
         } returns
             TossApiResponse(
                 400,
@@ -175,8 +184,8 @@ class BillingChargeExecutorTest {
         every {
             tossPaymentsApiClient.chargeBilling(
                 billingKey = "bk-b",
-                customerKey = any(),
-                amount = any(),
+                customerKey = "idolglow-user-1",
+                amount = BillingDefaults.MONTHLY_AMOUNT,
                 orderId = "sub-12-202610-a2",
                 orderName = any(),
                 customerEmail = any(),
@@ -210,8 +219,8 @@ class BillingChargeExecutorTest {
         subscriptionId = 12L,
         billingMethod = method,
         orderId = orderId,
-        orderName = "Glow Pass",
-        amount = 4900,
+        orderName = BillingDefaults.DEFAULT_ORDER_NAME,
+        amount = BillingDefaults.MONTHLY_AMOUNT,
         status = TossBillingChargeStatus.PENDING,
     )
 
@@ -222,8 +231,8 @@ class BillingChargeExecutorTest {
             subscriptionId = 12L,
             billingMethod = method,
             orderId = "sub-12-202610",
-            orderName = "Glow Pass",
-            amount = 4900,
+            orderName = BillingDefaults.DEFAULT_ORDER_NAME,
+            amount = BillingDefaults.MONTHLY_AMOUNT,
             status = TossBillingChargeStatus.FAILED,
             failMessage = "한도초과",
         )
@@ -249,8 +258,8 @@ class BillingChargeExecutorTest {
             id = id,
             userId = 1L,
             billingMethod = method,
-            orderName = "Glow Pass",
-            amount = 4900,
+            orderName = BillingDefaults.DEFAULT_ORDER_NAME,
+            amount = BillingDefaults.MONTHLY_AMOUNT,
             nextBillingAt = nextBillingAt,
         )
 }

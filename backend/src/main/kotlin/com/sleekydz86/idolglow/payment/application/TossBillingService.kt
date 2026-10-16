@@ -41,9 +41,9 @@ class TossBillingService(
     @Lazy private val self: TossBillingService,
     @param:Value("\${app.frontend-base-url:http://localhost:3000}")
     private val frontendBaseUrl: String,
-    @param:Value("\${payment.toss.billing.default-amount:4900}")
+    @param:Value("\${payment.toss.billing.default-amount:${BillingDefaults.MONTHLY_AMOUNT}}")
     private val defaultAmount: Long,
-    @param:Value("\${payment.toss.billing.default-order-name:IdolGlow 월간 구독}")
+    @param:Value("\${payment.toss.billing.default-order-name:${BillingDefaults.DEFAULT_ORDER_NAME}}")
     private val defaultOrderName: String,
 ) {
     fun clientConfig(userId: Long): TossBillingClientConfigResponse {

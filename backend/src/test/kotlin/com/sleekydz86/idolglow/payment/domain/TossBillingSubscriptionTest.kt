@@ -64,8 +64,8 @@ class TossBillingSubscriptionTest {
         return TossBillingSubscription(
             userId = 1L,
             billingMethod = method,
-            orderName = "Glow Pass",
-            amount = 4900,
+            orderName = "IdolGlow 월간 구독",
+            amount = 4_900L,
             nextBillingAt = nextBillingAt,
         )
     }

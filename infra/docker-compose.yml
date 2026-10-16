@@ -125,6 +125,8 @@ services:
       MOCK_PAYMENT_WEBHOOK_SECRET: ${MOCK_PAYMENT_WEBHOOK_SECRET:-dev-mock-webhook-secret}
       TOSS_BILLING_CRYPTO_SECRET: ${TOSS_BILLING_CRYPTO_SECRET:-idolglow-local-billing-crypto-secret}
       TOSS_BILLING_SCHEDULER_ENABLED: ${TOSS_BILLING_SCHEDULER_ENABLED:-true}
+      TOSS_BILLING_AMOUNT: ${TOSS_BILLING_AMOUNT:-4900}
+      TOSS_BILLING_ORDER_NAME: ${TOSS_BILLING_ORDER_NAME:-IdolGlow 월간 구독}
     depends_on:
       postgres:
         condition: service_healthy

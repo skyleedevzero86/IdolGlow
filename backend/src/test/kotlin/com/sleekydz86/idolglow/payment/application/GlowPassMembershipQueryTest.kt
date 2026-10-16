@@ -45,7 +45,7 @@ class GlowPassMembershipQueryTest {
             userId = 1L,
             billingMethod = method,
             orderName = "Glow Pass",
-            amount = 4900,
+            amount = BillingDefaults.MONTHLY_AMOUNT,
             status = status,
             nextBillingAt = nextBillingAt,
         )
