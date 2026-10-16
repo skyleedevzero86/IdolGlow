@@ -4,6 +4,40 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.8.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.7.1...v0.8.0) (2026-10-16)
+
+
+### Features
+
+* GitHub PR·이슈·CI·릴리즈 알림 추가 ([6b8c46d](https://github.com/skyleedevzero86/IdolGlow/commit/6b8c46d5b5b9708dec07049dc97730a7b0e50344))
+* Glow Pass 다중 카드 등록·임의 변경·미납 재결제 추가 ([aeeeb0d](https://github.com/skyleedevzero86/IdolGlow/commit/aeeeb0d274ca3b4d13092d7b353edb4a25d65aa9))
+* Glow Pass 토스 빌링·다중카드와 시스템 배포시 확인 알림 추가 [#26](https://github.com/skyleedevzero86/IdolGlow/issues/26) ([deaf8c2](https://github.com/skyleedevzero86/IdolGlow/commit/deaf8c2ebdce9c59215ebe89c4f6d2e9647f7db9))
+* 알람웹후크 추가 ([41d84a0](https://github.com/skyleedevzero86/IdolGlow/commit/41d84a0bb7e061a2e7442923fe785f2197b8b88b))
+* 이동 경로 링크 추가 ([705d220](https://github.com/skyleedevzero86/IdolGlow/commit/705d22048569748e839c1152eef1c2a7f2b15f32))
+* 전체 이용자 기준 자주 찾는 검색어 집계 추가 ([232808a](https://github.com/skyleedevzero86/IdolGlow/commit/232808acc1d91104fac33ef61856b15a1751fb56))
+* 토스 빌링키 발급·구독·회차 결제 추가 ([7e18c3b](https://github.com/skyleedevzero86/IdolGlow/commit/7e18c3bb893753e1373f93db1f46271bb4087f7e))
+
+
+### Bug Fixes
+
+* **#21:** Jenkins 로컬 배포 경로와 헬스체크 흐름 안정화 ([b7915fc](https://github.com/skyleedevzero86/IdolGlow/commit/b7915fcb6753bf119d4f91daa60d7193d8680a25))
+* Backend CI detekt 위반 정리 및 빌링 품질 게이트 통과 ([3647543](https://github.com/skyleedevzero86/IdolGlow/commit/3647543a76f97dfa370f316fb04fac3c4a55e47a))
+* Backend CI detekt 위반 정리 및 빌링 품질 게이트 통과 [#27](https://github.com/skyleedevzero86/IdolGlow/issues/27) ([cd4409c](https://github.com/skyleedevzero86/IdolGlow/commit/cd4409c5566d49b5ca73e7741c40ec67e90e9ad1))
+* Jenkins 로컬 배포 경로 및 헬스체크 흐름 안정화 ([f40d30b](https://github.com/skyleedevzero86/IdolGlow/commit/f40d30b580871552551318ac88c5c24fe3ca2d46))
+* push기능추가 ([6704500](https://github.com/skyleedevzero86/IdolGlow/commit/6704500cb46b12a16fa12307d44646b0883cfb02))
+* readme.md파일 테스트로 수정중 ([ee51721](https://github.com/skyleedevzero86/IdolGlow/commit/ee517216bc9ab64f4adbd9cf05ccc967a45349f6))
+* webhook User-Agent 추가 ([eafa9ba](https://github.com/skyleedevzero86/IdolGlow/commit/eafa9baffc131c16ea2848d1a99f78d58a34aee3))
+* workerflow테스트 적용 ([1f1810e](https://github.com/skyleedevzero86/IdolGlow/commit/1f1810e5ff05b0352296c6dac4aee8d8d4f71123))
+* 결제 GraphQL 보안 강화 및 예약·결제 도메인 테스트 추가 ([19827be](https://github.com/skyleedevzero86/IdolGlow/commit/19827be6e4486cabf32e80f91d43cd17c85d25ee))
+* 메세지발송 수정 ([855128e](https://github.com/skyleedevzero86/IdolGlow/commit/855128e75d34dcbce6d9ef1f0a96c3ed9e12788c))
+* 알림 전송 수정 ([f197695](https://github.com/skyleedevzero86/IdolGlow/commit/f197695dc396dec7ddbc3a08f472c79d21e2928b))
+* 웹후크알람 설정 확인 테스트 ([e7e4c98](https://github.com/skyleedevzero86/IdolGlow/commit/e7e4c983ed9dd6299590c1cd4d3fbe9302b1bd82))
+
+
+### CI
+
+* Telegram 커밋 알림 워크플로 추가 ([d38a7ac](https://github.com/skyleedevzero86/IdolGlow/commit/d38a7ac698e41600a71973ad18f57161aec27f03))
+
 ## [0.7.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.7.0...v0.7.1) (2026-07-07)
 
 
