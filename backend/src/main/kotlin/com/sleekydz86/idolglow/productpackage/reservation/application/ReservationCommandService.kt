@@ -4,6 +4,8 @@ import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
+import com.sleekydz86.idolglow.payment.application.GlowPassBenefitPolicy
+import com.sleekydz86.idolglow.payment.application.MembershipQuery
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
@@ -24,6 +26,8 @@ import com.sleekydz86.idolglow.schedule.domain.ScheduleRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -40,6 +44,8 @@ class ReservationCommandService(
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
     private val paymentRefundService: PaymentRefundService,
     private val tossPaymentProperties: TossPaymentProperties,
+    private val membershipQuery: MembershipQuery,
+    private val glowPassBenefitPolicy: GlowPassBenefitPolicy,
     @Value("\${reservation.pending-timeout-seconds:900}")
     private val pendingTimeoutSeconds: Long,
 ) {
@@ -48,9 +54,10 @@ class ReservationCommandService(
         val reservationSlot =
             findReservationTimeSlotByReservationSlotIdWithPessimisticLock(command.reservationSlotId)
         reservationSlot.validateAvailability(command.productId, now)
+        glowPassBenefitPolicy.assertEarlyBookingAllowed(command.userId, reservationSlot, now)
 
         val product = findProductByProductId(command.productId)
-        product.validateTotalPrice(command.totalPrice)
+        val pricing = resolveMembershipPricing(product, command.userId, command.totalPrice, now)
         val expiresAt = now.plusSeconds(pendingTimeoutSeconds)
 
         val reservation =
@@ -60,7 +67,8 @@ class ReservationCommandService(
                 visitDate = reservationSlot.reservationDate,
                 visitStartTime = reservationSlot.startTime,
                 visitEndTime = reservationSlot.endTime,
-                totalPrice = command.totalPrice,
+                totalPrice = pricing.expectedTotal,
+                membershipDiscount = pricing.discount,
             ).request(expiresAt)
 
         val savedReservation = reservationRepository.save(reservation)
@@ -88,6 +96,7 @@ class ReservationCommandService(
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "사용자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
+            glowPassBenefitPolicy.assertFreeCancelAllowed(userId, reservation)
             paymentRefundService.refundBeforeReservationCancel(
                 payment = payment,
                 reservation = reservation,
@@ -294,7 +303,39 @@ class ReservationCommandService(
         now: LocalDateTime,
     ): String = "pay_mock_${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
 
+    private fun resolveMembershipPricing(
+        product: Product,
+        userId: Long,
+        requestedTotalPrice: BigDecimal,
+        at: LocalDateTime,
+    ): MembershipPricing {
+        val fullPrice = product.totalPrice
+        val member = membershipQuery.isActive(userId, at)
+        val expectedTotal =
+            if (member) {
+                fullPrice
+                    .multiply(MEMBER_PRICE_RATE)
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .setScale(2)
+            } else {
+                fullPrice
+            }
+        if (expectedTotal.compareTo(requestedTotalPrice) != 0) {
+            throw IllegalArgumentException(
+                "상품 ${product.id}의 총금액이 일치하지 않습니다. requested=$requestedTotalPrice expected=$expectedTotal member=$member",
+            )
+        }
+        val discount = fullPrice.subtract(expectedTotal).max(BigDecimal.ZERO).setScale(2)
+        return MembershipPricing(expectedTotal = expectedTotal, discount = discount)
+    }
+
+    private data class MembershipPricing(
+        val expectedTotal: BigDecimal,
+        val discount: BigDecimal,
+    )
+
     companion object {
         private val PAYMENT_REFERENCE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+        private val MEMBER_PRICE_RATE = BigDecimal("0.9")
     }
 }

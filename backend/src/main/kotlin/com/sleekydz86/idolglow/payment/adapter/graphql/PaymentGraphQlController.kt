@@ -8,9 +8,11 @@ import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 
 @Controller
+@PreAuthorize("hasRole('ADMIN')")
 class PaymentGraphQlController(
     private val reservationPaymentService: ReservationPaymentService,
     @Value("\${payment.mock.webhook-secret}")

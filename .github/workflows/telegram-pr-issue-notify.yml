@@ -1,0 +1,355 @@
+name: Telegram GitHub Activity Notification
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+      - ready_for_review
+      - converted_to_draft
+      - review_requested
+      - review_request_removed
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+  pull_request_review_comment:
+    types:
+      - created
+  issues:
+    types:
+      - opened
+      - reopened
+      - closed
+      - assigned
+      - labeled
+  issue_comment:
+    types:
+      - created
+  release:
+    types:
+      - published
+  create:
+  workflow_run:
+    workflows:
+      - Backend CI
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  actions: read
+
+jobs:
+  notify-telegram:
+    name: Send Telegram GitHub activity notification
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'failure' ||
+      github.event.workflow_run.conclusion == 'cancelled' ||
+      github.event.workflow_run.conclusion == 'timed_out'
+    steps:
+      - name: Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+        run: |
+          python3 <<'PYTHON'
+          import html
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+
+          telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+          telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+          event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+          repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+          server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
+
+          if not telegram_token:
+              raise RuntimeError("TELEGRAM_BOT_TOKEN Secret이 비어 있습니다.")
+          if not telegram_chat_id:
+              raise RuntimeError("TELEGRAM_CHAT_ID Secret이 비어 있습니다.")
+          if not event_path:
+              raise RuntimeError("GITHUB_EVENT_PATH가 비어 있습니다.")
+          if not repository:
+              raise RuntimeError("GITHUB_REPOSITORY가 비어 있습니다.")
+
+          def escape_text(value):
+              return html.escape(str(value or ""))
+
+          def escape_url(value):
+              return html.escape(str(value or ""), quote=True)
+
+          def clip(value, limit=500):
+              text = str(value or "").strip()
+              if len(text) <= limit:
+                  return text
+              return text[: limit - 1].rstrip() + "…"
+
+          def actor_login(payload):
+              return (payload.get("sender") or {}).get("login") or "unknown"
+
+          def send_telegram(message):
+              payload = {
+                  "chat_id": telegram_chat_id,
+                  "text": message,
+                  "parse_mode": "HTML",
+                  "disable_web_page_preview": True,
+              }
+              request = urllib.request.Request(
+                  url=f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      result = json.loads(response.read().decode("utf-8"))
+              except urllib.error.HTTPError as error:
+                  body = error.read().decode("utf-8", errors="replace")
+                  raise RuntimeError(
+                      f"Telegram API 호출 실패: HTTP {error.code} {body}"
+                  ) from error
+              except urllib.error.URLError as error:
+                  raise RuntimeError(f"Telegram API 연결 실패: {error}") from error
+              if not result.get("ok"):
+                  raise RuntimeError(f"Telegram 전송 실패: {result}")
+              return result
+
+          with open(event_path, "r", encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          action = str(event.get("action") or "")
+          lines = []
+
+          if event_name == "pull_request":
+              pr = event.get("pull_request") or {}
+              number = pr.get("number") or event.get("number")
+              title = pr.get("title") or "(제목 없음)"
+              html_url = pr.get("html_url") or ""
+              head_ref = (pr.get("head") or {}).get("ref") or "-"
+              base_ref = (pr.get("base") or {}).get("ref") or "-"
+              author = actor_login(event)
+              draft = "예" if pr.get("draft") else "아니오"
+              merged = bool(pr.get("merged"))
+
+              action_label = {
+                  "opened": "열림",
+                  "synchronize": "동기화(커밋 추가)",
+                  "reopened": "다시 열림",
+                  "closed": "머지됨" if merged else "닫힘(미머지)",
+                  "ready_for_review": "리뷰 준비됨",
+                  "converted_to_draft": "Draft로 전환",
+                  "review_requested": "리뷰 요청",
+                  "review_request_removed": "리뷰 요청 취소",
+              }.get(action, action or "변경")
+
+              lines = [
+                  "🔀 <b>GitHub PR 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"이벤트: {escape_text(action_label)}",
+                  f"PR: <a href=\"{escape_url(html_url)}\">#{escape_text(number)} {escape_text(title)}</a>",
+                  f"작성자: <code>{escape_text(author)}</code>",
+                  f"브랜치: <code>{escape_text(head_ref)}</code> → <code>{escape_text(base_ref)}</code>",
+                  f"Draft: {escape_text(draft)}",
+              ]
+
+              if action == "review_requested":
+                  requested = event.get("requested_reviewer") or event.get("requested_team") or {}
+                  target = requested.get("login") or requested.get("name") or "-"
+                  lines.append(f"리뷰어: <code>{escape_text(target)}</code>")
+
+              if action in ("opened", "reopened", "ready_for_review"):
+                  body = clip(pr.get("body") or "")
+                  if body:
+                      lines.append(f"설명: {escape_text(body)}")
+
+          elif event_name == "pull_request_review":
+              review = event.get("review") or {}
+              pr = event.get("pull_request") or {}
+              number = pr.get("number")
+              title = pr.get("title") or "(제목 없음)"
+              html_url = review.get("html_url") or pr.get("html_url") or ""
+              state = str(review.get("state") or "").lower()
+              state_label = {
+                  "approved": "승인",
+                  "changes_requested": "변경 요청",
+                  "commented": "코멘트 리뷰",
+                  "dismissed": "리뷰 Dismiss",
+              }.get(state, state or action or "리뷰")
+              action_label = "리뷰 제출" if action == "submitted" else "리뷰 취소"
+              author = actor_login(event)
+
+              lines = [
+                  "📝 <b>GitHub PR 리뷰 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"이벤트: {escape_text(action_label)} · {escape_text(state_label)}",
+                  f"PR: <a href=\"{escape_url(html_url)}\">#{escape_text(number)} {escape_text(title)}</a>",
+                  f"리뷰어: <code>{escape_text(author)}</code>",
+              ]
+              body = clip(review.get("body") or "")
+              if body:
+                  lines.append(f"내용: {escape_text(body)}")
+
+          elif event_name == "pull_request_review_comment":
+              comment = event.get("comment") or {}
+              pr = event.get("pull_request") or {}
+              number = pr.get("number")
+              title = pr.get("title") or "(제목 없음)"
+              html_url = comment.get("html_url") or pr.get("html_url") or ""
+              author = actor_login(event)
+              path = comment.get("path") or "-"
+
+              lines = [
+                  "💬 <b>GitHub PR 코드 댓글</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"PR: <a href=\"{escape_url(html_url)}\">#{escape_text(number)} {escape_text(title)}</a>",
+                  f"작성자: <code>{escape_text(author)}</code>",
+                  f"파일: <code>{escape_text(path)}</code>",
+              ]
+              body = clip(comment.get("body") or "", 700)
+              if body:
+                  lines.append(f"댓글: {escape_text(body)}")
+
+          elif event_name == "issues":
+              issue = event.get("issue") or {}
+              number = issue.get("number")
+              title = issue.get("title") or "(제목 없음)"
+              html_url = issue.get("html_url") or ""
+              author = actor_login(event)
+              action_label = {
+                  "opened": "생성",
+                  "reopened": "다시 열림",
+                  "closed": "닫힘",
+                  "assigned": "담당자 지정",
+                  "labeled": "라벨 추가",
+              }.get(action, action or "변경")
+
+              lines = [
+                  "🎫 <b>GitHub 이슈 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"이벤트: {escape_text(action_label)}",
+                  f"이슈: <a href=\"{escape_url(html_url)}\">#{escape_text(number)} {escape_text(title)}</a>",
+                  f"작성자: <code>{escape_text(author)}</code>",
+              ]
+
+              if action == "assigned":
+                  assignee = (event.get("assignee") or {}).get("login") or "-"
+                  lines.append(f"담당자: <code>{escape_text(assignee)}</code>")
+
+              if action == "labeled":
+                  label = (event.get("label") or {}).get("name") or "-"
+                  lines.append(f"라벨: <code>{escape_text(label)}</code>")
+
+              if action in ("opened", "reopened"):
+                  body = clip(issue.get("body") or "")
+                  if body:
+                      lines.append(f"내용: {escape_text(body)}")
+
+          elif event_name == "issue_comment":
+              issue = event.get("issue") or {}
+              comment = event.get("comment") or {}
+              number = issue.get("number")
+              title = issue.get("title") or "(제목 없음)"
+              html_url = comment.get("html_url") or issue.get("html_url") or ""
+              author = actor_login(event)
+              is_pr = bool(issue.get("pull_request"))
+              target_label = "PR" if is_pr else "이슈"
+
+              lines = [
+                  "💬 <b>GitHub 댓글 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"대상: {escape_text(target_label)} "
+                  f"<a href=\"{escape_url(html_url)}\">#{escape_text(number)} {escape_text(title)}</a>",
+                  f"작성자: <code>{escape_text(author)}</code>",
+              ]
+              body = clip(comment.get("body") or "", 700)
+              if body:
+                  lines.append(f"댓글: {escape_text(body)}")
+
+          elif event_name == "release":
+              release = event.get("release") or {}
+              name = release.get("name") or release.get("tag_name") or "(릴리즈)"
+              tag = release.get("tag_name") or "-"
+              html_url = release.get("html_url") or ""
+              author = actor_login(event)
+              prerelease = "예" if release.get("prerelease") else "아니오"
+
+              lines = [
+                  "🚀 <b>GitHub 릴리즈 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"이벤트: 게시됨",
+                  f"릴리즈: <a href=\"{escape_url(html_url)}\">{escape_text(name)}</a>",
+                  f"태그: <code>{escape_text(tag)}</code>",
+                  f"작성자: <code>{escape_text(author)}</code>",
+                  f"Pre-release: {escape_text(prerelease)}",
+              ]
+              body = clip(release.get("body") or "", 700)
+              if body:
+                  lines.append(f"노트: {escape_text(body)}")
+
+          elif event_name == "create":
+              ref_type = str(event.get("ref_type") or "")
+              if ref_type != "tag":
+                  print("브랜치 생성은 커밋 알림으로 충분해 생략합니다.")
+                  sys.exit(0)
+              ref = event.get("ref") or "-"
+              author = actor_login(event)
+              tag_url = f"{server_url}/{repository}/releases/tag/{ref}"
+
+              lines = [
+                  "🏷️ <b>GitHub 태그 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"태그: <a href=\"{escape_url(tag_url)}\"><code>{escape_text(ref)}</code></a>",
+                  f"작성자: <code>{escape_text(author)}</code>",
+              ]
+
+          elif event_name == "workflow_run":
+              run = event.get("workflow_run") or {}
+              conclusion = str(run.get("conclusion") or "unknown")
+              conclusion_label = {
+                  "failure": "실패",
+                  "cancelled": "취소",
+                  "timed_out": "타임아웃",
+              }.get(conclusion, conclusion)
+              name = run.get("name") or "Workflow"
+              html_url = run.get("html_url") or ""
+              branch = run.get("head_branch") or "-"
+              event_trigger = run.get("event") or "-"
+              actor = ((run.get("actor") or {}).get("login")) or actor_login(event)
+
+              lines = [
+                  "💥 <b>GitHub CI 실패 알림</b>",
+                  f"저장소: <code>{escape_text(repository)}</code>",
+                  f"워크플로: <a href=\"{escape_url(html_url)}\">{escape_text(name)}</a>",
+                  f"결과: {escape_text(conclusion_label)}",
+                  f"트리거: <code>{escape_text(event_trigger)}</code>",
+                  f"브랜치: <code>{escape_text(branch)}</code>",
+                  f"실행자: <code>{escape_text(actor)}</code>",
+              ]
+
+          else:
+              print(f"지원하지 않는 이벤트: {event_name}")
+              sys.exit(0)
+
+          message = "\n".join(lines)
+          if len(message) > 3900:
+              message = message[:3899].rstrip() + "…"
+
+          send_telegram(message)
+          print(f"Telegram notification sent. event={event_name} action={action}")
+          PYTHON

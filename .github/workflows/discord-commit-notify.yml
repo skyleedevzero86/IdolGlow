@@ -1,0 +1,581 @@
+name: Discord Commit Notification
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord commit notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          python3 <<'PYTHON'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from collections import Counter
+          from datetime import datetime, timedelta, timezone
+
+          AGGREGATION_HOURS = 2
+          MAX_DISPLAY_COMMITS = 10
+          MAX_DISPLAY_FILES = 12
+          COMMITS_PER_PAGE = 100
+          MAX_API_PAGES = 5
+          KST = timezone(timedelta(hours=9))
+
+          discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+          github_token = os.environ.get("GITHUB_TOKEN", "").strip()
+          github_event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
+          github_repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+
+          if not discord_webhook_url:
+              raise RuntimeError("DISCORD_WEBHOOK_URL Secret이 비어 있습니다.")
+
+          if not github_token:
+              raise RuntimeError("GITHUB_TOKEN이 비어 있습니다.")
+
+          if not github_event_path:
+              raise RuntimeError("GITHUB_EVENT_PATH가 비어 있습니다.")
+
+          if not github_repository:
+              raise RuntimeError("GITHUB_REPOSITORY가 비어 있습니다.")
+
+          if discord_webhook_url.endswith("/github"):
+              raise RuntimeError("DISCORD_WEBHOOK_URL 끝의 /github를 제거하세요.")
+
+          def clean_text(value):
+              return (
+                  str(value or "")
+                  .replace("\\", "\\\\")
+                  .replace("`", "'")
+                  .replace("@", "@\u200b")
+              )
+
+          def clean_link_label(value):
+              return (
+                  clean_text(value)
+                  .replace("[", "\\[")
+                  .replace("]", "\\]")
+              )
+
+          def truncate(value, max_length):
+              text = str(value or "").strip()
+
+              if len(text) <= max_length:
+                  return text
+
+              return text[:max_length - 1] + "…"
+
+          def first_line(value):
+              text = str(value or "").strip()
+
+              if not text:
+                  return "(커밋 메시지 없음)"
+
+              return text.splitlines()[0].strip()
+
+          def parse_datetime(value):
+              if not value:
+                  return None
+
+              try:
+                  return datetime.fromisoformat(
+                      value.replace("Z", "+00:00")
+                  )
+              except ValueError:
+                  return None
+
+          def format_kst_time(value):
+              parsed = parse_datetime(value)
+
+              if parsed is None:
+                  return ""
+
+              return parsed.astimezone(KST).strftime("%m-%d %H:%M")
+
+          def get_commit_author(commit_data):
+              linked_author = commit_data.get("author") or {}
+              github_login = linked_author.get("login")
+
+              if github_login:
+                  return github_login
+
+              git_commit = commit_data.get("commit") or {}
+              git_author = git_commit.get("author") or {}
+
+              return git_author.get("name") or "unknown"
+
+          def get_commit_date(commit_data):
+              git_commit = commit_data.get("commit") or {}
+              author_data = git_commit.get("author") or {}
+              committer_data = git_commit.get("committer") or {}
+
+              return (
+                  author_data.get("date")
+                  or committer_data.get("date")
+                  or ""
+              )
+
+          def github_api_get(url):
+              request = urllib.request.Request(
+                  url=url,
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "Authorization": f"Bearer {github_token}",
+                      "User-Agent": "github-actions-discord-notify"
+                  },
+                  method="GET"
+              )
+
+              try:
+                  with urllib.request.urlopen(
+                      request,
+                      timeout=30
+                  ) as response:
+                      return json.loads(
+                          response.read().decode("utf-8")
+                      )
+              except urllib.error.HTTPError as error:
+                  body = error.read().decode(
+                      "utf-8",
+                      errors="replace"
+                  )
+
+                  raise RuntimeError(
+                      f"GitHub API 호출 실패: "
+                      f"HTTP {error.code} {body}"
+                  ) from error
+              except urllib.error.URLError as error:
+                  raise RuntimeError(
+                      f"GitHub API 연결 실패: {error}"
+                  ) from error
+
+          def fetch_recent_commits(repository, branch, since_value):
+              commits_by_sha = {}
+
+              for page in range(1, MAX_API_PAGES + 1):
+                  query = urllib.parse.urlencode({
+                      "sha": branch,
+                      "since": since_value,
+                      "per_page": COMMITS_PER_PAGE,
+                      "page": page
+                  })
+
+                  api_url = (
+                      f"https://api.github.com/repos/"
+                      f"{repository}/commits?{query}"
+                  )
+
+                  page_commits = github_api_get(api_url)
+
+                  if not isinstance(page_commits, list):
+                      raise RuntimeError(
+                          "GitHub Commit API 응답이 배열 형식이 아닙니다."
+                      )
+
+                  for commit_data in page_commits:
+                      sha = commit_data.get("sha", "")
+
+                      if sha:
+                          commits_by_sha[sha] = commit_data
+
+                  if len(page_commits) < COMMITS_PER_PAGE:
+                      break
+
+              recent_commits = list(commits_by_sha.values())
+              recent_commits.sort(
+                  key=get_commit_date,
+                  reverse=True
+              )
+
+              return recent_commits
+
+          def fetch_changed_files(repository, before_sha, after_sha, current_push_commits):
+              zero_sha = "0" * 40
+
+              if (
+                  before_sha
+                  and after_sha
+                  and before_sha != zero_sha
+                  and after_sha != zero_sha
+              ):
+                  compare_url = (
+                      f"https://api.github.com/repos/{repository}/compare/"
+                      f"{urllib.parse.quote(before_sha, safe='')}"
+                      f"...{urllib.parse.quote(after_sha, safe='')}"
+                  )
+
+                  try:
+                      compare_data = github_api_get(compare_url)
+                      files = compare_data.get("files") or []
+
+                      if files:
+                          return files
+                  except RuntimeError as error:
+                      print(f"Compare API fallback: {error}")
+
+              commit_shas = [
+                  item.get("id")
+                  for item in current_push_commits
+                  if item.get("id")
+              ]
+
+              if not commit_shas and after_sha and after_sha != zero_sha:
+                  commit_shas = [after_sha]
+
+              files_by_name = {}
+
+              for sha in commit_shas[:20]:
+                  commit_url = (
+                      f"https://api.github.com/repos/{repository}/commits/"
+                      f"{urllib.parse.quote(sha, safe='')}"
+                  )
+
+                  try:
+                      commit_data = github_api_get(commit_url)
+                  except RuntimeError as error:
+                      print(f"Commit files fallback skipped: {error}")
+                      continue
+
+                  for file_data in commit_data.get("files") or []:
+                      filename = file_data.get("filename")
+
+                      if filename:
+                          files_by_name[filename] = file_data
+
+              return list(files_by_name.values())
+
+          with open(
+              github_event_path,
+              "r",
+              encoding="utf-8"
+          ) as event_file:
+              event = json.load(event_file)
+
+          if event.get("deleted"):
+              print("Branch deletion event. Notification skipped.")
+              sys.exit(0)
+
+          ref = event.get("ref", "")
+
+          if not ref.startswith("refs/heads/"):
+              print("This is not a branch push. Notification skipped.")
+              sys.exit(0)
+
+          branch = ref.removeprefix("refs/heads/")
+
+          sender_data = event.get("sender") or {}
+          push_actor = (
+              sender_data.get("login")
+              or (event.get("pusher") or {}).get("name")
+              or "unknown"
+          )
+
+          current_push_commits = event.get("commits") or []
+          repository_data = event.get("repository") or {}
+
+          repository_url = (
+              repository_data.get("html_url")
+              or f"https://github.com/{github_repository}"
+          )
+
+          before_sha = event.get("before") or ""
+          after_sha = event.get("after") or ""
+          compare_url = event.get("compare") or repository_url
+
+          branch_url = (
+              f"{repository_url}/tree/"
+              f"{urllib.parse.quote(branch, safe='/')}"
+          )
+
+          actor_url = (
+              sender_data.get("html_url")
+              or f"https://github.com/{urllib.parse.quote(push_actor, safe='')}"
+          )
+
+          now_utc = datetime.now(timezone.utc)
+          since_utc = now_utc - timedelta(hours=AGGREGATION_HOURS)
+          since_value = since_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          recent_commits = fetch_recent_commits(
+              repository=github_repository,
+              branch=branch,
+              since_value=since_value
+          )
+
+          changed_files = fetch_changed_files(
+              repository=github_repository,
+              before_sha=before_sha,
+              after_sha=after_sha,
+              current_push_commits=current_push_commits
+          )
+
+          author_counts = Counter(
+              get_commit_author(item)
+              for item in recent_commits
+          )
+
+          total_commit_count = len(recent_commits)
+          current_push_count = len(current_push_commits)
+
+          author_lines = [
+              f"• **{clean_link_label(author_name)}**: {count}개"
+              for author_name, count in author_counts.most_common()
+          ]
+
+          author_summary = truncate(
+              "\n".join(author_lines)
+              if author_lines
+              else "작성자 정보 없음",
+              1024
+          )
+
+          display_commits = recent_commits[:MAX_DISPLAY_COMMITS]
+          commit_lines = []
+
+          for commit_data in display_commits:
+              sha = commit_data.get("sha", "")
+              short_sha = sha[:7]
+              commit_info = commit_data.get("commit") or {}
+
+              commit_message = truncate(
+                  clean_text(
+                      first_line(commit_info.get("message"))
+                  ),
+                  70
+              )
+
+              author_name = clean_text(
+                  get_commit_author(commit_data)
+              )
+
+              commit_time = format_kst_time(
+                  get_commit_date(commit_data)
+              )
+
+              commit_url = (
+                  commit_data.get("html_url")
+                  or f"{repository_url}/commit/{sha}"
+              )
+
+              line = (
+                  f"[`{short_sha}`]({commit_url}) "
+                  f"{commit_message}\n"
+                  f"└ {author_name}"
+              )
+
+              if commit_time:
+                  line += f" · {commit_time}"
+
+              commit_lines.append(line)
+
+          if not commit_lines:
+              commit_lines.append("최근 집계 범위에 커밋이 없습니다.")
+
+          remaining_commit_count = (
+              total_commit_count - len(display_commits)
+          )
+
+          if remaining_commit_count > 0:
+              commit_lines.append(
+                  f"… 외 {remaining_commit_count}개 커밋"
+              )
+
+          commit_summary = truncate(
+              "\n".join(commit_lines),
+              1024
+          )
+
+          status_icons = {
+              "added": "➕",
+              "modified": "📝",
+              "removed": "🗑️",
+              "renamed": "🔄",
+              "copied": "📄",
+              "changed": "🛠️",
+              "unchanged": "▫️"
+          }
+
+          display_files = changed_files[:MAX_DISPLAY_FILES]
+          file_lines = []
+
+          for file_data in display_files:
+              filename = file_data.get("filename") or "(파일명 없음)"
+              previous_filename = file_data.get("previous_filename")
+              status = file_data.get("status") or "changed"
+              icon = status_icons.get(status, "📄")
+
+              target_sha = after_sha
+
+              if status == "removed" and before_sha:
+                  target_sha = before_sha
+
+              encoded_filename = urllib.parse.quote(
+                  filename,
+                  safe="/"
+              )
+
+              if target_sha and target_sha != "0" * 40:
+                  file_url = (
+                      f"{repository_url}/blob/{target_sha}/"
+                      f"{encoded_filename}"
+                  )
+              else:
+                  file_url = compare_url
+
+              label = truncate(
+                  clean_link_label(filename),
+                  120
+              )
+
+              line = f"{icon} [`{label}`]({file_url})"
+
+              if previous_filename:
+                  previous_label = truncate(
+                      clean_text(previous_filename),
+                      80
+                  )
+                  line += f"\n└ 이전 경로: `{previous_label}`"
+
+              file_lines.append(line)
+
+          if not file_lines:
+              file_lines.append("이번 Push에서 변경 파일을 확인하지 못했습니다.")
+
+          remaining_file_count = len(changed_files) - len(display_files)
+
+          if remaining_file_count > 0:
+              file_lines.append(
+                  f"… 외 {remaining_file_count}개 파일"
+              )
+
+          file_summary = truncate(
+              "\n".join(file_lines),
+              1024
+          )
+
+          description = (
+              f"📦 [{clean_link_label(github_repository)}]"
+              f"({repository_url})\n"
+              f"🌿 [`{clean_link_label(branch)}`]"
+              f"({branch_url})\n"
+              f"🚚 Push 실행자: "
+              f"[**{clean_link_label(push_actor)}**]"
+              f"({actor_url})"
+          )
+
+          payload = {
+              "username": "GitHub Commit Bot",
+              "allowed_mentions": {
+                  "parse": []
+              },
+              "embeds": [
+                  {
+                      "title": "🚀 GitHub 커밋 알림",
+                      "url": compare_url,
+                      "description": description,
+                      "color": 5763719,
+                      "fields": [
+                          {
+                              "name": (
+                                  f"⏱ 최근 "
+                                  f"{AGGREGATION_HOURS}시간 집계"
+                              ),
+                              "value": (
+                                  f"누적 커밋: "
+                                  f"**{total_commit_count}개**\n"
+                                  f"이번 Push: "
+                                  f"**{current_push_count}개**\n"
+                                  f"변경 파일: "
+                                  f"**{len(changed_files)}개**"
+                              ),
+                              "inline": False
+                          },
+                          {
+                              "name": "👥 커밋 작성자별 집계",
+                              "value": author_summary,
+                              "inline": False
+                          },
+                          {
+                              "name": "📝 최근 커밋 목록",
+                              "value": commit_summary,
+                              "inline": False
+                          },
+                          {
+                              "name": "📂 이번 Push 변경 파일",
+                              "value": file_summary,
+                              "inline": False
+                          }
+                      ],
+                      "footer": {
+                          "text": (
+                              f"집계 기준: {branch} 브랜치 "
+                              f"최근 {AGGREGATION_HOURS}시간"
+                          )
+                      },
+                      "timestamp": now_utc.isoformat()
+                  }
+              ]
+          }
+
+          with open(
+              "/tmp/discord-payload.json",
+              "w",
+              encoding="utf-8"
+          ) as payload_file:
+              json.dump(
+                  payload,
+                  payload_file,
+                  ensure_ascii=False
+              )
+
+          print(f"Repository={github_repository}")
+          print(f"Branch={branch}")
+          print(f"PushActor={push_actor}")
+          print(f"CurrentPushCount={current_push_count}")
+          print(f"RollingCommitCount={total_commit_count}")
+          print(f"ChangedFileCount={len(changed_files)}")
+          print(f"AuthorCounts={dict(author_counts)}")
+          PYTHON
+
+          if [[ "$DISCORD_WEBHOOK_URL" == *"?"* ]]; then
+            REQUEST_URL="${DISCORD_WEBHOOK_URL}&wait=true"
+          else
+            REQUEST_URL="${DISCORD_WEBHOOK_URL}?wait=true"
+          fi
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --output /tmp/discord-response.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "Accept: application/json" \
+            --header "User-Agent: DiscordBot (https://github.com/${GITHUB_REPOSITORY}, 1.0)" \
+            --data-binary @/tmp/discord-payload.json \
+            "$REQUEST_URL")
+
+          cat /tmp/discord-response.json || true
+          echo
+          echo "Discord response status: $HTTP_STATUS"
+
+          if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
+            exit 1
+          fi
+
+          echo "Discord notification sent successfully."
