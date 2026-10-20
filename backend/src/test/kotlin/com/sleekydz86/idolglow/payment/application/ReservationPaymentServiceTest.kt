@@ -15,6 +15,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -90,6 +91,41 @@ class ReservationPaymentServiceTest {
             paymentRepository.findByReservationIdForUpdate(1L)
         }
         verify(exactly = 0) { paymentRepository.findByPaymentReferenceForUpdate(any()) }
+    }
+
+    @DisplayName("주문번호로 잠글 때도 예약을 먼저 잠그고 결제를 나중에 잠근다")
+    @Test
+    fun locksReservationBeforePaymentByOrderId() {
+        // given
+        val fixture = pendingFixture()
+        every { paymentRepository.findByOrderId("order-1") } returns fixture.payment
+        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+
+        // when
+        val result = service.lockReservationThenPaymentByOrderId("order-1")
+
+        // then
+        assertEquals(fixture.payment, result)
+        verifyOrder {
+            reservationRepository.findByIdForUpdate(1L)
+            paymentRepository.findByReservationIdForUpdate(1L)
+        }
+        verify(exactly = 0) { paymentRepository.findByOrderIdForUpdate(any()) }
+    }
+
+    @DisplayName("주문번호에 맞는 결제가 없으면 아무것도 잠그지 않고 null을 돌려준다")
+    @Test
+    fun returnsNullWhenOrderNotFound() {
+        // given
+        every { paymentRepository.findByOrderId("none") } returns null
+
+        // when
+        val result = service.lockReservationThenPaymentByOrderId("none")
+
+        // then
+        assertNull(result)
+        verify(exactly = 0) { reservationRepository.findByIdForUpdate(any()) }
     }
 
     @DisplayName("결제 실패 시 예약을 취소한다")

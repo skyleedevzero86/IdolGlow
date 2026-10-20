@@ -141,14 +141,22 @@ class ReservationPaymentService(
         return payment
     }
 
+    fun lockReservationThenPaymentByOrderId(orderId: String): Payment? =
+        paymentRepository.findByOrderId(orderId)?.let { lockByReservationOf(it).second }
+
     private fun lockReservationThenPayment(paymentReference: String): Pair<Reservation, Payment> {
-        val reservationId =
-            paymentRepository.findByPaymentReference(paymentReference)?.reservation?.id
+        val found =
+            paymentRepository.findByPaymentReference(paymentReference)
                 ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+        return lockByReservationOf(found)
+    }
+
+    private fun lockByReservationOf(found: Payment): Pair<Reservation, Payment> {
+        val reservationId = found.reservation.id
         val reservation = findReservationForUpdate(reservationId)
         val payment =
             paymentRepository.findByReservationIdForUpdate(reservationId)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: reservationId=$reservationId")
         return reservation to payment
     }
 
