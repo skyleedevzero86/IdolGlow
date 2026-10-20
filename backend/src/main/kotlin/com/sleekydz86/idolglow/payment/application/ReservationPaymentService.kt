@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationSlotWaitlistService
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
@@ -25,7 +26,7 @@ class ReservationPaymentService(
     private val paymentNotificationMailService: PaymentNotificationMailService,
 ) {
     fun handlePaymentSucceeded(paymentReference: String): Payment {
-        val payment = findPaymentForUpdate(paymentReference)
+        val (_, payment) = lockReservationThenPayment(paymentReference)
         return finalizeAfterGatewaySuccess(payment)
     }
 
@@ -70,8 +71,7 @@ class ReservationPaymentService(
         paymentReference: String,
         reason: String,
     ): Payment {
-        val payment = findPaymentForUpdate(paymentReference)
-        val reservation = findReservationForUpdate(payment.reservation.id)
+        val (reservation, payment) = lockReservationThenPayment(paymentReference)
 
         if (payment.status in setOf(PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED) &&
             reservation.status == ReservationStatus.CANCELED
@@ -108,8 +108,7 @@ class ReservationPaymentService(
         paymentReference: String,
         reason: String,
     ): Payment {
-        val payment = findPaymentForUpdate(paymentReference)
-        val reservation = findReservationForUpdate(payment.reservation.id)
+        val (reservation, payment) = lockReservationThenPayment(paymentReference)
 
         if (payment.status in setOf(PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED) &&
             reservation.status == ReservationStatus.CANCELED
@@ -142,9 +141,16 @@ class ReservationPaymentService(
         return payment
     }
 
-    private fun findPaymentForUpdate(paymentReference: String): Payment =
-        paymentRepository.findByPaymentReferenceForUpdate(paymentReference)
-            ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+    private fun lockReservationThenPayment(paymentReference: String): Pair<Reservation, Payment> {
+        val reservationId =
+            paymentRepository.findByPaymentReference(paymentReference)?.reservation?.id
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+        val reservation = findReservationForUpdate(reservationId)
+        val payment =
+            paymentRepository.findByReservationIdForUpdate(reservationId)
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+        return reservation to payment
+    }
 
     private fun findReservationForUpdate(reservationId: Long) =
         reservationRepository.findByIdForUpdate(reservationId)

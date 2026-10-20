@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStat
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -50,8 +51,9 @@ class ReservationPaymentServiceTest {
     fun confirmsReservationOnPaymentSuccess() {
         // given
         val fixture = pendingFixture()
-        every { paymentRepository.findByPaymentReferenceForUpdate("pay_ok") } returns fixture.payment
+        every { paymentRepository.findByPaymentReference("pay_ok") } returns fixture.payment
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
         every { reservationCommandService.confirmReservation(1L) } answers {
             fixture.reservation.confirm()
             fixture.reservation
@@ -66,13 +68,38 @@ class ReservationPaymentServiceTest {
         verify(exactly = 1) { paymentNotificationMailService.sendSucceeded(fixture.payment) }
     }
 
+    @DisplayName("결제 성공 처리는 예약을 먼저 잠그고 결제를 나중에 잠근다")
+    @Test
+    fun locksReservationBeforePaymentOnSuccess() {
+        // given
+        val fixture = pendingFixture()
+        every { paymentRepository.findByPaymentReference("pay_ok") } returns fixture.payment
+        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+        every { reservationCommandService.confirmReservation(1L) } answers {
+            fixture.reservation.confirm()
+            fixture.reservation
+        }
+
+        // when
+        service.handlePaymentSucceeded("pay_ok")
+
+        // then
+        verifyOrder {
+            reservationRepository.findByIdForUpdate(1L)
+            paymentRepository.findByReservationIdForUpdate(1L)
+        }
+        verify(exactly = 0) { paymentRepository.findByPaymentReferenceForUpdate(any()) }
+    }
+
     @DisplayName("결제 실패 시 예약을 취소한다")
     @Test
     fun cancelsReservationOnPaymentFailure() {
         // given
         val fixture = pendingFixture(paymentReference = "pay_fail")
-        every { paymentRepository.findByPaymentReferenceForUpdate("pay_fail") } returns fixture.payment
+        every { paymentRepository.findByPaymentReference("pay_fail") } returns fixture.payment
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
 
         // when
         val result = service.handlePaymentFailed("pay_fail", "카드 오류")
@@ -88,8 +115,9 @@ class ReservationPaymentServiceTest {
     fun expiresReservationOnLatePaymentSuccess() {
         // given
         val fixture = pendingFixture(paymentReference = "pay_late", expired = true)
-        every { paymentRepository.findByPaymentReferenceForUpdate("pay_late") } returns fixture.payment
+        every { paymentRepository.findByPaymentReference("pay_late") } returns fixture.payment
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
         every { reservationCommandService.expirePendingReservation(1L, any()) } returns fixture.reservation
 
         // when
