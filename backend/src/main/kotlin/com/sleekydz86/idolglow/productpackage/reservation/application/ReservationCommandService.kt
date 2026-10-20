@@ -166,19 +166,6 @@ class ReservationCommandService(
         return reservation
     }
 
-    fun expirePendingReservations(batchSize: Int = 100) {
-        while (true) {
-            val now = LocalDateTime.now()
-            val expiredIds = reservationRepository.findExpiredPendingIds(batchSize, now)
-            if (expiredIds.isEmpty()) {
-                return
-            }
-            expiredIds.forEach { reservationId ->
-                expirePendingReservation(reservationId, now)
-            }
-        }
-    }
-
     fun notifyExpiringSoonReservations(warningSeconds: Long = 300) {
         val now = LocalDateTime.now()
         val warningThreshold = now.plusSeconds(warningSeconds)
