@@ -49,6 +49,7 @@ object NoticePeriodDateTimeParser {
 
     private val DATE_TIME_FORMATTERS =
         listOf(
+            IdolGlowDateTimes.DISPLAY_DATE_TIME,
             DateTimeFormatter.ofPattern("yyyyMMddHHmm"),
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss"),
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),

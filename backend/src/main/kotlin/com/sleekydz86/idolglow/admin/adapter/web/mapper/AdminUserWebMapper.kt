@@ -4,11 +4,9 @@ import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminUserPageResponse
 import com.sleekydz86.idolglow.admin.adapter.web.dto.AdminUserSummaryResponse
 import com.sleekydz86.idolglow.admin.application.dto.AdminUserPageResult
 import com.sleekydz86.idolglow.admin.application.dto.AdminUserSummaryResult
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
-import java.time.format.DateTimeFormatter
-
-private val adminUserDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 
 fun AdminUserPageResult.toWebResponse(): AdminUserPageResponse =
     AdminUserPageResponse(
@@ -37,7 +35,7 @@ fun AdminUserSummaryResult.toWebResponse(): AdminUserSummaryResponse =
         locked = locked,
         platformUsername = platformUsername,
         profileImageUrl = profileImageUrl,
-        lastLoginAt = lastLoginAt?.format(adminUserDateTimeFormatter),
+        lastLoginAt = IdolGlowDateTimes.toDisplay(lastLoginAt),
         oauthLinked = oauthLinked,
         oauthProviders = oauthProviders,
     )

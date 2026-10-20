@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.payment.application.dto.ChargeTossBillingRequest
 import com.sleekydz86.idolglow.payment.application.dto.IssueTossBillingKeyRequest
 import com.sleekydz86.idolglow.payment.application.dto.RetryTossBillingChargeRequest
@@ -25,7 +26,6 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 @Service
 @Suppress("TooManyFunctions")
@@ -415,11 +415,7 @@ class TossBillingService(
 
     private fun customerKeyOf(userId: Long): String = "idolglow-user-$userId"
 
-    private fun parseDateTime(raw: String?): LocalDateTime? {
-        if (raw.isNullOrBlank()) return null
-        return runCatching { OffsetDateTime.parse(raw).toLocalDateTime() }.getOrNull()
-            ?: runCatching { LocalDateTime.parse(raw) }.getOrNull()
-    }
+    private fun parseDateTime(raw: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(raw)
 
     companion object {
         private const val PLAN_MONTHLY = "MONTHLY"

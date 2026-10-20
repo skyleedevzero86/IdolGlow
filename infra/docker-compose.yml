@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_DB: idolglow
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?infra/.env에 DB_PASSWORD를 설정하세요}"
       TZ: Asia/Seoul
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -28,15 +28,22 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      PGPASSWORD: postgres
+      PGPASSWORD: "${DB_PASSWORD:?infra/.env에 DB_PASSWORD를 설정하세요}"
     entrypoint: >
       /bin/sh -c "
       psql -h postgres -U postgres -d idolglow -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS vector;' &&
       psql -h postgres -U postgres -d idolglow -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pg_search;' &&
       psql -h postgres -U postgres -d idolglow -c \"SELECT extname, extversion FROM pg_extension WHERE extname IN ('vector','pg_search') ORDER BY extname;\" &&
-      exit 0
+      touch /tmp/ready &&
+      exec sleep infinity
       "
-    restart: "no"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   mysql:
     image: mysql:8.4
@@ -48,20 +55,20 @@ services:
     environment:
       MYSQL_DATABASE: idolglow
       MYSQL_USER: idolglow
-      MYSQL_PASSWORD: idolglow
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?infra/.env에 MYSQL_PASSWORD를 설정하세요}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?infra/.env에 MYSQL_ROOT_PASSWORD를 설정하세요}"
       TZ: Asia/Seoul
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 40s
 
   minio:
-    image: minio/minio:latest
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     container_name: idolglow-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -69,8 +76,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:?infra/.env에 MINIO_ROOT_USER를 설정하세요}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:?infra/.env에 MINIO_ROOT_PASSWORD를 설정하세요}"
       TZ: Asia/Seoul
     volumes:
       - minio_data:/data
@@ -82,19 +89,26 @@ services:
       start_period: 20s
 
   minio-init:
-    image: minio/mc:latest
+    image: pgsty/mc:latest
     container_name: idolglow-minio-init
     depends_on:
       minio:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
       mc mb --ignore-existing local/idolglow &&
       mc anonymous set download local/idolglow &&
-      exit 0
+      touch /tmp/ready &&
+      exec sleep infinity
       "
-    restart: "no"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   backend:
     build:
@@ -109,22 +123,22 @@ services:
       TZ: Asia/Seoul
       SERVER_PORT: 9090
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod,select}
-      JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD:-idolglow-dev-secret-2026!}
+      JASYPT_ENCRYPTOR_PASSWORD: "${JASYPT_ENCRYPTOR_PASSWORD:?infra/.env에 JASYPT_ENCRYPTOR_PASSWORD를 설정하세요}"
       DB_URL: jdbc:postgresql://postgres:5432/idolglow
       DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+      DB_PASSWORD: "${DB_PASSWORD:?infra/.env에 DB_PASSWORD를 설정하세요}"
       MINIO_ENABLED: "true"
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      MINIO_ACCESS_KEY: "${MINIO_ROOT_USER}"
+      MINIO_SECRET_KEY: "${MINIO_ROOT_PASSWORD}"
       MINIO_BUCKET: idolglow
       MINIO_PUBLIC_BASE_URL: http://localhost:9000/idolglow
       MINIO_PUBLIC_READ_PROFILE_OBJECTS: "true"
       MINIO_PUBLIC_READ_WEBZINE_OBJECTS: "true"
       APP_PUBLIC_BASE_URL: http://localhost:9090
       APP_VERSION: ${APP_VERSION:-unknown}
-      MOCK_PAYMENT_WEBHOOK_SECRET: ${MOCK_PAYMENT_WEBHOOK_SECRET:-dev-mock-webhook-secret}
-      TOSS_BILLING_CRYPTO_SECRET: ${TOSS_BILLING_CRYPTO_SECRET:-idolglow-local-billing-crypto-secret}
+      MOCK_PAYMENT_WEBHOOK_SECRET: "${MOCK_PAYMENT_WEBHOOK_SECRET:?infra/.env에 MOCK_PAYMENT_WEBHOOK_SECRET를 설정하세요}"
+      TOSS_BILLING_CRYPTO_SECRET: "${TOSS_BILLING_CRYPTO_SECRET:?infra/.env에 TOSS_BILLING_CRYPTO_SECRET를 설정하세요}"
       TOSS_BILLING_SCHEDULER_ENABLED: ${TOSS_BILLING_SCHEDULER_ENABLED:-true}
       TOSS_BILLING_AMOUNT: ${TOSS_BILLING_AMOUNT:-4900}
       TOSS_BILLING_ORDER_NAME: ${TOSS_BILLING_ORDER_NAME:-IdolGlow 월간 구독}
@@ -132,11 +146,11 @@ services:
       postgres:
         condition: service_healthy
       postgres-ext-init:
-        condition: service_completed_successfully
+        condition: service_healthy
       minio:
         condition: service_healthy
       minio-init:
-        condition: service_completed_successfully
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9090/health/check || exit 1"]
       interval: 30s

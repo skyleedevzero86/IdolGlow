@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
+import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeAttempt
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
@@ -21,11 +22,13 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.ObjectMapper
 import java.time.LocalDateTime
 import java.util.Optional
 
+@DisplayName("빌링 회차 결제 실행기")
 class BillingChargeExecutorTest {
     private val subscriptionRepository = mockk<TossBillingSubscriptionJpaRepository>()
     private val chargeRepository = mockk<TossBillingChargeJpaRepository>(relaxed = true)
@@ -36,24 +39,27 @@ class BillingChargeExecutorTest {
     private val notificationCommandService = mockk<NotificationCommandService>(relaxed = true)
     private val objectMapper = ObjectMapper()
 
+    private lateinit var txService: BillingChargeTxService
     private lateinit var executor: BillingChargeExecutor
 
     @BeforeEach
     fun setUp() {
-        executor =
-            BillingChargeExecutor(
+        txService =
+            BillingChargeTxService(
                 subscriptionRepository = subscriptionRepository,
                 chargeRepository = chargeRepository,
                 attemptRepository = attemptRepository,
                 methodRepository = methodRepository,
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 userRepository = userRepository,
-                notificationCommandService = notificationCommandService,
             )
+        executor = BillingChargeExecutor(txService, notificationCommandService)
     }
 
+    @DisplayName("같은 회차 DONE 이면 토스를 다시 호출하지 않는다")
     @Test
-    fun `같은 회차 DONE 이면 토스를 다시 호출하지 않는다`() {
+    fun skipsTossWhenPeriodAlreadyDone() {
+        // given
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscription = subscription(id = 12L, nextBillingAt = due)
         val orderId = BillingChargeExecutor.periodOrderId(12L, due)
@@ -71,8 +77,10 @@ class BillingChargeExecutorTest {
         every { subscriptionRepository.findWithBillingMethodById(12L) } returns subscription
         every { chargeRepository.findByOrderId(orderId) } returns done
 
+        // when
         val result = executor.chargeSubscription(12L, due)
 
+        // then
         assertEquals(TossBillingChargeStatus.DONE, result.status)
         verify(exactly = 0) {
             tossPaymentsApiClient.chargeBilling(
@@ -86,17 +94,24 @@ class BillingChargeExecutorTest {
                 idempotencyKey = any(),
             )
         }
+        verify(exactly = 0) { notificationCommandService.create(any(), any(), any(), any(), any()) }
     }
 
+    @DisplayName("회차 orderId 는 구독과 연월로 고정된다")
     @Test
-    fun `회차 orderId 는 구독과 연월로 고정된다`() {
+    fun periodOrderIdUsesSubscriptionAndYearMonth() {
+        // given
+        // when
         val due = LocalDateTime.of(2026, 11, 15, 10, 0)
+        // then
         assertEquals("sub-12-202611", BillingChargeExecutor.periodOrderId(12L, due))
         assertEquals("sub-12-202611-a2", BillingChargeExecutor.attemptOrderId("sub-12-202611", 2))
     }
 
+    @DisplayName("결제 실패 3회면 구독이 PAUSED 된다")
     @Test
-    fun `결제 실패 3회면 구독이 PAUSED 된다`() {
+    fun pausesSubscriptionAfterThreeFailures() {
+        // given
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscription = subscription(id = 12L, nextBillingAt = due)
         val orderId = BillingChargeExecutor.periodOrderId(12L, due)
@@ -122,16 +137,25 @@ class BillingChargeExecutorTest {
             )
 
         subscription.failCount = 2
-        runCatching { executor.finalizeWithToss(7L, due) }
 
+        // when
+        val thrown = runCatching { executor.chargeSubscription(12L, due) }
+
+        // then
+        assertEquals("한도초과", thrown.exceptionOrNull()?.message)
         assertEquals(TossBillingSubscriptionStatus.PAUSED, subscription.status)
         assertTrue(pending.status == TossBillingChargeStatus.FAILED)
         assertEquals("sub-12-202611-a1", attemptSlot.captured.tossOrderId)
         assertEquals(TossBillingChargeStatus.FAILED, attemptSlot.captured.status)
+        verify(exactly = 1) {
+            notificationCommandService.create(any(), NotificationType.PAYMENT_FAILED, any(), any(), any())
+        }
     }
 
+    @DisplayName("실패 회차를 다른 카드로 재결제하면 시도 번호가 증가한다")
     @Test
-    fun `실패 회차를 다른 카드로 재결제하면 시도 번호가 증가한다`() {
+    fun incrementsAttemptNoOnRetryWithOtherCard() {
+        // given
         val due = LocalDateTime.of(2026, 10, 1, 0, 0)
         val cardA = method(id = 3L, billingKey = "bk-a")
         val cardB = method(id = 4L, billingKey = "bk-b")
@@ -139,8 +163,10 @@ class BillingChargeExecutorTest {
         val attemptSlot = slot<TossBillingChargeAttempt>()
         stubRetryDeps(charge, cardA, attemptSlot, due)
 
+        // when
         executor.retryFailedCharge(9L, cardB, due)
 
+        // then
         assertEquals(TossBillingChargeStatus.DONE, charge.status)
         assertEquals(4L, charge.billingMethod.id)
         assertEquals(2, attemptSlot.captured.attemptNo)

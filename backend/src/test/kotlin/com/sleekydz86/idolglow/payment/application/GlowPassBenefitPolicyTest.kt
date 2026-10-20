@@ -7,12 +7,14 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+@DisplayName("Glow Pass Benefit Policy")
 class GlowPassBenefitPolicyTest {
     private val membershipQuery = mockk<MembershipQuery>()
     private val policy =
@@ -24,46 +26,62 @@ class GlowPassBenefitPolicyTest {
             freeCancelDaysNormal = 3,
         )
 
+    @DisplayName("일반 오픈 전에는 비멤버 예약을 거절한다")
     @Test
-    fun `일반 오픈 전에는 비멤버 예약을 거절한다`() {
+    fun rejectsNonMemberBeforePublicOpen() {
+        // given
         val slot = slot(LocalDate.of(2026, 11, 10), LocalTime.of(10, 0))
         val now = LocalDateTime.of(2026, 11, 2, 10, 0)
+        // when
         every { membershipQuery.isActive(1L, now) } returns false
 
+        // then
         assertThrows(IllegalArgumentException::class.java) {
             policy.assertEarlyBookingAllowed(1L, slot, now)
         }
     }
 
+    @DisplayName("멤버는 일반 오픈 24시간 전부터 예약할 수 있다")
     @Test
-    fun `멤버는 일반 오픈 24시간 전부터 예약할 수 있다`() {
+    fun allowsMemberBookingOneDayBeforePublicOpen() {
+        // given
         val slot = slot(LocalDate.of(2026, 11, 10), LocalTime.of(10, 0))
         val publicOpen = LocalDateTime.of(2026, 11, 3, 10, 0)
         val now = publicOpen.minusHours(12)
+        // when
         every { membershipQuery.isActive(1L, now) } returns true
 
+        // then
         assertDoesNotThrow {
             policy.assertEarlyBookingAllowed(1L, slot, now)
         }
     }
 
+    @DisplayName("비멤버는 방문 3일 전까지만 무료 취소 가능하다")
     @Test
-    fun `비멤버는 방문 3일 전까지만 무료 취소 가능하다`() {
+    fun allowsNonMemberFreeCancelUntilThreeDaysBefore() {
+        // given
         val reservation = reservation(LocalDate.of(2026, 11, 10), LocalTime.of(10, 0))
         val now = LocalDateTime.of(2026, 11, 8, 10, 0)
+        // when
         every { membershipQuery.isActive(1L, now) } returns false
 
+        // then
         assertThrows(IllegalArgumentException::class.java) {
             policy.assertFreeCancelAllowed(1L, reservation, now)
         }
     }
 
+    @DisplayName("멤버는 방문 1일 전까지 무료 취소 가능하다")
     @Test
-    fun `멤버는 방문 1일 전까지 무료 취소 가능하다`() {
+    fun allowsMemberFreeCancelUntilOneDayBefore() {
+        // given
         val reservation = reservation(LocalDate.of(2026, 11, 10), LocalTime.of(10, 0))
         val now = LocalDateTime.of(2026, 11, 9, 9, 0)
+        // when
         every { membershipQuery.isActive(1L, now) } returns true
 
+        // then
         assertDoesNotThrow {
             policy.assertFreeCancelAllowed(1L, reservation, now)
         }

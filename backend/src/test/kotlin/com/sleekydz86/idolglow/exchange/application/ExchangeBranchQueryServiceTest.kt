@@ -9,10 +9,12 @@ import com.sleekydz86.idolglow.global.config.ExchangeAirportHubProperties
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 
+@DisplayName("Exchange Branch Query Service")
 class ExchangeBranchQueryServiceTest {
     private val exchangeBranchJpaRepository = mockk<ExchangeBranchJpaRepository>()
     private val exchangeRateQueryPort = mockk<ExchangeRateQueryPort>()
@@ -31,8 +33,10 @@ class ExchangeBranchQueryServiceTest {
             exchangeAirportHubProperties = exchangeAirportHubProperties,
         )
 
+    @DisplayName("경로 조회 api 가 없으면 데모 이동 시간을 사용한다")
     @Test
-    fun `경로_조회_api_가_없으면_데모_이동_시간을_사용한다`() {
+    fun usesDemoTravelTimeWithoutRouteApi() {
+
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
@@ -45,8 +49,10 @@ class ExchangeBranchQueryServiceTest {
         assertEquals(listOf(0, 90, 83, 83, 83), result.map { it.durationMinutesFromAirport })
     }
 
+    @DisplayName("지점 데이터가 부족하면 템플릿 지점으로 보충한다")
     @Test
-    fun `지점_데이터가_부족하면_템플릿_지점으로_보충한다`() {
+    fun fillsMissingBranchesFromTemplate() {
+
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
@@ -74,8 +80,10 @@ class ExchangeBranchQueryServiceTest {
         assertEquals(listOf(0, 90, 83, 83, 83), result.map { it.durationMinutesFromAirport })
     }
 
+    @DisplayName("db 지점이 없으면 공식 환율로 전체 지점 목록을 생성한다")
     @Test
-    fun `db_지점이_없으면_공식_환율로_전체_지점_목록을_생성한다`() {
+    fun buildsAllBranchesFromOfficialRates() {
+
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
@@ -109,8 +117,10 @@ class ExchangeBranchQueryServiceTest {
         assertEquals(BigDecimal("189.030000"), result.first().rate)
     }
 
+    @DisplayName("경로 조회 api 결과가 있으면 해당 값을 사용한다")
     @Test
-    fun `경로_조회_api_결과가_있으면_해당_값을_사용한다`() {
+    fun usesRouteApiResultWhenPresent() {
+
         // given
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns
             listOf(

@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 import com.sleekydz86.idolglow.global.config.CultureInfoApiProperties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.ClientResponse
@@ -13,9 +14,12 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicReference
 
+@DisplayName("Culture Info Api Client")
 class CultureInfoApiClientTest {
+    @DisplayName("이미 인코딩된 공공데이터 서비스키를 그대로 유지한다")
     @Test
-    fun `이미_인코딩된_공공데이터_서비스키를_그대로_유지한다`() {
+    fun keepsAlreadyEncodedServiceKey() {
+
         // given
         val capturedUri = AtomicReference<URI>()
         val client =
@@ -40,8 +44,10 @@ class CultureInfoApiClientTest {
         assertServiceKey가_한_번만_인코딩됨(capturedUri.get(), "abc+def/ghi==")
     }
 
+    @DisplayName("원본 공공데이터 서비스키를 한 번만 인코딩한다")
     @Test
-    fun `원본_공공데이터_서비스키를_한_번만_인코딩한다`() {
+    fun encodesRawServiceKeyOnce() {
+
         // given
         val capturedUri = AtomicReference<URI>()
         val client =
@@ -66,8 +72,10 @@ class CultureInfoApiClientTest {
         assertServiceKey가_한_번만_인코딩됨(capturedUri.get(), "abc+def/ghi==")
     }
 
+    @DisplayName("이중 인코딩된 공공데이터 서비스키를 정규화한다")
     @Test
-    fun `이중_인코딩된_공공데이터_서비스키를_정규화한다`() {
+    fun normalizesDoubleEncodedServiceKey() {
+
         // given
         val capturedUri = AtomicReference<URI>()
         val client =

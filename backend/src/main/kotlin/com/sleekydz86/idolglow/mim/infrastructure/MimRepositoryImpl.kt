@@ -13,16 +13,14 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Repository
 class MimRepositoryImpl(
     private val jpaRepository: MimJpaRepository,
     private val entityManager: EntityManager,
 ) : MimRepository {
-    private val fmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
     override fun findList(criteria: MimListCriteria): List<MimItem> {
         val pageable =
             PageRequest.of(
@@ -145,7 +143,7 @@ class MimRepositoryImpl(
             description = e.imageDc,
             activeYn = e.reflctAt,
             createdBy = e.frstRegisterId,
-            createdAtFormatted = e.frstRegistPnttm?.format(fmt),
+            createdAtFormatted = IdolGlowDateTimes.toDisplay(e.frstRegistPnttm),
             domainName = e.domain?.domainNm,
         )
 }

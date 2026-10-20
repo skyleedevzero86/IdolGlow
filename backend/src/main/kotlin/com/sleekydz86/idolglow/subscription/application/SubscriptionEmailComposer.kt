@@ -2,11 +2,11 @@ package com.sleekydz86.idolglow.subscription.application
 
 import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import org.springframework.stereotype.Component
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Component
 class SubscriptionEmailComposer(
@@ -161,7 +161,7 @@ class SubscriptionEmailComposer(
         return "$base$path"
     }
 
-    private fun formatDate(date: LocalDate): String = date.format(DATE_FORMATTER)
+    private fun formatDate(date: LocalDate): String = requireNotNull(IdolGlowDateTimes.toDisplay(date))
 
     private fun escapeHtml(value: String): String =
         value
@@ -172,7 +172,4 @@ class SubscriptionEmailComposer(
             .replace("'", "&#39;")
             .replace("\n", "<br/>")
 
-    companion object {
-        private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
-    }
 }

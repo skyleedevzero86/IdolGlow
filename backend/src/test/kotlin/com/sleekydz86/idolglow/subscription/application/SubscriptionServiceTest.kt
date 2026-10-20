@@ -15,10 +15,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import java.time.LocalDateTime
 
+@DisplayName("Subscription Service")
 class SubscriptionServiceTest {
     private val emailSubscriptionPort = mockk<EmailSubscriptionPort>()
     private val subscriptionDispatchHistoryPort = mockk<SubscriptionDispatchHistoryPort>()
@@ -42,8 +44,10 @@ class SubscriptionServiceTest {
             )
     }
 
+    @DisplayName("이메일과 수신 대상이 없으면 구독에 실패한다")
     @Test
-    fun `이메일과_수신_대상이_없으면_구독에_실패한다`() {
+    fun failsWhenEmailAndTargetsMissing() {
+
         // given
         val command =
             RegisterSubscriptionCommand(
@@ -59,8 +63,10 @@ class SubscriptionServiceTest {
         }
     }
 
+    @DisplayName("신규 이메일 구독을 등록한다")
     @Test
-    fun `신규_이메일_구독을_등록한다`() {
+    fun registersNewEmailSubscription() {
+
         // given
         val savedSlot = slot<EmailSubscription>()
         every { emailSubscriptionPort.findByEmail("fan@example.com") } returns null
@@ -99,8 +105,10 @@ class SubscriptionServiceTest {
         verify(exactly = 1) { emailSubscriptionPort.save(any()) }
     }
 
+    @DisplayName("기존 구독자는 재구독한다")
     @Test
-    fun `기존_구독자는_재구독한다`() {
+    fun resubscribesExistingSubscriber() {
+
         // given
         val existing =
             EmailSubscription(

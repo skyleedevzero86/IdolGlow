@@ -3,11 +3,15 @@ package com.sleekydz86.idolglow.persistence
 import com.sleekydz86.idolglow.review.domain.ReviewRating
 import com.sleekydz86.idolglow.user.user.domain.vo.Nickname
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
+@DisplayName("Jpa Embeddable Constructor")
 class JpaEmbeddableConstructorTest {
+    @DisplayName("닉네임 임베디드 타입은 기본 생성자를 제공한다")
     @Test
-    fun `닉네임_임베디드_타입은_기본_생성자를_제공한다`() {
+    fun nicknameEmbeddableHasDefaultConstructor() {
+
         // given
 
         // when
@@ -17,8 +21,10 @@ class JpaEmbeddableConstructorTest {
         }
     }
 
+    @DisplayName("리뷰 평점 임베디드 타입은 기본 생성자를 제공한다")
     @Test
-    fun `리뷰_평점_임베디드_타입은_기본_생성자를_제공한다`() {
+    fun reviewRatingEmbeddableHasDefaultConstructor() {
+
         // given
 
         // when

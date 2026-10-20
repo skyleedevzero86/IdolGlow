@@ -20,9 +20,11 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
+@DisplayName("Password Recovery Service")
 class PasswordRecoveryServiceTest {
     private val userRepository = mockk<UserRepository>()
     private val passwordEncoder = BCryptPasswordEncoder()
@@ -51,8 +53,10 @@ class PasswordRecoveryServiceTest {
             )
     }
 
+    @DisplayName("비밀번호가 일치하면 로그인 토큰을 발급한다")
     @Test
-    fun `비밀번호가_일치하면_로그인_토큰을_발급한다`() {
+    fun issuesLoginTokenWhenPasswordMatches() {
+
         // given
         val rawPassword = "ValidPass!234"
         val user =
@@ -77,8 +81,10 @@ class PasswordRecoveryServiceTest {
         verify(exactly = 1) { userRepository.save(user) }
     }
 
+    @DisplayName("비밀번호가 틀리면 인증에 실패한다")
     @Test
-    fun `비밀번호가_틀리면_인증에_실패한다`() {
+    fun failsAuthenticationWhenPasswordMismatches() {
+
         // given
         val user =
             User(

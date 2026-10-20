@@ -20,6 +20,7 @@ import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDis
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -28,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @Transactional(readOnly = true)
 @Service
@@ -236,6 +236,4 @@ class SubscriptionService(
     )
 }
 
-private val subscriptionDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
-
-private fun LocalDate.asDisplayDate(): String = format(subscriptionDateFormatter)
+private fun LocalDate.asDisplayDate(): String = requireNotNull(IdolGlowDateTimes.toDisplay(this))

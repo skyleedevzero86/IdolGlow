@@ -11,7 +11,11 @@ interface PaymentRepository {
 
     fun findByReservationIdForUpdate(reservationId: Long): Payment?
 
+    fun findByOrderId(orderId: String): Payment?
+
     fun findByOrderIdForUpdate(orderId: String): Payment?
+
+    fun findByIdempotencyKey(idempotencyKey: String): Payment?
 
     fun findByIdempotencyKeyForUpdate(idempotencyKey: String): Payment?
 

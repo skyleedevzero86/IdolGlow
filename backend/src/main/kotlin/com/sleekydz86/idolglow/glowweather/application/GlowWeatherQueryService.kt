@@ -11,6 +11,7 @@ import com.sleekydz86.idolglow.glowweather.domain.GlowWeatherRegion
 import com.sleekydz86.idolglow.glowweather.domain.GlowWeatherRegions
 import com.sleekydz86.idolglow.glowweather.domain.WindDirection
 import com.sleekydz86.idolglow.glowweather.infrastructure.GlowClimateWindRepository
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -146,7 +147,7 @@ class GlowWeatherQueryService(
         val base = observation ?: return fallback
         return fallback.copy(
             regionName = zoneInfo?.regName ?: region.name,
-            observedAt = base.observedAt?.format(DISPLAY_DATE_TIME) ?: fallback.observedAt,
+            observedAt = IdolGlowDateTimes.toDisplay(base.observedAt) ?: fallback.observedAt,
             temperatureC = base.temperatureC ?: fallback.temperatureC,
             humidity = base.humidity ?: fallback.humidity,
             precipitationLabel = precipitationTypeLabel(base.precipitationTypeCode) ?: fallback.precipitationLabel,
@@ -177,7 +178,9 @@ class GlowWeatherQueryService(
 
         return CurrentWeatherResponse(
             regionName = fallbackDay.regionName,
-            observedAt = nearest?.format(DISPLAY_DATE_TIME) ?: today.atTime(9, 0).format(DISPLAY_DATE_TIME),
+            observedAt =
+                IdolGlowDateTimes.toDisplay(nearest)
+                    ?: IdolGlowDateTimes.toDisplay(today.atTime(9, 0)).orEmpty(),
             temperatureC = temperature,
             humidity = value("REH")?.toIntOrNull(),
             skyLabel = skyLabel(skyCode, ptyCode) ?: fallbackDay.summary,
@@ -205,7 +208,12 @@ class GlowWeatherQueryService(
             val date = startDate.plusDays(offset.toLong())
             val fromShort = shortMap[date]
             if (fromShort != null && offset <= 4) {
-                fromShort.copy(regionName = regionName, date = date, dateLabel = date.format(DATE_LABEL), dayLabel = dayLabel(date))
+                fromShort.copy(
+                    regionName = regionName,
+                    date = date,
+                    dateLabel = IdolGlowDateTimes.toDisplay(date).orEmpty(),
+                    dayLabel = dayLabel(date),
+                )
             } else {
                 val dayIndex = offset
                 val weather = midLand?.weatherByDay?.get(dayIndex)
@@ -215,7 +223,7 @@ class GlowWeatherQueryService(
                 GlowWeatherForecastDay(
                     regionName = regionName,
                     date = date,
-                    dateLabel = date.format(DATE_LABEL),
+                    dateLabel = IdolGlowDateTimes.toDisplay(date).orEmpty(),
                     dayLabel = dayLabel(date),
                     summary = weather ?: fromShort?.summary ?: "구름많음",
                     icon = if (weather != null) forecastIcon(weather, null, null) else fromShort?.icon ?: "cloud",
@@ -246,7 +254,7 @@ class GlowWeatherQueryService(
         return GlowWeatherForecastDay(
             regionName = "",
             date = date,
-            dateLabel = date.format(DATE_LABEL),
+            dateLabel = IdolGlowDateTimes.toDisplay(date).orEmpty(),
             dayLabel = dayLabel(date),
             summary = summary,
             icon = forecastIcon(null, skyCode, ptyCode),
@@ -471,7 +479,7 @@ class GlowWeatherQueryService(
             GlowWeatherForecastDay(
                 regionName = region.name,
                 date = date,
-                dateLabel = date.format(DATE_LABEL),
+                dateLabel = IdolGlowDateTimes.toDisplay(date).orEmpty(),
                 dayLabel = dayLabel(date),
                 summary =
                     when (index % 4) {
@@ -592,9 +600,4 @@ class GlowWeatherQueryService(
     }
 
     private fun Double.roundToIntSafe(): Int = round(this).toInt()
-
-    companion object {
-        private val DATE_LABEL: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
-        private val DISPLAY_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
-    }
 }

@@ -5,15 +5,19 @@ import com.sleekydz86.idolglow.exchangerate.domain.ExchangeRateQuote
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
+@DisplayName("Exchange Rate Query Service")
 class ExchangeRateQueryServiceTest {
     private val exchangeRateQueryPort = mockk<ExchangeRateQueryPort>()
     private val service = ExchangeRateQueryService(exchangeRateQueryPort)
 
+    @DisplayName("조회일 데이터가 있으면 해당 일자 환율을 반환한다")
     @Test
-    fun `조회일_데이터가_있으면_해당_일자_환율을_반환한다`() {
+    fun returnsRateForRequestedDate() {
+
         // given
         val searchDate = LocalDate.of(2026, 4, 24)
         val expected =
@@ -29,8 +33,10 @@ class ExchangeRateQueryServiceTest {
         assertEquals(expected, result)
     }
 
+    @DisplayName("조회일 데이터가 없으면 이전 영업일 환율을 조회한다")
     @Test
-    fun `조회일_데이터가_없으면_이전_영업일_환율을_조회한다`() {
+    fun fallsBackToPreviousBusinessDay() {
+
         // given
         val monday = LocalDate.of(2026, 4, 27)
         val friday = LocalDate.of(2026, 4, 24)
@@ -48,8 +54,10 @@ class ExchangeRateQueryServiceTest {
         assertEquals(expected, result)
     }
 
+    @DisplayName("이전 영업일에도 없으면 계속 과거로 조회한다")
     @Test
-    fun `이전_영업일에도_없으면_계속_과거로_조회한다`() {
+    fun keepsLookingFurtherBack() {
+
         // given
         val monday = LocalDate.of(2026, 5, 11)
         val friday = LocalDate.of(2026, 5, 8)

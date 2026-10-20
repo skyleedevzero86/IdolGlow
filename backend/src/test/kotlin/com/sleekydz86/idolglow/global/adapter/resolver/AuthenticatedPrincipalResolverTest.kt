@@ -11,11 +11,13 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 
+@DisplayName("Authenticated Principal Resolver")
 class AuthenticatedPrincipalResolverTest {
     private val userRepository = mockk<UserRepository>()
     private val resolver = AuthenticatedPrincipalResolver(userRepository)
@@ -25,8 +27,10 @@ class AuthenticatedPrincipalResolverTest {
         SecurityContextHolder.clearContext()
     }
 
+    @DisplayName("global jwt 주체 userId 를 해석한다")
     @Test
-    fun `global_jwt_주체_userId_를_해석한다`() {
+    fun resolvesUserIdFromGlobalJwt() {
+
         // given
         setAuthentication(
             UsernamePasswordAuthenticationToken(
@@ -46,8 +50,10 @@ class AuthenticatedPrincipalResolverTest {
         assertEquals(setOf("USER"), principal.roles)
     }
 
+    @DisplayName("이메일 주체는 user 테이블에서 userId 를 조회한다")
     @Test
-    fun `이메일_주체는_user_테이블에서_userId_를_조회한다`() {
+    fun resolvesUserIdFromEmailSubject() {
+
         // given
         every { userRepository.findByEmail("member@example.com") } returns user(id = 7L, email = "member@example.com")
         setAuthentication(
@@ -67,8 +73,10 @@ class AuthenticatedPrincipalResolverTest {
         assertEquals("member@example.com", principal.email)
     }
 
+    @DisplayName("매핑되지 않은 이메일 주체는 userId 조회에 실패한다")
     @Test
-    fun `매핑되지_않은_이메일_주체는_userId_조회에_실패한다`() {
+    fun failsWhenEmailSubjectIsUnmapped() {
+
         // given
         every { userRepository.findByEmail("unknown@example.com") } returns null
         setAuthentication(

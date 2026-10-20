@@ -13,16 +13,14 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Repository
 class PupRepositoryImpl(
     private val jpaRepository: PupJpaRepository,
     private val entityManager: EntityManager,
 ) : PupRepository {
-    private val fmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
     override fun findList(criteria: PupListCriteria): List<PupItem> {
         val pageable =
             PageRequest.of(
@@ -161,9 +159,9 @@ class PupRepositoryImpl(
             stopViewYn = e.stopvewSetupAt,
             noticeYn = e.ntceAt,
             createdBy = e.frstRegisterId,
-            createdAtFormatted = e.frstRegistPnttm?.format(fmt),
+            createdAtFormatted = IdolGlowDateTimes.toDisplay(e.frstRegistPnttm),
             updatedBy = e.lastUpdusrId,
-            updatedAtFormatted = e.lastUpdtPnttm?.format(fmt),
+            updatedAtFormatted = IdolGlowDateTimes.toDisplay(e.lastUpdtPnttm),
             domainName = e.domain?.domainNm,
         )
 }

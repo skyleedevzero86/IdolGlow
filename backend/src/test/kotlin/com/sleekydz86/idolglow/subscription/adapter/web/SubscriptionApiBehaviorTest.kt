@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.subscription.adapter.web
 
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -10,6 +11,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@DisplayName("Subscription Api Behavior")
 class SubscriptionApiBehaviorTest {
     @LocalServerPort
     private var port: Int = 0
@@ -25,8 +27,10 @@ class SubscriptionApiBehaviorTest {
                 .build()
     }
 
+    @DisplayName("이메일 구독 API가 신규 구독을 등록한다")
     @Test
-    fun `이메일_구독_API가_신규_구독을_등록한다`() {
+    fun registersSubscriptionViaApi() {
+
         // given
         val body =
             """

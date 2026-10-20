@@ -85,7 +85,7 @@ class TossWebhookService(
             return
         }
 
-        val payment = paymentRepository.findByOrderIdForUpdate(orderId)
+        val payment = reservationPaymentService.lockReservationThenPaymentByOrderId(orderId)
         if (payment == null) {
             logSystem(null, orderId, paymentKey, rawBody, "orderId에 해당하는 결제 없음")
             return

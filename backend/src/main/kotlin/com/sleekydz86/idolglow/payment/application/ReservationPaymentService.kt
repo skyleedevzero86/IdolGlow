@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationSlotWaitlistService
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
@@ -23,9 +24,10 @@ class ReservationPaymentService(
     private val notificationCommandService: NotificationCommandService,
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
     private val paymentNotificationMailService: PaymentNotificationMailService,
+    private val paymentRefundService: PaymentRefundService,
 ) {
     fun handlePaymentSucceeded(paymentReference: String): Payment {
-        val payment = findPaymentForUpdate(paymentReference)
+        val (_, payment) = lockReservationThenPayment(paymentReference)
         return finalizeAfterGatewaySuccess(payment)
     }
 
@@ -48,6 +50,8 @@ class ReservationPaymentService(
         if (reservation.isExpired(now)) {
             if (payment.status == PaymentStatus.PENDING) {
                 payment.markExpired(now)
+            } else {
+                paymentRefundService.refundAfterExpiredReservation(payment, reservation)
             }
             reservationCommandService.expirePendingReservation(reservation.id, now)
             return payment
@@ -70,8 +74,7 @@ class ReservationPaymentService(
         paymentReference: String,
         reason: String,
     ): Payment {
-        val payment = findPaymentForUpdate(paymentReference)
-        val reservation = findReservationForUpdate(payment.reservation.id)
+        val (reservation, payment) = lockReservationThenPayment(paymentReference)
 
         if (payment.status in setOf(PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED) &&
             reservation.status == ReservationStatus.CANCELED
@@ -108,8 +111,7 @@ class ReservationPaymentService(
         paymentReference: String,
         reason: String,
     ): Payment {
-        val payment = findPaymentForUpdate(paymentReference)
-        val reservation = findReservationForUpdate(payment.reservation.id)
+        val (reservation, payment) = lockReservationThenPayment(paymentReference)
 
         if (payment.status in setOf(PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED) &&
             reservation.status == ReservationStatus.CANCELED
@@ -142,9 +144,24 @@ class ReservationPaymentService(
         return payment
     }
 
-    private fun findPaymentForUpdate(paymentReference: String): Payment =
-        paymentRepository.findByPaymentReferenceForUpdate(paymentReference)
-            ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+    fun lockReservationThenPaymentByOrderId(orderId: String): Payment? =
+        paymentRepository.findByOrderId(orderId)?.let { lockByReservationOf(it).second }
+
+    private fun lockReservationThenPayment(paymentReference: String): Pair<Reservation, Payment> {
+        val found =
+            paymentRepository.findByPaymentReference(paymentReference)
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+        return lockByReservationOf(found)
+    }
+
+    private fun lockByReservationOf(found: Payment): Pair<Reservation, Payment> {
+        val reservationId = found.reservation.id
+        val reservation = findReservationForUpdate(reservationId)
+        val payment =
+            paymentRepository.findByReservationIdForUpdate(reservationId)
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: reservationId=$reservationId")
+        return reservation to payment
+    }
 
     private fun findReservationForUpdate(reservationId: Long) =
         reservationRepository.findByIdForUpdate(reservationId)

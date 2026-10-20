@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class BillingKeyCryptoInitializer(
-    @param:Value("\${payment.toss.billing.crypto.secret:idolglow-local-billing-crypto-secret}")
+    @param:Value("\${payment.toss.billing.crypto.secret:}")
     private val secret: String,
 ) {
     @PostConstruct

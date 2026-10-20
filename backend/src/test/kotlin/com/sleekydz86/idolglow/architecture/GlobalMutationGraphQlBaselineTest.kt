@@ -2,13 +2,17 @@ package com.sleekydz86.idolglow.architecture
 
 import com.sleekydz86.idolglow.architecture.support.ArchitectureSourceScanner
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@DisplayName("Global Mutation Graph Ql Baseline")
 class GlobalMutationGraphQlBaselineTest {
+    @DisplayName("global 모듈 graphql 에 도메인 mutation 핸들러가 없다")
     @Test
-    fun `global_모듈_graphql_에_도메인_mutation_핸들러가_없다`() {
+    fun globalGraphqlHasNoDomainMutations() {
+
         // given
         val sourceRoot = 메인코틀린소스루트()
 

@@ -176,7 +176,7 @@ class PaymentDocumentService {
     }
 
     companion object {
-        private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        private val DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         private val FONT_CANDIDATES =
             listOf(
                 "C:/Windows/Fonts/malgun.ttf",

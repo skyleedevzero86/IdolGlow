@@ -7,7 +7,9 @@ import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentProvider
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -33,14 +35,14 @@ class TossPaymentConfirmService(
     ): Payment {
         require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
 
-        val existingByIdem = idempotencyKey?.let { paymentRepository.findByIdempotencyKeyForUpdate(it) }
+        val existingByIdem = idempotencyKey?.let { paymentRepository.findByIdempotencyKey(it) }
         if (existingByIdem != null && existingByIdem.status == PaymentStatus.SUCCEEDED) {
             require(existingByIdem.reservation.userId == userId) { "본인 예약 결제만 승인할 수 있습니다." }
             return existingByIdem
         }
 
         val payment =
-            paymentRepository.findByOrderIdForUpdate(orderId)
+            reservationPaymentService.lockReservationThenPaymentByOrderId(orderId)
                 ?: throw IllegalArgumentException("주문을 찾을 수 없습니다: $orderId")
 
         require(payment.reservation.userId == userId) { "본인 예약 결제만 승인할 수 있습니다." }
@@ -52,6 +54,8 @@ class TossPaymentConfirmService(
             return payment
         }
         require(payment.status == PaymentStatus.PENDING) { "처리할 수 없는 결제 상태입니다: ${payment.status}" }
+
+        markExpiredIfReservationClosed(payment)?.let { return it }
 
         if (!idempotencyKey.isNullOrBlank()) {
             payment.idempotencyKey = idempotencyKey
@@ -95,20 +99,38 @@ class TossPaymentConfirmService(
             traceId = traceId,
         )
 
-        if (!response.isSuccess2xx || response.json == null) {
-            payment.markFailed(
-                reason = response.json?.path("message")?.asText() ?: response.rawBody ?: "토스 승인 실패",
-                code = response.json?.path("code")?.asText(),
-            )
-            payment.rawResponseJson = response.rawBody
-            return payment
-        }
+        markFailedIfTossConfirmRejected(payment, response)?.let { return it }
 
-        TossPaymentResponseMapper.applyConfirmSuccess(payment, response.json, response.rawBody!!)
+        TossPaymentResponseMapper.applyConfirmSuccess(payment, response.json!!, response.rawBody!!)
         val approvedAt = payment.approvedAt ?: LocalDateTime.now()
         payment.markSucceeded(approvedAt)
 
         return reservationPaymentService.finalizeAfterGatewaySuccess(payment)
+    }
+
+    private fun markFailedIfTossConfirmRejected(
+        payment: Payment,
+        response: TossApiResponse,
+    ): Payment? {
+        if (response.isSuccess2xx && response.json != null) {
+            return null
+        }
+        payment.markFailed(
+            reason = response.json?.path("message")?.asText() ?: response.rawBody ?: "토스 승인 실패",
+            code = response.json?.path("code")?.asText(),
+        )
+        payment.rawResponseJson = response.rawBody
+        return payment
+    }
+
+    private fun markExpiredIfReservationClosed(payment: Payment): Payment? {
+        val now = LocalDateTime.now()
+        val reservation = payment.reservation
+        if (!reservation.isExpired(now) && reservation.status != ReservationStatus.CANCELED) {
+            return null
+        }
+        payment.markExpired(now)
+        return payment
     }
 
     private fun toKrwLong(amount: BigDecimal): Long {

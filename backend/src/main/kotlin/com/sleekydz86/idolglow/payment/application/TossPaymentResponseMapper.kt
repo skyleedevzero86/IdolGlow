@@ -1,10 +1,9 @@
 package com.sleekydz86.idolglow.payment.application
 
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.payment.domain.Payment
 import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
 
 object TossPaymentResponseMapper {
     fun applyConfirmSuccess(
@@ -69,14 +68,5 @@ object TossPaymentResponseMapper {
         }
     }
 
-    private fun parseDate(text: String?): LocalDateTime? {
-        if (text.isNullOrBlank()) {
-            return null
-        }
-        return try {
-            OffsetDateTime.parse(text).toLocalDateTime()
-        } catch (_: DateTimeParseException) {
-            null
-        }
-    }
+    private fun parseDate(text: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(text)
 }

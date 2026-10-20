@@ -4,47 +4,65 @@ import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@DisplayName("Payment Domain")
 class PaymentDomainTest {
+    @DisplayName("대기 중인 결제는 승인될 수 있다")
     @Test
-    fun `대기 중인 결제는 승인될 수 있다`() {
+    fun pendingPaymentCanSucceed() {
+        // given
         val payment = samplePendingPayment()
 
+        // when
         payment.markSucceeded()
 
+        // then
         assertEquals(PaymentStatus.SUCCEEDED, payment.status)
     }
 
+    @DisplayName("이미 승인된 결제는 중복 승인 호출이 무해하다")
     @Test
-    fun `이미 승인된 결제는 중복 승인 호출이 무해하다`() {
+    fun succeedingTwiceIsIdempotent() {
+        // given
         val payment = samplePendingPayment()
         payment.markSucceeded()
 
+        // when
         payment.markSucceeded()
 
+        // then
         assertEquals(PaymentStatus.SUCCEEDED, payment.status)
     }
 
+    @DisplayName("승인된 결제는 실패 처리할 수 없다")
     @Test
-    fun `승인된 결제는 실패 처리할 수 없다`() {
+    fun succeededPaymentCannotFail() {
+        // given
         val payment = samplePendingPayment()
+        // when
         payment.markSucceeded()
 
+        // then
         assertThrows(IllegalArgumentException::class.java) {
             payment.markFailed("실패")
         }
     }
 
+    @DisplayName("대기 중인 결제는 만료 처리할 수 있다")
     @Test
-    fun `대기 중인 결제는 만료 처리할 수 있다`() {
+    fun pendingPaymentCanExpire() {
+        // given
         val payment = samplePendingPayment()
 
+        // when
         payment.markExpired()
 
+        // then
         assertEquals(PaymentStatus.EXPIRED, payment.status)
     }
 
