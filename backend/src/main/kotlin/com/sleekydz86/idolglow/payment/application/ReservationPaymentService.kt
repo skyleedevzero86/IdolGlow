@@ -24,6 +24,7 @@ class ReservationPaymentService(
     private val notificationCommandService: NotificationCommandService,
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
     private val paymentNotificationMailService: PaymentNotificationMailService,
+    private val paymentRefundService: PaymentRefundService,
 ) {
     fun handlePaymentSucceeded(paymentReference: String): Payment {
         val (_, payment) = lockReservationThenPayment(paymentReference)
@@ -49,6 +50,8 @@ class ReservationPaymentService(
         if (reservation.isExpired(now)) {
             if (payment.status == PaymentStatus.PENDING) {
                 payment.markExpired(now)
+            } else {
+                paymentRefundService.refundAfterExpiredReservation(payment, reservation)
             }
             reservationCommandService.expirePendingReservation(reservation.id, now)
             return payment

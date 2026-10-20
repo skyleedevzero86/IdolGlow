@@ -38,7 +38,23 @@ class PaymentRefundService(
     ) {
         require(reservation.status == ReservationStatus.BOOKED) { "확정된 예약만 환불 대상입니다." }
         require(payment.status == PaymentStatus.SUCCEEDED) { "승인된 결제만 환불할 수 있습니다." }
+        refundSucceededPayment(payment, reservation, cancelReason, requestedBy)
+    }
 
+    fun refundAfterExpiredReservation(
+        payment: Payment,
+        reservation: Reservation,
+    ) {
+        require(payment.status == PaymentStatus.SUCCEEDED) { "승인된 결제만 환불할 수 있습니다." }
+        refundSucceededPayment(payment, reservation, "결제 시간 초과로 자동 환불", RefundRequestedBy.SYSTEM)
+    }
+
+    private fun refundSucceededPayment(
+        payment: Payment,
+        reservation: Reservation,
+        cancelReason: String,
+        requestedBy: RefundRequestedBy,
+    ) {
         val idempotencyKey = "refund-${payment.id}-${UUID.randomUUID()}"
         val refund =
             paymentRefundJpaRepository.save(
@@ -54,72 +70,83 @@ class PaymentRefundService(
             )
 
         when (payment.provider) {
-            PaymentProvider.MOCK -> {
-                payment.markFullRefund()
-                refund.status = PaymentRefundStatus.SUCCEEDED
-                refund.rawResponseJson = objectMapper.createObjectNode().put("mock", true).toString()
-                paymentLogCommandService.append(
-                    payment = payment,
-                    orderId = payment.orderId,
-                    paymentKey = payment.paymentKey,
-                    logType = PaymentLogType.CANCEL_RESPONSE,
-                    step = PaymentLogStep.SERVER,
-                    httpStatus = 200,
-                    responseBody = refund.rawResponseJson,
-                )
-                paymentNotificationMailService.sendCanceled(payment)
-            }
-
-            PaymentProvider.TOSS -> {
-                require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
-                val key =
-                    payment.paymentKey
-                        ?: throw IllegalStateException("토스 paymentKey 가 없어 환불할 수 없습니다.")
-
-                paymentLogCommandService.append(
-                    payment = payment,
-                    orderId = payment.orderId,
-                    paymentKey = key,
-                    logType = PaymentLogType.CANCEL_REQUEST,
-                    step = PaymentLogStep.SERVER,
-                    requestUrl = "/v1/payments/$key/cancel",
-                    httpMethod = "POST",
-                    requestBody = """{"cancelReason":"${cancelReason.replace("\"", "'")}"}""",
-                )
-
-                val response =
-                    tossPaymentsApiClient.cancel(
-                        paymentKey = key,
-                        cancelReason = cancelReason,
-                        cancelAmount = null,
-                        idempotencyKey = idempotencyKey,
-                    )
-
-                paymentLogCommandService.append(
-                    payment = payment,
-                    orderId = payment.orderId,
-                    paymentKey = key,
-                    logType = if (response.isSuccess2xx) PaymentLogType.CANCEL_RESPONSE else PaymentLogType.CANCEL_ERROR,
-                    step = PaymentLogStep.TOSS_API,
-                    httpStatus = response.httpStatus,
-                    responseBody = response.rawBody,
-                    errorMessage = response.error?.message,
-                )
-
-                if (!response.isSuccess2xx || response.json == null) {
-                    refund.status = PaymentRefundStatus.FAILED
-                    refund.failCode = response.json?.path("code")?.asText()
-                    refund.failMessage = response.json?.path("message")?.asText() ?: response.rawBody
-                    throw IllegalStateException("토스 환불에 실패했습니다: ${refund.failMessage}")
-                }
-
-                refund.status = PaymentRefundStatus.SUCCEEDED
-                refund.rawResponseJson = response.rawBody
-                refund.externalTransactionKey = response.json.path("transactionKey").asText(null)
-                payment.markFullRefund()
-                paymentNotificationMailService.sendCanceled(payment)
-            }
+            PaymentProvider.MOCK -> completeMockRefund(payment, refund)
+            PaymentProvider.TOSS -> completeTossRefund(payment, refund, cancelReason, idempotencyKey)
         }
+    }
+
+    private fun completeMockRefund(
+        payment: Payment,
+        refund: PaymentRefund,
+    ) {
+        payment.markFullRefund()
+        refund.status = PaymentRefundStatus.SUCCEEDED
+        refund.rawResponseJson = objectMapper.createObjectNode().put("mock", true).toString()
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = payment.paymentKey,
+            logType = PaymentLogType.CANCEL_RESPONSE,
+            step = PaymentLogStep.SERVER,
+            httpStatus = 200,
+            responseBody = refund.rawResponseJson,
+        )
+        paymentNotificationMailService.sendCanceled(payment)
+    }
+
+    private fun completeTossRefund(
+        payment: Payment,
+        refund: PaymentRefund,
+        cancelReason: String,
+        idempotencyKey: String,
+    ) {
+        require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
+        val key =
+            payment.paymentKey
+                ?: throw IllegalStateException("토스 paymentKey 가 없어 환불할 수 없습니다.")
+
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = key,
+            logType = PaymentLogType.CANCEL_REQUEST,
+            step = PaymentLogStep.SERVER,
+            requestUrl = "/v1/payments/$key/cancel",
+            httpMethod = "POST",
+            requestBody = """{"cancelReason":"${cancelReason.replace("\"", "'")}"}""",
+        )
+
+        val response =
+            tossPaymentsApiClient.cancel(
+                paymentKey = key,
+                cancelReason = cancelReason,
+                cancelAmount = null,
+                idempotencyKey = idempotencyKey,
+            )
+
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = key,
+            logType = if (response.isSuccess2xx) PaymentLogType.CANCEL_RESPONSE else PaymentLogType.CANCEL_ERROR,
+            step = PaymentLogStep.TOSS_API,
+            httpStatus = response.httpStatus,
+            responseBody = response.rawBody,
+            errorMessage = response.error?.message,
+        )
+
+        if (!response.isSuccess2xx || response.json == null) {
+            refund.status = PaymentRefundStatus.FAILED
+            refund.failCode = response.json?.path("code")?.asText()
+            refund.failMessage = response.json?.path("message")?.asText() ?: response.rawBody
+            throw IllegalStateException("토스 환불에 실패했습니다: ${refund.failMessage}")
+        }
+
+        refund.status = PaymentRefundStatus.SUCCEEDED
+        refund.rawResponseJson = response.rawBody
+        refund.externalTransactionKey = response.json.path("transactionKey").asText(null)
+        payment.markFullRefund()
+        paymentNotificationMailService.sendCanceled(payment)
     }
 
     fun findRefundsByPaymentId(paymentId: Long): List<PaymentRefund> =

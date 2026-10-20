@@ -31,6 +31,7 @@ class ReservationPaymentServiceTest {
     private val notificationCommandService = mockk<NotificationCommandService>(relaxed = true)
     private val reservationSlotWaitlistService = mockk<ReservationSlotWaitlistService>(relaxed = true)
     private val paymentNotificationMailService = mockk<PaymentNotificationMailService>(relaxed = true)
+    private val paymentRefundService = mockk<PaymentRefundService>(relaxed = true)
 
     private lateinit var service: ReservationPaymentService
 
@@ -44,6 +45,7 @@ class ReservationPaymentServiceTest {
                 notificationCommandService = notificationCommandService,
                 reservationSlotWaitlistService = reservationSlotWaitlistService,
                 paymentNotificationMailService = paymentNotificationMailService,
+                paymentRefundService = paymentRefundService,
             )
     }
 
@@ -162,6 +164,23 @@ class ReservationPaymentServiceTest {
         // then
         assertEquals(PaymentStatus.EXPIRED, result.status)
         verify(exactly = 1) { reservationCommandService.expirePendingReservation(1L, any()) }
+        verify(exactly = 0) { reservationCommandService.confirmReservation(any()) }
+    }
+
+    @DisplayName("토스 승인은 성공했는데 그 사이 예약이 만료됐으면 자동 환불한다")
+    @Test
+    fun refundsWhenReservationExpiredAfterApproval() {
+        // given
+        val fixture = pendingFixture(paymentReference = "pay_late_ok", expired = true)
+        fixture.payment.markSucceeded(LocalDateTime.now())
+        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+        every { reservationCommandService.expirePendingReservation(1L, any()) } returns fixture.reservation
+
+        // when
+        service.finalizeAfterGatewaySuccess(fixture.payment)
+
+        // then
+        verify(exactly = 1) { paymentRefundService.refundAfterExpiredReservation(fixture.payment, fixture.reservation) }
         verify(exactly = 0) { reservationCommandService.confirmReservation(any()) }
     }
 
