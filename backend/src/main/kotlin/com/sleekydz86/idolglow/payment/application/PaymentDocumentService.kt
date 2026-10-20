@@ -10,12 +10,12 @@ import com.lowagie.text.pdf.BaseFont
 import com.lowagie.text.pdf.PdfPCell
 import com.lowagie.text.pdf.PdfPTable
 import com.lowagie.text.pdf.PdfWriter
-import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.payment.domain.Payment
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.time.format.DateTimeFormatter
 
 @Service
 class PaymentDocumentService {
@@ -176,7 +176,7 @@ class PaymentDocumentService {
     }
 
     companion object {
-        private val DATE_TIME_FORMATTER = IdolGlowDateTimes.DISPLAY_DATE_TIME
+        private val DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         private val FONT_CANDIDATES =
             listOf(
                 "C:/Windows/Fonts/malgun.ttf",

@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
+import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeAttempt
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
@@ -27,7 +28,7 @@ import tools.jackson.databind.ObjectMapper
 import java.time.LocalDateTime
 import java.util.Optional
 
-@DisplayName("Billing Charge Executor")
+@DisplayName("빌링 회차 결제 실행기")
 class BillingChargeExecutorTest {
     private val subscriptionRepository = mockk<TossBillingSubscriptionJpaRepository>()
     private val chargeRepository = mockk<TossBillingChargeJpaRepository>(relaxed = true)
@@ -93,6 +94,7 @@ class BillingChargeExecutorTest {
                 idempotencyKey = any(),
             )
         }
+        verify(exactly = 0) { notificationCommandService.create(any(), any(), any(), any(), any()) }
     }
 
     @DisplayName("회차 orderId 는 구독과 연월로 고정된다")
@@ -135,15 +137,19 @@ class BillingChargeExecutorTest {
             )
 
         subscription.failCount = 2
+
         // when
-        val result = txService.finalizeWithToss(7L, due)
+        val thrown = runCatching { executor.chargeSubscription(12L, due) }
 
         // then
-        assertEquals("한도초과", result.failureMessage)
+        assertEquals("한도초과", thrown.exceptionOrNull()?.message)
         assertEquals(TossBillingSubscriptionStatus.PAUSED, subscription.status)
         assertTrue(pending.status == TossBillingChargeStatus.FAILED)
         assertEquals("sub-12-202611-a1", attemptSlot.captured.tossOrderId)
         assertEquals(TossBillingChargeStatus.FAILED, attemptSlot.captured.status)
+        verify(exactly = 1) {
+            notificationCommandService.create(any(), NotificationType.PAYMENT_FAILED, any(), any(), any())
+        }
     }
 
     @DisplayName("실패 회차를 다른 카드로 재결제하면 시도 번호가 증가한다")

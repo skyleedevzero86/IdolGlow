@@ -17,6 +17,7 @@ import com.sleekydz86.idolglow.user.user.domain.vo.Nickname
 import com.sleekydz86.idolglow.user.user.infrastructure.UserJpaRepository
 import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -33,7 +34,7 @@ import java.util.UUID
 
 @SpringBootTest
 @ActiveProfiles("test")
-@DisplayName("Billing Charge Tx Integration")
+@DisplayName("빌링 회차 결제 통합")
 class BillingChargeTxIntegrationTest {
     @Autowired
     private lateinit var executor: BillingChargeExecutor
@@ -65,9 +66,7 @@ class BillingChargeTxIntegrationTest {
     fun stubTossLookup() {
         clearMocks(tossPaymentsApiClient, notificationCommandService)
         every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
-        every {
-            notificationCommandService.create(any(), any(), any(), any(), any())
-        } throws IllegalStateException("알림 저장 실패")
+        every { notificationCommandService.create(any(), any(), any(), any(), any()) } returns mockk(relaxed = true)
     }
 
     @DisplayName("자동결제가 실패하면 FAILED와 failCount가 DB에 남는다")
@@ -110,6 +109,28 @@ class BillingChargeTxIntegrationTest {
         verify(exactly = 0) {
             tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any())
         }
+    }
+
+    @DisplayName("실패 알림 저장이 실패해도 FAILED와 failCount는 DB에 남는다")
+    @Test
+    fun keepsFailedStatusWhenNotificationFails() {
+        // given
+        val due = LocalDateTime.of(2026, 11, 1, 0, 0)
+        val subscriptionId = persistActiveSubscription(due)
+        stubTossChargeFailure()
+        every { notificationCommandService.create(any(), any(), any(), any(), any()) } throws
+            IllegalStateException("알림 저장 실패")
+
+        // when
+        val thrown = runCatching { executor.chargeSubscription(subscriptionId, due) }
+
+        // then
+        assertEquals("한도초과", thrown.exceptionOrNull()?.message)
+        val sub = subscriptionRepository.findById(subscriptionId).orElseThrow()
+        assertEquals(1, sub.failCount)
+        val charge = chargeRepository.findByOrderId(BillingChargeExecutor.periodOrderId(subscriptionId, due))!!
+        assertEquals(TossBillingChargeStatus.FAILED, charge.status)
+        verify(exactly = 1) { notificationCommandService.create(any(), any(), any(), any(), any()) }
     }
 
     private fun persistActiveSubscription(due: LocalDateTime): Long {
