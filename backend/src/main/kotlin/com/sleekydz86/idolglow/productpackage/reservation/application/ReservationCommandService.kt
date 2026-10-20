@@ -73,7 +73,12 @@ class ReservationCommandService(
 
         val savedReservation = reservationRepository.save(reservation)
         reservationSlot.hold(savedReservation.id, expiresAt, now)
-        val paymentRef = createPaymentReference(savedReservation.id, now)
+        val paymentRef =
+            paymentReferenceOf(
+                useTossProvider = tossPaymentProperties.useTossProvider,
+                reservationId = savedReservation.id,
+                now = now,
+            )
         val payment =
             paymentRepository.save(
                 if (tossPaymentProperties.useTossProvider) {
@@ -285,11 +290,6 @@ class ReservationCommandService(
         }
     }
 
-    private fun createPaymentReference(
-        reservationId: Long,
-        now: LocalDateTime,
-    ): String = "pay_mock_${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
-
     private fun resolveMembershipPricing(
         product: Product,
         userId: Long,
@@ -325,5 +325,14 @@ class ReservationCommandService(
     companion object {
         private val PAYMENT_REFERENCE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
         private val MEMBER_PRICE_RATE = BigDecimal("0.9")
+
+        internal fun paymentReferenceOf(
+            useTossProvider: Boolean,
+            reservationId: Long,
+            now: LocalDateTime,
+        ): String {
+            val prefix = if (useTossProvider) "pay_toss_" else "pay_mock_"
+            return "$prefix${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
+        }
     }
 }
