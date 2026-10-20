@@ -14,6 +14,7 @@ import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
@@ -30,6 +31,8 @@ class PaymentRefundService(
     private val objectMapper: ObjectMapper,
     private val paymentNotificationMailService: PaymentNotificationMailService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     fun refundBeforeReservationCancel(
         payment: Payment,
         reservation: Reservation,
@@ -38,7 +41,8 @@ class PaymentRefundService(
     ) {
         require(reservation.status == ReservationStatus.BOOKED) { "확정된 예약만 환불 대상입니다." }
         require(payment.status == PaymentStatus.SUCCEEDED) { "승인된 결제만 환불할 수 있습니다." }
-        refundSucceededPayment(payment, reservation, cancelReason, requestedBy)
+        val refund = refundSucceededPayment(payment, reservation, cancelReason, requestedBy)
+        check(refund.status != PaymentRefundStatus.FAILED) { "토스 환불에 실패했습니다: ${refund.failMessage}" }
     }
 
     fun refundAfterExpiredReservation(
@@ -46,7 +50,14 @@ class PaymentRefundService(
         reservation: Reservation,
     ) {
         require(payment.status == PaymentStatus.SUCCEEDED) { "승인된 결제만 환불할 수 있습니다." }
-        refundSucceededPayment(payment, reservation, "결제 시간 초과로 자동 환불", RefundRequestedBy.SYSTEM)
+        val refund = refundSucceededPayment(payment, reservation, "결제 시간 초과로 자동 환불", RefundRequestedBy.SYSTEM)
+        if (refund.status == PaymentRefundStatus.FAILED) {
+            log.warn(
+                "만료 예약 자동 환불이 실패했습니다. 관리자 재시도가 필요합니다. paymentId={} reason={}",
+                payment.id,
+                refund.failMessage,
+            )
+        }
     }
 
     private fun refundSucceededPayment(
@@ -54,7 +65,7 @@ class PaymentRefundService(
         reservation: Reservation,
         cancelReason: String,
         requestedBy: RefundRequestedBy,
-    ) {
+    ): PaymentRefund {
         val idempotencyKey = "refund-${payment.id}-${UUID.randomUUID()}"
         val refund =
             paymentRefundJpaRepository.save(
@@ -73,6 +84,7 @@ class PaymentRefundService(
             PaymentProvider.MOCK -> completeMockRefund(payment, refund)
             PaymentProvider.TOSS -> completeTossRefund(payment, refund, cancelReason, idempotencyKey)
         }
+        return refund
     }
 
     private fun completeMockRefund(
@@ -139,7 +151,7 @@ class PaymentRefundService(
             refund.status = PaymentRefundStatus.FAILED
             refund.failCode = response.json?.path("code")?.asText()
             refund.failMessage = response.json?.path("message")?.asText() ?: response.rawBody
-            throw IllegalStateException("토스 환불에 실패했습니다: ${refund.failMessage}")
+            return
         }
 
         refund.status = PaymentRefundStatus.SUCCEEDED
