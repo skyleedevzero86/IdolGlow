@@ -36,12 +36,13 @@ class BillingChargeExecutorTest {
     private val notificationCommandService = mockk<NotificationCommandService>(relaxed = true)
     private val objectMapper = ObjectMapper()
 
+    private lateinit var txService: BillingChargeTxService
     private lateinit var executor: BillingChargeExecutor
 
     @BeforeEach
     fun setUp() {
-        executor =
-            BillingChargeExecutor(
+        txService =
+            BillingChargeTxService(
                 subscriptionRepository = subscriptionRepository,
                 chargeRepository = chargeRepository,
                 attemptRepository = attemptRepository,
@@ -50,6 +51,7 @@ class BillingChargeExecutorTest {
                 userRepository = userRepository,
                 notificationCommandService = notificationCommandService,
             )
+        executor = BillingChargeExecutor(txService)
     }
 
     @Test
@@ -122,8 +124,9 @@ class BillingChargeExecutorTest {
             )
 
         subscription.failCount = 2
-        runCatching { executor.finalizeWithToss(7L, due) }
+        val result = txService.finalizeWithToss(7L, due)
 
+        assertEquals("한도초과", result.failureMessage)
         assertEquals(TossBillingSubscriptionStatus.PAUSED, subscription.status)
         assertTrue(pending.status == TossBillingChargeStatus.FAILED)
         assertEquals("sub-12-202611-a1", attemptSlot.captured.tossOrderId)
