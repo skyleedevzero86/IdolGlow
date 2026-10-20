@@ -4,6 +4,40 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.10.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.9.0...v0.10.0) (2026-10-20)
+
+
+### Features
+
+* 주문번호로도 예약을 먼저 잠그는 경로를 추가 ([4a5bf10](https://github.com/skyleedevzero86/IdolGlow/commit/4a5bf109dae2fe20c9ea8fd2596e86f12d35be1e))
+
+
+### Bug Fixes
+
+* **#35:** 결제 락 순서와 만료 자동 환불을 맞춘다 ([7e59707](https://github.com/skyleedevzero86/IdolGlow/commit/7e59707e65720dccc60e338a3770f3fa32224e49))
+* docker-compose 비밀번호와 기본 시크릿을 infra/.env 필수값으로 변경 ([8a6a441](https://github.com/skyleedevzero86/IdolGlow/commit/8a6a4411b7aee929f306cd22ecac6528924f6339))
+* 결제 웹훅 처리의 잠금 순서를 예약 먼저로 맞춘다 ([1031f8c](https://github.com/skyleedevzero86/IdolGlow/commit/1031f8c1885e2f0ae96ae02def1e8dcd8cf3ce11))
+* 날짜 파싱 순환 호출을 끊고 전역 JSON 시각 포맷을 뺀다 ([114c8e2](https://github.com/skyleedevzero86/IdolGlow/commit/114c8e2d6dec84c819bf322d1c422aef865b9125))
+* 내려간 MinIO 공식 이미지 대신 pgsty 이미지를 작성 ([70a47cd](https://github.com/skyleedevzero86/IdolGlow/commit/70a47cd4ed77737616d0e78a26d28f7ceee80822))
+* 만료 예약 자동 환불이 실패해도 실패 기록을 처리 ([df9bb62](https://github.com/skyleedevzero86/IdolGlow/commit/df9bb62059b9c6ceae4a33fcff2c68ac727ba9aa))
+* 만료·취소된 예약은 토스 승인을 요청하지 않게 처리 ([ae11a94](https://github.com/skyleedevzero86/IdolGlow/commit/ae11a946adc9178b7af71b6d59b6905fc80b7303))
+* 빌링 결제 기록을 별도 빈으로 분리해 REQUIRES_NEW가 적용되게 한다 ([3b5bcf6](https://github.com/skyleedevzero86/IdolGlow/commit/3b5bcf6ce4b66d139d13fcc5edc9320e5641495c))
+* 빌링 실패 알림을 커밋 뒤로 빼고 날짜는 표시만 포맷한다 ([bec6be4](https://github.com/skyleedevzero86/IdolGlow/commit/bec6be485b0013166ba5171dbbe5128790da3721))
+* 빌링 암호화 키 기본값을 코드에서 제거 ([9019d59](https://github.com/skyleedevzero86/IdolGlow/commit/9019d5980b778f1ff259869f15dee7bde4d8f179))
+* 토스 결제 승인도 예약에서 결제 순서로  잠금 ([61ba567](https://github.com/skyleedevzero86/IdolGlow/commit/61ba567b810c4a33b8d764af63a788034d7e025d))
+* 토스 승인 뒤 예약이 만료되면 시스템 자동 환불처리 ([4a8c00a](https://github.com/skyleedevzero86/IdolGlow/commit/4a8c00aa7c9f5b5d7197feb9c4a9b94d7fe51b3a))
+* 토스 웹훅도 예약에서 결제 순서로 정리 ([47efbfb](https://github.com/skyleedevzero86/IdolGlow/commit/47efbfb94c5b543a53fdd524df6c8e397a4890a2))
+
+
+### Documentation
+
+* README에 결제·예약 한계와 다음 단계 절을 추가 ([6fa64be](https://github.com/skyleedevzero86/IdolGlow/commit/6fa64be8650dfe5c14d99d068f831ced01fea411))
+
+
+### Tests
+
+* 알림 실패가 결제 FAILED를 롤백하지 않는지 테스트로 고정한다 ([9304412](https://github.com/skyleedevzero86/IdolGlow/commit/93044128dc76a9b515298a9f946c90940512b0d5))
+
 ## [0.9.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.8.0...v0.9.0) (2026-10-16)
 
 
