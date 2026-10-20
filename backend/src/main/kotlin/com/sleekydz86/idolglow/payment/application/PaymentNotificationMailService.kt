@@ -7,6 +7,8 @@ import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPor
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 @Service
 class PaymentNotificationMailService(
@@ -69,18 +71,30 @@ class PaymentNotificationMailService(
             </html>
             """.trimIndent()
 
-        runCatching {
-            outboundMailPort.send(
-                OutboundMailMessage(
-                    to = user.email,
-                    subject = subject,
-                    plainTextBody = plainText,
-                    htmlBody = htmlBody,
-                ),
+        val paymentId = payment.id
+        val message =
+            OutboundMailMessage(
+                to = user.email,
+                subject = subject,
+                plainTextBody = plainText,
+                htmlBody = htmlBody,
             )
-        }.onFailure { ex ->
-            log.error("결제 결과 메일 발송 실패: paymentId={}", payment.id, ex)
+        runAfterCommit {
+            runCatching { outboundMailPort.send(message) }
+                .onFailure { ex -> log.error("결제 결과 메일 발송 실패: paymentId={}", paymentId, ex) }
         }
+    }
+
+    private fun runAfterCommit(action: () -> Unit) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action()
+            return
+        }
+        TransactionSynchronizationManager.registerSynchronization(
+            object : TransactionSynchronization {
+                override fun afterCommit() = action()
+            },
+        )
     }
 
     private fun escapeHtml(value: String): String =
