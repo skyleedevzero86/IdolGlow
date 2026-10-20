@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -73,10 +74,27 @@ class TossPaymentConfirmServiceTest {
         verify(exactly = 0) { paymentRepository.findByIdempotencyKeyForUpdate(any()) }
     }
 
-    private fun tossPayment(): Payment {
+    @DisplayName("예약이 만료됐으면 토스 승인을 부르지 않고 결제를 만료 처리한다")
+    @Test
+    fun skipsTossConfirmWhenReservationExpired() {
+        // given
+        val payment = tossPayment(expired = true)
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+
+        // when
+        val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.EXPIRED, result.status)
+        verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
+    }
+
+    private fun tossPayment(expired: Boolean = false): Payment {
         val reservation = mockk<Reservation>(relaxed = true)
         every { reservation.userId } returns 10L
         every { reservation.totalPrice } returns BigDecimal("35000")
+        every { reservation.status } returns ReservationStatus.PENDING
+        every { reservation.isExpired(any()) } returns expired
         return Payment.createPendingForToss(reservation, "pay_toss_1")
     }
 }
