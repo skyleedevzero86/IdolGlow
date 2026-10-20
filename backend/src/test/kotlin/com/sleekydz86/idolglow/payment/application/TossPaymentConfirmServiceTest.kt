@@ -1,6 +1,5 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
@@ -20,8 +19,8 @@ import java.math.BigDecimal
 
 @DisplayName("토스 결제 승인")
 class TossPaymentConfirmServiceTest {
+    private val tossPaymentConfirmTxService = mockk<TossPaymentConfirmTxService>()
     private val paymentRepository = mockk<PaymentRepository>()
-    private val reservationPaymentService = mockk<ReservationPaymentService>()
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>()
     private val paymentLogCommandService = mockk<PaymentLogCommandService>(relaxed = true)
 
@@ -31,61 +30,23 @@ class TossPaymentConfirmServiceTest {
     fun setUp() {
         service =
             TossPaymentConfirmService(
+                tossPaymentConfirmTxService = tossPaymentConfirmTxService,
                 paymentRepository = paymentRepository,
-                reservationPaymentService = reservationPaymentService,
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 paymentLogCommandService = paymentLogCommandService,
-                tossPaymentProperties = TossPaymentProperties(enabled = true),
             )
-    }
-
-    @DisplayName("승인할 때 결제를 직접 잠그지 않고 예약 → 결제 순서 잠금 경로를 쓴다")
-    @Test
-    fun confirmUsesReservationFirstLock() {
-        // given
-        val payment = tossPayment()
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
-        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
-            TossApiResponse(400, null, """{"message":"승인 거절"}""")
-
-        // when
-        val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
-
-        // then
-        assertEquals(PaymentStatus.FAILED, result.status)
-        verify(exactly = 1) { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) }
-        verify(exactly = 0) { paymentRepository.findByOrderIdForUpdate(any()) }
-    }
-
-    @DisplayName("멱등 키 확인은 잠그지 않고 조회한다")
-    @Test
-    fun idempotencyCheckDoesNotLock() {
-        // given
-        val payment = tossPayment()
-        every { paymentRepository.findByIdempotencyKey("idem-1") } returns null
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
-        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
-            TossApiResponse(400, null, """{"message":"승인 거절"}""")
-
-        // when
-        service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), "idem-1", null)
-
-        // then
-        verify(exactly = 1) { paymentRepository.findByIdempotencyKey("idem-1") }
-        verify(exactly = 0) { paymentRepository.findByIdempotencyKeyForUpdate(any()) }
     }
 
     @DisplayName("예약이 만료됐으면 토스 승인을 부르지 않고 결제를 만료 처리한다")
     @Test
     fun skipsTossConfirmWhenReservationExpired() {
-        // given
         val payment = tossPayment(expired = true)
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = true, idempotencyKey = "confirm-${payment.orderId}")
 
-        // when
         val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
 
-        // then
         assertEquals(PaymentStatus.EXPIRED, result.status)
         verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
     }
@@ -93,18 +54,38 @@ class TossPaymentConfirmServiceTest {
     @DisplayName("멱등 키가 없으면 결제마다 고정된 키로 토스 승인을 요청한다")
     @Test
     fun usesStableIdempotencyKeyPerPayment() {
-        // given
         val payment = tossPayment()
         val keySlot = slot<String?>()
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = false, idempotencyKey = "confirm-${payment.orderId}")
         every { tossPaymentsApiClient.confirm(any(), any(), any(), captureNullable(keySlot)) } returns
             TossApiResponse(400, null, """{"message":"승인 거절"}""")
+        every {
+            tossPaymentConfirmTxService.completeConfirm(10L, payment.orderId, BigDecimal("35000"), any())
+        } returns payment
 
-        // when
         service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
 
-        // then
         assertEquals("confirm-${payment.orderId}", keySlot.captured)
+    }
+
+    @DisplayName("토스 승인 응답이 5xx면 처리 중으로 두고 승인을 끝내지 않는다")
+    @Test
+    fun leavesConfirmingWhenTossReturns5xx() {
+        val payment = tossPayment()
+        payment.markConfirming()
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = false, idempotencyKey = "confirm-${payment.orderId}")
+        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
+            TossApiResponse(500, null, "internal")
+        every { paymentRepository.findByOrderId(payment.orderId) } returns payment
+
+        val result = service.confirm(10L, "pk-5xx", payment.orderId, BigDecimal("35000"), null, null)
+
+        assertEquals(PaymentStatus.CONFIRMING, result.status)
+        verify(exactly = 0) { tossPaymentConfirmTxService.completeConfirm(any(), any(), any(), any()) }
     }
 
     private fun tossPayment(expired: Boolean = false): Payment {
@@ -113,6 +94,10 @@ class TossPaymentConfirmServiceTest {
         every { reservation.totalPrice } returns BigDecimal("35000")
         every { reservation.status } returns ReservationStatus.PENDING
         every { reservation.isExpired(any()) } returns expired
-        return Payment.createPendingForToss(reservation, "pay_toss_1")
+        val payment = Payment.createPendingForToss(reservation, "pay_toss_1")
+        if (expired) {
+            payment.markExpired()
+        }
+        return payment
     }
 }

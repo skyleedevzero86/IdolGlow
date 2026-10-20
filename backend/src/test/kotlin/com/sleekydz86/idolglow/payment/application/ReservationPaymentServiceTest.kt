@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationSlotWaitlistService
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationCancelReason
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
@@ -180,6 +181,20 @@ class ReservationPaymentServiceTest {
         service.finalizeAfterGatewaySuccess(fixture.payment)
 
         // then
+        verify(exactly = 1) { paymentRefundService.refundAfterExpiredReservation(fixture.payment, fixture.reservation) }
+        verify(exactly = 0) { reservationCommandService.confirmReservation(any()) }
+    }
+
+    @DisplayName("예약이 취소된 뒤 결제가 성공하면 예외 대신 자동 환불한다")
+    @Test
+    fun refundsWhenReservationCanceledAfterApproval() {
+        val fixture = pendingFixture(paymentReference = "pay_canceled_ok")
+        fixture.reservation.cancel(ReservationCancelReason.USER_REQUESTED)
+        fixture.payment.markSucceeded(LocalDateTime.now())
+        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
+
+        service.finalizeAfterGatewaySuccess(fixture.payment)
+
         verify(exactly = 1) { paymentRefundService.refundAfterExpiredReservation(fixture.payment, fixture.reservation) }
         verify(exactly = 0) { reservationCommandService.confirmReservation(any()) }
     }

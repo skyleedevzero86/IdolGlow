@@ -2,6 +2,9 @@ package com.sleekydz86.idolglow.payment.infrastructure
 
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import java.time.LocalDateTime
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -31,4 +34,11 @@ class PaymentRepositoryImpl(
         paymentJpaRepository.findByIdempotencyKeyForUpdate(idempotencyKey)
 
     override fun findByIdForUpdate(paymentId: Long): Payment? = paymentJpaRepository.findPaymentByIdForUpdate(paymentId)
+
+    override fun findConfirmingUpdatedBefore(
+        before: LocalDateTime,
+        limit: Int,
+    ): List<Payment> =
+        paymentJpaRepository
+            .findConfirmingUpdatedBefore(PaymentStatus.CONFIRMING, before, PageRequest.of(0, limit))
 }

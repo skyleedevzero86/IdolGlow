@@ -109,11 +109,19 @@ class Payment(
     @Column(name = "idempotency_key", length = 100)
     var idempotencyKey: String? = null,
 ) : BaseEntity() {
+    fun markConfirming() {
+        if (status == PaymentStatus.CONFIRMING) {
+            return
+        }
+        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 승인 처리 중으로 바꿀 수 있습니다." }
+        status = PaymentStatus.CONFIRMING
+    }
+
     fun markSucceeded(approvedAt: LocalDateTime = LocalDateTime.now()) {
         if (status == PaymentStatus.SUCCEEDED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 승인할 수 있습니다." }
+        require(isOpenForGatewayOutcome()) { "대기 중이거나 승인 처리 중인 결제만 승인할 수 있습니다. status=$status" }
         status = PaymentStatus.SUCCEEDED
         this.approvedAt = approvedAt
         failedAt = null
@@ -130,7 +138,7 @@ class Payment(
         if (status == PaymentStatus.FAILED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 실패 처리할 수 있습니다." }
+        require(isOpenForGatewayOutcome()) { "대기 중이거나 승인 처리 중인 결제만 실패 처리할 수 있습니다. status=$status" }
         status = PaymentStatus.FAILED
         this.failedAt = failedAt
         approvedAt = null
@@ -143,7 +151,7 @@ class Payment(
         if (status == PaymentStatus.CANCELED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 취소할 수 있습니다." }
+        require(isOpenForGatewayOutcome()) { "대기 중이거나 승인 처리 중인 결제만 취소할 수 있습니다. status=$status" }
         status = PaymentStatus.CANCELED
         failureReason = reason?.trim()?.takeIf { it.isNotBlank() }
         failCode = null
@@ -156,7 +164,7 @@ class Payment(
         if (status == PaymentStatus.EXPIRED) {
             return
         }
-        require(status == PaymentStatus.PENDING) { "대기 중인 결제만 만료 처리할 수 있습니다." }
+        require(isOpenForGatewayOutcome()) { "대기 중이거나 승인 처리 중인 결제만 만료 처리할 수 있습니다. status=$status" }
         status = PaymentStatus.EXPIRED
         this.expiredAt = expiredAt
         approvedAt = null
@@ -188,6 +196,9 @@ class Payment(
         this.canceledAt = canceledAt
         status = if (next >= amount) PaymentStatus.REFUNDED else PaymentStatus.PARTIAL_CANCELED
     }
+
+    private fun isOpenForGatewayOutcome(): Boolean =
+        status == PaymentStatus.PENDING || status == PaymentStatus.CONFIRMING
 
     companion object {
         fun createMock(

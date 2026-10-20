@@ -39,16 +39,20 @@ class ReservationPaymentService(
             return payment
         }
 
-        require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.SUCCEEDED) {
+        require(
+            payment.status == PaymentStatus.PENDING ||
+                payment.status == PaymentStatus.CONFIRMING ||
+                payment.status == PaymentStatus.SUCCEEDED,
+        ) {
             "결제는 ${payment.status} 상태에서 확정할 수 없습니다."
         }
 
         if (reservation.status == ReservationStatus.CANCELED) {
-            throw IllegalStateException("취소된 예약은 확정할 수 없습니다.")
+            return refundCanceledReservationIfSucceeded(payment, reservation)
         }
 
         if (reservation.isExpired(now)) {
-            if (payment.status == PaymentStatus.PENDING) {
+            if (payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.CONFIRMING) {
                 payment.markExpired(now)
             } else {
                 paymentRefundService.refundAfterExpiredReservation(payment, reservation)
@@ -57,7 +61,7 @@ class ReservationPaymentService(
             return payment
         }
 
-        if (payment.status == PaymentStatus.PENDING) {
+        if (payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.CONFIRMING) {
             payment.markSucceeded(now)
         }
 
@@ -82,11 +86,15 @@ class ReservationPaymentService(
             return payment
         }
 
-        require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.FAILED) {
+        require(
+            payment.status == PaymentStatus.PENDING ||
+                payment.status == PaymentStatus.CONFIRMING ||
+                payment.status == PaymentStatus.FAILED,
+        ) {
             "결제 $paymentReference 는 ${payment.status} 상태에서 실패 처리할 수 없습니다."
         }
 
-        if (payment.status == PaymentStatus.PENDING) {
+        if (payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.CONFIRMING) {
             payment.markFailed(reason)
         }
 
@@ -119,11 +127,15 @@ class ReservationPaymentService(
             return payment
         }
 
-        require(payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.CANCELED) {
+        require(
+            payment.status == PaymentStatus.PENDING ||
+                payment.status == PaymentStatus.CONFIRMING ||
+                payment.status == PaymentStatus.CANCELED,
+        ) {
             "결제 $paymentReference 는 ${payment.status} 상태에서 취소 처리할 수 없습니다."
         }
 
-        if (payment.status == PaymentStatus.PENDING) {
+        if (payment.status == PaymentStatus.PENDING || payment.status == PaymentStatus.CONFIRMING) {
             payment.markCanceled(reason)
         }
 
@@ -141,6 +153,17 @@ class ReservationPaymentService(
 
         paymentNotificationMailService.sendCanceled(payment)
 
+        return payment
+    }
+
+    private fun refundCanceledReservationIfSucceeded(
+        payment: Payment,
+        reservation: Reservation,
+    ): Payment {
+        if (payment.status != PaymentStatus.SUCCEEDED) {
+            throw IllegalStateException("취소된 예약은 확정할 수 없습니다.")
+        }
+        paymentRefundService.refundAfterExpiredReservation(payment, reservation)
         return payment
     }
 

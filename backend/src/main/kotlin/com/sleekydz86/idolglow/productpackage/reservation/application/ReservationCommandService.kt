@@ -99,6 +99,7 @@ class ReservationCommandService(
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         reservation.validateOwner(userId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        rejectIfPaymentConfirming(payment)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "사용자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
             glowPassBenefitPolicy.assertFreeCancelAllowed(userId, reservation)
@@ -128,6 +129,7 @@ class ReservationCommandService(
     ): Reservation {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        rejectIfPaymentConfirming(payment)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "운영자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
             paymentRefundService.refundBeforeReservationCancel(
@@ -205,7 +207,18 @@ class ReservationCommandService(
         if (!reservation.isExpired(now)) {
             return reservation
         }
-        val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        expireClosedReservation(reservation, now)
+        return reservation
+    }
+
+    private fun expireClosedReservation(
+        reservation: Reservation,
+        now: LocalDateTime,
+    ) {
+        val payment = paymentRepository.findByReservationIdForUpdate(reservation.id)
+        if (payment?.status == PaymentStatus.CONFIRMING) {
+            return
+        }
         if (payment?.status == PaymentStatus.PENDING) {
             payment.markExpired(now)
         }
@@ -216,7 +229,12 @@ class ReservationCommandService(
             notificationTitle = "예약 만료",
             notificationMessage = "예약 #${reservation.id} 결제가 완료되기 전에 예약이 만료되었습니다.",
         )
-        return reservation
+    }
+
+    private fun rejectIfPaymentConfirming(payment: Payment?) {
+        require(payment?.status != PaymentStatus.CONFIRMING) {
+            "결제 처리 중입니다. 잠시 후 다시 시도해 주세요."
+        }
     }
 
     private fun findReservationTimeSlotByReservationSlotIdWithPessimisticLock(reservationSlotId: Long): ReservationSlot =

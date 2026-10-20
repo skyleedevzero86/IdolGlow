@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.payment.domain
 
+import java.time.LocalDateTime
+
 interface PaymentRepository {
     fun save(payment: Payment): Payment
 
@@ -20,4 +22,9 @@ interface PaymentRepository {
     fun findByIdempotencyKeyForUpdate(idempotencyKey: String): Payment?
 
     fun findByIdForUpdate(paymentId: Long): Payment?
+
+    fun findConfirmingUpdatedBefore(
+        before: LocalDateTime,
+        limit: Int,
+    ): List<Payment>
 }

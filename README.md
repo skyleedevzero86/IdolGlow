@@ -4,7 +4,7 @@
 <br/>
 
 외국인 이용자를 대상으로 설문조사 기반 개인화 추천을 제공하는 K-pop 뷰티·공연·체험 예약 플랫폼입니다.
-핵심은 Kotlin/Spring 기반 백엔드에서 시간 슬롯·수량·좌석 같은 예약 자원을 안전하게 관리하고, 결제 성공/실패/취소/만료에 따라 예약 상태를 일관되게 전이시키는 것입니다..
+핵심은 Kotlin/Spring 기반 백엔드에서 1시간 단위 슬롯(09~15시)을 슬롯당 1건으로 안전하게 잡고, 결제 성공/실패/취소/만료에 따라 예약 상태를 일관되게 전이시키는 것입니다.
 <br/>
 
 ## 프로젝트 목표
@@ -299,10 +299,13 @@ $env:ENCRYPT_KEY="your-encrypt-key"
 
 ## 한계와 다음 단계
 
-| 한계                                                                                                                | 다음 단계                                                  |
-| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 해결: 정기결제 실행에서 REQUIRES_NEW를 같은 클래스 안에서 호출해 트랜잭션이 분리되지 않던 문제                       | `BillingChargeTxService`로 분리하고, 실패 시 FAILED·failCount가 DB에 남는지 통합 테스트로 확인함 |
-| 결제 승인 중 토스 API 호출을 결제 행 락 안에서 한다                                                                 | 락 밖에서 호출하고 결과만 짧은 트랜잭션으로 반영           |
-| 예약 만료 직후 도착한 결제 승인 처리(자동 환불)가 없다                                                              | 만료된 예약의 승인은 즉시 취소·환불                        |
-| 사용자 취소와 결제 웹훅의 락 순서가 다르다                                                                          | 예약 → 결제 순서로 통일                                    |
-| 단위 테스트(MockK) 위주라 트랜잭션·락 동작은 검증하지 못한다                                                        | 실제 DB 통합 테스트 추가                                   |
+| 한계 | 다음 단계 |
+| --- | --- |
+| 해결: 정기결제 REQUIRES_NEW 자기 호출 | `BillingChargeTxService` 분리. `BillingChargeTxIntegrationTest`, `BillingNotificationRollbackPostgresTest` |
+| 해결: 토스 승인을 결제 행 락 안에서 호출 | `TossPaymentConfirmTxService`로 잠금·기록을 나누고 HTTP는 트랜잭션 밖. `TossConfirmOutsideTxPostgresTest` |
+| 해결: 만료 직후 승인 자동 환불 없음 | 만료 예약은 토스 미호출, 늦은 승인은 SYSTEM 환불. `TossPaymentConfirmServiceTest`, `ReservationPaymentServiceTest` |
+| 해결: 사용자 취소와 웹훅 락 순서가 다름 | 예약 → 결제 순서로 통일. `ReservationPaymentLockOrderPostgresTest`에서 데드락 0건, 결제 FOR UPDATE는 예약 행을 잠그지 않음 |
+| 해결: MockK만으로 락을 검증하지 못함 | Testcontainers PostgreSQL 17. `ConcurrentReservationPostgresTest`, `PostgresSmokeTest` |
+| 사용자 취소 경로에서 환불 실패가 예외로 취소 자체를 막음 | 실패 기록을 남기고 관리자가 재시도할 수 있게 정리 |
+| 관리자 환불 재시도가 실패하면 예외 구조가 사용자 취소와 같음 | 시스템 자동 환불처럼 실패 기록만 남기는 경로와 분리 |
+| 환불 HTTP(`PaymentRefundService`)는 아직 트랜잭션 안에서 호출 | 승인 분리와 같이 트랜잭션 밖으로 빼기 |
