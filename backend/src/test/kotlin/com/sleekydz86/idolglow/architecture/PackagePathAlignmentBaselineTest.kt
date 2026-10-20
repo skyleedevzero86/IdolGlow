@@ -2,13 +2,17 @@ package com.sleekydz86.idolglow.architecture
 
 import com.sleekydz86.idolglow.architecture.support.ArchitectureSourceScanner
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@DisplayName("Package Path Alignment Baseline")
 class PackagePathAlignmentBaselineTest {
+    @DisplayName("패키지 선언과 폴더 경로 불일치 건수가 기준값을 초과하지 않는다")
     @Test
-    fun `패키지_선언과_폴더_경로_불일치_건수가_기준값을_초과하지_않는다`() {
+    fun packagePathMismatchStaysWithinBaseline() {
+
         // given
         val sourceRoot = 메인코틀린소스루트()
 

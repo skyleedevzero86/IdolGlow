@@ -13,16 +13,14 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Repository
 class BnrRepositoryImpl(
     private val jpaRepository: BnrJpaRepository,
     private val entityManager: EntityManager,
 ) : BnrRepository {
-    private val fmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
     override fun findList(criteria: BnrListCriteria): List<BnrItem> {
         val pageable =
             PageRequest.of(
@@ -156,7 +154,7 @@ class BnrRepositoryImpl(
             sortOrder = e.sortOrdr ?: 0,
             activeYn = e.reflctAt,
             createdBy = e.frstRegisterId,
-            createdAtFormatted = e.frstRegistPnttm?.format(fmt),
+            createdAtFormatted = IdolGlowDateTimes.toDisplay(e.frstRegistPnttm),
             domainName = e.domain?.domainNm,
         )
 }

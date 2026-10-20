@@ -1,7 +1,5 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.sleekydz86.idolglow.notification.application.NotificationCommandService
-import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeAttempt
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
@@ -12,13 +10,13 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaReposi
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.util.UUID
 
 @Service
@@ -29,7 +27,6 @@ class BillingChargeTxService(
     private val methodRepository: TossBillingMethodJpaRepository,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val userRepository: UserRepository,
-    private val notificationCommandService: NotificationCommandService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -174,7 +171,6 @@ class BillingChargeTxService(
             attempt.markFailed(message, response.rawBody)
             charge.markFailed(message, response.rawBody)
             subscription?.markChargeFailed(now)
-            notifyChargeFailed(charge.userId, message)
             return BillingChargeFinalizeResult(charge = charge, failureMessage = message)
         }
         val paymentKey = response.json.path("paymentKey").asText(null)
@@ -236,28 +232,7 @@ class BillingChargeTxService(
         }
     }
 
-    private fun notifyChargeFailed(
-        userId: Long,
-        message: String,
-    ) {
-        runCatching {
-            notificationCommandService.create(
-                userId = userId,
-                type = NotificationType.PAYMENT_FAILED,
-                title = "Glow Pass 결제 실패",
-                message = "자동결제에 실패했습니다. 다른 카드로 다시 결제할 수 있습니다. ($message)",
-                link = "/billing",
-            )
-        }.onFailure { error ->
-            log.warn("빌링 실패 알림 발송 실패 userId={}", userId, error)
-        }
-    }
-
-    private fun parseDateTime(raw: String?): LocalDateTime? {
-        if (raw.isNullOrBlank()) return null
-        return runCatching { OffsetDateTime.parse(raw).toLocalDateTime() }.getOrNull()
-            ?: runCatching { LocalDateTime.parse(raw) }.getOrNull()
-    }
+    private fun parseDateTime(raw: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(raw)
 }
 
 data class PreparedBillingCharge(

@@ -6,8 +6,10 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
+@DisplayName("Glow Alert Query Service")
 class GlowAlertQueryServiceTest {
     private val notificationRepository = mockk<NotificationRepository>()
     private lateinit var service: GlowAlertQueryService
@@ -18,8 +20,10 @@ class GlowAlertQueryServiceTest {
         service = GlowAlertQueryService(notificationRepository)
     }
 
+    @DisplayName("게스트 알림 조회는 페이지 메타데이터를 반환한다")
     @Test
-    fun `게스트_알림_조회는_페이지_메타데이터를_반환한다`() {
+    fun guestAlertQueryReturnsPageMetadata() {
+
         // given
 
         // when
@@ -32,8 +36,10 @@ class GlowAlertQueryServiceTest {
         assertTrue(page.totalElements >= 0)
     }
 
+    @DisplayName("게스트 알림 읽음 처리를 지원한다")
     @Test
-    fun `게스트_알림_읽음_처리를_지원한다`() {
+    fun guestAlertReadIsSupported() {
+
         // given
 
         // when
@@ -43,8 +49,10 @@ class GlowAlertQueryServiceTest {
         assertTrue(marked)
     }
 
+    @DisplayName("로그인 사용자는 저장소 알림을 조회한다")
     @Test
-    fun `로그인_사용자는_저장소_알림을_조회한다`() {
+    fun loggedInUserReadsStoredAlerts() {
+
         // given
         every { notificationRepository.findVisibleByUserId(99L, any()) } returns emptyList()
         every { notificationRepository.countUnreadVisibleByUserId(99L, any()) } returns 0L

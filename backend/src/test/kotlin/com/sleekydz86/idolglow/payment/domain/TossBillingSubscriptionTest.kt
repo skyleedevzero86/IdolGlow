@@ -4,30 +4,40 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
+@DisplayName("Toss Billing Subscription")
 class TossBillingSubscriptionTest {
+    @DisplayName("결제 성공 시 결제일은 기존 nextBillingAt 기준 한 달 뒤로 유지된다")
     @Test
-    fun `결제 성공 시 결제일은 기존 nextBillingAt 기준 한 달 뒤로 유지된다`() {
+    fun successKeepsNextBillingFromCurrentDue() {
+        // given
         val due = LocalDateTime.of(2026, 10, 1, 0, 0)
         val paidAt = due.plusDays(3)
         val subscription = subscription(nextBillingAt = due)
 
+        // when
         subscription.markCharged(paidAt)
 
+        // then
         assertEquals(due.plusMonths(1), subscription.nextBillingAt)
         assertEquals(0, subscription.failCount)
         assertNull(subscription.retryAt)
         assertEquals(TossBillingSubscriptionStatus.ACTIVE, subscription.status)
     }
 
+    @DisplayName("결제 실패 3회면 PAUSED 된다")
     @Test
-    fun `결제 실패 3회면 PAUSED 된다`() {
+    fun pausesAfterThreeFailures() {
+        // given
         val now = LocalDateTime.of(2026, 10, 16, 12, 0)
         val subscription = subscription(nextBillingAt = now)
 
+        // when
         subscription.markChargeFailed(now)
+        // then
         assertEquals(1, subscription.failCount)
         assertEquals(now.plusDays(1), subscription.retryAt)
 
@@ -41,12 +51,16 @@ class TossBillingSubscriptionTest {
         assertNull(subscription.retryAt)
     }
 
+    @DisplayName("해지 예약 기간 안에는 멤버십이 유효하고 기간이 지나면 무효다")
     @Test
-    fun `해지 예약 기간 안에는 멤버십이 유효하고 기간이 지나면 무효다`() {
+    fun cancelScheduledStaysValidUntilEndsAt() {
+        // given
         val endsAt = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscription = subscription(nextBillingAt = endsAt)
+        // when
         subscription.scheduleCancel(LocalDateTime.of(2026, 10, 16, 0, 0))
 
+        // then
         assertEquals(TossBillingSubscriptionStatus.CANCEL_SCHEDULED, subscription.status)
         assertTrue(subscription.isMembershipActive(endsAt.minusDays(1)))
         assertTrue(subscription.isMembershipActive(endsAt))

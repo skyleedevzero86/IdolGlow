@@ -4,12 +4,16 @@ import com.sleekydz86.idolglow.admin.application.dto.AdminUserSummaryResult
 import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
+@DisplayName("관리자 회원 웹 매퍼")
 class AdminUserWebMapperTest {
+    @DisplayName("summary result를 기존 API 응답 형식으로 변환한다")
     @Test
-    fun `summary_result_를_기존_api_응답_형식으로_변환한다`() {
+    fun mapsSummaryResultToExistingApiShape() {
+
         // given
         val result =
             AdminUserSummaryResult(
@@ -35,7 +39,7 @@ class AdminUserWebMapperTest {
         assertEquals("관리자", response.roleLabel)
         assertEquals("APPROVED", response.accountStatus)
         assertEquals("승인", response.accountStatusLabel)
-        assertEquals("2026.06.18 15:30", response.lastLoginAt)
+        assertEquals("2026-06-18 15:30", response.lastLoginAt)
         assertEquals(listOf("GOOGLE"), response.oauthProviders)
     }
 }

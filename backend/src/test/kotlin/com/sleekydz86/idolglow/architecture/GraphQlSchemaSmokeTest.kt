@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.architecture
 
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -10,6 +11,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@DisplayName("Graph Ql Schema Smoke")
 class GraphQlSchemaSmokeTest {
     @LocalServerPort
     private var port: Int = 0
@@ -25,8 +27,10 @@ class GraphQlSchemaSmokeTest {
                 .build()
     }
 
+    @DisplayName("health 쿼리가 정상 응답을 반환한다")
     @Test
-    fun `health_쿼리가_정상_응답을_반환한다`() {
+    fun healthQueryReturnsOk() {
+
         // given
         val query = """{"query":"{ health }"}"""
 
@@ -48,8 +52,10 @@ class GraphQlSchemaSmokeTest {
             .isEqualTo("정상")
     }
 
+    @DisplayName("핵심 mutation 필드가 스키마에 등록되어 있다")
     @Test
-    fun `핵심_mutation_필드가_스키마에_등록되어_있다`() {
+    fun coreMutationFieldsAreRegistered() {
+
         // given
         val query =
             """

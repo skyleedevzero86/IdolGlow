@@ -23,8 +23,7 @@ import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import javax.sql.DataSource
 import kotlin.math.round
 
@@ -41,8 +40,6 @@ class AdminServerStatusService(
     private val memoryBean = ManagementFactory.getMemoryMXBean()
     private val runtimeBean = ManagementFactory.getRuntimeMXBean()
     private val threadBean = ManagementFactory.getThreadMXBean()
-    private val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-
     fun getServerStatus(): AdminServerStatusResult {
         val memory = memoryStatus()
         val disk = diskStatus()
@@ -57,7 +54,7 @@ class AdminServerStatusService(
             )
 
         return AdminServerStatusResult(
-            generatedAt = OffsetDateTime.now().format(dateTimeFormatter),
+            generatedAt = IdolGlowDateTimes.toDisplay(OffsetDateTime.now()).orEmpty(),
             overallStatus = resolveOverallStatus(infrastructure),
             summary =
                 AdminServerSummaryResult(
@@ -168,11 +165,7 @@ class AdminServerStatusService(
             peakThreadCount = threadBean.peakThreadCount,
             uptimeSeconds = Duration.ofMillis(runtimeBean.uptime).seconds,
             startTime =
-                Instant
-                    .ofEpochMilli(runtimeBean.startTime)
-                    .atZone(ZoneId.systemDefault())
-                    .toOffsetDateTime()
-                    .format(dateTimeFormatter),
+                IdolGlowDateTimes.toDisplay(Instant.ofEpochMilli(runtimeBean.startTime)).orEmpty(),
         )
     }
 

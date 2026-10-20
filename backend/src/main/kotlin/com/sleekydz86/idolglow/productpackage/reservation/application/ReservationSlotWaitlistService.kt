@@ -8,10 +8,10 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStat
 import com.sleekydz86.idolglow.productpackage.reservation.infrastructure.ReservationJpaRepository
 import com.sleekydz86.idolglow.productpackage.reservation.infrastructure.ReservationSlotJpaRepository
 import com.sleekydz86.idolglow.productpackage.reservation.infrastructure.ReservationSlotWaitlistJpaRepository
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Transactional
 @Service
@@ -93,8 +93,9 @@ class ReservationSlotWaitlistService(
         }
 
         val product = slot.product
-        val dateStr = slot.reservationDate.format(DATE_FMT)
-        val timeStr = "${formatTime(slot.startTime)}~${formatTime(slot.endTime)}"
+        val dateStr = IdolGlowDateTimes.toDisplay(slot.reservationDate).orEmpty()
+        val timeStr =
+            "${IdolGlowDateTimes.toDisplay(slot.startTime)}~${IdolGlowDateTimes.toDisplay(slot.endTime)}"
         val message = "\"${product.name}\" $dateStr $timeStr 에 빈자리가 생겼습니다. 지금 예약해 보세요."
 
         entries.forEach { entry ->
@@ -111,12 +112,5 @@ class ReservationSlotWaitlistService(
 
     fun clearWaitlistForSlot(reservationSlotId: Long) {
         reservationSlotWaitlistJpaRepository.deleteByReservationSlotId(reservationSlotId)
-    }
-
-    companion object {
-        private val DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE
-        private val TIME_FMT = DateTimeFormatter.ofPattern("HH:mm")
-
-        private fun formatTime(t: java.time.LocalTime): String = t.format(TIME_FMT)
     }
 }

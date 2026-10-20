@@ -2,7 +2,7 @@ package com.sleekydz86.idolglow.airportcrowd.adapter.web
 
 import com.sleekydz86.idolglow.airportcrowd.application.ArrivalCongestionView
 import com.sleekydz86.idolglow.airportcrowd.domain.DepartureCrowdLevel
-import java.time.format.DateTimeFormatter
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 
 data class ArrivalCongestionResponse(
     val terminal: String,
@@ -19,8 +19,6 @@ data class ArrivalCongestionResponse(
     val levelLabel: String,
 ) {
     companion object {
-        private val FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
         fun from(view: ArrivalCongestionView): ArrivalCongestionResponse =
             ArrivalCongestionResponse(
                 terminal = view.terminal,
@@ -31,8 +29,8 @@ data class ArrivalCongestionResponse(
                 korean = view.korean,
                 foreigner = view.foreigner,
                 totalFlow = view.totalFlow,
-                scheduleTime = view.scheduleTime?.format(FORMATTER),
-                estimatedTime = view.estimatedTime?.format(FORMATTER),
+                scheduleTime = IdolGlowDateTimes.toDisplay(view.scheduleTime),
+                estimatedTime = IdolGlowDateTimes.toDisplay(view.estimatedTime),
                 level = view.level.name.lowercase(),
                 levelLabel =
                     when (view.level) {

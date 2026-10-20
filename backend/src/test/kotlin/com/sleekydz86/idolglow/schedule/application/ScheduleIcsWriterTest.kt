@@ -2,13 +2,17 @@ package com.sleekydz86.idolglow.schedule.application
 
 import com.sleekydz86.idolglow.schedule.domain.dto.ScheduleResponse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.time.ZoneId
 
+@DisplayName("Schedule Ics Writer")
 class ScheduleIcsWriterTest {
+    @DisplayName("ics 본문에 uid 요약 알람 정보가 포함된다")
     @Test
-    fun `ics_본문에_uid_요약_알람_정보가_포함된다`() {
+    fun icsContainsUidSummaryAndAlarm() {
+
         // given
         val schedule =
             ScheduleResponse(

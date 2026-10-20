@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.ninjasquad.springmockk.MockkBean
+import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
 import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -31,6 +33,7 @@ import java.util.UUID
 
 @SpringBootTest
 @ActiveProfiles("test")
+@DisplayName("Billing Charge Tx Integration")
 class BillingChargeTxIntegrationTest {
     @Autowired
     private lateinit var executor: BillingChargeExecutor
@@ -53,22 +56,32 @@ class BillingChargeTxIntegrationTest {
     @MockkBean
     private lateinit var tossPaymentsApiClient: TossPaymentsApiClient
 
+    @MockkBean
+    private lateinit var notificationCommandService: NotificationCommandService
+
     private val objectMapper = ObjectMapper()
 
     @BeforeEach
     fun stubTossLookup() {
-        clearMocks(tossPaymentsApiClient)
+        clearMocks(tossPaymentsApiClient, notificationCommandService)
         every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
+        every {
+            notificationCommandService.create(any(), any(), any(), any(), any())
+        } throws IllegalStateException("알림 저장 실패")
     }
 
+    @DisplayName("자동결제가 실패하면 FAILED와 failCount가 DB에 남는다")
     @Test
-    fun `자동결제가 실패하면 FAILED와 failCount가 DB에 남는다`() {
+    fun persistsFailedStatusAndFailCount() {
+        // given
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscriptionId = persistActiveSubscription(due)
         stubTossChargeFailure()
 
+        // when
         val thrown = runCatching { executor.chargeSubscription(subscriptionId, due) }
 
+        // then
         assertTrue(thrown.isFailure)
         val sub = subscriptionRepository.findById(subscriptionId).orElseThrow()
         assertEquals(1, sub.failCount)
@@ -80,15 +93,19 @@ class BillingChargeTxIntegrationTest {
         assertEquals(TossBillingChargeStatus.FAILED, attempt.status)
     }
 
+    @DisplayName("같은 회차가 이미 DONE 이면 토스를 다시 호출하지 않는다")
     @Test
-    fun `같은 회차가 이미 DONE 이면 토스를 다시 호출하지 않는다`() {
+    fun skipsTossWhenChargeAlreadyDone() {
+        // given
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscriptionId = persistActiveSubscription(due)
         persistDoneCharge(subscriptionId, due)
         stubTossChargeSuccess()
 
+        // when
         val result = executor.chargeSubscription(subscriptionId, due)
 
+        // then
         assertEquals(TossBillingChargeStatus.DONE, result.status)
         verify(exactly = 0) {
             tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any())

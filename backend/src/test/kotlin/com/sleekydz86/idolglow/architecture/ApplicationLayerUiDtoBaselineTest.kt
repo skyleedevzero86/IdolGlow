@@ -2,13 +2,17 @@ package com.sleekydz86.idolglow.architecture
 
 import com.sleekydz86.idolglow.architecture.support.ArchitectureSourceScanner
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@DisplayName("Application Layer Ui Dto Baseline")
 class ApplicationLayerUiDtoBaselineTest {
+    @DisplayName("application 계층의 ui dto 참조 건수가 기준값을 초과하지 않는다")
     @Test
-    fun `application_계층의_ui_dto_참조_건수가_기준값을_초과하지_않는다`() {
+    fun applicationLayerUiDtoCountStaysWithinBaseline() {
+
         // given
         val sourceRoot = 메인코틀린소스루트()
 

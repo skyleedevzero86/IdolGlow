@@ -4,54 +4,72 @@ import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@DisplayName("Reservation Slot Domain")
 class ReservationSlotDomainTest {
+    @DisplayName("선점 후 동일 예약이면 hold 가 유지된다")
     @Test
-    fun `선점 후 동일 예약이면 hold 가 유지된다`() {
+    fun keepsHoldForSameReservation() {
+        // given
         val slot = sampleSlot()
         val expiresAt = LocalDateTime.now().plusMinutes(15)
 
+        // when
         slot.hold(reservationId = 1L, expiresAt = expiresAt)
 
+        // then
         assertTrue(isCurrentlyHeld(slot))
     }
 
+    @DisplayName("다른 예약이 선점 중이면 hold 를 거부한다")
     @Test
-    fun `다른 예약이 선점 중이면 hold 를 거부한다`() {
+    fun rejectsHoldWhenSlotHeldByOther() {
+        // given
         val slot = sampleSlot()
         val expiresAt = LocalDateTime.now().plusMinutes(15)
+        // when
         slot.hold(reservationId = 1L, expiresAt = expiresAt)
 
+        // then
         assertThrows(IllegalStateException::class.java) {
             slot.hold(reservationId = 2L, expiresAt = expiresAt)
         }
     }
 
+    @DisplayName("선점 후 결제 확정 시 슬롯이 예약 완료된다")
     @Test
-    fun `선점 후 결제 확정 시 슬롯이 예약 완료된다`() {
+    fun booksSlotOnPaymentConfirm() {
+        // given
         val slot = sampleSlot()
         val expiresAt = LocalDateTime.now().plusMinutes(15)
         slot.hold(reservationId = 1L, expiresAt = expiresAt)
 
+        // when
         slot.confirmBooking(reservationId = 1L)
 
+        // then
         assertTrue(slot.isStatusBooked)
         assertFalse(isCurrentlyHeld(slot))
     }
 
+    @DisplayName("선점 해제 후 슬롯을 다시 선점할 수 있다")
     @Test
-    fun `선점 해제 후 슬롯을 다시 선점할 수 있다`() {
+    fun allowsHoldAfterRelease() {
+        // given
         val slot = sampleSlot()
         val expiresAt = LocalDateTime.now().plusMinutes(15)
         slot.hold(reservationId = 1L, expiresAt = expiresAt)
 
         slot.releaseHold(reservationId = 1L)
+        // when
         slot.hold(reservationId = 2L, expiresAt = expiresAt)
 
+        // then
         assertTrue(isCurrentlyHeld(slot))
     }
 

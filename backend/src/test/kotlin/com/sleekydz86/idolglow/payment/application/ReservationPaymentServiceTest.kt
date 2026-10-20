@@ -15,11 +15,13 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@DisplayName("Reservation Payment Service")
 class ReservationPaymentServiceTest {
     private val paymentRepository = mockk<PaymentRepository>()
     private val reservationRepository = mockk<ReservationRepository>()
@@ -43,8 +45,10 @@ class ReservationPaymentServiceTest {
             )
     }
 
+    @DisplayName("결제 성공 시 예약을 확정한다")
     @Test
-    fun `결제 성공 시 예약을 확정한다`() {
+    fun confirmsReservationOnPaymentSuccess() {
+        // given
         val fixture = pendingFixture()
         every { paymentRepository.findByPaymentReferenceForUpdate("pay_ok") } returns fixture.payment
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
@@ -53,35 +57,45 @@ class ReservationPaymentServiceTest {
             fixture.reservation
         }
 
+        // when
         val result = service.handlePaymentSucceeded("pay_ok")
 
+        // then
         assertEquals(PaymentStatus.SUCCEEDED, result.status)
         verify(exactly = 1) { reservationCommandService.confirmReservation(1L) }
         verify(exactly = 1) { paymentNotificationMailService.sendSucceeded(fixture.payment) }
     }
 
+    @DisplayName("결제 실패 시 예약을 취소한다")
     @Test
-    fun `결제 실패 시 예약을 취소한다`() {
+    fun cancelsReservationOnPaymentFailure() {
+        // given
         val fixture = pendingFixture(paymentReference = "pay_fail")
         every { paymentRepository.findByPaymentReferenceForUpdate("pay_fail") } returns fixture.payment
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
 
+        // when
         val result = service.handlePaymentFailed("pay_fail", "카드 오류")
 
+        // then
         assertEquals(PaymentStatus.FAILED, result.status)
         assertEquals(ReservationStatus.CANCELED, fixture.reservation.status)
         verify(exactly = 1) { reservationSlotWaitlistService.notifyWaitersForReleasedSlot(fixture.slot.id) }
     }
 
+    @DisplayName("만료된 예약은 결제 성공 요청 시 만료 처리된다")
     @Test
-    fun `만료된 예약은 결제 성공 요청 시 만료 처리된다`() {
+    fun expiresReservationOnLatePaymentSuccess() {
+        // given
         val fixture = pendingFixture(paymentReference = "pay_late", expired = true)
         every { paymentRepository.findByPaymentReferenceForUpdate("pay_late") } returns fixture.payment
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
         every { reservationCommandService.expirePendingReservation(1L, any()) } returns fixture.reservation
 
+        // when
         val result = service.handlePaymentSucceeded("pay_late")
 
+        // then
         assertEquals(PaymentStatus.EXPIRED, result.status)
         verify(exactly = 1) { reservationCommandService.expirePendingReservation(1L, any()) }
         verify(exactly = 0) { reservationCommandService.confirmReservation(any()) }
