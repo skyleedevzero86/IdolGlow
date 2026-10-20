@@ -299,13 +299,14 @@ $env:ENCRYPT_KEY="your-encrypt-key"
 
 ## 한계와 다음 단계
 
-| 한계 | 다음 단계 |
-| --- | --- |
-| 해결: 정기결제 REQUIRES_NEW 자기 호출 | `BillingChargeTxService` 분리. `BillingChargeTxIntegrationTest`, `BillingNotificationRollbackPostgresTest` |
-| 해결: 토스 승인을 결제 행 락 안에서 호출 | `TossPaymentConfirmTxService`로 잠금·기록을 나누고 HTTP는 트랜잭션 밖. `TossConfirmOutsideTxPostgresTest` |
-| 해결: 만료 직후 승인 자동 환불 없음 | 만료 예약은 토스 미호출, 늦은 승인은 SYSTEM 환불. `TossPaymentConfirmServiceTest`, `ReservationPaymentServiceTest` |
-| 해결: 사용자 취소와 웹훅 락 순서가 다름 | 예약 → 결제 순서로 통일. `ReservationPaymentLockOrderPostgresTest`에서 데드락 0건, 결제 FOR UPDATE는 예약 행을 잠그지 않음 |
-| 해결: MockK만으로 락을 검증하지 못함 | Testcontainers PostgreSQL 17. `ConcurrentReservationPostgresTest`, `PostgresSmokeTest` |
-| 사용자 취소 경로에서 환불 실패가 예외로 취소 자체를 막음 | 실패 기록을 남기고 관리자가 재시도할 수 있게 정리 |
-| 관리자 환불 재시도가 실패하면 예외 구조가 사용자 취소와 같음 | 시스템 자동 환불처럼 실패 기록만 남기는 경로와 분리 |
-| 환불 HTTP(`PaymentRefundService`)는 아직 트랜잭션 안에서 호출 | 승인 분리와 같이 트랜잭션 밖으로 빼기 |
+| 한계                                                                                                                              | 다음 단계                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 해결: 정기결제 REQUIRES_NEW 자기 호출                                                                                             | `BillingChargeTxService` 분리. `BillingChargeTxIntegrationTest`, `BillingNotificationRollbackPostgresTest`                 |
+| 해결: 토스 승인을 결제 행 락 안에서 호출                                                                                          | `TossPaymentConfirmTxService`로 잠금·기록을 나누고 HTTP는 트랜잭션 밖. `TossConfirmOutsideTxPostgresTest`                  |
+| 해결: 만료 직후 승인 자동 환불 없음                                                                                               | 만료 예약은 토스 미호출, 늦은 승인은 SYSTEM 환불. `TossPaymentConfirmServiceTest`, `ReservationPaymentServiceTest`         |
+| 해결: 사용자 취소와 웹훅 락 순서가 다름                                                                                           | 예약 → 결제 순서로 통일. `ReservationPaymentLockOrderPostgresTest`에서 데드락 0건, 결제 FOR UPDATE는 예약 행을 잠그지 않음 |
+| 해결: MockK만으로 락을 검증하지 못함                                                                                              | Testcontainers PostgreSQL 17. `ConcurrentReservationPostgresTest`, `PostgresSmokeTest`                                     |
+| 사용자 취소 경로에서 환불 실패가 예외로 취소 자체를 막음                                                                          | 실패 기록을 남기고 관리자가 재시도할 수 있게 정리                                                                          |
+| 관리자 환불 재시도가 실패하면 예외 구조가 사용자 취소와 같음                                                                      | 시스템 자동 환불처럼 실패 기록만 남기는 경로와 분리                                                                        |
+| 환불 HTTP(`PaymentRefundService`)는 아직 트랜잭션 안에서 호출                                                                     | 승인 분리와 같이 트랜잭션 밖으로 빼기                                                                                      |
+| 승인 처리 중 결제를 10분 뒤 실패로 정리한 다음 토스가 실제로 승인했다면, 이후 웹훅은 이미 FAILED인 결제를 무시해 환불 경로가 없다 | FAILED 결제에 DONE 웹훅이 오면 자동 환불하거나 관리자에게 알림                                                             |
