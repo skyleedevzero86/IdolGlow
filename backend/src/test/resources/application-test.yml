@@ -65,6 +65,10 @@ platform:
 payment:
   mock:
     webhook-secret: test-mock-webhook-secret
+  toss:
+    billing:
+      crypto:
+        secret: test-billing-crypto-secret
 
 jasypt:
   encryptor:
