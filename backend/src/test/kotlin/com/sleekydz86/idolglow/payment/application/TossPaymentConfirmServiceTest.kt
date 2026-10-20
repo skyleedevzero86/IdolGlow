@@ -10,6 +10,7 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -87,6 +88,23 @@ class TossPaymentConfirmServiceTest {
         // then
         assertEquals(PaymentStatus.EXPIRED, result.status)
         verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
+    }
+
+    @DisplayName("멱등 키가 없으면 결제마다 고정된 키로 토스 승인을 요청한다")
+    @Test
+    fun usesStableIdempotencyKeyPerPayment() {
+        // given
+        val payment = tossPayment()
+        val keySlot = slot<String?>()
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every { tossPaymentsApiClient.confirm(any(), any(), any(), captureNullable(keySlot)) } returns
+            TossApiResponse(400, null, """{"message":"승인 거절"}""")
+
+        // when
+        service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals("confirm-${payment.orderId}", keySlot.captured)
     }
 
     private fun tossPayment(expired: Boolean = false): Payment {

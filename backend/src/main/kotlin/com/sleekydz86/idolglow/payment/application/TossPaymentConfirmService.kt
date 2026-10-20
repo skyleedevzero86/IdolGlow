@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Transactional
 @Service
@@ -82,7 +81,7 @@ class TossPaymentConfirmService(
                 paymentKey = paymentKey,
                 orderId = orderId,
                 amount = amountLong,
-                idempotencyKey = idempotencyKey ?: "idem-confirm-${payment.id}-${UUID.randomUUID()}",
+                idempotencyKey = idempotencyKey ?: "confirm-${payment.orderId}",
             )
 
         paymentLogCommandService.append(
