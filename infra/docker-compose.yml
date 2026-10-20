@@ -76,8 +76,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:?infra/.env에 MINIO_ROOT_USER를 설정하세요}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:?infra/.env에 MINIO_ROOT_PASSWORD를 설정하세요}"
       TZ: Asia/Seoul
     volumes:
       - minio_data:/data
@@ -96,7 +96,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
       mc mb --ignore-existing local/idolglow &&
       mc anonymous set download local/idolglow &&
       touch /tmp/ready &&
@@ -123,22 +123,22 @@ services:
       TZ: Asia/Seoul
       SERVER_PORT: 9090
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod,select}
-      JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD:-idolglow-dev-secret-2026!}
+      JASYPT_ENCRYPTOR_PASSWORD: "${JASYPT_ENCRYPTOR_PASSWORD:?infra/.env에 JASYPT_ENCRYPTOR_PASSWORD를 설정하세요}"
       DB_URL: jdbc:postgresql://postgres:5432/idolglow
       DB_USERNAME: postgres
       DB_PASSWORD: "${DB_PASSWORD:?infra/.env에 DB_PASSWORD를 설정하세요}"
       MINIO_ENABLED: "true"
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      MINIO_ACCESS_KEY: "${MINIO_ROOT_USER}"
+      MINIO_SECRET_KEY: "${MINIO_ROOT_PASSWORD}"
       MINIO_BUCKET: idolglow
       MINIO_PUBLIC_BASE_URL: http://localhost:9000/idolglow
       MINIO_PUBLIC_READ_PROFILE_OBJECTS: "true"
       MINIO_PUBLIC_READ_WEBZINE_OBJECTS: "true"
       APP_PUBLIC_BASE_URL: http://localhost:9090
       APP_VERSION: ${APP_VERSION:-unknown}
-      MOCK_PAYMENT_WEBHOOK_SECRET: ${MOCK_PAYMENT_WEBHOOK_SECRET:-dev-mock-webhook-secret}
-      TOSS_BILLING_CRYPTO_SECRET: ${TOSS_BILLING_CRYPTO_SECRET:-idolglow-local-billing-crypto-secret}
+      MOCK_PAYMENT_WEBHOOK_SECRET: "${MOCK_PAYMENT_WEBHOOK_SECRET:?infra/.env에 MOCK_PAYMENT_WEBHOOK_SECRET를 설정하세요}"
+      TOSS_BILLING_CRYPTO_SECRET: "${TOSS_BILLING_CRYPTO_SECRET:?infra/.env에 TOSS_BILLING_CRYPTO_SECRET를 설정하세요}"
       TOSS_BILLING_SCHEDULER_ENABLED: ${TOSS_BILLING_SCHEDULER_ENABLED:-true}
       TOSS_BILLING_AMOUNT: ${TOSS_BILLING_AMOUNT:-4900}
       TOSS_BILLING_ORDER_NAME: ${TOSS_BILLING_ORDER_NAME:-IdolGlow 월간 구독}
