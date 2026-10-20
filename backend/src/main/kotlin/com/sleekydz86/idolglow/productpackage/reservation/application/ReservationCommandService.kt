@@ -73,7 +73,12 @@ class ReservationCommandService(
 
         val savedReservation = reservationRepository.save(reservation)
         reservationSlot.hold(savedReservation.id, expiresAt, now)
-        val paymentRef = createPaymentReference(savedReservation.id, now)
+        val paymentRef =
+            paymentReferenceOf(
+                useTossProvider = tossPaymentProperties.useTossProvider,
+                reservationId = savedReservation.id,
+                now = now,
+            )
         val payment =
             paymentRepository.save(
                 if (tossPaymentProperties.useTossProvider) {
@@ -94,6 +99,7 @@ class ReservationCommandService(
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         reservation.validateOwner(userId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        rejectIfPaymentConfirming(payment)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "사용자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
             glowPassBenefitPolicy.assertFreeCancelAllowed(userId, reservation)
@@ -123,6 +129,7 @@ class ReservationCommandService(
     ): Reservation {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        rejectIfPaymentConfirming(payment)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "운영자가 예약을 취소했습니다."
         if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
             paymentRefundService.refundBeforeReservationCancel(
@@ -166,19 +173,6 @@ class ReservationCommandService(
         return reservation
     }
 
-    fun expirePendingReservations(batchSize: Int = 100) {
-        while (true) {
-            val now = LocalDateTime.now()
-            val expiredIds = reservationRepository.findExpiredPendingIds(batchSize, now)
-            if (expiredIds.isEmpty()) {
-                return
-            }
-            expiredIds.forEach { reservationId ->
-                expirePendingReservation(reservationId, now)
-            }
-        }
-    }
-
     fun notifyExpiringSoonReservations(warningSeconds: Long = 300) {
         val now = LocalDateTime.now()
         val warningThreshold = now.plusSeconds(warningSeconds)
@@ -213,7 +207,18 @@ class ReservationCommandService(
         if (!reservation.isExpired(now)) {
             return reservation
         }
-        val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        expireClosedReservation(reservation, now)
+        return reservation
+    }
+
+    private fun expireClosedReservation(
+        reservation: Reservation,
+        now: LocalDateTime,
+    ) {
+        val payment = paymentRepository.findByReservationIdForUpdate(reservation.id)
+        if (payment?.status == PaymentStatus.CONFIRMING) {
+            return
+        }
         if (payment?.status == PaymentStatus.PENDING) {
             payment.markExpired(now)
         }
@@ -224,7 +229,12 @@ class ReservationCommandService(
             notificationTitle = "예약 만료",
             notificationMessage = "예약 #${reservation.id} 결제가 완료되기 전에 예약이 만료되었습니다.",
         )
-        return reservation
+    }
+
+    private fun rejectIfPaymentConfirming(payment: Payment?) {
+        require(payment?.status != PaymentStatus.CONFIRMING) {
+            "결제 처리 중입니다. 잠시 후 다시 시도해 주세요."
+        }
     }
 
     private fun findReservationTimeSlotByReservationSlotIdWithPessimisticLock(reservationSlotId: Long): ReservationSlot =
@@ -298,11 +308,6 @@ class ReservationCommandService(
         }
     }
 
-    private fun createPaymentReference(
-        reservationId: Long,
-        now: LocalDateTime,
-    ): String = "pay_mock_${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
-
     private fun resolveMembershipPricing(
         product: Product,
         userId: Long,
@@ -338,5 +343,14 @@ class ReservationCommandService(
     companion object {
         private val PAYMENT_REFERENCE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
         private val MEMBER_PRICE_RATE = BigDecimal("0.9")
+
+        internal fun paymentReferenceOf(
+            useTossProvider: Boolean,
+            reservationId: Long,
+            now: LocalDateTime,
+        ): String {
+            val prefix = if (useTossProvider) "pay_toss_" else "pay_mock_"
+            return "$prefix${now.format(PAYMENT_REFERENCE_TIME_FORMATTER)}_$reservationId"
+        }
     }
 }

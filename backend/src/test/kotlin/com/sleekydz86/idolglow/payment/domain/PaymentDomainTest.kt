@@ -53,6 +53,17 @@ class PaymentDomainTest {
         }
     }
 
+    @DisplayName("승인 처리 중인 결제는 승인될 수 있다")
+    @Test
+    fun confirmingPaymentCanSucceed() {
+        val payment = samplePendingPayment()
+        payment.markConfirming()
+
+        payment.markSucceeded()
+
+        assertEquals(PaymentStatus.SUCCEEDED, payment.status)
+    }
+
     @DisplayName("대기 중인 결제는 만료 처리할 수 있다")
     @Test
     fun pendingPaymentCanExpire() {

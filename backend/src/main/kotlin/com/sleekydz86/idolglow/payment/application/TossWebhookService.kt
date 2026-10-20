@@ -107,7 +107,7 @@ class TossWebhookService(
                 logSystem(payment, orderId, paymentKey, rawBody, "종료된 결제 상태: ${payment.status}")
                 return
             }
-            PaymentStatus.PENDING -> Unit
+            PaymentStatus.PENDING, PaymentStatus.CONFIRMING -> Unit
         }
 
         val remote = tossPaymentsApiClient.getPayment(paymentKey)

@@ -102,10 +102,9 @@ class ReservationSlot(
     }
 
     fun releaseHold(reservationId: Long) {
-        if (holdReservationId == null) {
+        if (holdReservationId != reservationId) {
             return
         }
-        require(holdReservationId == reservationId) { "다른 예약이 선점한 슬롯입니다." }
         clearHold()
     }
 

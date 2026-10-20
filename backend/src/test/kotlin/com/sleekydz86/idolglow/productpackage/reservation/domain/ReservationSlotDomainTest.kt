@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.reservation.domain
 
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -70,6 +71,22 @@ class ReservationSlotDomainTest {
         slot.hold(reservationId = 2L, expiresAt = expiresAt)
 
         // then
+        assertTrue(isCurrentlyHeld(slot))
+    }
+
+    @DisplayName("만료된 예약을 정리할 때 다른 예약이 슬롯을 잡고 있으면 예외 없이 그 잡음을 유지한다")
+    @Test
+    fun keepsOtherHoldWhenReleasingExpiredReservation() {
+        // given
+        val slot = sampleSlot()
+        slot.hold(reservationId = 1L, expiresAt = LocalDateTime.now().minusMinutes(1))
+        slot.hold(reservationId = 2L, expiresAt = LocalDateTime.now().plusMinutes(15))
+
+        // when
+        slot.releaseHold(reservationId = 1L)
+
+        // then
+        assertEquals(2L, slot.holdReservationId)
         assertTrue(isCurrentlyHeld(slot))
     }
 
