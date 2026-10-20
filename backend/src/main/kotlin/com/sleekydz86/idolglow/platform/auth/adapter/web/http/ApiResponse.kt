@@ -10,7 +10,7 @@ data class ApiResponse<T>(
     var message: String? = null,
     var data: T? = null,
     var errors: List<String>? = null,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     var timestamp: LocalDateTime = LocalDateTime.now(),
     var requestId: String? = null,
     var statusCode: Int = 0,

@@ -19,6 +19,7 @@ import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.round
 
 @Service
@@ -99,7 +100,7 @@ class GlowWeatherQueryService(
             windGuide = windGuide,
             forecastFromApi = forecastFromApi,
             currentFromApi = currentFromApi,
-            generatedAt = IdolGlowDateTimes.toDisplay(now.toLocalDateTime()).orEmpty(),
+            generatedAt = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
         )
     }
 

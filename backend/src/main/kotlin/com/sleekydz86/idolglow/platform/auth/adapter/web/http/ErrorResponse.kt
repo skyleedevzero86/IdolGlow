@@ -11,7 +11,7 @@ data class ErrorResponse(
     var message: String? = null,
     var path: String? = null,
     var status: Int = 0,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     var timestamp: LocalDateTime = LocalDateTime.now(),
     var context: Map<String, Any>? = null,
     var traceId: String? = null,
