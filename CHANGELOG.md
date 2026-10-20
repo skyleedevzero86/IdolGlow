@@ -4,6 +4,24 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.10.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.10.0...v0.10.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **#40:** 토스 승인을 트랜잭션 밖에서 처리하고 만료·재시도 경로를 정리한다 ([6d1f253](https://github.com/skyleedevzero86/IdolGlow/commit/6d1f25369410acaff0eb97628e0956783ba0c376))
+* 결제 결과 메일은 트랜잭션이 커밋된 뒤에만 보낸다 ([14e005a](https://github.com/skyleedevzero86/IdolGlow/commit/14e005a87bf0dd67bf2a7528d1a1e5dda2a454b2))
+* 만료 예약 정리 시 다른 예약이 잡은 슬롯은 건드리지 않기 ([3521aaa](https://github.com/skyleedevzero86/IdolGlow/commit/3521aaa23d8c3b6236fa124fbaef7e60c0fbba56))
+* 만료 예약은 한 건이 실패해도 나머지를 처리한다 ([1710979](https://github.com/skyleedevzero86/IdolGlow/commit/1710979ca214685e747865e1955070ac476b9d5d))
+* 멱등 키가 없으면 결제마다 고정된 키로 토스 승인을 요청처리 ([7091631](https://github.com/skyleedevzero86/IdolGlow/commit/7091631f4349cf57e52aa9e48bb2637d20fa7802))
+* 토스 결제의 참조값을 pay_toss_ 로 시작해 목업 결제와 구분처리 ([4fc1f3a](https://github.com/skyleedevzero86/IdolGlow/commit/4fc1f3aae178a4871c4b4e3efc18adf07ec25fc7))
+* 토스 승인을 트랜잭션 밖에서 호출하고 처리 중 결제를 조회로 정리 ([fcdaf33](https://github.com/skyleedevzero86/IdolGlow/commit/fcdaf33d665171636bd1fdf3a605a1928ab21544))
+
+
+### Documentation
+
+* README 한계에 승인 처리 중 결제의 늦은 승인 웹훅 경로를 추가 ([c34696d](https://github.com/skyleedevzero86/IdolGlow/commit/c34696d2ca3b222781e62af5588ce1f11353b747))
+
 ## [0.10.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.9.0...v0.10.0) (2026-10-20)
 
 
