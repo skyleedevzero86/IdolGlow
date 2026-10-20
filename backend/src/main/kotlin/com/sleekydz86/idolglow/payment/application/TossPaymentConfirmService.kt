@@ -33,14 +33,14 @@ class TossPaymentConfirmService(
     ): Payment {
         require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
 
-        val existingByIdem = idempotencyKey?.let { paymentRepository.findByIdempotencyKeyForUpdate(it) }
+        val existingByIdem = idempotencyKey?.let { paymentRepository.findByIdempotencyKey(it) }
         if (existingByIdem != null && existingByIdem.status == PaymentStatus.SUCCEEDED) {
             require(existingByIdem.reservation.userId == userId) { "본인 예약 결제만 승인할 수 있습니다." }
             return existingByIdem
         }
 
         val payment =
-            paymentRepository.findByOrderIdForUpdate(orderId)
+            reservationPaymentService.lockReservationThenPaymentByOrderId(orderId)
                 ?: throw IllegalArgumentException("주문을 찾을 수 없습니다: $orderId")
 
         require(payment.reservation.userId == userId) { "본인 예약 결제만 승인할 수 있습니다." }
