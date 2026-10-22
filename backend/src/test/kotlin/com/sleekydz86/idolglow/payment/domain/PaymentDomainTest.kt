@@ -10,7 +10,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-@DisplayName("Payment Domain")
+@DisplayName("결제 도메인")
 class PaymentDomainTest {
     @DisplayName("대기 중인 결제는 승인될 수 있다")
     @Test
@@ -56,11 +56,14 @@ class PaymentDomainTest {
     @DisplayName("승인 처리 중인 결제는 승인될 수 있다")
     @Test
     fun confirmingPaymentCanSucceed() {
+        // given
         val payment = samplePendingPayment()
         payment.markConfirming()
 
+        // when
         payment.markSucceeded()
 
+        // then
         assertEquals(PaymentStatus.SUCCEEDED, payment.status)
     }
 

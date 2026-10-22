@@ -100,6 +100,7 @@ class BillingChargeExecutorTest {
     @DisplayName("예전 형식 키가 저장된 카드 청구는 그 카드의 키를 그대로 쓴다")
     @Test
     fun existingCardChargeUsesStoredMethodKey() {
+        // given
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val storedKey = "idolglow-user-1"
         val card = method(id = 3L, billingKey = "bk", customerKey = storedKey)
@@ -126,8 +127,10 @@ class BillingChargeExecutorTest {
                 """{"paymentKey":"pay-old"}""",
             )
 
+        // when
         executor.chargeSubscription(12L, due)
 
+        // then
         assertEquals(storedKey, card.customerKey)
         verify(exactly = 1) {
             tossPaymentsApiClient.chargeBilling(

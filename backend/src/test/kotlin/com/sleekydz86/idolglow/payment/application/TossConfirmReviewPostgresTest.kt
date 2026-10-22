@@ -62,6 +62,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스 대기 중 예약이 만료된 뒤 승인되면 자동 환불한다")
     @Test
     fun refundsWhenTossApprovesAfterReservationExpired() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         val entered = CountDownLatch(1)
@@ -74,6 +75,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
             TossApiResponse(200, objectMapper.readTree("""{"transactionKey":"tx-1"}"""), "{}")
 
+        // when
         val thread = Thread { confirm(user.id, created, "pk-late") }
         thread.start()
         assertTrue(entered.await(10, TimeUnit.SECONDS))
@@ -81,6 +83,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         release.countDown()
         thread.join(10_000)
 
+        // then
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertNotEquals(PaymentStatus.EXPIRED, payment.status)
         assertEquals(PaymentStatus.REFUNDED, payment.status)
@@ -96,6 +99,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스 대기 중 만료 스케줄러가 돌아도 예약을 취소하지 않는다")
     @Test
     fun expirationSchedulerSkipsConfirmingReservation() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         val entered = CountDownLatch(1)
@@ -105,12 +109,14 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
             release.await(10, TimeUnit.SECONDS)
             tossFailure()
         }
+        // when
         val thread = Thread { runCatching { confirm(user.id, created, "pk-hold") } }
         thread.start()
         assertTrue(entered.await(10, TimeUnit.SECONDS))
         expireReservation(created.id)
         reservationExpirationScheduler.expirePendingReservations()
 
+        // then
         val reservation = reservationRepository.findById(created.id)!!
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(ReservationStatus.PENDING, reservation.status)
@@ -122,6 +128,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스 대기 중 사용자 취소는 거절한다")
     @Test
     fun userCancelRejectedWhileConfirming() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         val entered = CountDownLatch(1)
@@ -135,10 +142,13 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         thread.start()
         assertTrue(entered.await(10, TimeUnit.SECONDS))
 
+        // when
         val thrown =
             assertThrows(IllegalArgumentException::class.java) {
                 reservationCommandService.cancelReservationByUser(created.id, user.id)
             }
+
+        // then
         assertEquals("결제 처리 중입니다. 잠시 후 다시 시도해 주세요.", thrown.message)
         release.countDown()
         thread.join(10_000)
@@ -147,6 +157,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("예약이 취소된 뒤 토스가 승인하면 예외 대신 자동 환불한다")
     @Test
     fun refundsWhenReservationCanceledBeforeTossSuccess() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         val entered = CountDownLatch(1)
@@ -159,6 +170,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
             TossApiResponse(200, objectMapper.readTree("""{"transactionKey":"tx-2"}"""), "{}")
 
+        // when
         val thread = Thread { confirm(user.id, created, "pk-canceled") }
         thread.start()
         assertTrue(entered.await(10, TimeUnit.SECONDS))
@@ -166,6 +178,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         release.countDown()
         thread.join(10_000)
 
+        // then
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.REFUNDED, payment.status)
     }
@@ -176,6 +189,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         tossStatus: String,
         expected: PaymentStatus,
     ) {
+        // given
         val created = timeoutConfirming()
         every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns
             TossApiResponse(
@@ -184,8 +198,10 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
                 """{"status":"$tossStatus"}""",
             )
 
+        // when
         tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
 
+        // then
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(expected, payment.status)
         assertNotEquals(PaymentStatus.CONFIRMING, payment.status)
@@ -196,12 +212,15 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스에 주문이 없으면 결제를 실패로 정리한다")
     @Test
     fun reconcileNotFoundFailsConfirming() {
+        // given
         val created = timeoutConfirming()
         every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns
             TossApiResponse(404, null, "not found")
 
+        // when
         tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
 
+        // then
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.FAILED, payment.status)
     }
@@ -209,6 +228,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("10분이 지나도 결론이 없으면 결제를 실패로 정리한다")
     @Test
     fun reconcileStaleConfirmingFails() {
+        // given
         val created = timeoutConfirming()
         every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns
             TossApiResponse(200, objectMapper.readTree("""{"status":"IN_PROGRESS"}"""), "{}")
@@ -218,8 +238,10 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
             created.payment.paymentId,
         )
 
+        // when
         tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
 
+        // then
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.FAILED, payment.status)
     }
@@ -227,11 +249,13 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스 승인 응답이 5xx면 처리 중으로 두고 조회로 맞춘다")
     @Test
     fun fiveXxLeavesConfirmingUntilReconcile() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
             TossApiResponse(500, null, "internal")
 
+        // when
         tossPaymentConfirmService.confirm(
             user.id,
             "pk-5xx",
@@ -240,11 +264,16 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
             null,
             null,
         )
+
+        // then
         val after5xx = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.CONFIRMING, after5xx.status)
 
+        // when
         every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns tossDone(created)
         tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
+
+        // then
         val afterReconcile = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.SUCCEEDED, afterReconcile.status)
     }

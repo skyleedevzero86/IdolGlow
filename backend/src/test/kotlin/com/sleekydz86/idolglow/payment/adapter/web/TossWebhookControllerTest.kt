@@ -36,9 +36,11 @@ class TossWebhookControllerTest {
     @DisplayName("서명 헤더가 없는 결제 상태 웹훅은 접수하고 서비스로 넘긴다")
     @Test
     fun paymentStatusWebhookWithoutSignatureAccepted() {
+        // given
         val body =
             """{"eventType":"PAYMENT_STATUS_CHANGED","data":{"paymentKey":"pk-1","orderId":"ORD-1","status":"DONE"}}"""
 
+        // when
         mockMvc
             .perform(
                 post("/payments/toss/webhook")
@@ -47,14 +49,17 @@ class TossWebhookControllerTest {
                     .content(body),
             ).andExpect(status().isOk)
 
+        // then
         verify(exactly = 1) { tossWebhookService.handlePayload(body, "tx-9") }
     }
 
     @DisplayName("서명 헤더가 없는 payout.changed는 401이다")
     @Test
     fun payoutWebhookWithoutSignatureRejected() {
+        // given
         val body = """{"eventType":"payout.changed","data":{"payoutId":"po-1"}}"""
 
+        // when
         mockMvc
             .perform(
                 post("/payments/toss/webhook")
@@ -63,6 +68,7 @@ class TossWebhookControllerTest {
                     .content(body),
             ).andExpect(status().isUnauthorized)
 
+        // then
         verify(exactly = 0) { tossWebhookService.handlePayload(any(), any()) }
         verify {
             paymentLogCommandService.append(

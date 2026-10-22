@@ -24,7 +24,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
-@DisplayName("Password Recovery Service")
+@DisplayName("비밀번호 찾기")
 class PasswordRecoveryServiceTest {
     private val userRepository = mockk<UserRepository>()
     private val passwordEncoder = BCryptPasswordEncoder()

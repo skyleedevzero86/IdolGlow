@@ -9,7 +9,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-@DisplayName("Exchange Rate Query Service")
+@DisplayName("환율 조회")
 class ExchangeRateQueryServiceTest {
     private val exchangeRateQueryPort = mockk<ExchangeRateQueryPort>()
     private val service = ExchangeRateQueryService(exchangeRateQueryPort)

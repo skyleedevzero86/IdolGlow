@@ -17,7 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 
-@DisplayName("Authenticated Principal Resolver")
+@DisplayName("인증 주체 해석")
 class AuthenticatedPrincipalResolverTest {
     private val userRepository = mockk<UserRepository>()
     private val resolver = AuthenticatedPrincipalResolver(userRepository)

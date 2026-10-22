@@ -8,7 +8,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-@DisplayName("Toss Billing Subscription")
+@DisplayName("토스 빌링 구독")
 class TossBillingSubscriptionTest {
     @DisplayName("결제 성공 시 결제일은 기존 nextBillingAt 기준 한 달 뒤로 유지된다")
     @Test

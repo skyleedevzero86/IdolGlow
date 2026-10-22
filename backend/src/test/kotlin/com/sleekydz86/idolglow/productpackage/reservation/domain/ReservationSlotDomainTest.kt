@@ -11,7 +11,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-@DisplayName("Reservation Slot Domain")
+@DisplayName("예약 슬롯")
 class ReservationSlotDomainTest {
     @DisplayName("선점 후 동일 예약이면 hold 가 유지된다")
     @Test

@@ -49,6 +49,7 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스 호출 중에는 같은 예약을 짧은 시간에 잠글 수 있다")
     @Test
     fun otherThreadCanLockReservationDuringTossCall() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         val enteredConfirm = CountDownLatch(1)
@@ -71,6 +72,7 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
                     )
                 }
             }
+        // when
         confirmThread.start()
         assertTrue(enteredConfirm.await(10, TimeUnit.SECONDS))
         val elapsedMs =
@@ -81,16 +83,20 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
             }!!
         releaseConfirm.countDown()
         confirmThread.join(10_000)
+
+        // then
         assertTrue(elapsedMs < 1000, "elapsedMs=$elapsedMs")
     }
 
     @DisplayName("토스 승인 실패면 실패 기록이 남는다")
     @Test
     fun failedConfirmPersistsFailedStatus() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns tossFailure()
 
+        // when
         tossPaymentConfirmService.confirm(
             user.id,
             "pk-fail",
@@ -100,6 +106,7 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
             null,
         )
 
+        // then
         val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.FAILED, payment.status)
     }
@@ -107,11 +114,13 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
     @DisplayName("토스 타임아웃이면 처리 중으로 남고 조회 스케줄러가 DONE 이면 성공으로 맞춘다")
     @Test
     fun timeoutStaysConfirmingUntilReconcileFindsDone() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
             TossApiResponse(0, null, "Read timed out", IllegalStateException("Read timed out"))
 
+        // when
         tossPaymentConfirmService.confirm(
             user.id,
             "pk-timeout",
@@ -120,9 +129,12 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
             null,
             null,
         )
+
+        // then
         val afterTimeout = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.CONFIRMING, afterTimeout.status)
 
+        // when
         every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns
             TossApiResponse(
                 200,
@@ -137,6 +149,7 @@ class TossConfirmOutsideTxPostgresTest : PostgresIntegrationTest() {
             )
         tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
 
+        // then
         val afterReconcile = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.SUCCEEDED, afterReconcile.status)
     }

@@ -63,14 +63,17 @@ class TossWebhookServiceTest {
     @DisplayName("본문 status가 DONE이어도 토스 조회 상태가 대기면 성공 처리하지 않는다")
     @Test
     fun webhookBodyIsNotTrusted() {
+        // given
         val payment = pendingTossPayment()
         val body = statusChangedBody(payment.orderId, "DONE")
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
         val remote = remotePayment(payment.orderId, "WAITING_FOR_DEPOSIT", 35000)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remote
 
+        // when
         service.handlePayload(body, "tx-1")
 
+        // then
         assertThat(payment.status).isEqualTo(PaymentStatus.PENDING)
         verify(exactly = 1) { tossPaymentsApiClient.getPayment("pk-1") }
         verify(exactly = 0) { reservationPaymentService.finalizeAfterGatewaySuccess(any()) }
@@ -91,13 +94,16 @@ class TossWebhookServiceTest {
     @DisplayName("토스 조회 금액이 결제 금액과 다르면 성공 처리하지 않는다")
     @Test
     fun webhookAmountMismatchIgnored() {
+        // given
         val payment = pendingTossPayment()
         val body = statusChangedBody(payment.orderId, "DONE")
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 1)
 
+        // when
         service.handlePayload(body)
 
+        // then
         assertThat(payment.status).isEqualTo(PaymentStatus.PENDING)
         verify(exactly = 0) { reservationPaymentService.finalizeAfterGatewaySuccess(any()) }
     }

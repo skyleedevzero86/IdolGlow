@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-@DisplayName("Glow Pass Membership Query")
+@DisplayName("글로우패스 멤버십 조회")
 class GlowPassMembershipQueryTest {
     private val subscriptionRepository = mockk<TossBillingSubscriptionJpaRepository>()
     private val query = GlowPassMembershipQuery(subscriptionRepository)

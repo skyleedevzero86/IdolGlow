@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@DisplayName("Application Layer Ui Dto Baseline")
+@DisplayName("애플리케이션 계층 UI DTO 기준")
 class ApplicationLayerUiDtoBaselineTest {
     @DisplayName("application 계층의 ui dto 참조 건수가 기준값을 초과하지 않는다")
     @Test

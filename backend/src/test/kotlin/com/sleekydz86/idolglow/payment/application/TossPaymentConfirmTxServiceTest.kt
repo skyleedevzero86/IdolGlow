@@ -44,11 +44,14 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("승인 준비는 결제를 직접 잠그지 않고 예약 → 결제 순서 잠금 경로를 쓴다")
     @Test
     fun prepareUsesReservationFirstLock() {
+        // given
         val payment = tossPayment()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
 
+        // when
         val result = service.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
 
+        // then
         assertEquals(PaymentStatus.CONFIRMING, result.payment.status)
         verify(exactly = 1) { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) }
         verify(exactly = 0) { paymentRepository.findByOrderIdForUpdate(any()) }
@@ -57,12 +60,15 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("멱등 키 확인은 잠그지 않고 조회한다")
     @Test
     fun idempotencyCheckDoesNotLock() {
+        // given
         val payment = tossPayment()
         every { paymentRepository.findByIdempotencyKey("idem-1") } returns null
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
 
+        // when
         service.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), "idem-1")
 
+        // then
         verify(exactly = 1) { paymentRepository.findByIdempotencyKey("idem-1") }
         verify(exactly = 0) { paymentRepository.findByIdempotencyKeyForUpdate(any()) }
     }
@@ -70,10 +76,12 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("토스 승인 실패면 실패 상태로 남긴다")
     @Test
     fun completeMarksFailedWhenTossRejects() {
+        // given
         val payment = tossPayment()
         payment.markConfirming()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
 
+        // when
         val result =
             service.completeConfirm(
                 10L,
@@ -82,17 +90,20 @@ class TossPaymentConfirmTxServiceTest {
                 TossApiResponse(400, null, """{"message":"승인 거절"}"""),
             )
 
+        // then
         assertEquals(PaymentStatus.FAILED, result.status)
     }
 
     @DisplayName("토스 승인이 성공하면 예약 만료와 관계없이 승인 확정으로 보낸다")
     @Test
     fun completeAppliesSuccessWithoutExpireCheckWhenTossApproves() {
+        // given
         val payment = tossPayment(expired = true)
         payment.markConfirming()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
         every { reservationPaymentService.finalizeAfterGatewaySuccess(payment) } returns payment
 
+        // when
         val result =
             service.completeConfirm(
                 10L,
@@ -101,6 +112,7 @@ class TossPaymentConfirmTxServiceTest {
                 tossDoneResponse(),
             )
 
+        // then
         assertEquals(PaymentStatus.SUCCEEDED, result.status)
         verify(exactly = 1) { reservationPaymentService.finalizeAfterGatewaySuccess(payment) }
     }
@@ -108,10 +120,12 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("토스가 거절했고 예약이 닫혀 있으면 결제를 만료한다")
     @Test
     fun completeMarksExpiredWhenTossRejectsClosedReservation() {
+        // given
         val payment = tossPayment(expired = true)
         payment.markConfirming()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
 
+        // when
         val result =
             service.completeConfirm(
                 10L,
@@ -120,12 +134,14 @@ class TossPaymentConfirmTxServiceTest {
                 TossApiResponse(400, null, """{"message":"승인 거절"}"""),
             )
 
+        // then
         assertEquals(PaymentStatus.EXPIRED, result.status)
     }
 
     @DisplayName("조회로 결론이 안 난 처리 중 결제는 실패로 넘긴다")
     @Test
     fun failUnresolvedConfirmingDelegatesToPaymentFailed() {
+        // given
         val payment = tossPayment()
         payment.markConfirming()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
@@ -133,8 +149,10 @@ class TossPaymentConfirmTxServiceTest {
             reservationPaymentService.handlePaymentFailed(payment.paymentReference, "토스에 주문이 없습니다.")
         } returns payment
 
+        // when
         service.failUnresolvedConfirming(10L, payment.orderId, BigDecimal("35000"), "토스에 주문이 없습니다.")
 
+        // then
         verify(exactly = 1) {
             reservationPaymentService.handlePaymentFailed(payment.paymentReference, "토스에 주문이 없습니다.")
         }
@@ -143,10 +161,12 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("승인 응답이 입금 대기면 성공 처리하지 않고 승인 처리 중으로 남긴다")
     @Test
     fun confirmWaitingForDepositNotSucceeded() {
+        // given
         val payment = tossPayment()
         payment.markConfirming()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
 
+        // when
         val result =
             service.completeConfirm(
                 10L,
@@ -155,6 +175,7 @@ class TossPaymentConfirmTxServiceTest {
                 tossResponse("WAITING_FOR_DEPOSIT", 35000),
             )
 
+        // then
         assertEquals(PaymentStatus.CONFIRMING, result.status)
         assertEquals(ReservationStatus.PENDING, payment.reservation.status)
         verify(exactly = 0) { reservationPaymentService.finalizeAfterGatewaySuccess(any()) }
@@ -163,10 +184,12 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("승인 응답이 완료여도 금액이 다르면 금액 불일치로 실패한다")
     @Test
     fun confirmAmountMismatchNotSucceeded() {
+        // given
         val payment = tossPayment()
         payment.markConfirming()
         every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
 
+        // when
         val result =
             service.completeConfirm(
                 10L,
@@ -175,6 +198,7 @@ class TossPaymentConfirmTxServiceTest {
                 tossResponse("DONE", 1),
             )
 
+        // then
         assertEquals(PaymentStatus.FAILED, result.status)
         assertTrue(result.failureReason!!.contains("금액 불일치"))
         assertTrue(result.failureReason!!.contains("35000"))
@@ -197,6 +221,7 @@ class TossPaymentConfirmTxServiceTest {
     @DisplayName("조회에서 완료여도 금액이 다르면 실패하고 다음 조회에서 다시 처리하지 않는다")
     @Test
     fun reconcileDoneWithAmountMismatchNotSucceeded() {
+        // given
         val payment = tossPayment()
         payment.markConfirming()
         val client = mockk<TossPaymentsApiClient>()
@@ -213,9 +238,11 @@ class TossPaymentConfirmTxServiceTest {
             )
         val cutoff = LocalDateTime.now().plusMinutes(1)
 
+        // when
         scheduler.reconcileConfirmingPayments(cutoff)
         scheduler.reconcileConfirmingPayments(cutoff)
 
+        // then
         assertEquals(PaymentStatus.FAILED, payment.status)
         assertTrue(payment.failureReason!!.contains("금액 불일치"))
         verify(exactly = 0) { reservationPaymentService.finalizeAfterGatewaySuccess(any()) }

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-@DisplayName("Billing Key Crypto")
+@DisplayName("빌링키 암호화")
 class BillingKeyCryptoTest {
     @BeforeEach
     fun setUp() {

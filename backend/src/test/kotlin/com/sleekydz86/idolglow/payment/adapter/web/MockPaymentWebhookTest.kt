@@ -38,8 +38,10 @@ import java.time.LocalDateTime
 
 @DisplayName("모의 결제 웹훅")
 class MockPaymentWebhookTest {
+    @DisplayName("토스 결제 참조는 모의 웹훅에서 거절한다")
     @Test
     fun mockWebhookRejectsTossPayment() {
+        // given
         val payment = tossPayment()
         val (service, reservationRepository) = paymentService(payment)
         val mockMvc =
@@ -48,6 +50,7 @@ class MockPaymentWebhookTest {
                 .setControllerAdvice(GlobalExceptionAdvice())
                 .build()
 
+        // when
         mockMvc
             .perform(
                 post("/payments/mock/webhook")
@@ -57,30 +60,40 @@ class MockPaymentWebhookTest {
             ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("MOCK")))
 
+        // then
         verify(exactly = 0) { reservationRepository.findByIdForUpdate(any()) }
     }
 
+    @DisplayName("모의 결제 웹훅은 운영 프로필에 없고 테스트 프로필에만 있다")
     @Test
     fun mockWebhookDisabledInProdProfile() {
+        // given
+
+        // when
         profileRunner("prod").run { context: AssertableApplicationContext ->
+            // then
             assertThat(context).hasNotFailed()
             assertThat(context).doesNotHaveBean(PaymentController::class.java)
             assertThat(context).doesNotHaveBean(PaymentGraphQlController::class.java)
         }
 
         profileRunner("test", "payment.mock.webhook-secret=$WEBHOOK_SECRET").run { context ->
+            // then
             assertThat(context).hasNotFailed()
             assertThat(context).hasSingleBean(PaymentController::class.java)
             assertThat(context).hasSingleBean(PaymentGraphQlController::class.java)
         }
     }
 
+    @DisplayName("그래프큐엘 모의 웹훅도 토스 결제 참조는 거절한다")
     @Test
     fun graphQlMockWebhookRejectsTossPayment() {
+        // given
         val payment = tossPayment()
         val (service, reservationRepository) = paymentService(payment)
         val controller = PaymentGraphQlController(service, WEBHOOK_SECRET)
 
+        // when
         val exception =
             assertThrows<IllegalArgumentException> {
                 controller.mockPaymentWebhook(
@@ -93,6 +106,7 @@ class MockPaymentWebhookTest {
                 )
             }
 
+        // then
         assertThat(exception.message).contains("MOCK")
         verify(exactly = 0) { reservationRepository.findByIdForUpdate(any()) }
     }

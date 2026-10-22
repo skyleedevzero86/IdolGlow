@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@DisplayName("Controller Direct Repository Baseline")
+@DisplayName("컨트롤러의 리포지토리 직접 참조 기준")
 class ControllerDirectRepositoryBaselineTest {
     @DisplayName("controller가 repository를 직접 참조하는 건수가 기준값을 초과하지 않는다")
     @Test

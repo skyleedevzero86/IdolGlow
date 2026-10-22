@@ -11,7 +11,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@DisplayName("Subscription Api Behavior")
+@DisplayName("구독 API")
 class SubscriptionApiBehaviorTest {
     @LocalServerPort
     private var port: Int = 0

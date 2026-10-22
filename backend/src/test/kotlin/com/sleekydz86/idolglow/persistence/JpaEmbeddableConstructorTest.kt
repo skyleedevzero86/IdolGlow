@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-@DisplayName("Jpa Embeddable Constructor")
+@DisplayName("JPA 임베디드 생성자")
 class JpaEmbeddableConstructorTest {
     @DisplayName("닉네임 임베디드 타입은 기본 생성자를 제공한다")
     @Test

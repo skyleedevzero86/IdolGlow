@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 
-@DisplayName("Exchange Branch Query Service")
+@DisplayName("환전 지점 조회")
 class ExchangeBranchQueryServiceTest {
     private val exchangeBranchJpaRepository = mockk<ExchangeBranchJpaRepository>()
     private val exchangeRateQueryPort = mockk<ExchangeRateQueryPort>()

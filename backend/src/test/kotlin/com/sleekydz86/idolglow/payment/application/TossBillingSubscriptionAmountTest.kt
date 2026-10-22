@@ -19,6 +19,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 
+@DisplayName("정기결제 구독 금액")
 class TossBillingSubscriptionAmountTest {
     private val methodRepository = mockk<TossBillingMethodJpaRepository>()
     private val subscriptionRepository = mockk<TossBillingSubscriptionJpaRepository>()
@@ -66,19 +68,25 @@ class TossBillingSubscriptionAmountTest {
             )
     }
 
+    @DisplayName("새 구독은 클라이언트가 보낸 금액을 무시하고 서버 금액을 저장한다")
     @Test
     fun subscriptionAmountIgnoresClientValue() {
+        // given
         every { subscriptionRepository.findByUserIdAndPlanCode(USER_ID, "MONTHLY") } returns null
         val saved = slot<TossBillingSubscription>()
         every { subscriptionRepository.saveAndFlush(capture(saved)) } answers { saved.captured }
 
+        // when
         service.saveSubscription(USER_ID, requestWithClientAmount(100L))
 
+        // then
         assertThat(saved.captured.amount).isEqualTo(BillingDefaults.MONTHLY_AMOUNT)
     }
 
+    @DisplayName("이미 있는 구독도 클라이언트가 보낸 금액으로 바꾸지 않는다")
     @Test
     fun existingSubscriptionRenewalIgnoresClientValue() {
+        // given
         val existing =
             TossBillingSubscription(
                 id = 9L,
@@ -97,19 +105,27 @@ class TossBillingSubscriptionAmountTest {
         every { subscriptionRepository.findByUserIdAndPlanCode(USER_ID, "MONTHLY") } returns existing
         every { subscriptionRepository.saveAndFlush(existing) } returns existing
 
+        // when
         service.saveSubscription(USER_ID, requestWithClientAmount(100L))
 
+        // then
         assertThat(existing.amount).isEqualTo(BillingDefaults.MONTHLY_AMOUNT)
     }
 
+    @DisplayName("단건 청구는 운영 프로필에 없고 테스트 프로필에만 있다")
     @Test
     fun oneOffChargeDisabledInProdProfile() {
+        // given
+
+        // when
         profileRunner("prod").run { context: AssertableApplicationContext ->
+            // then
             assertThat(context).hasNotFailed()
             assertThat(context).hasSingleBean(TossBillingController::class.java)
             assertThat(context).doesNotHaveBean(TossBillingOneOffChargeController::class.java)
         }
         profileRunner("test").run { context ->
+            // then
             assertThat(context).hasNotFailed()
             assertThat(context).hasSingleBean(TossBillingController::class.java)
             assertThat(context).hasSingleBean(TossBillingOneOffChargeController::class.java)

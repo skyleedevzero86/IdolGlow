@@ -52,6 +52,7 @@ class BillingNotificationRollbackPostgresTest : PostgresIntegrationTest() {
     @DisplayName("실제 알림 서비스가 저장 실패해도 FAILED와 failCount는 DB에 남는다")
     @Test
     fun keepsFailedStatusWhenRealNotificationSaveFails() {
+        // given
         val due = LocalDateTime.of(2026, 11, 1, 0, 0)
         val subscriptionId = persistActiveSubscription(due)
         every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
@@ -65,8 +66,10 @@ class BillingNotificationRollbackPostgresTest : PostgresIntegrationTest() {
             )
         every { notificationRepository.save(any()) } throws IllegalStateException("알림 저장 실패")
 
+        // when
         val thrown = runCatching { executor.chargeSubscription(subscriptionId, due) }
 
+        // then
         assertEquals("한도초과", thrown.exceptionOrNull()?.message)
         val sub = subscriptionRepository.findById(subscriptionId).orElseThrow()
         assertEquals(1, sub.failCount)

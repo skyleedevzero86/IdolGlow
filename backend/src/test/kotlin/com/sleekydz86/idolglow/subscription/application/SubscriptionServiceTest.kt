@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import java.time.LocalDateTime
 
-@DisplayName("Subscription Service")
+@DisplayName("구독")
 class SubscriptionServiceTest {
     private val emailSubscriptionPort = mockk<EmailSubscriptionPort>()
     private val subscriptionDispatchHistoryPort = mockk<SubscriptionDispatchHistoryPort>()

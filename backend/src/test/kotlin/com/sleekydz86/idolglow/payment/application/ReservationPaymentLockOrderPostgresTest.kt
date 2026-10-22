@@ -56,8 +56,11 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
     @DisplayName("같은 예약에 취소와 결제 성공을 동시에 여러 번 실행해도 데드락이 나지 않는다")
     @Test
     fun cancelAndSuccessDoNotDeadlock() {
+        // given
         val lockFailures = AtomicInteger()
         val pool = Executors.newFixedThreadPool(4)
+
+        // when
         repeat(30) {
             val user = fixture.persistUser()
             val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
@@ -81,13 +84,18 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
             done.await(20, TimeUnit.SECONDS)
         }
         pool.shutdownNow()
+
+        // then
         assertEquals(0, lockFailures.get())
     }
 
     @DisplayName("결제 FOR UPDATE 는 예약 행을 같이 잠그지 않는다")
     @Test
     fun paymentForUpdateDoesNotLockReservationRow() {
+        // given
         val created = fixture.createReservation(fixture.persistUser().id, fixture.persistOpenSlot())
+
+        // when
         val lockedTables =
             TransactionTemplate(transactionManager).execute { status ->
                 status.setRollbackOnly()
@@ -113,15 +121,19 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
                     String::class.java,
                 )
             }!!
+
+        // then
         assertFalse(lockedTables.contains("reservations"), lockedTables.toString())
     }
 
     @DisplayName("마이페이지 취소와 결제 성공을 동시에 여러 번 실행해도 데드락이 나지 않는다")
     @Test
     fun myPageCancelFollowsReservationThenPaymentLockOrder() {
+        // given
         val lockFailures = AtomicInteger()
         val pool = Executors.newFixedThreadPool(4)
         try {
+            // when
             repeat(30) {
                 val user = fixture.persistUser()
                 val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
@@ -146,6 +158,8 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
                 assertTrue(done.await(20, TimeUnit.SECONDS))
                 assertConsistentCancelOrSuccess(created.payment.paymentId)
             }
+
+            // then
             assertEquals(0, lockFailures.get())
         } finally {
             pool.shutdownNow()
@@ -155,6 +169,7 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
     @DisplayName("잠금 대기 중 결제가 환불되면 마이페이지 취소는 거절된다")
     @Test
     fun myPageCancelSeesStateChangedBeforeLock() {
+        // given
         val user = fixture.persistUser()
         val created = fixture.createReservation(user.id, fixture.persistOpenSlot())
         reservationPaymentService.handlePaymentSucceeded(created.payment.paymentReference)
@@ -164,6 +179,7 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
         val failure = AtomicReference<Throwable>()
         val pool = Executors.newFixedThreadPool(2)
         try {
+            // when
             pool.submit { holdRefundWhileLockingReservation(created.id, created.payment.paymentId, holding, release) }
             assertTrue(holding.await(20, TimeUnit.SECONDS))
             pool.submit {
@@ -181,6 +197,8 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
             release.countDown()
             pool.shutdownNow()
         }
+
+        // then
         val thrown = failure.get()
         assertTrue(thrown is IllegalArgumentException, thrown?.toString() ?: "예외 없음")
         assertEquals("사용자 결제 취소 가능 기간(15일)이 지났거나 취소할 수 없는 상태입니다.", thrown?.message)

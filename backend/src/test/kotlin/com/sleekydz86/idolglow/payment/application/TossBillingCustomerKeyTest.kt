@@ -65,12 +65,17 @@ class TossBillingCustomerKeyTest {
         every { self.insertCustomerKey(any()) } answers { service.insertCustomerKey(firstArg()) }
     }
 
+    @DisplayName("같은 사용자는 같은 UUID를 받고 사용자 아이디는 키에 없다")
     @Test
     fun customerKeyIsRandomAndStable() {
+        // given
+
+        // when
         val first = service.clientConfig(USER_A).customerKey
         val second = service.clientConfig(USER_A).customerKey
         val other = service.clientConfig(USER_B).customerKey
 
+        // then
         assertThat(first).isEqualTo(second)
         assertThat(UUID.fromString(first).toString()).isEqualTo(first)
         assertThat(first).doesNotContain(USER_A.toString())
@@ -78,26 +83,35 @@ class TossBillingCustomerKeyTest {
         assertThat(other).doesNotContain(USER_B.toString())
     }
 
+    @DisplayName("예전 형식 customerKey로 빌링키 발급을 요청하면 거절한다")
     @Test
     fun billingKeyIssueRejectsOldFormatKey() {
+        // given
         service.clientConfig(USER_A)
 
-        assertThatThrownBy {
-            service.persistBillingKey(
-                USER_A,
-                IssueTossBillingKeyRequest(
-                    authKey = "auth-key",
-                    customerKey = "idolglow-user-$USER_A",
-                ),
-            )
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("customerKey가 일치하지 않습니다.")
+        // when
+        val thrown =
+            assertThatThrownBy {
+                service.persistBillingKey(
+                    USER_A,
+                    IssueTossBillingKeyRequest(
+                        authKey = "auth-key",
+                        customerKey = "idolglow-user-$USER_A",
+                    ),
+                )
+            }
 
+        // then
+        thrown
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("customerKey가 일치하지 않습니다.")
         verify(exactly = 0) { tossPaymentsApiClient.issueBillingKey(any(), any()) }
     }
 
+    @DisplayName("user_id가 겹치면 이미 저장된 customerKey를 돌려준다")
     @Test
     fun customerKeyUniqueConflictReturnsStored() {
+        // given
         val winner = UUID.randomUUID().toString()
         var lookups = 0
         every { customerRepository.findByUserId(USER_A) } answers {
@@ -111,8 +125,10 @@ class TossBillingCustomerKeyTest {
         every { customerRepository.saveAndFlush(any()) } throws
             DataIntegrityViolationException("uk_toss_billing_customers_user_id")
 
+        // when
         val key = service.clientConfig(USER_A).customerKey
 
+        // then
         assertThat(key).isEqualTo(winner)
     }
 
