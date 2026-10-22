@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
+import tools.jackson.databind.ObjectMapper
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -91,6 +92,28 @@ class TossPaymentConfirmServiceTest {
 
         // when
         val result = service.confirm(10L, "pk-5xx", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.CONFIRMING, result.status)
+        verify(exactly = 0) { tossPaymentConfirmTxService.completeConfirm(any(), any(), any(), any()) }
+    }
+
+    @DisplayName("토스 승인이 409 멱등 처리 중이면 실패로 끝내지 않고 승인 처리 중으로 남긴다")
+    @Test
+    fun confirmIdempotentProcessingTreatedAsUnknown() {
+        // given
+        val payment = tossPayment()
+        payment.markConfirming()
+        val body = """{"code":"IDEMPOTENT_REQUEST_PROCESSING"}"""
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = false, idempotencyKey = "confirm-${payment.orderId}")
+        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
+            TossApiResponse(409, ObjectMapper().readTree(body), body)
+        every { paymentRepository.findByOrderId(payment.orderId) } returns payment
+
+        // when
+        val result = service.confirm(10L, "pk-409", payment.orderId, BigDecimal("35000"), null, null)
 
         // then
         assertEquals(PaymentStatus.CONFIRMING, result.status)

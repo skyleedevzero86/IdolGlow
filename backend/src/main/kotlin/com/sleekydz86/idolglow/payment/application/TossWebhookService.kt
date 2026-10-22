@@ -111,6 +111,10 @@ class TossWebhookService(
                 logSystem(payment, orderId, paymentKey, rawBody, "종료된 결제 상태: ${payment.status}")
                 return
             }
+            PaymentStatus.REFUNDING -> {
+                logSystem(payment, orderId, paymentKey, rawBody, "환불 처리 중")
+                return
+            }
             PaymentStatus.PENDING, PaymentStatus.CONFIRMING -> Unit
         }
 

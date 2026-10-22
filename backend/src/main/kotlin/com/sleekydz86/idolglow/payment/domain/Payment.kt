@@ -182,6 +182,13 @@ class Payment(
         cancelAmount = amount
     }
 
+    fun markRefunding() {
+        require(status == PaymentStatus.SUCCEEDED) {
+            "승인된 결제만 환불 처리 중으로 바꿀 수 있습니다. status=$status"
+        }
+        status = PaymentStatus.REFUNDING
+    }
+
     fun markPartialRefund(
         additionalCancelAmount: BigDecimal,
         canceledAt: LocalDateTime = LocalDateTime.now(),

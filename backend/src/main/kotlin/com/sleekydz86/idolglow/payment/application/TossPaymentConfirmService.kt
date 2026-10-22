@@ -4,7 +4,6 @@ import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
-import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -73,22 +72,15 @@ class TossPaymentConfirmService(
             errorMessage = response.error?.message,
             traceId = traceId,
         )
-        if (isInconclusiveConfirmResponse(response)) {
+        if (response.isInconclusive) {
             return paymentRepository.findByOrderId(orderId) ?: prepared.payment
         }
         return tossPaymentConfirmTxService.completeConfirm(userId, orderId, amount, response)
     }
 
-    private fun isInconclusiveConfirmResponse(response: TossApiResponse): Boolean =
-        response.httpStatus == 0 || response.httpStatus >= HTTP_SERVER_ERROR
-
     private fun toKrwLong(amount: BigDecimal): Long {
         val normalized = amount.stripTrailingZeros()
         require(normalized.scale() <= 0) { "원화 결제 금액은 정수여야 합니다." }
         return normalized.longValueExact()
-    }
-
-    companion object {
-        private const val HTTP_SERVER_ERROR = 500
     }
 }

@@ -551,6 +551,7 @@ enum PaymentStatus {
     PENDING
     CONFIRMING
     SUCCEEDED
+    REFUNDING
     FAILED
     CANCELED
     EXPIRED
