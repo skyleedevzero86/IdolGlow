@@ -2,11 +2,14 @@ package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
+import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentProvider
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -18,7 +21,9 @@ class TossPaymentConfirmTxService(
     private val paymentRepository: PaymentRepository,
     private val reservationPaymentService: ReservationPaymentService,
     private val tossPaymentProperties: TossPaymentProperties,
+    private val paymentLogCommandService: PaymentLogCommandService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
     fun prepareConfirm(
         userId: Long,
         orderId: String,
@@ -138,10 +143,35 @@ class TossPaymentConfirmTxService(
         payment: Payment,
         response: TossApiResponse,
     ): Payment {
-        TossPaymentResponseMapper.applyConfirmSuccess(payment, response.json!!, response.rawBody!!)
-        val approvedAt = payment.approvedAt ?: LocalDateTime.now()
-        payment.markSucceeded(approvedAt)
-        return reservationPaymentService.finalizeAfterGatewaySuccess(payment)
+        val json = response.json!!
+        val matched = TossPaymentResponseMapper.isDoneWithMatchingAmount(json, payment.amount)
+        if (matched) {
+            TossPaymentResponseMapper.applyConfirmSuccess(payment, json, response.rawBody!!)
+            payment.markSucceeded(payment.approvedAt ?: LocalDateTime.now())
+        } else if (json.path("status").asText(null)?.trim() == "DONE") {
+            val reason = TossPaymentResponseMapper.amountMismatchReason(json, payment.amount)
+            log.error(
+                "토스 승인 금액이 일치하지 않습니다. paymentId={} orderId={} reason={}",
+                payment.id,
+                payment.orderId,
+                reason,
+            )
+            paymentLogCommandService.append(
+                payment = payment,
+                orderId = payment.orderId,
+                paymentKey = json.path("paymentKey").asText(null),
+                logType = PaymentLogType.SYSTEM,
+                step = PaymentLogStep.SERVER,
+                httpStatus = response.httpStatus,
+                responseBody = response.rawBody,
+                errorMessage = reason,
+            )
+            payment.markFailed(reason)
+            payment.rawResponseJson = response.rawBody
+        } else if (payment.status == PaymentStatus.PENDING) {
+            payment.markConfirming()
+        }
+        return if (matched) reservationPaymentService.finalizeAfterGatewaySuccess(payment) else payment
     }
 
     private fun failTossConfirm(

@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.payment.application
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.payment.domain.Payment
 import tools.jackson.databind.JsonNode
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 object TossPaymentResponseMapper {
@@ -51,6 +52,31 @@ object TossPaymentResponseMapper {
         }
 
         payment.rawResponseJson = rawJson
+    }
+
+    fun isDoneWithMatchingAmount(
+        json: JsonNode,
+        expectedAmount: BigDecimal,
+    ): Boolean {
+        val total = json.path("totalAmount")
+        return json.path("status").asText(null)?.trim() == "DONE" &&
+            total.isNumber &&
+            total.decimalValue().compareTo(expectedAmount) == 0
+    }
+
+    fun amountMismatchReason(
+        json: JsonNode,
+        expectedAmount: BigDecimal,
+    ): String {
+        val total = json.path("totalAmount")
+        val tossAmount =
+            if (total.isNumber) {
+                total.decimalValue().stripTrailingZeros().toPlainString()
+            } else {
+                "없음"
+            }
+        val ours = expectedAmount.stripTrailingZeros().toPlainString()
+        return "금액 불일치. 우리 금액=$ours, 토스 금액=$tossAmount"
     }
 
     fun applyFailure(
