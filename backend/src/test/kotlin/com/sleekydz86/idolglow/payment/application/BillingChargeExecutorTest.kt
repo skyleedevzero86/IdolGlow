@@ -97,6 +97,52 @@ class BillingChargeExecutorTest {
         verify(exactly = 0) { notificationCommandService.create(any(), any(), any(), any(), any()) }
     }
 
+    @DisplayName("예전 형식 키가 저장된 카드 청구는 그 카드의 키를 그대로 쓴다")
+    @Test
+    fun existingCardChargeUsesStoredMethodKey() {
+        val due = LocalDateTime.of(2026, 11, 1, 0, 0)
+        val storedKey = "idolglow-user-1"
+        val card = method(id = 3L, billingKey = "bk", customerKey = storedKey)
+        val subscription = subscription(id = 12L, nextBillingAt = due, method = card)
+        val orderId = BillingChargeExecutor.periodOrderId(12L, due)
+        val pending = pendingCharge(7L, orderId, card)
+        val attemptSlot = slot<TossBillingChargeAttempt>()
+        stubFinalizeDeps(subscription, pending, attemptSlot)
+        every {
+            tossPaymentsApiClient.chargeBilling(
+                billingKey = "bk",
+                customerKey = storedKey,
+                amount = BillingDefaults.MONTHLY_AMOUNT,
+                orderId = "sub-12-202611-a1",
+                orderName = any(),
+                customerEmail = any(),
+                customerName = any(),
+                idempotencyKey = any(),
+            )
+        } returns
+            TossApiResponse(
+                200,
+                objectMapper.readTree("""{"paymentKey":"pay-old","approvedAt":"2026-11-01T12:00:00+09:00"}"""),
+                """{"paymentKey":"pay-old"}""",
+            )
+
+        executor.chargeSubscription(12L, due)
+
+        assertEquals(storedKey, card.customerKey)
+        verify(exactly = 1) {
+            tossPaymentsApiClient.chargeBilling(
+                billingKey = "bk",
+                customerKey = storedKey,
+                amount = BillingDefaults.MONTHLY_AMOUNT,
+                orderId = "sub-12-202611-a1",
+                orderName = any(),
+                customerEmail = any(),
+                customerName = any(),
+                idempotencyKey = any(),
+            )
+        }
+    }
+
     @DisplayName("회차 orderId 는 구독과 연월로 고정된다")
     @Test
     fun periodOrderIdUsesSubscriptionAndYearMonth() {
@@ -266,11 +312,12 @@ class BillingChargeExecutorTest {
     private fun method(
         id: Long,
         billingKey: String,
+        customerKey: String = "idolglow-user-1",
     ): TossBillingMethod =
         TossBillingMethod(
             id = id,
             userId = 1L,
-            customerKey = "idolglow-user-1",
+            customerKey = customerKey,
             billingKey = billingKey,
             isDefault = id == 3L,
         )

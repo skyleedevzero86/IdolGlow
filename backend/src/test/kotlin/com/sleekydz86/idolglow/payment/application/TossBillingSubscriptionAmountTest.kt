@@ -9,6 +9,7 @@ import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscription
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
+import com.sleekydz86.idolglow.payment.infrastructure.TossBillingCustomerJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingDueClaimRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
@@ -52,6 +53,7 @@ class TossBillingSubscriptionAmountTest {
                     ),
                 tossPaymentsApiClient = mockk<TossPaymentsApiClient>(relaxed = true),
                 methodRepository = methodRepository,
+                customerRepository = mockk<TossBillingCustomerJpaRepository>(relaxed = true),
                 subscriptionRepository = subscriptionRepository,
                 chargeRepository = mockk<TossBillingChargeJpaRepository>(relaxed = true),
                 attemptRepository = mockk<TossBillingChargeAttemptJpaRepository>(relaxed = true),

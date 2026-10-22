@@ -2,9 +2,9 @@
 -- 새 데이터베이스를 처음 만들 때만 사용한다. 이미 같은 스키마가 반영된 환경에는 실행하지 않는다.
 
 -- 초기 스키마
----
+-- ---
 -- users: 애플리케이션 회원
----
+-- ---
 CREATE TABLE users (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '회원 PK',
     email VARCHAR(255) NOT NULL COMMENT '로그인과 식별에 쓰는 이메일. 유니크 인덱스',
@@ -17,9 +17,9 @@ CREATE TABLE users (
 -- 이메일 로그인·조회용
 CREATE INDEX idx_users_email ON users (email);
 
----
+-- ---
 -- user_oauths: OAuth 제공자별 계정 연결
----
+-- ---
 CREATE TABLE user_oauths (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '연동 행 PK',
     user_id BIGINT NOT NULL COMMENT 'users.id FK',
@@ -33,9 +33,9 @@ CREATE INDEX idx_user_oauths_user_id ON user_oauths (user_id);
 CREATE INDEX idx_user_oauths_provider_provider_id ON user_oauths (provider, provider_id);
 CREATE INDEX idx_user_oauths_email ON user_oauths (email);
 
----
+-- ---
 -- options: 상품에 붙는 옵션
----
+-- ---
 CREATE TABLE options (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '옵션 PK',
     name VARCHAR(120) NOT NULL COMMENT '옵션명',
@@ -46,9 +46,9 @@ CREATE TABLE options (
     updated_at DATETIME(6) NOT NULL COMMENT '수정 시각'
 ) COMMENT='상품 옵션 마스터(가격·설명·위치 문구)';
 
----
+-- ---
 -- products: 상품 마스터
----
+-- ---
 CREATE TABLE products (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '상품 PK',
     name VARCHAR(120) NOT NULL COMMENT '상품명',
@@ -59,9 +59,9 @@ CREATE TABLE products (
     base_price DECIMAL(19, 2) NOT NULL DEFAULT 0.00 COMMENT '상품 기본가(옵션 합산과 별도)'
 ) COMMENT='상품 기본 정보';
 
----
+-- ---
 -- product_option: 상품-옵션 N:M
----
+-- ---
 CREATE TABLE product_option (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '연결 행 PK',
     product_id BIGINT NOT NULL COMMENT 'products.id FK',
@@ -76,9 +76,9 @@ CREATE TABLE product_option (
 CREATE INDEX idx_product_option_product_id ON product_option (product_id);
 CREATE INDEX idx_product_option_option_id ON product_option (option_id);
 
----
+-- ---
 -- product_tag: 상품 태그
----
+-- ---
 CREATE TABLE product_tag (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '태그 행 PK',
     product_id BIGINT NOT NULL COMMENT 'products.id FK',
@@ -92,9 +92,9 @@ CREATE TABLE product_tag (
 CREATE INDEX idx_product_tag_tag_name ON product_tag (tag_name);
 CREATE INDEX idx_product_tag_product_id ON product_tag (product_id);
 
----
+-- ---
 -- product_locations: 상품 대표 위치
----
+-- ---
 CREATE TABLE product_locations (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '위치 행 PK',
     product_id BIGINT NOT NULL COMMENT 'products.id FK',
@@ -110,9 +110,9 @@ CREATE TABLE product_locations (
     CONSTRAINT fk_product_locations_product FOREIGN KEY (product_id) REFERENCES products (id)
 ) COMMENT='상품당 하나의 지도/주소 정보';
 
----
+-- ---
 -- reservation_slots: 상품별 예약 가능 슬롯
----
+-- ---
 CREATE TABLE reservation_slots (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '슬롯 PK',
     product_id BIGINT NOT NULL COMMENT 'products.id FK',
@@ -130,9 +130,9 @@ CREATE TABLE reservation_slots (
 
 CREATE INDEX idx_reservation_slots_product_id ON reservation_slots (product_id);
 
----
+-- ---
 -- reservations: 사용자 예약
----
+-- ---
 CREATE TABLE reservations (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '예약 PK',
     reservation_slot_id BIGINT NOT NULL COMMENT 'reservation_slots.id FK',
@@ -152,9 +152,9 @@ CREATE TABLE reservations (
 CREATE INDEX idx_reservations_user_visit_time ON reservations (user_id, visit_date, visit_start_time);
 CREATE INDEX idx_reservations_reservation_slot_id ON reservations (reservation_slot_id);
 
----
+-- ---
 -- product_reviews: 상품 리뷰
----
+-- ---
 CREATE TABLE product_reviews (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '리뷰 PK',
     product_id BIGINT NOT NULL COMMENT 'products.id FK',
@@ -171,9 +171,9 @@ CREATE TABLE product_reviews (
 CREATE INDEX idx_product_reviews_product_id ON product_reviews (product_id);
 CREATE INDEX idx_product_reviews_user_id ON product_reviews (user_id);
 
----
+-- ---
 -- images: 집계 타입별 첨부 이미지 메타
----
+-- ---
 CREATE TABLE images (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '이미지 PK',
     aggregate_type VARCHAR(30) NOT NULL COMMENT '소속 엔티티 종류(PRODUCT/OPTION/USER/PRODUCT_REVIEW)',
@@ -193,9 +193,9 @@ CREATE TABLE images (
 
 CREATE INDEX idx_images_aggregate ON images (aggregate_type, aggregate_id, sort_order);
 
----
+-- ---
 -- user_survey: 온보딩/취향 설문
----
+-- ---
 CREATE TABLE user_survey (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '설문 PK',
     user_id BIGINT NOT NULL COMMENT 'users.id FK',
@@ -213,9 +213,9 @@ CREATE TABLE user_survey (
 
 CREATE INDEX idx_user_survey_user_id ON user_survey (user_id);
 
----
+-- ---
 -- user_survey_places: 설문에 선택한 장소 목록
----
+-- ---
 CREATE TABLE user_survey_places (
     user_survey_id BIGINT NOT NULL COMMENT 'user_survey.id FK',
     place VARCHAR(100) NOT NULL COMMENT '장소명',
@@ -224,9 +224,9 @@ CREATE TABLE user_survey_places (
 
 CREATE INDEX idx_user_survey_places_survey_id ON user_survey_places (user_survey_id);
 
----
+-- ---
 -- wishes: 상품 찜
----
+-- ---
 CREATE TABLE wishes (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '찜 PK',
     user_id BIGINT NOT NULL COMMENT 'users.id FK',
@@ -241,9 +241,9 @@ CREATE TABLE wishes (
 CREATE INDEX idx_wishes_user_id ON wishes (user_id);
 CREATE INDEX idx_wishes_product_id ON wishes (product_id);
 
----
+-- ---
 -- schedules: 마이페이지 일정
----
+-- ---
 CREATE TABLE schedules (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '일정 PK',
     user_id BIGINT NOT NULL COMMENT 'users.id',
@@ -259,17 +259,17 @@ CREATE TABLE schedules (
 CREATE INDEX idx_schedule_user_start ON schedules (user_id, start_at);
 
 -- 예약·결제·알림·보안 확장
----
+-- ---
 -- users: ADMIN 역할 추가
----
+-- ---
 ALTER TABLE users DROP CHECK chk_users_role;
 ALTER TABLE users ADD CONSTRAINT chk_users_role CHECK (role IN ('USER', 'ADMIN'));
 
----
+-- ---
 -- reservation_slots: PENDING 예약이 슬롯을 점유할 때 hold 정보
 -- hold_reservation_id: 잠금을 건 예약 PK
 -- hold_expires_at: hold 만료 시각
----
+-- ---
 ALTER TABLE reservation_slots ADD COLUMN hold_reservation_id BIGINT NULL COMMENT 'hold를 건 reservations.id';
 ALTER TABLE reservation_slots ADD COLUMN hold_expires_at DATETIME(6) NULL COMMENT 'hold 만료 시각';
 ALTER TABLE reservation_slots
@@ -278,9 +278,9 @@ ALTER TABLE reservation_slots
 -- hold 만료 스캔·조회용
 CREATE INDEX idx_reservation_slots_hold ON reservation_slots (hold_reservation_id, hold_expires_at);
 
----
+-- ---
 -- reservations: 결제·만료·취소 도메인 필드
----
+-- ---
 ALTER TABLE reservations ADD COLUMN expires_at DATETIME(6) NULL COMMENT 'PENDING 예약 자동 만료 시각';
 ALTER TABLE reservations ADD COLUMN confirmed_at DATETIME(6) NULL COMMENT '결제 성공 후 확정 시각';
 ALTER TABLE reservations ADD COLUMN canceled_at DATETIME(6) NULL COMMENT '취소 시각';
@@ -293,9 +293,9 @@ ALTER TABLE reservations
 -- 만료 배치·상태 조회용
 CREATE INDEX idx_reservations_status_expires_at ON reservations (status, expires_at);
 
----
+-- ---
 -- payments: 예약 1건당 1건 결제
----
+-- ---
 CREATE TABLE payments (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '결제 PK',
     reservation_id BIGINT NOT NULL COMMENT 'reservations.id FK(유니크)',
@@ -319,9 +319,9 @@ CREATE TABLE payments (
 -- 상태별 후처리·모니터링용
 CREATE INDEX idx_payments_status_updated_at ON payments (status, updated_at);
 
----
+-- ---
 -- notifications: 사용자 알림
----
+-- ---
 CREATE TABLE notifications (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '알림 PK',
     user_id BIGINT NOT NULL COMMENT '수신자 users.id',
@@ -358,9 +358,9 @@ CREATE TABLE IF NOT EXISTS images (
     INDEX idx_images_aggregate (aggregate_type, aggregate_id, sort_order)
 ) COMMENT='엔티티별 첨부 이미지 메타데이터';
 
----
+-- ---
 -- 샘플 1건: products.id=1이 존재할 때만 의미 있음
----
+-- ---
 INSERT INTO images (
     aggregate_type,
     aggregate_id,
@@ -824,9 +824,9 @@ create index idx_email_subscriptions_active on email_subscriptions(active);
 create index idx_subscription_dispatch_histories_dispatched_at on subscription_dispatch_histories(dispatched_at);
 
 -- 사이트 도메인, 배너, 팝업, 메인이미지
----
+-- ---
 -- tb_domain_list: 멀티 사이트구분용 도메인 마스터
----
+-- ---
 create table if not exists tb_domain_list (
     domain_id varchar(20) primary key comment '사이트 도메인 식별자. kr, en처럼 짧은 코드',
     domain_nm varchar(100) comment '표시명',
@@ -837,9 +837,9 @@ create table if not exists tb_domain_list (
     sort_seq int default 0 comment '정렬 순서'
 ) engine=InnoDB default charset=utf8mb4 comment='사이트·언어 도메인 목록(배너/팝업/메인이미지 공통 참조)';
 
----
+-- ---
 -- tb_banner: 상단·슬롯 등 배너 콘텐츠
----
+-- ---
 create table if not exists tb_banner (
     banner_id varchar(20) primary key comment '배너 PK',
     domain_id varchar(20) default 'kr' comment 'tb_domain_list FK',
@@ -857,9 +857,9 @@ create table if not exists tb_banner (
     constraint fk_tb_banner_domain foreign key (domain_id) references tb_domain_list (domain_id)
 ) engine=InnoDB default charset=utf8mb4 comment='배너 관리';
 
----
+-- ---
 -- tb_popup_manage: 기간·위치·크기 속성을 가진 팝업
----
+-- ---
 create table if not exists tb_popup_manage (
     popup_id varchar(20) primary key comment '팝업 PK',
     domain_id varchar(20) default 'kr' comment 'tb_domain_list FK',
@@ -883,9 +883,9 @@ create table if not exists tb_popup_manage (
     constraint fk_tb_popup_domain foreign key (domain_id) references tb_domain_list (domain_id)
 ) engine=InnoDB default charset=utf8mb4 comment='팝업 관리';
 
----
+-- ---
 -- tb_main_image: 메인 영역 슬라이드/히어로 이미지
----
+-- ---
 create table if not exists tb_main_image (
     image_id varchar(20) primary key comment '이미지 PK',
     domain_id varchar(20) default 'kr' comment 'tb_domain_list FK',
@@ -901,9 +901,9 @@ create table if not exists tb_main_image (
     constraint fk_tb_main_image_domain foreign key (domain_id) references tb_domain_list (domain_id)
 ) engine=InnoDB default charset=utf8mb4 comment='메인 이미지 관리';
 
----
+-- ---
 -- 시드: 도메인 + 샘플 데이터
----
+-- ---
 insert ignore into tb_domain_list (domain_id, domain_nm, domain_path, domain_dc, use_at, sort_seq) values
 ('kr', '한국어', '/kr', '한국어 메인사이트', 'Y', 1),
 ('en', 'English', '/en', 'English site', 'Y', 2),
@@ -923,15 +923,15 @@ insert ignore into tb_main_image (image_id, domain_id, image_nm, image_dc, reflc
 ('IMG_002', 'kr', '메인 이미지 2', '서브 슬라이드 이미지', 'Y', 'admin');
 
 -- MySQL
----
+-- ---
 -- editor_documents
----
+-- ---
 create table if not exists editor_documents (
     id char(36) not null primary key,
     title varchar(120) not null,
     author varchar(60) not null,
     markdown longtext not null,
-    tags_json longtext not null default '[]',
+    tags_json longtext not null default ('[]'),
     updated_at timestamp(6) not null,
     embedding text not null,
     publication_status varchar(20) not null default 'PUBLISHED',
@@ -941,18 +941,18 @@ create table if not exists editor_documents (
     view_count bigint not null default 0
 ) engine=InnoDB default charset=utf8mb4;
 
-create index if not exists editor_documents_updated_at_idx
+create index editor_documents_updated_at_idx
     on editor_documents (updated_at desc);
 
-create index if not exists editor_documents_publication_status_idx
+create index editor_documents_publication_status_idx
     on editor_documents (publication_status, updated_at desc);
 
-create index if not exists editor_documents_url_slug_idx
+create index editor_documents_url_slug_idx
     on editor_documents (url_slug);
 
----
+-- ---
 -- editor_assets
----
+-- ---
 create table if not exists editor_assets (
     id char(36) not null primary key,
     object_key varchar(255) not null,
@@ -964,7 +964,7 @@ create table if not exists editor_assets (
     constraint uk_editor_assets_object_key unique (object_key)
 ) engine=InnoDB default charset=utf8mb4;
 
-create index if not exists editor_assets_uploaded_at_idx
+create index editor_assets_uploaded_at_idx
     on editor_assets (uploaded_at desc);
 
 -- 플랫폼 인증용 users 확장·비밀번호 이력·역할
@@ -1078,9 +1078,3 @@ ALTER TABLE users
 ALTER TABLE users
     ADD COLUMN temporary_password_required BOOLEAN NOT NULL DEFAULT FALSE
         COMMENT '임시 비밀번호 발급 등으로 비밀번호 변경이 필요하면 1';
-
-ALTER TABLE reservation_slots
-    ADD COLUMN IF NOT EXISTS admin_note TEXT NULL COMMENT '운영자 메모';
-
-ALTER TABLE reservations
-    ADD COLUMN IF NOT EXISTS admin_memo TEXT NULL COMMENT '관리자 메모';
