@@ -27,6 +27,7 @@ class TossBillingCustomerKeyTest {
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>(relaxed = true)
     private val stored = mutableMapOf<Long, TossBillingCustomer>()
     private lateinit var service: TossBillingService
+    private lateinit var self: TossBillingService
 
     @BeforeEach
     fun setUp() {
@@ -40,7 +41,7 @@ class TossBillingCustomerKeyTest {
             }
             row
         }
-        val self = mockk<TossBillingService>()
+        self = mockk()
         service =
             TossBillingService(
                 tossPaymentProperties =
@@ -63,6 +64,7 @@ class TossBillingCustomerKeyTest {
                 defaultOrderName = BillingDefaults.DEFAULT_ORDER_NAME,
             )
         every { self.insertCustomerKey(any()) } answers { service.insertCustomerKey(firstArg()) }
+        every { self.findStoredCustomerKey(any()) } answers { service.findStoredCustomerKey(firstArg()) }
     }
 
     @DisplayName("같은 사용자는 같은 UUID를 받고 사용자 아이디는 키에 없다")
@@ -130,6 +132,25 @@ class TossBillingCustomerKeyTest {
 
         // then
         assertThat(key).isEqualTo(winner)
+    }
+
+    @DisplayName("user_id 충돌 뒤 다시 조회는 새 트랜잭션 메서드로 한다")
+    @Test
+    fun customerKeyConflictRereadsInNewTransaction() {
+        // given
+        val winner = UUID.randomUUID().toString()
+        every { customerRepository.findByUserId(USER_A) } returns null
+        every { customerRepository.saveAndFlush(any()) } throws
+            DataIntegrityViolationException("uk_toss_billing_customers_user_id")
+        every { self.findStoredCustomerKey(USER_A) } returns winner
+
+        // when
+        val key = service.clientConfig(USER_A).customerKey
+
+        // then
+        assertThat(key).isEqualTo(winner)
+        verify(exactly = 1) { self.findStoredCustomerKey(USER_A) }
+        verify(exactly = 2) { customerRepository.findByUserId(USER_A) }
     }
 
     private companion object {

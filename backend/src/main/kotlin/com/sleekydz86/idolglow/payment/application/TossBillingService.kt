@@ -423,10 +423,13 @@ class TossBillingService(
         return try {
             self.insertCustomerKey(userId)
         } catch (ex: DataIntegrityViolationException) {
-            customerRepository.findByUserId(userId)?.customerKey
+            self.findStoredCustomerKey(userId)
                 ?: throw IllegalStateException("customerKey 저장에 실패했습니다. userId=$userId", ex)
         }
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    fun findStoredCustomerKey(userId: Long): String? = customerRepository.findByUserId(userId)?.customerKey
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun insertCustomerKey(userId: Long): String {
