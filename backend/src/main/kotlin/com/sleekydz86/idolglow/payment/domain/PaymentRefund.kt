@@ -47,7 +47,7 @@ class PaymentRefund(
     @Column(name = "fail_message", length = 500)
     var failMessage: String? = null,
     @Column(name = "idempotency_key", length = 100)
-    val idempotencyKey: String? = null,
+    var idempotencyKey: String? = null,
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "raw_response_json")
     var rawResponseJson: String? = null,

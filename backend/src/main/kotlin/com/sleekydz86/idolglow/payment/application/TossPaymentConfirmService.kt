@@ -14,6 +14,7 @@ class TossPaymentConfirmService(
     private val paymentRepository: PaymentRepository,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val paymentLogCommandService: PaymentLogCommandService,
+    private val paymentRefundService: PaymentRefundService,
 ) {
     fun confirm(
         userId: Long,
@@ -75,7 +76,9 @@ class TossPaymentConfirmService(
         if (response.isInconclusive) {
             return paymentRepository.findByOrderId(orderId) ?: prepared.payment
         }
-        return tossPaymentConfirmTxService.completeConfirm(userId, orderId, amount, response)
+        return tossPaymentConfirmTxService.completeConfirm(userId, orderId, amount, response).let {
+            paymentRefundService.settlePreparedRefund(it.id)
+        }
     }
 
     private fun toKrwLong(amount: BigDecimal): Long {

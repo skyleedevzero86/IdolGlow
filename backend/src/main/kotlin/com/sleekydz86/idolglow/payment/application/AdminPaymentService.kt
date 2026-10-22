@@ -12,8 +12,10 @@ import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.AdminPaymentQueryRepository
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
-import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCancelFacade
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -25,9 +27,10 @@ class AdminPaymentService(
     private val adminPaymentQueryRepository: AdminPaymentQueryRepository,
     private val paymentRefundJpaRepository: PaymentRefundJpaRepository,
     private val paymentLogJpaRepository: PaymentLogJpaRepository,
-    private val reservationCommandService: ReservationCommandService,
+    private val reservationCancelFacade: ReservationCancelFacade,
     private val paymentViewPolicyService: PaymentViewPolicyService,
     private val paymentDocumentService: PaymentDocumentService,
+    @Lazy private val self: AdminPaymentService,
 ) {
     fun findPayments(
         status: PaymentStatus?,
@@ -137,17 +140,13 @@ class AdminPaymentService(
         )
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun cancelPayment(
         paymentId: Long,
         reason: String? = null,
     ): AdminPaymentDetailResponse {
-        val payment =
-            adminPaymentQueryRepository.findPaymentById(paymentId)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
-        require(paymentViewPolicyService.canAdminCancel(payment)) { "관리자 취소가 가능한 결제 상태가 아닙니다." }
-        reservationCommandService.cancelReservationByAdmin(payment.reservation.id, reason)
-        return findPaymentDetail(paymentId)
+        reservationCancelFacade.cancelAdminPayment(paymentId, reason)
+        return self.findPaymentDetail(paymentId)
     }
 
     fun exportPaymentsXlsx(

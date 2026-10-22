@@ -1,0 +1,224 @@
+package com.sleekydz86.idolglow.payment.application
+
+import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
+import com.sleekydz86.idolglow.payment.domain.PaymentLogType
+import com.sleekydz86.idolglow.payment.domain.PaymentProvider
+import com.sleekydz86.idolglow.payment.domain.PaymentRefund
+import com.sleekydz86.idolglow.payment.domain.PaymentRefundStatus
+import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentJpaRepository
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
+import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
+import jakarta.persistence.EntityManager
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.ObjectMapper
+import java.time.LocalDateTime
+
+@Transactional
+@Service
+class PaymentRefundTxService(
+    private val entityManager: EntityManager,
+    private val paymentRepository: PaymentRepository,
+    private val paymentJpaRepository: PaymentJpaRepository,
+    private val reservationRepository: ReservationRepository,
+    private val paymentRefundJpaRepository: PaymentRefundJpaRepository,
+    private val paymentLogCommandService: PaymentLogCommandService,
+    private val paymentNotificationMailService: PaymentNotificationMailService,
+    private val tossPaymentProperties: TossPaymentProperties,
+    private val objectMapper: ObjectMapper,
+) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    fun prepareRefund(
+        paymentId: Long,
+        cancelReason: String,
+        requestedBy: RefundRequestedBy,
+    ): RefundPrepareResult {
+        val payment = lockPayment(paymentId)
+        return when (payment.status) {
+            PaymentStatus.REFUNDED -> RefundPrepareResult(payment.id)
+            PaymentStatus.REFUNDING -> pendingRefund(payment)
+            PaymentStatus.SUCCEEDED -> openRefund(payment, cancelReason, requestedBy)
+            else -> throw IllegalArgumentException("승인된 결제만 환불할 수 있습니다. status=${payment.status}")
+        }
+    }
+
+    fun completeRefund(
+        refundId: Long,
+        response: TossApiResponse,
+    ) {
+        val (paymentId, reservationId) = ownerIds(refundId)
+        reservationRepository.findByIdForUpdate(reservationId)
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
+        val payment =
+            paymentRepository.findByIdForUpdate(paymentId)
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
+        val refund =
+            paymentRefundJpaRepository.findById(refundId).orElseThrow {
+                IllegalArgumentException("환불 이력을 찾을 수 없습니다: $refundId")
+            }
+        if (refund.status != PaymentRefundStatus.PENDING || response.isInconclusive) {
+            return
+        }
+        if (!response.isSuccess2xx || response.json == null) {
+            markRefundRejected(payment, refund, response)
+        } else {
+            markRefundSucceeded(payment, refund, response)
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun findPendingTossRefund(paymentId: Long): RefundPrepareResult? {
+        val payment = paymentJpaRepository.findById(paymentId).orElse(null)
+        if (payment == null || payment.status != PaymentStatus.REFUNDING || payment.provider != PaymentProvider.TOSS) {
+            return null
+        }
+        return pendingRefund(payment).takeIf { it.needsTossCancel }
+    }
+
+    @Transactional(readOnly = true)
+    fun loadPayment(paymentId: Long): Payment =
+        paymentJpaRepository.findById(paymentId).orElseThrow {
+            IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
+        }
+
+    private fun openRefund(
+        payment: Payment,
+        cancelReason: String,
+        requestedBy: RefundRequestedBy,
+    ): RefundPrepareResult {
+        if (payment.provider == PaymentProvider.TOSS) {
+            require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
+            require(!payment.paymentKey.isNullOrBlank()) { "토스 paymentKey 가 없어 환불할 수 없습니다." }
+        }
+        payment.markRefunding()
+        val refund = savePending(payment, cancelReason, requestedBy)
+        if (payment.provider == PaymentProvider.MOCK) {
+            payment.markFullRefund()
+            refund.status = PaymentRefundStatus.SUCCEEDED
+            refund.rawResponseJson = objectMapper.createObjectNode().put("mock", true).toString()
+            paymentLogCommandService.append(
+                payment = payment,
+                orderId = payment.orderId,
+                paymentKey = payment.paymentKey,
+                logType = PaymentLogType.CANCEL_RESPONSE,
+                step = PaymentLogStep.SERVER,
+                httpStatus = 200,
+                responseBody = refund.rawResponseJson,
+            )
+            paymentNotificationMailService.sendCanceled(payment)
+            return RefundPrepareResult(paymentId = payment.id, refundId = refund.id)
+        }
+        return RefundPrepareResult(
+            paymentId = payment.id,
+            orderId = payment.orderId,
+            refundId = refund.id,
+            paymentKey = payment.paymentKey,
+            idempotencyKey = refund.idempotencyKey,
+            cancelReason = refund.cancelReason,
+            needsTossCancel = true,
+        )
+    }
+
+    private fun markRefundRejected(
+        payment: Payment,
+        refund: PaymentRefund,
+        response: TossApiResponse,
+    ) {
+        refund.status = PaymentRefundStatus.FAILED
+        refund.failCode = response.json?.path("code")?.asText()
+        refund.failMessage = response.json?.path("message")?.asText() ?: response.rawBody
+        log.error(
+            "토스 환불이 거절되었습니다. paymentId={} refundId={} httpStatus={} code={}",
+            payment.id,
+            refund.id,
+            response.httpStatus,
+            refund.failCode,
+        )
+    }
+
+    private fun markRefundSucceeded(
+        payment: Payment,
+        refund: PaymentRefund,
+        response: TossApiResponse,
+    ) {
+        refund.status = PaymentRefundStatus.SUCCEEDED
+        refund.rawResponseJson = response.rawBody
+        refund.externalTransactionKey = response.json?.path("transactionKey")?.asText(null)
+        payment.markFullRefund()
+        paymentNotificationMailService.sendCanceled(payment)
+    }
+
+    private fun savePending(
+        payment: Payment,
+        cancelReason: String,
+        requestedBy: RefundRequestedBy,
+    ): PaymentRefund {
+        val refund =
+            paymentRefundJpaRepository.saveAndFlush(
+                PaymentRefund(
+                    payment = payment,
+                    reservation = payment.reservation,
+                    cancelAmount = payment.amount,
+                    cancelReason = cancelReason,
+                    status = PaymentRefundStatus.PENDING,
+                    requestedBy = requestedBy,
+                    firstRequestedAt = LocalDateTime.now(),
+                ),
+            )
+        refund.idempotencyKey = "refund-${refund.id}"
+        return refund
+    }
+
+    private fun pendingRefund(payment: Payment): RefundPrepareResult {
+        val pending =
+            paymentRefundJpaRepository
+                .findAllByPaymentIdOrderByCreatedAtDesc(payment.id)
+                .firstOrNull { it.status == PaymentRefundStatus.PENDING }
+        if (pending == null || payment.provider != PaymentProvider.TOSS) {
+            return RefundPrepareResult(payment.id)
+        }
+        return RefundPrepareResult(
+            paymentId = payment.id,
+            orderId = payment.orderId,
+            refundId = pending.id,
+            paymentKey = payment.paymentKey,
+            idempotencyKey = pending.idempotencyKey,
+            cancelReason = pending.cancelReason,
+            needsTossCancel = true,
+        )
+    }
+
+    private fun lockPayment(paymentId: Long): Payment {
+        val found =
+            entityManager
+                .createNativeQuery("select reservation_id from payments where id = :paymentId")
+                .setParameter("paymentId", paymentId)
+                .resultList
+                .firstOrNull()
+        val reservationId = (found as? Number)?.toLong()
+        val reservation = reservationId?.let { reservationRepository.findByIdForUpdate(it) }
+        val payment = reservation?.let { paymentRepository.findByIdForUpdate(paymentId) }
+        return payment ?: throw IllegalArgumentException("결제 잠금에 실패했습니다. paymentId=$paymentId")
+    }
+
+    private fun ownerIds(refundId: Long): Pair<Long, Long> {
+        val row =
+            entityManager
+                .createNativeQuery("select payment_id, reservation_id from payment_refunds where id = :id")
+                .setParameter("id", refundId)
+                .resultList
+                .firstOrNull()
+        val values = row as? Array<*> ?: throw IllegalArgumentException("환불 이력을 찾을 수 없습니다: $refundId")
+        val paymentId = (values[0] as Number).toLong()
+        val reservationId = (values[1] as Number).toLong()
+        return paymentId to reservationId
+    }
+}

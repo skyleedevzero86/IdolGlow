@@ -262,7 +262,8 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
         val reservationStatus = row["reservation_status"].toString()
         val consistent =
             (paymentStatus == "SUCCEEDED" && reservationStatus == "BOOKED") ||
-                (paymentStatus == "REFUNDED" && reservationStatus == "CANCELED")
+                (paymentStatus == "REFUNDED" && reservationStatus == "CANCELED") ||
+                (paymentStatus == "REFUNDING" && reservationStatus == "CANCELED")
         assertTrue(consistent, "payment=$paymentStatus reservation=$reservationStatus")
     }
 

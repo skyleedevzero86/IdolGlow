@@ -24,6 +24,7 @@ class TossPaymentConfirmServiceTest {
     private val paymentRepository = mockk<PaymentRepository>()
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>()
     private val paymentLogCommandService = mockk<PaymentLogCommandService>(relaxed = true)
+    private val paymentRefundService = mockk<PaymentRefundService>(relaxed = true)
 
     private lateinit var service: TossPaymentConfirmService
 
@@ -35,6 +36,7 @@ class TossPaymentConfirmServiceTest {
                 paymentRepository = paymentRepository,
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 paymentLogCommandService = paymentLogCommandService,
+                paymentRefundService = paymentRefundService,
             )
     }
 

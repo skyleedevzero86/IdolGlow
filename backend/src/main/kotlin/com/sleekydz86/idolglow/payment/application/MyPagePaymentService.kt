@@ -1,24 +1,21 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.payment.application.dto.MyPagePaymentSummaryResponse
-import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.infrastructure.AdminPaymentQueryRepository
-import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
-import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
-import jakarta.persistence.EntityManager
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCancelFacade
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Transactional(readOnly = true)
 @Service
 class MyPagePaymentService(
-    private val entityManager: EntityManager,
     private val adminPaymentQueryRepository: AdminPaymentQueryRepository,
-    private val paymentRepository: PaymentRepository,
-    private val reservationRepository: ReservationRepository,
-    private val reservationCommandService: ReservationCommandService,
     private val paymentViewPolicyService: PaymentViewPolicyService,
     private val paymentDocumentService: PaymentDocumentService,
+    private val reservationCancelFacade: ReservationCancelFacade,
+    @Lazy private val self: MyPagePaymentService,
 ) {
     fun findPayments(
         userId: Long,
@@ -50,35 +47,14 @@ class MyPagePaymentService(
         )
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun cancelPayment(
         userId: Long,
         paymentId: Long,
         reason: String? = null,
     ): MyPagePaymentSummaryResponse {
-        val reservationId = findReservationId(paymentId)
-        reservationRepository.findByIdForUpdate(reservationId)
-            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다: $reservationId")
-        val payment =
-            paymentRepository.findByIdForUpdate(paymentId)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
-        require(payment.reservation.userId == userId) { "본인 결제만 취소할 수 있습니다." }
-        require(paymentViewPolicyService.canUserCancel(payment)) {
-            "사용자 결제 취소 가능 기간(15일)이 지났거나 취소할 수 없는 상태입니다."
-        }
-        reservationCommandService.cancelReservationByUser(payment.reservation.id, userId, reason)
-        return findPayment(userId, paymentId)
-    }
-
-    private fun findReservationId(paymentId: Long): Long {
-        val found =
-            entityManager
-                .createNativeQuery("select reservation_id from payments where id = :paymentId")
-                .setParameter("paymentId", paymentId)
-                .resultList
-                .firstOrNull()
-        return (found as? Number)?.toLong()
-            ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
+        reservationCancelFacade.cancelMyPagePayment(userId, paymentId, reason)
+        return self.findPayment(userId, paymentId)
     }
 
     fun renderReceiptPdf(

@@ -1,90 +1,107 @@
 package com.sleekydz86.idolglow.payment.application
 
-import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
-import com.sleekydz86.idolglow.payment.domain.PaymentRefund
-import com.sleekydz86.idolglow.payment.domain.PaymentRefundStatus
-import com.sleekydz86.idolglow.payment.domain.PaymentRepository
-import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
-import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 
 @DisplayName("결제 환불")
 class PaymentRefundServiceTest {
-    private val paymentRepository = mockk<PaymentRepository>()
-    private val paymentRefundJpaRepository = mockk<PaymentRefundJpaRepository>()
+    private val paymentRefundTxService = mockk<PaymentRefundTxService>()
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>()
     private val paymentLogCommandService = mockk<PaymentLogCommandService>(relaxed = true)
-    private val paymentNotificationMailService = mockk<PaymentNotificationMailService>(relaxed = true)
     private val objectMapper = ObjectMapper()
 
     private lateinit var service: PaymentRefundService
-    private val savedRefund = slot<PaymentRefund>()
 
     @BeforeEach
     fun setUp() {
         service =
             PaymentRefundService(
-                paymentRepository = paymentRepository,
-                paymentRefundJpaRepository = paymentRefundJpaRepository,
+                paymentRefundTxService = paymentRefundTxService,
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 paymentLogCommandService = paymentLogCommandService,
-                tossPaymentProperties = TossPaymentProperties(enabled = true),
-                objectMapper = objectMapper,
-                paymentNotificationMailService = paymentNotificationMailService,
-            )
-        every { paymentRefundJpaRepository.save(capture(savedRefund)) } answers { savedRefund.captured }
-        every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
-            TossApiResponse(
-                500,
-                objectMapper.readTree("""{"code":"PG_ERROR","message":"환불 실패"}"""),
-                """{"message":"환불 실패"}""",
+                paymentRepository = mockk(),
+                paymentRefundJpaRepository = mockk(),
+                tossPaymentProperties = com.sleekydz86.idolglow.global.config.TossPaymentProperties(enabled = true),
+                paymentNotificationMailService = mockk(relaxed = true),
             )
     }
 
-    @DisplayName("자동 환불이 토스에서 실패해도 예외 없이 실패 기록을 남긴다")
+    @DisplayName("만료 예약 자동 환불은 토스를 호출하지 않고 환불 준비만 한다")
     @Test
-    fun systemRefundKeepsFailedRecordWithoutThrowing() {
+    fun systemRefundPreparesWithoutCallingToss() {
         // given
         val (payment, reservation) = succeededTossPayment(ReservationStatus.PENDING)
+        val prepared = RefundPrepareResult(paymentId = payment.id, needsTossCancel = false)
+        every {
+            paymentRefundTxService.prepareRefund(payment.id, "결제 시간 초과로 자동 환불", RefundRequestedBy.SYSTEM)
+        } returns prepared
 
         // when
-        service.refundAfterExpiredReservation(payment, reservation)
+        val result = service.refundAfterExpiredReservation(payment, reservation)
 
         // then
-        assertEquals(PaymentRefundStatus.FAILED, savedRefund.captured.status)
-        assertEquals(RefundRequestedBy.SYSTEM, savedRefund.captured.requestedBy)
-        assertEquals(PaymentStatus.SUCCEEDED, payment.status)
+        assertEquals(prepared, result)
+        verify(exactly = 0) { tossPaymentsApiClient.cancel(any(), any(), any(), any()) }
     }
 
-    @DisplayName("사용자 취소 환불이 토스에서 실패하면 지금처럼 예외로 취소를 막는다")
+    @DisplayName("사용자 환불 4xx는 예외 없이 완료 처리로 넘긴다")
     @Test
-    fun userRefundStillThrowsOnFailure() {
+    fun userRefundFourXxDoesNotThrow() {
         // given
-        val (payment, reservation) = succeededTossPayment(ReservationStatus.BOOKED)
+        val prepared = tossPrepared()
+        every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
+            TossApiResponse(400, objectMapper.readTree("""{"code":"REJECT","message":"거절"}"""), """{"message":"거절"}""")
+        every { paymentRefundTxService.completeRefund(prepared.refundId!!, any()) } returns Unit
 
-        // when, then
-        assertThrows<IllegalStateException> {
-            service.refundBeforeReservationCancel(payment, reservation, "사용자 취소", RefundRequestedBy.USER)
-        }
+        // when
+        service.cancelPrepared(prepared)
+
+        // then
+        verify(exactly = 1) { paymentRefundTxService.completeRefund(prepared.refundId!!, any()) }
     }
+
+    @DisplayName("토스 환불 5xx는 완료 처리를 호출하지 않는다")
+    @Test
+    fun inconclusiveRefundSkipsComplete() {
+        // given
+        val prepared = tossPrepared()
+        every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
+            TossApiResponse(500, null, "internal")
+
+        // when
+        service.cancelPrepared(prepared)
+
+        // then
+        verify(exactly = 0) { paymentRefundTxService.completeRefund(any(), any()) }
+    }
+
+    private fun tossPrepared(): RefundPrepareResult =
+        RefundPrepareResult(
+            paymentId = 3L,
+            orderId = "ORD-1",
+            refundId = 9L,
+            paymentKey = "pk-refund",
+            idempotencyKey = "refund-9",
+            cancelReason = "사용자 취소",
+            needsTossCancel = true,
+        )
 
     private fun succeededTossPayment(reservationStatus: ReservationStatus): Pair<Payment, Reservation> {
         val reservation = mockk<Reservation>(relaxed = true)
+        every { reservation.id } returns 4L
         every { reservation.totalPrice } returns BigDecimal("35000")
         every { reservation.status } returns reservationStatus
         val payment = Payment.createPendingForToss(reservation, "pay_toss_refund")

@@ -4,10 +4,12 @@ import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminReservationSummaryResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.ReservationDashboardResponse
 import com.sleekydz86.idolglow.productpackage.admin.infrastructure.AdminReservationQueryRepository
-import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCancelFacade
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
@@ -15,9 +17,10 @@ import java.time.LocalDate
 @Service
 class AdminReservationService(
     private val adminReservationQueryRepository: AdminReservationQueryRepository,
-    private val reservationCommandService: ReservationCommandService,
+    private val reservationCancelFacade: ReservationCancelFacade,
     private val reservationRepository: ReservationRepository,
     private val adminAuditService: AdminAuditService,
+    @Lazy private val self: AdminReservationService,
 ) {
     fun findDashboard(
         fromDate: LocalDate?,
@@ -63,16 +66,24 @@ class AdminReservationService(
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun cancelReservation(reservationId: Long): AdminReservationSummaryResponse {
-        val reservation = reservationCommandService.cancelReservationByAdmin(reservationId)
-        val payments = adminReservationQueryRepository.findPaymentsByReservationIds(listOf(reservation.id))
+        reservationCancelFacade.cancelByAdmin(reservationId)
         adminAuditService.log(
             actionCode = "RESERVATION_CANCEL",
             targetType = "RESERVATION",
             targetId = reservationId,
             detail = null,
         )
+        return self.loadReservationSummary(reservationId)
+    }
+
+    @Transactional(readOnly = true)
+    fun loadReservationSummary(reservationId: Long): AdminReservationSummaryResponse {
+        val reservation =
+            reservationRepository.findById(reservationId)
+                ?: throw IllegalArgumentException("예약을 찾을 수 없습니다. reservationId=$reservationId")
+        val payments = adminReservationQueryRepository.findPaymentsByReservationIds(listOf(reservation.id))
         return AdminReservationSummaryResponse.from(reservation, payments[reservation.id])
     }
 
