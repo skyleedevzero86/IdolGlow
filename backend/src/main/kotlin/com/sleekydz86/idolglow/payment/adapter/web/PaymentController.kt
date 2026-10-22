@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+@Profile("local", "test")
 @Tag(name = "결제", description = "결제 상태 동기화 및 모의 웹훅 API")
 @RestController
 @RequestMapping("/payments/mock")
@@ -28,6 +30,10 @@ class PaymentController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
+    init {
+        require(webhookSecret.isNotBlank()) { "payment.mock.webhook-secret 값이 비어 있습니다." }
+    }
+
     @Operation(summary = "모의 결제 웹훅 처리", description = "테스트용 결제 상태 변경 웹훅을 받아 예약 결제 상태를 갱신합니다.")
     @ApiResponses(
         value = [
@@ -41,11 +47,12 @@ class PaymentController(
     )
     @PostMapping("/webhook")
     fun handleWebhook(
-        @Parameter(description = "모의 웹훅 인증 시크릿", example = "idolglow-mock-secret")
+        @Parameter(description = "모의 웹훅 인증 시크릿")
         @RequestHeader("X-Mock-Payment-Secret", required = false) secret: String?,
         @Valid @RequestBody request: MockPaymentWebhookRequest,
     ): ResponseEntity<PaymentResponse> {
         require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
+        reservationPaymentService.requireMockPayment(request.paymentReference)
 
         val payment =
             when (request.status) {
