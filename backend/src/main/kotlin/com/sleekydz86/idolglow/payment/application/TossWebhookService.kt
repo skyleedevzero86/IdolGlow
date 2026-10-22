@@ -25,7 +25,10 @@ class TossWebhookService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val reservationPaymentService: ReservationPaymentService,
 ) {
-    fun handleSignedPayload(rawBody: String) {
+    fun handlePayload(
+        rawBody: String,
+        transmissionId: String? = null,
+    ) {
         val root =
             runCatching { objectMapper.readTree(rawBody) }.getOrElse {
                 paymentLogCommandService.append(
@@ -37,6 +40,7 @@ class TossWebhookService(
                     httpStatus = 200,
                     requestBody = rawBody,
                     errorMessage = "웹훅 JSON 파싱 실패",
+                    traceId = transmissionId,
                 )
                 return
             }
@@ -55,6 +59,7 @@ class TossWebhookService(
             step = PaymentLogStep.SERVER,
             httpStatus = 200,
             requestBody = rawBody,
+            traceId = transmissionId,
         )
 
         if (!tossPaymentProperties.enabled) {

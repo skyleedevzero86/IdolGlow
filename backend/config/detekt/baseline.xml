@@ -11,7 +11,7 @@
     <ID>CyclomaticComplexMethod:GlowWeatherQueryService.kt:GlowWeatherQueryService$private fun buildWindGuide( region: GlowWeatherRegion, now: ZonedDateTime, current: CurrentWeatherResponse, forecast: List&lt;GlowWeatherForecastDay&gt;, ): GlowWeatherWindGuide</ID>
     <ID>CyclomaticComplexMethod:KmaGlowWeatherClient.kt:KmaGlowWeatherClient$override fun fetchMidLandForecast( regionId: String, tmFc: LocalDateTime, ): MidLandForecastSnapshot?</ID>
     <ID>CyclomaticComplexMethod:ProductDiscoveryService.kt:ProductDiscoveryService$fun findRecommendedProducts( userId: Long, size: Int, ): List&lt;ProductRankingResponse&gt;</ID>
-    <ID>CyclomaticComplexMethod:TossWebhookService.kt:TossWebhookService$fun handleSignedPayload(rawBody: String)</ID>
+    <ID>CyclomaticComplexMethod:TossWebhookService.kt:TossWebhookService$fun handlePayload( rawBody: String, transmissionId: String? = null, )</ID>
     <ID>CyclomaticComplexMethod:TourFestivalApiClient.kt:CodeItem$fun toDomain(parentRegnCd: String? = null): CodeEntry</ID>
     <ID>CyclomaticComplexMethod:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
     <ID>CyclomaticComplexMethod:UserSurveyFormService.kt:UserSurveyFormService$fun submitCurrentForm( userId: Long, command: SubmitSurveyResponseCommand, ): SurveySubmissionResponse</ID>
@@ -44,7 +44,7 @@
     <ID>LongMethod:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$fun composeWebzineIssue(event: WebzineIssueDispatchRequestedEvent): ComposedSubscriptionEmail</ID>
     <ID>LongMethod:SurveyRecommendationService.kt:SurveyRecommendationService$fun generate( userId: Long, submissionId: Long, useLlm: Boolean, ): SurveyRecommendationResponse</ID>
     <ID>LongMethod:TossPaymentConfirmService.kt:TossPaymentConfirmService$fun confirm( userId: Long, paymentKey: String, orderId: String, amount: BigDecimal, idempotencyKey: String?, traceId: String?, ): Payment</ID>
-    <ID>LongMethod:TossWebhookService.kt:TossWebhookService$fun handleSignedPayload(rawBody: String)</ID>
+    <ID>LongMethod:TossWebhookService.kt:TossWebhookService$fun handlePayload( rawBody: String, transmissionId: String? = null, )</ID>
     <ID>LongMethod:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
     <ID>LongMethod:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$@Transactional override fun run(args: ApplicationArguments)</ID>
     <ID>LoopWithTooManyJumpStatements:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$for</ID>
@@ -685,7 +685,7 @@
     <ID>ReturnCount:SpcdeInfoApiClient.kt:SpcdeInfoApiClient$private fun fetch( operation: String, solYear: String, solMonth: String, source: String, ): List&lt;SpecialDayInfo&gt;</ID>
     <ID>ReturnCount:SubscriptionDispatchSchedule.kt:SubscriptionDispatchSchedule$fun shouldTriggerAt(now: LocalDateTime): Boolean</ID>
     <ID>ReturnCount:TossPaymentConfirmService.kt:TossPaymentConfirmService$fun confirm( userId: Long, paymentKey: String, orderId: String, amount: BigDecimal, idempotencyKey: String?, traceId: String?, ): Payment</ID>
-    <ID>ReturnCount:TossWebhookService.kt:TossWebhookService$fun handleSignedPayload(rawBody: String)</ID>
+    <ID>ReturnCount:TossWebhookService.kt:TossWebhookService$fun handlePayload( rawBody: String, transmissionId: String? = null, )</ID>
     <ID>ReturnCount:TourApiClient.kt:TourApiClient$override fun fetchAreaBasedAttractions( baseYm: String, areaCode: Int, signguCode: Int, size: Int, ): List&lt;TourAttraction&gt;</ID>
     <ID>ReturnCount:TourFestivalApiClient.kt:FestivalItem$fun toDomain(): FestivalEvent?</ID>
     <ID>ReturnCount:TourFestivalApiClient.kt:TourFestivalApiClient$private fun extractItemNodes(itemsNode: JsonNode): List&lt;JsonNode&gt;</ID>
