@@ -15,7 +15,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@DisplayName("Graph Ql Mutation Behavior")
+@DisplayName("GraphQL 뮤테이션")
 class GraphQlMutationBehaviorTest {
     @LocalServerPort
     private var port: Int = 0

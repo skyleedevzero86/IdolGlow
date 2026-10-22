@@ -11,7 +11,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@DisplayName("Graph Ql Schema Smoke")
+@DisplayName("GraphQL 스키마")
 class GraphQlSchemaSmokeTest {
     @LocalServerPort
     private var port: Int = 0
@@ -19,7 +19,7 @@ class GraphQlSchemaSmokeTest {
     private lateinit var webTestClient: WebTestClient
 
     @BeforeEach
-    fun 준비() {
+    fun setUp() {
         webTestClient =
             WebTestClient
                 .bindToServer()

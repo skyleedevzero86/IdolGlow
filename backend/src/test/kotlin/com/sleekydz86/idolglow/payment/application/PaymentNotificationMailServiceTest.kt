@@ -67,6 +67,8 @@ class PaymentNotificationMailServiceTest {
     @DisplayName("트랜잭션이 없으면 메일을 바로 보낸다")
     @Test
     fun sendsImmediatelyWithoutTransaction() {
+        // given
+
         // when
         service.sendSucceeded(payment())
 

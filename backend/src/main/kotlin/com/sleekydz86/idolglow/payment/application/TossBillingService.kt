@@ -12,20 +12,25 @@ import com.sleekydz86.idolglow.payment.application.dto.TossBillingMethodResponse
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingOverviewResponse
 import com.sleekydz86.idolglow.payment.application.dto.TossBillingSubscriptionResponse
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
+import com.sleekydz86.idolglow.payment.domain.TossBillingCustomer
 import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscription
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscriptionStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
+import com.sleekydz86.idolglow.payment.infrastructure.TossBillingCustomerJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingDueClaimRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 @Suppress("TooManyFunctions")
@@ -33,6 +38,7 @@ class TossBillingService(
     private val tossPaymentProperties: TossPaymentProperties,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val methodRepository: TossBillingMethodJpaRepository,
+    private val customerRepository: TossBillingCustomerJpaRepository,
     private val subscriptionRepository: TossBillingSubscriptionJpaRepository,
     private val chargeRepository: TossBillingChargeJpaRepository,
     private val attemptRepository: TossBillingChargeAttemptJpaRepository,
@@ -241,7 +247,6 @@ class TossBillingService(
             resolveDefaultMethod(userId)
                 ?: throw IllegalArgumentException("등록된 결제 수단이 없습니다. 먼저 카드를 등록하세요.")
 
-        val amount = if (request.amount > 0) request.amount else defaultAmount
         val orderName = request.orderName.ifBlank { defaultOrderName }
         val now = LocalDateTime.now()
         val existing = subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)
@@ -252,14 +257,14 @@ class TossBillingService(
                     billingMethod = method,
                     planCode = PLAN_MONTHLY,
                     orderName = orderName,
-                    amount = amount,
+                    amount = defaultAmount,
                     status = TossBillingSubscriptionStatus.ACTIVE,
                     nextBillingAt = if (request.chargeImmediately) now else now.plusMonths(1),
                 )
             } else {
                 existing.billingMethod = method
                 existing.orderName = orderName
-                existing.amount = amount
+                existing.amount = defaultAmount
                 existing.status = TossBillingSubscriptionStatus.ACTIVE
                 existing.failCount = 0
                 existing.retryAt = null
@@ -413,7 +418,29 @@ class TossBillingService(
         require(tossPaymentProperties.clientKey.isNotBlank()) { "payment.toss.client-key 가 비어 있습니다." }
     }
 
-    private fun customerKeyOf(userId: Long): String = "idolglow-user-$userId"
+    private fun customerKeyOf(userId: Long): String {
+        customerRepository.findByUserId(userId)?.let { return it.customerKey }
+        return try {
+            self.insertCustomerKey(userId)
+        } catch (ex: DataIntegrityViolationException) {
+            self.findStoredCustomerKey(userId)
+                ?: throw IllegalStateException("customerKey 저장에 실패했습니다. userId=$userId", ex)
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    fun findStoredCustomerKey(userId: Long): String? = customerRepository.findByUserId(userId)?.customerKey
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun insertCustomerKey(userId: Long): String {
+        customerRepository.findByUserId(userId)?.let { return it.customerKey }
+        val created =
+            TossBillingCustomer(
+                userId = userId,
+                customerKey = UUID.randomUUID().toString(),
+            )
+        return customerRepository.saveAndFlush(created).customerKey
+    }
 
     private fun parseDateTime(raw: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(raw)
 

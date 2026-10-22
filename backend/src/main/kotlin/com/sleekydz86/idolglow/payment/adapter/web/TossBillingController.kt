@@ -2,7 +2,6 @@ package com.sleekydz86.idolglow.payment.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import com.sleekydz86.idolglow.payment.application.TossBillingService
-import com.sleekydz86.idolglow.payment.application.dto.ChargeTossBillingRequest
 import com.sleekydz86.idolglow.payment.application.dto.IssueTossBillingKeyRequest
 import com.sleekydz86.idolglow.payment.application.dto.RetryTossBillingChargeRequest
 import com.sleekydz86.idolglow.payment.application.dto.StartTossBillingSubscriptionRequest
@@ -87,14 +86,6 @@ class TossBillingController(
         @LoginUser userId: Long,
     ): ResponseEntity<TossBillingSubscriptionResponse> =
         ResponseEntity.ok(tossBillingService.withdrawCancelSubscription(userId))
-
-    @Operation(summary = "빌링키로 즉시 결제(테스트용)")
-    @PostMapping("/charge")
-    fun charge(
-        @LoginUser userId: Long,
-        @Valid @RequestBody request: ChargeTossBillingRequest,
-    ): ResponseEntity<TossBillingChargeResponse> =
-        ResponseEntity.ok(tossBillingService.chargeNow(userId, request))
 
     @Operation(summary = "실패 회차를 선택한 카드로 재결제")
     @PostMapping("/charges/{chargeId}/retry")

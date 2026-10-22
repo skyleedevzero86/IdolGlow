@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-@DisplayName("Schedule Ics Writer")
+@DisplayName("일정 ics 작성")
 class ScheduleIcsWriterTest {
     @DisplayName("ics 본문에 uid 요약 알람 정보가 포함된다")
     @Test

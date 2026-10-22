@@ -33,8 +33,11 @@ class PaymentLogRollbackPostgresTest : PostgresIntegrationTest() {
     @DisplayName("바깥 처리가 예외로 롤백돼도 결제 로그 행은 남는다")
     @Test
     fun keepsLogWhenOuterTransactionRollsBack() {
+        // given
         val created = fixture.createReservation(fixture.persistUser().id, fixture.persistOpenSlot())
         val required = TransactionTemplate(transactionManager)
+
+        // when
         runCatching {
             required.execute {
                 val payment = paymentJpaRepository.findByOrderIdForUpdate(created.payment.orderId)!!
@@ -51,6 +54,8 @@ class PaymentLogRollbackPostgresTest : PostgresIntegrationTest() {
                 throw IllegalStateException("바깥 처리 실패")
             }
         }
+
+        // then
         val logs = paymentLogJpaRepository.findAllByPaymentIdOrderByCreatedAtDesc(created.payment.paymentId)
         assertTrue(logs.isNotEmpty())
     }

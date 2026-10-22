@@ -14,7 +14,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicReference
 
-@DisplayName("Culture Info Api Client")
+@DisplayName("문화정보 API 클라이언트")
 class CultureInfoApiClientTest {
     @DisplayName("이미 인코딩된 공공데이터 서비스키를 그대로 유지한다")
     @Test

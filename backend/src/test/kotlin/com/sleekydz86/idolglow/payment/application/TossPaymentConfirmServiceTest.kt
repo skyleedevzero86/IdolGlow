@@ -40,13 +40,16 @@ class TossPaymentConfirmServiceTest {
     @DisplayName("예약이 만료됐으면 토스 승인을 부르지 않고 결제를 만료 처리한다")
     @Test
     fun skipsTossConfirmWhenReservationExpired() {
+        // given
         val payment = tossPayment(expired = true)
         every {
             tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
         } returns TossConfirmPrepareResult(payment, skipGateway = true, idempotencyKey = "confirm-${payment.orderId}")
 
+        // when
         val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
 
+        // then
         assertEquals(PaymentStatus.EXPIRED, result.status)
         verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
     }
@@ -54,6 +57,7 @@ class TossPaymentConfirmServiceTest {
     @DisplayName("멱등 키가 없으면 결제마다 고정된 키로 토스 승인을 요청한다")
     @Test
     fun usesStableIdempotencyKeyPerPayment() {
+        // given
         val payment = tossPayment()
         val keySlot = slot<String?>()
         every {
@@ -65,14 +69,17 @@ class TossPaymentConfirmServiceTest {
             tossPaymentConfirmTxService.completeConfirm(10L, payment.orderId, BigDecimal("35000"), any())
         } returns payment
 
+        // when
         service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
 
+        // then
         assertEquals("confirm-${payment.orderId}", keySlot.captured)
     }
 
     @DisplayName("토스 승인 응답이 5xx면 처리 중으로 두고 승인을 끝내지 않는다")
     @Test
     fun leavesConfirmingWhenTossReturns5xx() {
+        // given
         val payment = tossPayment()
         payment.markConfirming()
         every {
@@ -82,8 +89,10 @@ class TossPaymentConfirmServiceTest {
             TossApiResponse(500, null, "internal")
         every { paymentRepository.findByOrderId(payment.orderId) } returns payment
 
+        // when
         val result = service.confirm(10L, "pk-5xx", payment.orderId, BigDecimal("35000"), null, null)
 
+        // then
         assertEquals(PaymentStatus.CONFIRMING, result.status)
         verify(exactly = 0) { tossPaymentConfirmTxService.completeConfirm(any(), any(), any(), any()) }
     }

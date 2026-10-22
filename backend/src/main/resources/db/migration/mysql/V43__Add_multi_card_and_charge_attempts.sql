@@ -37,7 +37,7 @@ WHERE m.is_default = FALSE;
 
 ALTER TABLE toss_billing_methods
     MODIFY COLUMN active BOOLEAN NOT NULL DEFAULT TRUE COMMENT '삭제하지 않은 사용 가능 카드 여부. 여러 장 동시 활성 가능',
-    MODIFY COLUMN user_id BIGINT NOT NULL COMMENT '회원 아이디. 활성 카드는 사용자당 여러 장 가능';
+    MODIFY COLUMN user_id BIGINT NOT NULL COMMENT '회원 아이디. 활성 카드는 사용자당 여러 장 가능',
     MODIFY COLUMN is_default BOOLEAN NOT NULL DEFAULT FALSE COMMENT '구독 자동결제에 쓸 기본 수단 여부';
 
 CREATE INDEX idx_toss_billing_methods_user_active_default

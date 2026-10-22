@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@DisplayName("Global Mutation Graph Ql Baseline")
+@DisplayName("글로벌 GraphQL 뮤테이션 기준")
 class GlobalMutationGraphQlBaselineTest {
     @DisplayName("global 모듈 graphql 에 도메인 mutation 핸들러가 없다")
     @Test

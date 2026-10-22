@@ -12,18 +12,36 @@ class PaymentReferenceTest {
     @DisplayName("토스 결제는 pay_toss_ 로 시작한다")
     @Test
     fun tossPaymentUsesTossPrefix() {
-        assertEquals(
-            "pay_toss_20261020213000_7",
-            ReservationCommandService.paymentReferenceOf(useTossProvider = true, reservationId = 7L, now = now),
-        )
+        // given
+        val now = this.now
+
+        // when
+        val reference =
+            ReservationCommandService.paymentReferenceOf(
+                useTossProvider = true,
+                reservationId = 7L,
+                now = now,
+            )
+
+        // then
+        assertEquals("pay_toss_20261020213000_7", reference)
     }
 
     @DisplayName("목업 결제는 pay_mock_ 로 시작한다")
     @Test
     fun mockPaymentUsesMockPrefix() {
-        assertEquals(
-            "pay_mock_20261020213000_7",
-            ReservationCommandService.paymentReferenceOf(useTossProvider = false, reservationId = 7L, now = now),
-        )
+        // given
+        val now = this.now
+
+        // when
+        val reference =
+            ReservationCommandService.paymentReferenceOf(
+                useTossProvider = false,
+                reservationId = 7L,
+                now = now,
+            )
+
+        // then
+        assertEquals("pay_mock_20261020213000_7", reference)
     }
 }

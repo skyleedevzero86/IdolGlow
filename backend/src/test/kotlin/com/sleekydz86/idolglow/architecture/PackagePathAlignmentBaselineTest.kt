@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@DisplayName("Package Path Alignment Baseline")
+@DisplayName("패키지 경로 기준")
 class PackagePathAlignmentBaselineTest {
     @DisplayName("패키지 선언과 폴더 경로 불일치 건수가 기준값을 초과하지 않는다")
     @Test

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-@DisplayName("Health Check Controller")
+@DisplayName("헬스 체크")
 class HealthCheckControllerTest {
     @DisplayName("헬스 JSON에 버전과 UP 상태를 반환한다")
     @Test

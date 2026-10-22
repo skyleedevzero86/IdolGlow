@@ -14,7 +14,12 @@ class PostgresSmokeTest : PostgresIntegrationTest() {
     @DisplayName("select version() 이 PostgreSQL 17 로 시작한다")
     @Test
     fun selectVersionStartsWithPostgreSQL17() {
+        // given
+
+        // when
         val version = jdbcTemplate.queryForObject("select version()", String::class.java)!!
+
+        // then
         assertTrue(version.startsWith("PostgreSQL 17"), version)
     }
 }

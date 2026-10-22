@@ -23,6 +23,7 @@ class ConcurrentReservationPostgresTest : PostgresIntegrationTest() {
     @DisplayName("같은 슬롯에 10명이 동시에 예약하면 1명만 성공한다")
     @Test
     fun onlyOneOfTenConcurrentReservationsSucceeds() {
+        // given
         val slot = fixture.persistOpenSlot()
         val users = List(10) { fixture.persistUser() }
         val start = CountDownLatch(1)
@@ -42,10 +43,12 @@ class ConcurrentReservationPostgresTest : PostgresIntegrationTest() {
             }
         }
 
+        // when
         start.countDown()
         done.await(30, TimeUnit.SECONDS)
         pool.shutdownNow()
 
+        // then
         val reserved =
             jdbcTemplate.queryForObject(
                 "select count(*) from reservations where reservation_slot_id = ?",

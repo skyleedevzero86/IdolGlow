@@ -16,19 +16,17 @@
 -- [A] products — 가격 컬럼
 -- ----------------------------------------------------------------------------
 
-ALTER TABLE products
-    ADD COLUMN IF NOT EXISTS base_price DECIMAL(19, 2) NOT NULL DEFAULT 0.00
-        COMMENT '상품 기본가(옵션 합산과 별도)';
+-- base_price 는 V1 통합 스키마의 products 에 이미 있다. MySQL 은 ADD COLUMN 를 지원하지 않아 다시 추가하지 않는다.
 
 -- ----------------------------------------------------------------------------
 -- [A2] products — 추천 운영 컬럼 + latest-in-korea 큐레이션
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE products
-    ADD COLUMN IF NOT EXISTS is_recommended BOOLEAN NOT NULL DEFAULT FALSE COMMENT '관리자 추천 노출 여부';
+    ADD COLUMN is_recommended BOOLEAN NOT NULL DEFAULT FALSE COMMENT '관리자 추천 노출 여부';
 
 ALTER TABLE products
-    ADD COLUMN IF NOT EXISTS recommendation_score INT NOT NULL DEFAULT 0 COMMENT '관리자 수동 추천 점수(높을수록 우선)';
+    ADD COLUMN recommendation_score INT NOT NULL DEFAULT 0 COMMENT '관리자 수동 추천 점수(높을수록 우선)';
 
 UPDATE products SET is_recommended = COALESCE(is_recommended, FALSE) WHERE is_recommended IS NULL;
 UPDATE products SET recommendation_score = COALESCE(recommendation_score, 0) WHERE recommendation_score IS NULL;

@@ -6,11 +6,13 @@ import com.sleekydz86.idolglow.payment.adapter.web.request.MockPaymentWebhookSta
 import com.sleekydz86.idolglow.payment.application.ReservationPaymentService
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Profile
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 
+@Profile("local", "test")
 @Controller
 @PreAuthorize("hasRole('ADMIN')")
 class PaymentGraphQlController(
@@ -18,12 +20,15 @@ class PaymentGraphQlController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
+
     @MutationMapping
     fun mockPaymentWebhook(
         @Argument secret: String,
         @Argument @Valid input: MockPaymentWebhookRequest,
     ): PaymentGraphQlResponse {
+        require(webhookSecret.isNotBlank()) { "payment.mock.webhook-secret 값이 비어 있습니다." }
         require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
+        reservationPaymentService.requireMockPayment(input.paymentReference)
 
         val payment =
             when (input.status) {

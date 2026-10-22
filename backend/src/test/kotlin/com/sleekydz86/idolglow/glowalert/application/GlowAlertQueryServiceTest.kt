@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-@DisplayName("Glow Alert Query Service")
+@DisplayName("글로우 알림 조회")
 class GlowAlertQueryServiceTest {
     private val notificationRepository = mockk<NotificationRepository>()
     private lateinit var service: GlowAlertQueryService

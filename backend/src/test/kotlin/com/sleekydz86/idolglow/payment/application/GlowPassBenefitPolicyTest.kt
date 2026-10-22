@@ -14,7 +14,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@DisplayName("Glow Pass Benefit Policy")
+@DisplayName("글로우패스 혜택")
 class GlowPassBenefitPolicyTest {
     private val membershipQuery = mockk<MembershipQuery>()
     private val policy =

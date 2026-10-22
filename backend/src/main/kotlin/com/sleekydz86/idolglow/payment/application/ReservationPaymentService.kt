@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.payment.application
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentProvider
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
@@ -26,6 +27,15 @@ class ReservationPaymentService(
     private val paymentNotificationMailService: PaymentNotificationMailService,
     private val paymentRefundService: PaymentRefundService,
 ) {
+    fun requireMockPayment(paymentReference: String) {
+        val payment =
+            paymentRepository.findByPaymentReference(paymentReference)
+                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
+        require(payment.provider == PaymentProvider.MOCK) {
+            "모의 웹훅은 MOCK 결제만 처리할 수 있습니다. paymentReference=$paymentReference, provider=${payment.provider}"
+        }
+    }
+
     fun handlePaymentSucceeded(paymentReference: String): Payment {
         val (_, payment) = lockReservationThenPayment(paymentReference)
         return finalizeAfterGatewaySuccess(payment)

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Transactional
@@ -25,7 +24,10 @@ class TossWebhookService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val reservationPaymentService: ReservationPaymentService,
 ) {
-    fun handleSignedPayload(rawBody: String) {
+    fun handlePayload(
+        rawBody: String,
+        transmissionId: String? = null,
+    ) {
         val root =
             runCatching { objectMapper.readTree(rawBody) }.getOrElse {
                 paymentLogCommandService.append(
@@ -37,6 +39,7 @@ class TossWebhookService(
                     httpStatus = 200,
                     requestBody = rawBody,
                     errorMessage = "웹훅 JSON 파싱 실패",
+                    traceId = transmissionId,
                 )
                 return
             }
@@ -55,6 +58,7 @@ class TossWebhookService(
             step = PaymentLogStep.SERVER,
             httpStatus = 200,
             requestBody = rawBody,
+            traceId = transmissionId,
         )
 
         if (!tossPaymentProperties.enabled) {
@@ -136,14 +140,9 @@ class TossWebhookService(
             return
         }
 
-        if (!amountMatches(pjson, payment.amount)) {
-            logSystem(payment, orderId, paymentKey, remote.rawBody, "결제 금액 불일치")
-            return
-        }
-
         val status = pjson.path("status").asText(null)?.trim() ?: ""
         when (status) {
-            "DONE" -> finalizeFromRemote(payment, pjson, remote.rawBody!!)
+            "DONE" -> applyDoneFromRemote(payment, pjson, remote.rawBody, orderId, paymentKey)
             "CANCELED" ->
                 reservationPaymentService.handlePaymentCanceled(
                     payment.paymentReference,
@@ -171,6 +170,20 @@ class TossWebhookService(
         }
     }
 
+    private fun applyDoneFromRemote(
+        payment: Payment,
+        json: JsonNode,
+        rawJson: String?,
+        orderId: String,
+        paymentKey: String,
+    ) {
+        if (!TossPaymentResponseMapper.isDoneWithMatchingAmount(json, payment.amount)) {
+            logSystem(payment, orderId, paymentKey, rawJson, "결제 금액 불일치")
+            return
+        }
+        finalizeFromRemote(payment, json, rawJson!!)
+    }
+
     private fun finalizeFromRemote(
         payment: Payment,
         json: JsonNode,
@@ -180,15 +193,6 @@ class TossWebhookService(
         val approvedAt = payment.approvedAt ?: LocalDateTime.now()
         payment.markSucceeded(approvedAt)
         reservationPaymentService.finalizeAfterGatewaySuccess(payment)
-    }
-
-    private fun amountMatches(
-        json: JsonNode,
-        expected: BigDecimal,
-    ): Boolean {
-        val total = json.path("totalAmount")
-        if (!total.isNumber) return false
-        return BigDecimal.valueOf(total.asLong()).compareTo(expected.stripTrailingZeros()) == 0
     }
 
     private fun logSystem(

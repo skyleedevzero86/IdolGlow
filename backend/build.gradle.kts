@@ -103,6 +103,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 
     // ShedLock (빌링 스케줄러 다중 인스턴스 잠금)
+    implementation("net.javacrumbs.shedlock:shedlock-core:5.16.0")
     implementation("net.javacrumbs.shedlock:shedlock-spring:5.16.0")
     implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.16.0")
 }
