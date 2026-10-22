@@ -4,6 +4,26 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.10.2](https://github.com/skyleedevzero86/IdolGlow/compare/v0.10.1...v0.10.2) (2026-10-22)
+
+
+### Bug Fixes
+
+* **#43:** 토스 결제 승인과 정기결제 구매자 키를 서버 기준으로 검증한다 ([353777d](https://github.com/skyleedevzero86/IdolGlow/commit/353777d1e5969b1ed81c4a7515c6d04fe96706d2))
+* customerKey 충돌 후 재조회를 별도 트랜잭션에서 한다 ([f7b6cd7](https://github.com/skyleedevzero86/IdolGlow/commit/f7b6cd7a10680cb23b8349a728aefff2f9b0bdc2))
+* 마이페이지 결제 취소는 예약 다음 결제 순서로 잠그고 잠금 후 상태로 확인처리 ([ef46b79](https://github.com/skyleedevzero86/IdolGlow/commit/ef46b7988e3263e731a2b981584b5d23cbeb7f8c))
+* 모의 결제 웹훅을 로컬·테스트 프로필의 MOCK 결제로만 제한한다 ([cf0c978](https://github.com/skyleedevzero86/IdolGlow/commit/cf0c978f05a620a3b0cced789a33142056c8faad))
+* 빈 모의 웹훅 시크릿과 ShedLock 클래스 누락으로 서버 다시재가동 ([333b9e3](https://github.com/skyleedevzero86/IdolGlow/commit/333b9e3abc5f9d80c5ca25dd75daa6e86aa61223))
+* 정기결제 customerKey를 사용자별 무작위 UUID로 저장 ([955df36](https://github.com/skyleedevzero86/IdolGlow/commit/955df36ba45c7ad7e3cc177f7e184d545b3ed309))
+* 정기결제 구독 금액을 서버 플랜 가격으로만 정한다 ([a22e7a7](https://github.com/skyleedevzero86/IdolGlow/commit/a22e7a718254ebd2667207c837894b1486add812))
+* 토스 결제 상태 웹훅은 서명 대신 결제 조회로 검증한다 ([e4509f7](https://github.com/skyleedevzero86/IdolGlow/commit/e4509f729c0eb2a209d4f788b349585d634b2a59))
+* 토스 승인 응답이 DONE이고 금액이 일치할 때만 결제를 성공 처리 ([8caf9db](https://github.com/skyleedevzero86/IdolGlow/commit/8caf9dbcc302435365031c0c01e64c2e6bb5f79a))
+
+
+### Tests
+
+* 백엔드 테스트에 given when then 주석과 한글 표시 이름을 정리 ([6e69cac](https://github.com/skyleedevzero86/IdolGlow/commit/6e69cac0af2a278518e4d8a2584512a93b217813))
+
 ## [0.10.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.10.0...v0.10.1) (2026-10-20)
 
 
