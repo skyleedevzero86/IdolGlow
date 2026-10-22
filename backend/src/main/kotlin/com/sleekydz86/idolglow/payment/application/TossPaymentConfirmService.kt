@@ -4,7 +4,9 @@ import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -16,6 +18,8 @@ class TossPaymentConfirmService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val paymentRefundService: PaymentRefundService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     fun confirm(
         userId: Long,
         paymentKey: String,
@@ -26,7 +30,7 @@ class TossPaymentConfirmService(
     ): Payment {
         val prepared = tossPaymentConfirmTxService.prepareConfirm(userId, orderId, amount, idempotencyKey)
         if (prepared.skipGateway) {
-            return prepared.payment
+            return finishSkipped(prepared.payment)
         }
         return confirmWithGateway(userId, paymentKey, orderId, amount, prepared, traceId)
     }
@@ -76,10 +80,29 @@ class TossPaymentConfirmService(
         if (response.isInconclusive) {
             return paymentRepository.findByOrderId(orderId) ?: prepared.payment
         }
-        return tossPaymentConfirmTxService.completeConfirm(userId, orderId, amount, response).let {
-            paymentRefundService.settlePreparedRefund(it.id)
-        }
+        return settleQuietly(tossPaymentConfirmTxService.completeConfirm(userId, orderId, amount, response))
     }
+
+    private fun finishSkipped(payment: Payment): Payment =
+        if (payment.status == PaymentStatus.REFUNDING) {
+            settleQuietly(payment)
+        } else {
+            payment
+        }
+
+    private fun settleQuietly(payment: Payment): Payment =
+        runCatching { paymentRefundService.settlePreparedRefund(payment.id) }
+            .onFailure { error ->
+                log.error("승인 뒤 환불 정산에 실패했습니다. paymentId={}", payment.id, error)
+                paymentLogCommandService.append(
+                    payment = payment,
+                    orderId = payment.orderId,
+                    paymentKey = payment.paymentKey,
+                    logType = PaymentLogType.CANCEL_ERROR,
+                    step = PaymentLogStep.SERVER,
+                    errorMessage = "승인 뒤 환불 정산에 실패했습니다. paymentId=${payment.id}",
+                )
+            }.getOrElse { payment }
 
     private fun toKrwLong(amount: BigDecimal): Long {
         val normalized = amount.stripTrailingZeros()

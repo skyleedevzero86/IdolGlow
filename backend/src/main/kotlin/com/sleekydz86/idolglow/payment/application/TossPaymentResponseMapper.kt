@@ -64,6 +64,27 @@ object TossPaymentResponseMapper {
             total.decimalValue().compareTo(expectedAmount) == 0
     }
 
+    fun isFullyCanceled(
+        json: JsonNode,
+        expectedAmount: BigDecimal,
+    ): Boolean {
+        val balance = json.path("balanceAmount")
+        val total = json.path("totalAmount")
+        return json.path("status").asText(null)?.trim() == "CANCELED" &&
+            balance.isNumber &&
+            balance.decimalValue().compareTo(BigDecimal.ZERO) == 0 &&
+            total.isNumber &&
+            total.decimalValue().compareTo(expectedAmount) == 0
+    }
+
+    fun cancelTransactionKey(json: JsonNode): String? {
+        val fromCancels = lastCancelKey(json.path("cancels"))
+        if (!fromCancels.isNullOrBlank()) {
+            return fromCancels
+        }
+        return json.path("lastTransactionKey").asText(null)?.takeIf { it.isNotBlank() }
+    }
+
     fun amountMismatchReason(
         json: JsonNode,
         expectedAmount: BigDecimal,
@@ -92,6 +113,13 @@ object TossPaymentResponseMapper {
         if (raw != null) {
             payment.rawResponseJson = raw
         }
+    }
+
+    private fun lastCancelKey(cancels: JsonNode): String? {
+        if (!cancels.isArray || cancels.size() == 0) {
+            return null
+        }
+        return cancels.get(cancels.size() - 1).path("transactionKey").asText(null)
     }
 
     private fun parseDate(text: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(text)

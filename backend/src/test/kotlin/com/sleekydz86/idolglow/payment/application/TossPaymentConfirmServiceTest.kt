@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
+import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
@@ -120,6 +122,36 @@ class TossPaymentConfirmServiceTest {
         // then
         assertEquals(PaymentStatus.CONFIRMING, result.status)
         verify(exactly = 0) { tossPaymentConfirmTxService.completeConfirm(any(), any(), any(), any()) }
+    }
+
+    @DisplayName("이미 환불 처리 중인 결제를 다시 확인해도 정산 실패가 응답을 깨지 않는다")
+    @Test
+    fun skipGatewayKeepsResponseWhenRefundSettlementFails() {
+        // given
+        val payment = tossPayment()
+        payment.markSucceeded()
+        payment.markRefunding()
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = true, idempotencyKey = "confirm-${payment.orderId}")
+        every { paymentRefundService.settlePreparedRefund(payment.id) } throws IllegalStateException("정산 실패")
+
+        // when
+        val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.REFUNDING, result.status)
+        verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
+        verify(exactly = 1) {
+            paymentLogCommandService.append(
+                payment = payment,
+                orderId = payment.orderId,
+                paymentKey = payment.paymentKey,
+                logType = PaymentLogType.CANCEL_ERROR,
+                step = PaymentLogStep.SERVER,
+                errorMessage = "승인 뒤 환불 정산에 실패했습니다. paymentId=${payment.id}",
+            )
+        }
     }
 
     private fun tossPayment(expired: Boolean = false): Payment {

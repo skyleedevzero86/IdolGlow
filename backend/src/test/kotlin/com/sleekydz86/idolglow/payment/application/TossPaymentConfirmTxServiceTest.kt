@@ -57,6 +57,23 @@ class TossPaymentConfirmTxServiceTest {
         verify(exactly = 0) { paymentRepository.findByOrderIdForUpdate(any()) }
     }
 
+    @DisplayName("환불 처리 중인 결제는 토스 승인 없이 건너뛴다")
+    @Test
+    fun prepareSkipsGatewayWhenRefunding() {
+        // given
+        val payment = tossPayment()
+        payment.markSucceeded()
+        payment.markRefunding()
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+
+        // when
+        val result = service.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+
+        // then
+        assertTrue(result.skipGateway)
+        assertEquals(PaymentStatus.REFUNDING, result.payment.status)
+    }
+
     @DisplayName("멱등 키 확인은 잠그지 않고 조회한다")
     @Test
     fun idempotencyCheckDoesNotLock() {
@@ -235,6 +252,7 @@ class TossPaymentConfirmTxServiceTest {
                 paymentRepository = paymentRepository,
                 tossPaymentsApiClient = client,
                 tossPaymentConfirmTxService = service,
+                paymentRefundService = mockk(relaxed = true),
             )
         val cutoff = LocalDateTime.now().plusMinutes(1)
 

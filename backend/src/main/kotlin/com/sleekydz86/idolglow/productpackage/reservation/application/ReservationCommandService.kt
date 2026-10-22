@@ -8,10 +8,13 @@ import com.sleekydz86.idolglow.payment.application.GlowPassBenefitPolicy
 import com.sleekydz86.idolglow.payment.application.MembershipQuery
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
 import com.sleekydz86.idolglow.payment.application.PaymentViewPolicyService
+import com.sleekydz86.idolglow.payment.application.ReservationPaymentLock
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentRefundStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
@@ -24,7 +27,6 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import com.sleekydz86.idolglow.schedule.domain.Schedule
 import com.sleekydz86.idolglow.schedule.domain.ScheduleRepository
-import jakarta.persistence.EntityManager
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -40,7 +42,8 @@ class ReservationCommandService(
     private val reservationSlotRepository: ReservationSlotRepository,
     private val productCommandRepository: ProductCommandRepository,
     private val paymentRepository: PaymentRepository,
-    private val entityManager: EntityManager,
+    private val reservationPaymentLock: ReservationPaymentLock,
+    private val paymentRefundJpaRepository: PaymentRefundJpaRepository,
     private val scheduleRepository: ScheduleRepository,
     private val notificationCommandService: NotificationCommandService,
     private val notificationRepository: NotificationRepository,
@@ -100,17 +103,13 @@ class ReservationCommandService(
         paymentId: Long,
         cancelReasonText: String? = null,
     ): ReservationCancelOutcome {
-        val reservationId = reservationIdOfPayment(paymentId)
-        findReservationByReservationIdForUpdate(reservationId)
-        val payment =
-            paymentRepository.findByIdForUpdate(paymentId)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
+        val payment = reservationPaymentLock.lockByPaymentId(paymentId)
         require(payment.reservation.userId == userId) { "본인 결제만 취소할 수 있습니다." }
         rejectIfPaymentConfirming(payment)
         require(paymentViewPolicyService.canUserCancel(payment)) {
             "사용자 결제 취소 가능 기간(15일)이 지났거나 취소할 수 없는 상태입니다."
         }
-        return cancelReservationByUser(reservationId, userId, cancelReasonText)
+        return cancelReservationByUser(payment.reservation.id, userId, cancelReasonText)
     }
 
     fun cancelReservationByUser(
@@ -139,14 +138,10 @@ class ReservationCommandService(
         paymentId: Long,
         cancelReasonText: String? = null,
     ): ReservationCancelOutcome {
-        val reservationId = reservationIdOfPayment(paymentId)
-        findReservationByReservationIdForUpdate(reservationId)
-        val payment =
-            paymentRepository.findByIdForUpdate(paymentId)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
+        val payment = reservationPaymentLock.lockByPaymentId(paymentId)
         rejectIfPaymentConfirming(payment)
         require(paymentViewPolicyService.canAdminCancel(payment)) { "관리자 취소가 가능한 결제 상태가 아닙니다." }
-        return cancelReservationByAdmin(reservationId, cancelReasonText)
+        return cancelReservationByAdmin(payment.reservation.id, cancelReasonText)
     }
 
     fun cancelReservationByAdmin(
@@ -280,24 +275,25 @@ class ReservationCommandService(
         )
     }
 
-    private fun reservationIdOfPayment(paymentId: Long): Long {
-        val found =
-            entityManager
-                .createNativeQuery("select reservation_id from payments where id = :paymentId")
-                .setParameter("paymentId", paymentId)
-                .resultList
-                .firstOrNull()
-        return (found as? Number)?.toLong()
-            ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
-    }
-
     private fun rejectIfPaymentConfirming(payment: Payment?) {
         require(payment?.status != PaymentStatus.CONFIRMING) {
             "결제 처리 중입니다. 잠시 후 다시 시도해 주세요."
         }
-        require(payment?.status != PaymentStatus.REFUNDING) {
-            "환불 처리 중입니다. 잠시 후 다시 시도해 주세요."
+        if (payment?.status != PaymentStatus.REFUNDING) {
+            return
         }
+        val rejected =
+            paymentRefundJpaRepository
+                .findAllByPaymentIdOrderByCreatedAtDesc(payment.id)
+                .firstOrNull()
+                ?.status == PaymentRefundStatus.FAILED
+        val message =
+            if (rejected) {
+                "환불이 거절되어 관리자 확인이 필요합니다."
+            } else {
+                "환불 처리 중입니다. 잠시 후 다시 확인해 주세요."
+            }
+        throw IllegalArgumentException(message)
     }
 
     private fun findReservationTimeSlotByReservationSlotIdWithPessimisticLock(reservationSlotId: Long): ReservationSlot =
