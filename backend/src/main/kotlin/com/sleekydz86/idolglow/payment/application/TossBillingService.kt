@@ -241,7 +241,6 @@ class TossBillingService(
             resolveDefaultMethod(userId)
                 ?: throw IllegalArgumentException("등록된 결제 수단이 없습니다. 먼저 카드를 등록하세요.")
 
-        val amount = if (request.amount > 0) request.amount else defaultAmount
         val orderName = request.orderName.ifBlank { defaultOrderName }
         val now = LocalDateTime.now()
         val existing = subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)
@@ -252,14 +251,14 @@ class TossBillingService(
                     billingMethod = method,
                     planCode = PLAN_MONTHLY,
                     orderName = orderName,
-                    amount = amount,
+                    amount = defaultAmount,
                     status = TossBillingSubscriptionStatus.ACTIVE,
                     nextBillingAt = if (request.chargeImmediately) now else now.plusMonths(1),
                 )
             } else {
                 existing.billingMethod = method
                 existing.orderName = orderName
-                existing.amount = amount
+                existing.amount = defaultAmount
                 existing.status = TossBillingSubscriptionStatus.ACTIVE
                 existing.failCount = 0
                 existing.retryAt = null
