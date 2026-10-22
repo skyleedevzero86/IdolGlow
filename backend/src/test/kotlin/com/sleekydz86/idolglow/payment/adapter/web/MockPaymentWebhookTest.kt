@@ -38,6 +38,31 @@ import java.time.LocalDateTime
 
 @DisplayName("모의 결제 웹훅")
 class MockPaymentWebhookTest {
+    @DisplayName("시크릿이 비어 있으면 모의 웹훅을 거절하고 서버는 빈을 만든다")
+    @Test
+    fun mockWebhookRejectsWhenSecretBlank() {
+        // given
+        val payment = tossPayment()
+        val (service, reservationRepository) = paymentService(payment)
+        val mockMvc =
+            MockMvcBuilders
+                .standaloneSetup(PaymentController(service, ""))
+                .setControllerAdvice(GlobalExceptionAdvice())
+                .build()
+
+        // when
+        mockMvc
+            .perform(
+                post("/payments/mock/webhook")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"paymentReference":"pay_mock","status":"SUCCEEDED"}"""),
+            ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("webhook-secret")))
+
+        // then
+        verify(exactly = 0) { reservationRepository.findByIdForUpdate(any()) }
+    }
+
     @DisplayName("토스 결제 참조는 모의 웹훅에서 거절한다")
     @Test
     fun mockWebhookRejectsTossPayment() {

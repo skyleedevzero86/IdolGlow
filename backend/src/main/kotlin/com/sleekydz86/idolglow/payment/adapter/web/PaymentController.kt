@@ -30,9 +30,6 @@ class PaymentController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
-    init {
-        require(webhookSecret.isNotBlank()) { "payment.mock.webhook-secret 값이 비어 있습니다." }
-    }
 
     @Operation(summary = "모의 결제 웹훅 처리", description = "테스트용 결제 상태 변경 웹훅을 받아 예약 결제 상태를 갱신합니다.")
     @ApiResponses(
@@ -51,6 +48,7 @@ class PaymentController(
         @RequestHeader("X-Mock-Payment-Secret", required = false) secret: String?,
         @Valid @RequestBody request: MockPaymentWebhookRequest,
     ): ResponseEntity<PaymentResponse> {
+        require(webhookSecret.isNotBlank()) { "payment.mock.webhook-secret 값이 비어 있습니다." }
         require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
         reservationPaymentService.requireMockPayment(request.paymentReference)
 

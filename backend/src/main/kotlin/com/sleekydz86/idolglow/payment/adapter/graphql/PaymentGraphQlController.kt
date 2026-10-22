@@ -20,15 +20,13 @@ class PaymentGraphQlController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
-    init {
-        require(webhookSecret.isNotBlank()) { "payment.mock.webhook-secret 값이 비어 있습니다." }
-    }
 
     @MutationMapping
     fun mockPaymentWebhook(
         @Argument secret: String,
         @Argument @Valid input: MockPaymentWebhookRequest,
     ): PaymentGraphQlResponse {
+        require(webhookSecret.isNotBlank()) { "payment.mock.webhook-secret 값이 비어 있습니다." }
         require(secret == webhookSecret) { "웹훅 시크릿이 올바르지 않습니다." }
         reservationPaymentService.requireMockPayment(input.paymentReference)
 
