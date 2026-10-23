@@ -13,4 +13,5 @@ data class BillingReconcileApplyResult(
     val userId: Long? = null,
     val failureMessage: String? = null,
     val amount: Long? = null,
+    val subscriptionId: Long? = null,
 )

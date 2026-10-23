@@ -201,8 +201,28 @@ class TossBillingReconcileSchedulerPostgresTest : PostgresIntegrationTest() {
         assertEquals(TossBillingChargeStatus.FAILED, chargeRepository.findById(seeded.chargeId).orElseThrow().status)
         assertEquals(1, subscriptionRepository.findById(seeded.subscriptionId!!).orElseThrow().failCount)
         verify(exactly = 1) {
-            notificationCommandService.create(any(), NotificationType.PAYMENT_FAILED, any(), any(), any())
+            notificationCommandService.create(
+                any(),
+                NotificationType.PAYMENT_FAILED,
+                "Glow Pass 결제 실패",
+                match { it.startsWith("자동결제에 실패했습니다.") },
+                "/billing",
+            )
         }
+    }
+
+    @DisplayName("단건 결제 404·ABORTED는 일반 결제 실패 문구를 보낸다")
+    @Test
+    fun billingOneOffReconcileFailureUsesPlainPaymentCopy() {
+        // given
+        val cases =
+            listOf(
+                RemoteCase(404, null, null, true),
+                RemoteCase(200, "ABORTED", null, true),
+            )
+
+        // when
+        cases.forEach { item -> assertOneOffFailureNotice(item) }
     }
 
     @DisplayName("조회 중에 끝난 시도와 회차는 늦은 응답으로 덮지 않는다")
@@ -372,7 +392,44 @@ class TossBillingReconcileSchedulerPostgresTest : PostgresIntegrationTest() {
         assertEquals(expected, attempt.status)
         assertEquals(if (item.fails) 1 else 0, failCount)
         verify(exactly = if (item.fails) 1 else 0) {
-            notificationCommandService.create(any(), any(), any(), any(), any())
+            notificationCommandService.create(
+                any(),
+                NotificationType.PAYMENT_FAILED,
+                "Glow Pass 결제 실패",
+                match { it.startsWith("자동결제에 실패했습니다.") },
+                "/billing",
+            )
+        }
+    }
+
+    private fun assertOneOffFailureNotice(item: RemoteCase) {
+        // given
+        clearMocks(tossPaymentsApiClient, notificationCommandService)
+        val seeded = seedPending(LocalDateTime.of(2026, 11, 1, 0, 0), oneOff = true)
+        every { tossPaymentsApiClient.getPaymentByOrderId(seeded.tossOrderId) } returns
+            statusRemote(item.httpStatus, item.status, item.code)
+
+        // when
+        scheduler.reconcilePendingBillingAttempts(agedNow())
+
+        // then
+        val charge = chargeRepository.findById(seeded.chargeId).orElseThrow()
+        val attempt = attemptRepository.findById(seeded.attemptId).orElseThrow()
+        assertEquals(TossBillingChargeStatus.FAILED, charge.status)
+        assertEquals(TossBillingChargeStatus.FAILED, attempt.status)
+        assertNull(charge.subscriptionId)
+        verify(exactly = 1) {
+            notificationCommandService.create(
+                charge.userId,
+                NotificationType.PAYMENT_FAILED,
+                "결제 실패",
+                match { body ->
+                    body.startsWith("결제에 실패했습니다.") &&
+                        !body.contains("자동결제") &&
+                        !body.contains("Glow Pass")
+                },
+                "/billing",
+            )
         }
     }
 

@@ -94,6 +94,7 @@ class BillingChargeReconcileTxService(
             outcome = BillingReconcileOutcome.FAILED,
             userId = charge.userId,
             failureMessage = message,
+            subscriptionId = charge.subscriptionId,
         )
     }
 

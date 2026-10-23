@@ -44,7 +44,7 @@ class TossBillingReconcileScheduler(
             runCatching { reconcileOne(target, now) }
                 .onFailure { error ->
                     log.warn(
-                        "정기결제 조회 실패 chargeId={} attemptId={} tossOrderId={}",
+                        "빌링 결제 조회 실패 chargeId={} attemptId={} tossOrderId={}",
                         target.chargeId,
                         target.attemptId,
                         target.tossOrderId,
@@ -77,7 +77,7 @@ class TossBillingReconcileScheduler(
     ) {
         if (applied.outcome == BillingReconcileOutcome.AMOUNT_MISMATCH) {
             log.error(
-                "정기결제 조회 금액이 회차 금액과 다릅니다. chargeId={} orderId={} amount={}",
+                "빌링 결제 조회 금액이 회차 금액과 다릅니다. chargeId={} orderId={} amount={}",
                 target.chargeId,
                 target.tossOrderId,
                 applied.amount,
@@ -92,7 +92,7 @@ class TossBillingReconcileScheduler(
         val stale = !target.createdAt.isAfter(now.minusHours(STALE_HOURS))
         if (stillPending && stale) {
             log.error(
-                "정기결제 승인 결과가 1시간 넘게 확인되지 않음, 관리자 확인 필요. " +
+                "빌링 결제 승인 결과가 1시간 넘게 확인되지 않음, 관리자 확인 필요. " +
                     "chargeId={} attemptId={} tossOrderId={} createdAt={} httpStatus={}",
                 target.chargeId,
                 target.attemptId,
@@ -110,14 +110,27 @@ class TossBillingReconcileScheduler(
             notificationCommandService.create(
                 userId = userId,
                 type = NotificationType.PAYMENT_FAILED,
-                title = "Glow Pass 결제 실패",
-                message = "자동결제에 실패했습니다. 다른 카드로 다시 결제할 수 있습니다. ($message)",
+                title = failureTitle(applied.subscriptionId),
+                message = failureBody(applied.subscriptionId, message),
                 link = "/billing",
             )
         }.onFailure { error ->
             log.warn("빌링 실패 알림 발송 실패 userId={}", userId, error)
         }
     }
+
+    private fun failureTitle(subscriptionId: Long?): String =
+        if (subscriptionId != null) "Glow Pass 결제 실패" else "결제 실패"
+
+    private fun failureBody(
+        subscriptionId: Long?,
+        message: String,
+    ): String =
+        if (subscriptionId != null) {
+            "자동결제에 실패했습니다. 다른 카드로 다시 결제할 수 있습니다. ($message)"
+        } else {
+            "결제에 실패했습니다. 다시 결제할 수 있습니다. ($message)"
+        }
 
     companion object {
         private const val BATCH_SIZE = 100
