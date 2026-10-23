@@ -32,8 +32,9 @@ class BillingKeyDeletionTxService(
             -> prepared(method, callToss = false, notify = false)
             TossBillingKeyDeletionStatus.DELETE_PENDING -> prepared(method, callToss = true, notify = false)
             TossBillingKeyDeletionStatus.ACTIVE -> {
+                val wasDefault = method.isDefault
                 method.beginDeletion(now)
-                prepared(method, callToss = true, notify = detach(method))
+                prepared(method, callToss = true, notify = detach(method, wasDefault))
             }
         }
     }
@@ -71,7 +72,8 @@ class BillingKeyDeletionTxService(
         if (method == null || method.deletionStatus == TossBillingKeyDeletionStatus.DELETED) {
             return BillingKeyDeletionApplied(BillingKeyDeletionOutcome.SKIPPED, method?.userId)
         }
-        val notify = detach(method)
+        val wasDefault = method.isDefault
+        val notify = detach(method, wasDefault)
         method.concealDeletedKey(now)
         return BillingKeyDeletionApplied(BillingKeyDeletionOutcome.DELETED, method.userId, notify)
     }
@@ -91,15 +93,20 @@ class BillingKeyDeletionTxService(
         return BillingKeyDeletionApplied(outcome, method.userId)
     }
 
-    private fun detach(method: TossBillingMethod): Boolean {
+    private fun detach(
+        method: TossBillingMethod,
+        wasDefault: Boolean,
+    ): Boolean {
         val subscription = subscriptionRepository.findByUserIdAndPlanCode(method.userId, PLAN_MONTHLY)
         val owns = subscription != null && subscription.billingMethod.id == method.id
-        val next = if (owns) nextActive(method.userId, method.id) else null
-        val pause = owns && next == null && subscription?.status == TossBillingSubscriptionStatus.ACTIVE
-        if (owns && next != null && subscription != null) {
+        val next = if (wasDefault || owns) nextActive(method.userId, method.id) else null
+        if (next != null) {
             next.markAsDefault()
+        }
+        if (owns && next != null && subscription != null) {
             subscription.billingMethod = next
         }
+        val pause = owns && next == null && subscription?.status == TossBillingSubscriptionStatus.ACTIVE
         if (owns && next == null && subscription != null) {
             subscription.retryAt = null
             if (pause) {

@@ -160,19 +160,23 @@ class BillingKeyDeletionPostgresTest : PostgresIntegrationTest() {
     fun billingDeletionFourXxNeedsReview() {
         // given
         val seeded = seed(billingKey = "bk-400", withSubscription = false)
+        val now = LocalDateTime.now()
         every { tossPaymentsApiClient.deleteBillingKey(any()) } returns TossApiResponse(500, null, null)
-        every { tossPaymentsApiClient.deleteBillingKey(seeded.billingKey) } returns TossApiResponse(400, null, null)
+        every { tossPaymentsApiClient.deleteBillingKey(seeded.billingKey) } returns
+            TossApiResponse(500, null, null) andThen TossApiResponse(400, null, null)
 
         // when
         billingService.deactivateMethod(seeded.userId, seeded.methodId)
-        scheduler.retryPendingDeletions(LocalDateTime.now().plusMinutes(2))
+        scheduler.retryPendingDeletions(now.plusMinutes(2))
+        scheduler.retryPendingDeletions(now.plusMinutes(3))
 
         // then
         val method = methodRepository.findById(seeded.methodId).orElseThrow()
         assertEquals(TossBillingKeyDeletionStatus.DELETE_FAILED, method.deletionStatus)
         assertFalse(method.active)
         assertFalse(method.usableForCharge())
-        verify(exactly = 1) { tossPaymentsApiClient.deleteBillingKey(seeded.billingKey) }
+        assertEquals(2, method.deletionAttemptCount)
+        verify(exactly = 2) { tossPaymentsApiClient.deleteBillingKey(seeded.billingKey) }
     }
 
     @DisplayName("삭제 재시도는 같은 빌링키만 다시 지운다")
@@ -294,6 +298,28 @@ class BillingKeyDeletionPostgresTest : PostgresIntegrationTest() {
         assertTrue(replacement.isDefault)
         assertEquals(next.methodId, subscription.billingMethod.id)
         assertEquals(TossBillingSubscriptionStatus.ACTIVE, subscription.status)
+        verify(exactly = 0) {
+            notificationCommandService.create(any(), any(), any(), any(), any())
+        }
+    }
+
+    @DisplayName("구독이 없어도 기본 카드를 지우면 다음 카드가 기본이 된다")
+    @Test
+    fun deletingDefaultWithoutSubscriptionPromotesNextCard() {
+        // given
+        val first = seed(billingKey = "bk-solo-default", withSubscription = false)
+        val next = addCard(first, billingKey = "bk-solo-next", defaultCard = false)
+        every { tossPaymentsApiClient.deleteBillingKey(any()) } returns TossApiResponse(200, null, "")
+
+        // when
+        billingService.deactivateMethod(first.userId, first.methodId)
+
+        // then
+        val replacement = methodRepository.findById(next.methodId).orElseThrow()
+        assertTrue(replacement.isDefault)
+        assertTrue(replacement.active)
+        assertDeleted(first)
+        assertNull(subscriptionRepository.findByUserIdAndPlanCode(first.userId, "MONTHLY"))
         verify(exactly = 0) {
             notificationCommandService.create(any(), any(), any(), any(), any())
         }
