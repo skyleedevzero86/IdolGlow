@@ -32,10 +32,7 @@ class PaymentRefundServiceTest {
                 paymentRefundTxService = paymentRefundTxService,
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 paymentLogCommandService = paymentLogCommandService,
-                paymentRepository = mockk(),
                 paymentRefundJpaRepository = mockk(),
-                tossPaymentProperties = com.sleekydz86.idolglow.global.config.TossPaymentProperties(enabled = true),
-                paymentNotificationMailService = mockk(relaxed = true),
             )
     }
 

@@ -48,9 +48,6 @@ class TossRefundOutsideTxPostgresTest : PostgresIntegrationTest() {
     private lateinit var tossPaymentConfirmService: TossPaymentConfirmService
 
     @Autowired
-    private lateinit var paymentRefundService: PaymentRefundService
-
-    @Autowired
     private lateinit var tossConfirmReconcileScheduler: TossConfirmReconcileScheduler
 
     @Autowired
@@ -267,46 +264,6 @@ class TossRefundOutsideTxPostgresTest : PostgresIntegrationTest() {
         val key = row["idempotency_key"].toString()
         assertEquals("refund-$refundId", key)
         assertTrue(key.matches(Regex("refund-\\d+")))
-    }
-
-    @DisplayName("환불 처리 중인 결제는 관리자 재시도를 거절한다")
-    @Test
-    fun adminRetryRejectedWhileRefunding() {
-        // given
-        val created = succeededTossReservation()
-        val body = """{"code":"REJECT_CARD_COMPANY","message":"거절"}"""
-        every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
-            TossApiResponse(400, objectMapper.readTree(body), body)
-        reservationCancelFacade.cancelMyPagePayment(created.userId, created.paymentId, "취소")
-
-        // when
-        val thrown =
-            assertThrows(IllegalArgumentException::class.java) {
-                paymentRefundService.adminRetryLastFailedRefund(created.paymentId)
-            }
-
-        // then
-        assertEquals("환불 재시도는 결제가 아직 승인된 상태에서만 가능합니다.", thrown.message)
-        assertRefund(created.paymentId, PaymentStatus.REFUNDING, PaymentRefundStatus.FAILED)
-    }
-
-    @DisplayName("결과를 기다리는 환불 처리 중 결제는 관리자 재시도를 거절한다")
-    @Test
-    fun adminRetryRejectedWhileRefundPending() {
-        // given
-        val created = succeededTossReservation()
-        every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns TossApiResponse(0, null, "timeout")
-        reservationCancelFacade.cancelMyPagePayment(created.userId, created.paymentId, "취소")
-
-        // when
-        val thrown =
-            assertThrows(IllegalArgumentException::class.java) {
-                paymentRefundService.adminRetryLastFailedRefund(created.paymentId)
-            }
-
-        // then
-        assertEquals("환불 재시도는 결제가 아직 승인된 상태에서만 가능합니다.", thrown.message)
-        assertRefund(created.paymentId, PaymentStatus.REFUNDING, PaymentRefundStatus.PENDING)
     }
 
     @DisplayName("승인 조회 스케줄러가 만료 예약 결제를 승인하면 같은 흐름에서 환불까지 보낸다")

@@ -12,11 +12,11 @@ import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
+import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import java.time.LocalDateTime
 
@@ -65,8 +65,60 @@ class PaymentRefundTxService(
         } else if (TossPaymentResponseMapper.isFullyCanceled(json, payment.amount)) {
             markRefundSucceeded(payment, refund, response)
         } else {
-            logIncompleteCancel(payment, refund, json, response.httpStatus, response.rawBody)
+            val remoteStatus = json.path("status").asText("")
+            val balance = json.path("balanceAmount")
+            val balanceText =
+                if (balance.isNumber) {
+                    balance.decimalValue().stripTrailingZeros().toPlainString()
+                } else {
+                    balance.asText("")
+                }
+            val detail =
+                if (remoteStatus == "PARTIAL_CANCELED") {
+                    "부분 취소, status=$remoteStatus, balanceAmount=$balanceText"
+                } else {
+                    "status=$remoteStatus, balanceAmount=$balanceText"
+                }
+            val message = "환불 응답이 전액 취소가 아님: $detail"
+            log.error("{} paymentId={} refundId={}", message, payment.id, refund.id)
+            paymentLogCommandService.append(
+                payment = payment,
+                orderId = payment.orderId,
+                paymentKey = payment.paymentKey,
+                logType = PaymentLogType.CANCEL_ERROR,
+                step = PaymentLogStep.SERVER,
+                httpStatus = response.httpStatus,
+                responseBody = response.rawBody,
+                errorMessage = message,
+            )
         }
+    }
+
+    fun prepareAdminRetry(paymentId: Long): RefundPrepareResult {
+        val payment = reservationPaymentLock.lockByPaymentId(paymentId)
+        require(payment.provider == PaymentProvider.TOSS) { "토스 결제만 PG 재시도할 수 있습니다." }
+        require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다." }
+        require(!payment.paymentKey.isNullOrBlank()) { "토스 paymentKey가 없습니다." }
+        require(payment.status == PaymentStatus.REFUNDING || payment.status == PaymentStatus.SUCCEEDED) {
+            "환불 재시도는 결제가 환불 처리 중이거나 승인된 상태에서만 가능합니다."
+        }
+        val refunds = paymentRefundJpaRepository.findAllByPaymentIdOrderByCreatedAtDesc(payment.id)
+        check(refunds.none { it.status == PaymentRefundStatus.PENDING }) {
+            "이미 환불 결과를 기다리는 중입니다."
+        }
+        val failed =
+            refunds.firstOrNull()?.takeIf { it.status == PaymentRefundStatus.FAILED }
+                ?: throw IllegalStateException("재시도할 실패 환불 이력이 없습니다.")
+        if (payment.status == PaymentStatus.SUCCEEDED) {
+            payment.markRefunding()
+        }
+        savePending(
+            payment,
+            failed.cancelReason + " (재시도)",
+            RefundRequestedBy.ADMIN,
+            failed.reservation,
+        )
+        return pendingRefund(payment)
     }
 
     @Transactional(readOnly = true)
@@ -172,12 +224,13 @@ class PaymentRefundTxService(
         payment: Payment,
         cancelReason: String,
         requestedBy: RefundRequestedBy,
+        reservation: Reservation = payment.reservation,
     ): PaymentRefund {
         val refund =
             paymentRefundJpaRepository.saveAndFlush(
                 PaymentRefund(
                     payment = payment,
-                    reservation = payment.reservation,
+                    reservation = reservation,
                     cancelAmount = payment.amount,
                     cancelReason = cancelReason,
                     status = PaymentRefundStatus.PENDING,
@@ -208,40 +261,4 @@ class PaymentRefundTxService(
             firstRequestedAt = pending.firstRequestedAt,
         )
     }
-
-    private fun logIncompleteCancel(
-        payment: Payment,
-        refund: PaymentRefund,
-        json: JsonNode,
-        httpStatus: Int,
-        rawBody: String?,
-    ) {
-        val remoteStatus = json.path("status").asText("")
-        val balance = json.path("balanceAmount")
-        val balanceText =
-            if (balance.isNumber) {
-                balance.decimalValue().stripTrailingZeros().toPlainString()
-            } else {
-                balance.asText("")
-            }
-        val detail =
-            if (remoteStatus == "PARTIAL_CANCELED") {
-                "부분 취소, status=$remoteStatus, balanceAmount=$balanceText"
-            } else {
-                "status=$remoteStatus, balanceAmount=$balanceText"
-            }
-        val message = "환불 응답이 전액 취소가 아님: $detail"
-        log.error("{} paymentId={} refundId={}", message, payment.id, refund.id)
-        paymentLogCommandService.append(
-            payment = payment,
-            orderId = payment.orderId,
-            paymentKey = payment.paymentKey,
-            logType = PaymentLogType.CANCEL_ERROR,
-            step = PaymentLogStep.SERVER,
-            httpStatus = httpStatus,
-            responseBody = rawBody,
-            errorMessage = message,
-        )
-    }
-
 }
