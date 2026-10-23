@@ -16,6 +16,7 @@ import java.util.Base64
 class TossPaymentsApiClient(
     private val props: TossPaymentProperties,
     @param:Qualifier("tossRestClient") private val restClient: RestClient,
+    @param:Qualifier("tossBillingRestClient") private val billingRestClient: RestClient,
     private val objectMapper: ObjectMapper,
 ) {
     fun confirm(
@@ -100,7 +101,12 @@ class TossPaymentsApiClient(
                 }
                 put("taxFreeAmount", 0)
             }
-        return post("/v1/billing/$encoded", objectMapper.writeValueAsString(body), idempotencyKey)
+        return post(
+            path = "/v1/billing/$encoded",
+            jsonBody = objectMapper.writeValueAsString(body),
+            idempotencyKey = idempotencyKey,
+            client = billingRestClient,
+        )
     }
 
     private fun get(path: String): TossApiResponse {
@@ -133,6 +139,7 @@ class TossPaymentsApiClient(
         path: String,
         jsonBody: String,
         idempotencyKey: String?,
+        client: RestClient = restClient,
     ): TossApiResponse {
         val secret = props.secretKey.trim()
         require(secret.isNotEmpty()) { "payment.toss.secret-key 가 설정되어 있어야 합니다." }
@@ -140,7 +147,7 @@ class TossPaymentsApiClient(
 
         return try {
             val entity =
-                restClient
+                client
                     .post()
                     .uri(path)
                     .headers { h ->
