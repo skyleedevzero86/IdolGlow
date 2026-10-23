@@ -50,10 +50,9 @@ class BillingChargeExecutorTest {
                 chargeRepository = chargeRepository,
                 attemptRepository = attemptRepository,
                 methodRepository = methodRepository,
-                tossPaymentsApiClient = tossPaymentsApiClient,
                 userRepository = userRepository,
             )
-        executor = BillingChargeExecutor(txService, notificationCommandService)
+        executor = BillingChargeExecutor(txService, tossPaymentsApiClient, notificationCommandService)
     }
 
     @DisplayName("같은 회차 DONE 이면 토스를 다시 호출하지 않는다")
@@ -123,8 +122,17 @@ class BillingChargeExecutorTest {
         } returns
             TossApiResponse(
                 200,
-                objectMapper.readTree("""{"paymentKey":"pay-old","approvedAt":"2026-11-01T12:00:00+09:00"}"""),
-                """{"paymentKey":"pay-old"}""",
+                objectMapper.readTree(
+                    """
+                    {
+                      "paymentKey": "pay-old",
+                      "status": "DONE",
+                      "totalAmount": 4900,
+                      "approvedAt": "2026-11-01T12:00:00+09:00"
+                    }
+                    """.trimIndent(),
+                ),
+                """{"paymentKey":"pay-old","status":"DONE","totalAmount":4900}""",
             )
 
         // when
@@ -211,6 +219,7 @@ class BillingChargeExecutorTest {
         val charge = failedCharge(cardA)
         val attemptSlot = slot<TossBillingChargeAttempt>()
         stubRetryDeps(charge, cardA, attemptSlot, due)
+        every { methodRepository.findById(4L) } returns Optional.of(cardB)
 
         // when
         executor.retryFailedCharge(9L, cardB, due)
@@ -231,8 +240,11 @@ class BillingChargeExecutorTest {
         every { subscriptionRepository.findWithBillingMethodById(12L) } returns subscription
         every { chargeRepository.findByOrderId(pending.orderId) } returns pending andThen pending
         every { chargeRepository.findById(7L) } returns Optional.of(pending)
+        every { chargeRepository.findByIdForUpdate(7L) } returns pending
         every { attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(7L) } returns null
         every { attemptRepository.save(capture(attemptSlot)) } answers { attemptSlot.captured }
+        every { attemptRepository.findChargeIdById(any()) } answers { attemptSlot.captured.chargeId }
+        every { attemptRepository.findById(any()) } answers { Optional.of(attemptSlot.captured) }
         every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
         every { userRepository.findById(1L) } returns testUser()
     }
@@ -253,8 +265,11 @@ class BillingChargeExecutorTest {
                 status = TossBillingChargeStatus.FAILED,
             )
         every { chargeRepository.findById(9L) } returns Optional.of(charge)
+        every { chargeRepository.findByIdForUpdate(9L) } returns charge
         every { attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(9L) } returns previous
         every { attemptRepository.save(capture(attemptSlot)) } answers { attemptSlot.captured }
+        every { attemptRepository.findChargeIdById(any()) } answers { attemptSlot.captured.chargeId }
+        every { attemptRepository.findById(any()) } answers { Optional.of(attemptSlot.captured) }
         every { tossPaymentsApiClient.getPaymentByOrderId(any()) } returns TossApiResponse(404, null, null)
         every {
             tossPaymentsApiClient.chargeBilling(
@@ -270,8 +285,17 @@ class BillingChargeExecutorTest {
         } returns
             TossApiResponse(
                 200,
-                objectMapper.readTree("""{"paymentKey":"pay-b","approvedAt":"2026-10-16T12:00:00+09:00"}"""),
-                """{"paymentKey":"pay-b"}""",
+                objectMapper.readTree(
+                    """
+                    {
+                      "paymentKey": "pay-b",
+                      "status": "DONE",
+                      "totalAmount": 4900,
+                      "approvedAt": "2026-10-16T12:00:00+09:00"
+                    }
+                    """.trimIndent(),
+                ),
+                """{"paymentKey":"pay-b","status":"DONE","totalAmount":4900}""",
             )
         every { userRepository.findById(1L) } returns testUser()
         every { subscriptionRepository.findWithBillingMethodById(12L) } returns

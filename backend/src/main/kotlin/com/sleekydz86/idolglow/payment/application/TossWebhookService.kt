@@ -17,6 +17,7 @@ class TossWebhookService(
     private val tossPaymentProperties: TossPaymentProperties,
     private val paymentLogCommandService: PaymentLogCommandService,
     private val tossWebhookTxService: TossWebhookTxService,
+    private val billingKeyDeletionService: BillingKeyDeletionService,
 ) {
     fun handlePayload(
         rawBody: String,
@@ -37,6 +38,14 @@ class TossWebhookService(
                 )
                 return
             }
+
+        val eventType = root.path("eventType").asText(null)
+        if (eventType == "BILLING_DELETED") {
+            if (tossPaymentProperties.enabled) {
+                billingKeyDeletionService.acceptBillingDeleted(root.path("data"))
+            }
+            return
+        }
 
         val data = root.path("data")
         val logOrderId =
@@ -60,7 +69,6 @@ class TossWebhookService(
             return
         }
 
-        val eventType = root.path("eventType").asText(null)
         if (eventType != "PAYMENT_STATUS_CHANGED" || data.isMissingNode || data.isNull) {
             logSystem(null, logOrderId, logPaymentKey, rawBody, "처리 대상 아님: eventType=$eventType")
             return

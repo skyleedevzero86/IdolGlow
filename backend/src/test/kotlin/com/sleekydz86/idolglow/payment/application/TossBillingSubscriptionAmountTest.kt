@@ -61,6 +61,7 @@ class TossBillingSubscriptionAmountTest {
                 attemptRepository = mockk<TossBillingChargeAttemptJpaRepository>(relaxed = true),
                 dueClaimRepository = mockk<TossBillingDueClaimRepository>(relaxed = true),
                 billingChargeExecutor = mockk<BillingChargeExecutor>(relaxed = true),
+                billingKeyDeletionService = mockk(relaxed = true),
                 self = mockk<TossBillingService>(relaxed = true),
                 frontendBaseUrl = "http://localhost:3000",
                 defaultAmount = BillingDefaults.MONTHLY_AMOUNT,

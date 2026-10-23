@@ -28,6 +28,7 @@ abstract class PostgresIntegrationTest {
             registry.add("payment.toss.enabled") { "true" }
             registry.add("payment.toss.use-toss-provider") { "true" }
             registry.add("payment.toss.secret-key") { "test-toss-secret" }
+            registry.add("payment.toss.client-key") { "test-client" }
             registry.add("spring.task.scheduling.enabled") { "false" }
         }
     }
