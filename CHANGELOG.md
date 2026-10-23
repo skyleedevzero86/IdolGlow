@@ -4,6 +4,22 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.11.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.10.2...v0.11.0) (2026-10-23)
+
+
+### Features
+
+* 환불 처리 중 상태를 두고 토스 결과 모름 판단을 공통으로 뺀다 ([6eb8015](https://github.com/skyleedevzero86/IdolGlow/commit/6eb801500648fdedcaf5743d85d40957ad9a6b2b))
+
+
+### Bug Fixes
+
+* 관리자 환불 재시도도 토스 조회 뒤 트랜잭션 밖에서 보내고 거절은 기록만 처리 ([a59ce3e](https://github.com/skyleedevzero86/IdolGlow/commit/a59ce3e75f8f21cd3c299c860b9c5962b0f4ee86))
+* 토스 환불을 락 밖에서 처리하고 결과를 모르면 조회해 맞춘다 [#46](https://github.com/skyleedevzero86/IdolGlow/issues/46) ([01c0c8f](https://github.com/skyleedevzero86/IdolGlow/commit/01c0c8fb98e087d224101e20b690a3854514325b))
+* 토스 환불을 트랜잭션 밖에서 호출하고 결과를 모르면 환불 처리 중으로 남긴다 ([c8ee4fe](https://github.com/skyleedevzero86/IdolGlow/commit/c8ee4feb8bc1136da2ae845133bcf1f012db886c))
+* 환불 결과를 모르면 토스를 먼저 조회해 맞추고 환불 실패가 취소를 깨지 않게 처리 ([ac1f73f](https://github.com/skyleedevzero86/IdolGlow/commit/ac1f73f01e0a4a755e989ddfbc4b5e199586cac6))
+* 환불 응답이 전액 취소일 때만 끝내고 정산 실패가 승인 응답을 깨지 않게 처리 ([ff348b0](https://github.com/skyleedevzero86/IdolGlow/commit/ff348b07227999625c58c45413d4b15f7250b305))
+
 ## [0.10.2](https://github.com/skyleedevzero86/IdolGlow/compare/v0.10.1...v0.10.2) (2026-10-22)
 
 
