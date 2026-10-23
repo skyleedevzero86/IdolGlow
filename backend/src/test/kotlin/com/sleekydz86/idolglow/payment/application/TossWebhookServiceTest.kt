@@ -6,10 +6,13 @@ import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
+import io.mockk.MockKVerificationScope
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -28,6 +31,7 @@ class TossWebhookServiceTest {
     private val paymentRepository = mockk<PaymentRepository>()
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>()
     private val paymentLogCommandService = mockk<PaymentLogCommandService>(relaxed = true)
+    private val paymentLogJpaRepository = mockk<PaymentLogJpaRepository>(relaxed = true)
     private val reservationPaymentService = mockk<ReservationPaymentService>()
 
     private lateinit var service: TossWebhookService
@@ -43,6 +47,7 @@ class TossWebhookServiceTest {
                 paymentLogCommandService = paymentLogCommandService,
                 reservationPaymentService = reservationPaymentService,
                 paymentRefundTxService = mockk(relaxed = true),
+                paymentLogJpaRepository = paymentLogJpaRepository,
             )
     }
 
@@ -109,11 +114,128 @@ class TossWebhookServiceTest {
         verify(exactly = 0) { reservationPaymentService.finalizeAfterGatewaySuccess(any()) }
     }
 
+    @DisplayName("실패로 정리된 결제가 토스에서 승인되면 확인 로그만 남긴다")
+    @Test
+    fun lateApprovalOnFailedPaymentIsFlagged() {
+        // given
+        val payment = failedTossPayment()
+        val reservationStatus = payment.reservation.status
+        val body = statusChangedBody(payment.orderId, "DONE")
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 35000)
+        every {
+            paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(
+                payment.id,
+                TossWebhookService.LATE_APPROVAL_MESSAGE,
+            )
+        } returns false
+
+        // when
+        service.handlePayload(body)
+
+        // then
+        assertThat(payment.status).isEqualTo(PaymentStatus.FAILED)
+        assertThat(payment.reservation.status).isEqualTo(reservationStatus)
+        assertThat(payment.reservation.status).isEqualTo(ReservationStatus.PENDING)
+        assertThat(payment.paymentKey).isNull()
+        assertThat(payment.approvedAt).isNull()
+        verify(exactly = 0) { tossPaymentsApiClient.cancel(any(), any(), any(), any()) }
+        verify(exactly = 0) { reservationPaymentService.finalizeAfterGatewaySuccess(any()) }
+        verify(exactly = 1) { lateApprovalLog(payment) }
+    }
+
+    @DisplayName("같은 실패 결제의 늦은 승인 확인 로그는 한 건만 남긴다")
+    @Test
+    fun lateApprovalFlagIsWrittenOnce() {
+        // given
+        val payment = failedTossPayment()
+        val body = statusChangedBody(payment.orderId, "DONE")
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 35000)
+        every {
+            paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(
+                payment.id,
+                TossWebhookService.LATE_APPROVAL_MESSAGE,
+            )
+        } returnsMany listOf(false, true)
+
+        // when
+        service.handlePayload(body)
+        service.handlePayload(body)
+
+        // then
+        verify(exactly = 1) { lateApprovalLog(payment) }
+        verify(exactly = 2) { tossPaymentsApiClient.getPayment("pk-1") }
+    }
+
+    @DisplayName("실패로 정리된 결제의 조회가 중단이면 확인 로그를 남기지 않는다")
+    @Test
+    fun failedPaymentWithAbortedRemoteIsIgnored() {
+        // given
+        val payment = failedTossPayment()
+        val body = statusChangedBody(payment.orderId, "ABORTED")
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "ABORTED", 35000)
+
+        // when
+        service.handlePayload(body)
+
+        // then
+        assertThat(payment.status).isEqualTo(PaymentStatus.FAILED)
+        verify(exactly = 1) { tossPaymentsApiClient.getPayment("pk-1") }
+        verify(exactly = 0) { lateApprovalLog(payment) }
+        verify(exactly = 1) { closedFailedLog(payment) }
+    }
+
+    @DisplayName("실패로 정리된 결제의 승인 금액이 다르면 확인 로그를 남기지 않는다")
+    @Test
+    fun failedPaymentWithAmountMismatchIsNotFlagged() {
+        // given
+        val payment = failedTossPayment()
+        val body = statusChangedBody(payment.orderId, "DONE")
+        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 1)
+
+        // when
+        service.handlePayload(body)
+
+        // then
+        assertThat(payment.status).isEqualTo(PaymentStatus.FAILED)
+        assertThat(payment.approvedAt).isNull()
+        verify(exactly = 1) { tossPaymentsApiClient.getPayment("pk-1") }
+        verify(exactly = 0) { lateApprovalLog(payment) }
+        verify(exactly = 1) { closedFailedLog(payment) }
+    }
+
+    private inline fun MockKVerificationScope.lateApprovalLog(payment: Payment) {
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = payment.paymentKey,
+            logType = PaymentLogType.CONFIRM_ERROR,
+            step = PaymentLogStep.SERVER,
+            httpStatus = 200,
+            responseBody = any(),
+            errorMessage = TossWebhookService.LATE_APPROVAL_MESSAGE,
+        )
+    }
+
+    private inline fun MockKVerificationScope.closedFailedLog(payment: Payment) {
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = payment.paymentKey,
+            logType = PaymentLogType.SYSTEM,
+            step = PaymentLogStep.SERVER,
+            requestBody = any(),
+            errorMessage = "종료된 결제 상태: FAILED",
+        )
+    }
+
     private fun statusChangedBody(
         orderId: String,
         status: String,
-    ): String =
-        """{"eventType":"PAYMENT_STATUS_CHANGED","data":{"orderId":"$orderId","paymentKey":"pk-1","status":"$status"}}"""
+    ): String = """{"eventType":"PAYMENT_STATUS_CHANGED","data":{"orderId":"$orderId","paymentKey":"pk-1","status":"$status"}}"""
 
     private fun remotePayment(
         orderId: String,
@@ -125,6 +247,12 @@ class TossWebhookServiceTest {
                 """{"orderId":"$orderId","paymentKey":"pk-1","status":"$status","totalAmount":$totalAmount}""",
             )
         return TossApiResponse(httpStatus = 200, json = json, rawBody = json.toString())
+    }
+
+    private fun failedTossPayment(): Payment {
+        val payment = pendingTossPayment()
+        payment.markFailed("토스 결제가 일정 시간 결론이 나지 않았습니다.")
+        return payment
     }
 
     private fun pendingTossPayment(): Payment {

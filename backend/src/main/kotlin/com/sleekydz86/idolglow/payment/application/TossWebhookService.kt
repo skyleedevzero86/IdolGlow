@@ -7,8 +7,10 @@ import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentProvider
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.JsonNode
@@ -25,7 +27,10 @@ class TossWebhookService(
     private val paymentLogCommandService: PaymentLogCommandService,
     private val reservationPaymentService: ReservationPaymentService,
     private val paymentRefundTxService: PaymentRefundTxService,
+    private val paymentLogJpaRepository: PaymentLogJpaRepository,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     fun handlePayload(
         rawBody: String,
         transmissionId: String? = null,
@@ -107,12 +112,13 @@ class TossWebhookService(
                 logSystem(payment, orderId, paymentKey, rawBody, "이미 승인됨(멱등)")
                 return
             }
-            PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED,
+            PaymentStatus.CANCELED, PaymentStatus.EXPIRED,
             PaymentStatus.REFUNDED, PaymentStatus.PARTIAL_CANCELED,
             -> {
                 logSystem(payment, orderId, paymentKey, rawBody, "종료된 결제 상태: ${payment.status}")
                 return
             }
+            PaymentStatus.FAILED -> Unit
             PaymentStatus.REFUNDING -> Unit
             PaymentStatus.PENDING, PaymentStatus.CONFIRMING -> Unit
         }
@@ -146,6 +152,10 @@ class TossWebhookService(
             finishRefundingFromRemote(payment, pjson, remote)
             return
         }
+        if (payment.status == PaymentStatus.FAILED) {
+            flagLateApproval(payment, pjson, remote)
+            return
+        }
 
         val status = pjson.path("status").asText(null)?.trim() ?: ""
         when (status) {
@@ -175,6 +185,31 @@ class TossWebhookService(
                 logSystem(payment, orderId, paymentKey, remote.rawBody, "토스 상태 미처리: $status")
             }
         }
+    }
+
+    private fun flagLateApproval(
+        payment: Payment,
+        json: JsonNode,
+        remote: TossApiResponse,
+    ) {
+        if (!TossPaymentResponseMapper.isDoneWithMatchingAmount(json, payment.amount)) {
+            logSystem(payment, payment.orderId, payment.paymentKey, remote.rawBody, "종료된 결제 상태: FAILED")
+            return
+        }
+        if (paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(payment.id, LATE_APPROVAL_MESSAGE)) {
+            return
+        }
+        log.error("{} paymentId={}", LATE_APPROVAL_MESSAGE, payment.id)
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = payment.paymentKey,
+            logType = PaymentLogType.CONFIRM_ERROR,
+            step = PaymentLogStep.SERVER,
+            httpStatus = remote.httpStatus,
+            responseBody = remote.rawBody,
+            errorMessage = LATE_APPROVAL_MESSAGE,
+        )
     }
 
     private fun finishRefundingFromRemote(
@@ -231,5 +266,9 @@ class TossWebhookService(
             requestBody = body,
             errorMessage = message,
         )
+    }
+
+    companion object {
+        const val LATE_APPROVAL_MESSAGE = "실패로 정리된 결제가 토스에서 승인됨, 환불 필요, 관리자 확인 필요"
     }
 }
