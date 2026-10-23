@@ -4,6 +4,20 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.11.2](https://github.com/skyleedevzero86/IdolGlow/compare/v0.11.1...v0.11.2) (2026-10-23)
+
+
+### Bug Fixes
+
+* **#54:** reconcile unknown billing charges and delete Toss billing keys outside locks ([823f723](https://github.com/skyleedevzero86/IdolGlow/commit/823f7235fa7d4a5892e5d06eb4369c077514b533))
+* 구독이 없어도 기본 카드를 지우면 다음 카드를 기본으로 업로드 ([f583e31](https://github.com/skyleedevzero86/IdolGlow/commit/f583e31d888bf3547c69a51b83a628266842e888))
+* 단건 결제 실패 알림은 정기구독 문구와 나누어 보낸다 ([6a3b8f5](https://github.com/skyleedevzero86/IdolGlow/commit/6a3b8f5944386488612e344a2731e7c7ed81e5cf))
+* 대기 중인 정기결제 승인을 토스 조회로만 다시 맞추고 새 승인은 보내지 않게 처리 ([4bcd658](https://github.com/skyleedevzero86/IdolGlow/commit/4bcd6580753b5639226bc611e5d06121e07d86b6))
+* 자동결제 승인만 토스 권장 60초 읽기 타임아웃을 쓰게 처리 ([47e01a6](https://github.com/skyleedevzero86/IdolGlow/commit/47e01a69f168d494f277643866706cb6cee7a55b))
+* 정기결제 토스 조회와 승인을 트랜잭션 밖에서 호출 ([e23c751](https://github.com/skyleedevzero86/IdolGlow/commit/e23c751c378fa92c8561e5b3e2a50c5a34304e93))
+* 정기결제는 결과를 모르면 실패로 기록하지 않고 대기 중 시도가 있으면 다시 승인하지 않게 처리 ([c369a39](https://github.com/skyleedevzero86/IdolGlow/commit/c369a39ebd9e29fc0aae52a5b3a64839ff37a9c8))
+* 카드 비활성화 때 토스 빌링키도 지우고 결과를 모르면 삭제 대기로 남긴다 ([e6caa1d](https://github.com/skyleedevzero86/IdolGlow/commit/e6caa1df0d34de630a2cbb9f8093936dd85919e6))
+
 ## [0.11.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.11.0...v0.11.1) (2026-10-23)
 
 
