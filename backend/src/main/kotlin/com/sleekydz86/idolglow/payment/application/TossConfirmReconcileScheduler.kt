@@ -1,9 +1,13 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
+import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -15,10 +19,17 @@ class TossConfirmReconcileScheduler(
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val tossPaymentConfirmTxService: TossPaymentConfirmTxService,
     private val paymentRefundService: PaymentRefundService,
+    private val paymentLogCommandService: PaymentLogCommandService,
+    private val paymentLogJpaRepository: PaymentLogJpaRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(fixedDelayString = "\${payment.toss.confirm-reconcile-interval-ms:15000}")
+    @SchedulerLock(
+        name = "tossConfirmReconcile",
+        lockAtLeastFor = "PT5S",
+        lockAtMostFor = "PT1M",
+    )
     fun reconcileConfirmingPayments() {
         reconcileConfirmingPayments(LocalDateTime.now().minusSeconds(RECONCILE_AFTER_SECONDS))
     }
@@ -34,7 +45,7 @@ class TossConfirmReconcileScheduler(
         val remote = tossPaymentsApiClient.getPaymentByOrderId(payment.orderId)
         when {
             remote.httpStatus == HTTP_NOT_FOUND -> failUnresolved(payment, "토스에 주문이 없습니다.")
-            !remote.isSuccess2xx || remote.json == null -> leaveOrFailIfStale(payment, remote, "토스 주문 조회 실패")
+            !remote.isSuccess2xx || remote.json == null -> leaveAndFlagIfStale(payment, remote, "토스 주문 조회 실패")
             else -> applyRemoteStatus(payment, remote)
         }
     }
@@ -54,20 +65,44 @@ class TossConfirmReconcileScheduler(
                         remote,
                     ).let { paymentRefundService.settlePreparedRefund(it.id) }
             "ABORTED", "EXPIRED", "CANCELED" -> failUnresolved(payment, "토스 결제가 $status 상태입니다.")
-            else -> leaveOrFailIfStale(payment, remote, "토스 결제 status=$status")
+            else -> leaveAndFlagIfStale(payment, remote, "토스 결제 status=$status")
         }
     }
 
-    private fun leaveOrFailIfStale(
+    private fun leaveAndFlagIfStale(
         payment: Payment,
         remote: TossApiResponse,
         detail: String,
     ) {
-        log.warn("토스 주문 조회가 결론이 아닙니다. paymentId={} httpStatus={} detail={}", payment.id, remote.httpStatus, detail)
-        if (!isStale(payment)) {
+        log.warn(
+            "토스 주문 조회가 결론이 아닙니다. paymentId={} httpStatus={} detail={}",
+            payment.id,
+            remote.httpStatus,
+            detail,
+        )
+        if (isStale(payment)) {
+            flagNeedsReview(payment, remote)
+        }
+    }
+
+    private fun flagNeedsReview(
+        payment: Payment,
+        remote: TossApiResponse,
+    ) {
+        if (paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(payment.id, REVIEW_REQUIRED_MESSAGE)) {
             return
         }
-        failUnresolved(payment, "토스 결제가 일정 시간 결론이 나지 않았습니다. $detail")
+        log.error("{} paymentId={}", REVIEW_REQUIRED_MESSAGE, payment.id)
+        paymentLogCommandService.append(
+            payment = payment,
+            orderId = payment.orderId,
+            paymentKey = payment.paymentKey,
+            logType = PaymentLogType.CONFIRM_ERROR,
+            step = PaymentLogStep.SERVER,
+            httpStatus = remote.httpStatus,
+            responseBody = remote.rawBody,
+            errorMessage = REVIEW_REQUIRED_MESSAGE,
+        )
     }
 
     private fun failUnresolved(
@@ -89,6 +124,7 @@ class TossConfirmReconcileScheduler(
     }
 
     companion object {
+        const val REVIEW_REQUIRED_MESSAGE = "승인 결과가 10분 넘게 확인되지 않음, 관리자 확인 필요"
         private const val BATCH_SIZE = 100
         private const val RECONCILE_AFTER_SECONDS = 5L
         private const val STALE_AFTER_MINUTES = 10L

@@ -15,6 +15,7 @@ class ReservationCancelFacade(
     private val paymentLogCommandService: PaymentLogCommandService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
+
     fun cancelByUser(
         reservationId: Long,
         userId: Long,
