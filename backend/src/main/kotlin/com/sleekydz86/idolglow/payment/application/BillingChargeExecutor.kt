@@ -47,6 +47,9 @@ class BillingChargeExecutor(
     }
 
     private fun complete(result: BillingChargeFinalizeResult): TossBillingCharge {
+        if (result.pending) {
+            return result.charge
+        }
         val message = result.failureMessage
         if (message != null) {
             notifyChargeFailed(result.charge.userId, message)

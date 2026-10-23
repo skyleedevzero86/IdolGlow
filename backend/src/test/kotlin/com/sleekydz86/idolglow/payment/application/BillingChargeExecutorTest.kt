@@ -123,8 +123,17 @@ class BillingChargeExecutorTest {
         } returns
             TossApiResponse(
                 200,
-                objectMapper.readTree("""{"paymentKey":"pay-old","approvedAt":"2026-11-01T12:00:00+09:00"}"""),
-                """{"paymentKey":"pay-old"}""",
+                objectMapper.readTree(
+                    """
+                    {
+                      "paymentKey": "pay-old",
+                      "status": "DONE",
+                      "totalAmount": 4900,
+                      "approvedAt": "2026-11-01T12:00:00+09:00"
+                    }
+                    """.trimIndent(),
+                ),
+                """{"paymentKey":"pay-old","status":"DONE","totalAmount":4900}""",
             )
 
         // when
@@ -270,8 +279,17 @@ class BillingChargeExecutorTest {
         } returns
             TossApiResponse(
                 200,
-                objectMapper.readTree("""{"paymentKey":"pay-b","approvedAt":"2026-10-16T12:00:00+09:00"}"""),
-                """{"paymentKey":"pay-b"}""",
+                objectMapper.readTree(
+                    """
+                    {
+                      "paymentKey": "pay-b",
+                      "status": "DONE",
+                      "totalAmount": 4900,
+                      "approvedAt": "2026-10-16T12:00:00+09:00"
+                    }
+                    """.trimIndent(),
+                ),
+                """{"paymentKey":"pay-b","status":"DONE","totalAmount":4900}""",
             )
         every { userRepository.findById(1L) } returns testUser()
         every { subscriptionRepository.findWithBillingMethodById(12L) } returns
