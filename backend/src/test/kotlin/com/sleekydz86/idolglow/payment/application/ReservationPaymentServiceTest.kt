@@ -15,6 +15,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
+import jakarta.persistence.EntityManager
+import jakarta.persistence.Query
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -33,6 +35,7 @@ class ReservationPaymentServiceTest {
     private val reservationSlotWaitlistService = mockk<ReservationSlotWaitlistService>(relaxed = true)
     private val paymentNotificationMailService = mockk<PaymentNotificationMailService>(relaxed = true)
     private val paymentRefundService = mockk<PaymentRefundService>(relaxed = true)
+    private val entityManager = mockk<EntityManager>()
 
     private lateinit var service: ReservationPaymentService
 
@@ -47,6 +50,12 @@ class ReservationPaymentServiceTest {
                 reservationSlotWaitlistService = reservationSlotWaitlistService,
                 paymentNotificationMailService = paymentNotificationMailService,
                 paymentRefundService = paymentRefundService,
+                reservationPaymentLock =
+                    ReservationPaymentLock(
+                        entityManager = entityManager,
+                        reservationRepository = reservationRepository,
+                        paymentRepository = paymentRepository,
+                    ),
             )
     }
 
@@ -55,9 +64,7 @@ class ReservationPaymentServiceTest {
     fun confirmsReservationOnPaymentSuccess() {
         // given
         val fixture = pendingFixture()
-        every { paymentRepository.findByPaymentReference("pay_ok") } returns fixture.payment
-        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
-        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+        stubPaymentReference("pay_ok", fixture.reservation, fixture.payment)
         every { reservationCommandService.confirmReservation(1L) } answers {
             fixture.reservation.confirm()
             fixture.reservation
@@ -77,9 +84,7 @@ class ReservationPaymentServiceTest {
     fun locksReservationBeforePaymentOnSuccess() {
         // given
         val fixture = pendingFixture()
-        every { paymentRepository.findByPaymentReference("pay_ok") } returns fixture.payment
-        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
-        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+        stubPaymentReference("pay_ok", fixture.reservation, fixture.payment)
         every { reservationCommandService.confirmReservation(1L) } answers {
             fixture.reservation.confirm()
             fixture.reservation
@@ -91,8 +96,9 @@ class ReservationPaymentServiceTest {
         // then
         verifyOrder {
             reservationRepository.findByIdForUpdate(1L)
-            paymentRepository.findByReservationIdForUpdate(1L)
+            paymentRepository.findByIdForUpdate(0L)
         }
+        verify(exactly = 0) { paymentRepository.findByPaymentReference(any()) }
         verify(exactly = 0) { paymentRepository.findByPaymentReferenceForUpdate(any()) }
     }
 
@@ -101,9 +107,9 @@ class ReservationPaymentServiceTest {
     fun locksReservationBeforePaymentByOrderId() {
         // given
         val fixture = pendingFixture()
-        every { paymentRepository.findByOrderId("order-1") } returns fixture.payment
+        stubLookup("order_id", "order-1", arrayOf(0L, 1L))
         every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
-        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+        every { paymentRepository.findByIdForUpdate(0L) } returns fixture.payment
 
         // when
         val result = service.lockReservationThenPaymentByOrderId("order-1")
@@ -112,8 +118,9 @@ class ReservationPaymentServiceTest {
         assertEquals(fixture.payment, result)
         verifyOrder {
             reservationRepository.findByIdForUpdate(1L)
-            paymentRepository.findByReservationIdForUpdate(1L)
+            paymentRepository.findByIdForUpdate(0L)
         }
+        verify(exactly = 0) { paymentRepository.findByOrderId(any()) }
         verify(exactly = 0) { paymentRepository.findByOrderIdForUpdate(any()) }
     }
 
@@ -121,7 +128,7 @@ class ReservationPaymentServiceTest {
     @Test
     fun returnsNullWhenOrderNotFound() {
         // given
-        every { paymentRepository.findByOrderId("none") } returns null
+        stubLookup("order_id", "none", null)
 
         // when
         val result = service.lockReservationThenPaymentByOrderId("none")
@@ -136,9 +143,7 @@ class ReservationPaymentServiceTest {
     fun cancelsReservationOnPaymentFailure() {
         // given
         val fixture = pendingFixture(paymentReference = "pay_fail")
-        every { paymentRepository.findByPaymentReference("pay_fail") } returns fixture.payment
-        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
-        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+        stubPaymentReference("pay_fail", fixture.reservation, fixture.payment)
 
         // when
         val result = service.handlePaymentFailed("pay_fail", "카드 오류")
@@ -154,9 +159,7 @@ class ReservationPaymentServiceTest {
     fun expiresReservationOnLatePaymentSuccess() {
         // given
         val fixture = pendingFixture(paymentReference = "pay_late", expired = true)
-        every { paymentRepository.findByPaymentReference("pay_late") } returns fixture.payment
-        every { reservationRepository.findByIdForUpdate(1L) } returns fixture.reservation
-        every { paymentRepository.findByReservationIdForUpdate(1L) } returns fixture.payment
+        stubPaymentReference("pay_late", fixture.reservation, fixture.payment)
         every { reservationCommandService.expirePendingReservation(1L, any()) } returns fixture.reservation
 
         // when
@@ -236,6 +239,27 @@ class ReservationPaymentServiceTest {
             ).request(expiresAt)
         val payment = Payment.createMock(reservation, paymentReference)
         return PaymentFixture(slot = slot, reservation = reservation, payment = payment)
+    }
+
+    private fun stubPaymentReference(
+        reference: String,
+        reservation: Reservation,
+        payment: Payment,
+    ) {
+        stubLookup("payment_reference", reference, arrayOf(0L, reservation.id))
+        every { reservationRepository.findByIdForUpdate(reservation.id) } returns reservation
+        every { paymentRepository.findByIdForUpdate(0L) } returns payment
+    }
+
+    private fun stubLookup(
+        sqlPart: String,
+        parameter: String,
+        row: Array<Any>?,
+    ) {
+        val query = mockk<Query>()
+        every { entityManager.createNativeQuery(match<String> { it.contains(sqlPart) }) } returns query
+        every { query.setParameter(any<String>(), parameter) } returns query
+        every { query.resultList } returns if (row == null) emptyList<Any>() else listOf(row)
     }
 
     private data class PaymentFixture(

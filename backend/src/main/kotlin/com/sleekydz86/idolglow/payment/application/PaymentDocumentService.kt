@@ -163,6 +163,7 @@ class PaymentDocumentService {
             com.sleekydz86.idolglow.payment.domain.PaymentStatus.REFUNDED,
             com.sleekydz86.idolglow.payment.domain.PaymentStatus.PARTIAL_CANCELED,
             -> "결제 취소 확인"
+            com.sleekydz86.idolglow.payment.domain.PaymentStatus.REFUNDING -> "환불 처리 중"
             else -> "결제 확인"
         }
 

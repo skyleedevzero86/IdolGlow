@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.productpackage.reservation.adapter.web
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request.CreateReservationRequest
 import com.sleekydz86.idolglow.productpackage.reservation.adapter.web.request.toCommand
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCancelFacade
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationQueryService
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
@@ -22,6 +23,7 @@ import java.net.URI
 @RequestMapping("/products/{productId}/reservations")
 class ReservationController(
     private val reservationCommandService: ReservationCommandService,
+    private val reservationCancelFacade: ReservationCancelFacade,
     private val reservationQueryService: ReservationQueryService,
 ) : ReservationApi {
     @PostMapping
@@ -45,7 +47,7 @@ class ReservationController(
     ): ResponseEntity<ReservationSummaryResponse> {
         val existing = reservationQueryService.findReservationDetail(reservationId, userId)
         require(existing.productId == productId) { "해당 예약은 상품 ID $productId 에 속하지 않습니다." }
-        reservationCommandService.cancelReservationByUser(reservationId, userId)
+        reservationCancelFacade.cancelByUser(reservationId, userId)
         return ResponseEntity.ok(
             reservationQueryService.findReservationDetail(reservationId, userId),
         )

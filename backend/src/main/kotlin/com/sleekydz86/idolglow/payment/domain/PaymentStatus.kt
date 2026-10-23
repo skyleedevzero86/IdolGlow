@@ -4,6 +4,7 @@ enum class PaymentStatus {
     PENDING,
     CONFIRMING,
     SUCCEEDED,
+    REFUNDING,
     FAILED,
     CANCELED,
     EXPIRED,

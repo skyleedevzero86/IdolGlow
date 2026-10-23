@@ -3,10 +3,11 @@ package com.sleekydz86.idolglow.productpackage.reservation.adapter.graphql
 import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlBigDecimal
 import com.sleekydz86.idolglow.global.adapter.graphql.toGraphQlIdLong
 import com.sleekydz86.idolglow.global.adapter.resolver.AuthenticatedUserIdResolver
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCancelFacade
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
+import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationQueryService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationSlotWaitlistService
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
-import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationSummaryResponse
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.MutationMapping
 import org.springframework.security.access.prepost.PreAuthorize
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Controller
 @PreAuthorize("isAuthenticated()")
 class ReservationMutationGraphQlController(
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
+    private val reservationCancelFacade: ReservationCancelFacade,
     private val reservationCommandService: ReservationCommandService,
+    private val reservationQueryService: ReservationQueryService,
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
 ) {
     @MutationMapping
@@ -71,16 +74,10 @@ class ReservationMutationGraphQlController(
         @Argument reservationId: String,
     ): ReservationSummaryGraphQlResponse {
         val userId = authenticatedUserIdResolver.resolveRequired()
-        val reservation =
-            reservationCommandService.cancelReservationByUser(
-                reservationId = reservationId.toGraphQlIdLong("reservationId"),
-                userId = userId,
-            )
+        val reservationIdLong = reservationId.toGraphQlIdLong("reservationId")
+        reservationCancelFacade.cancelByUser(reservationIdLong, userId)
         return ReservationSummaryGraphQlResponse.from(
-            ReservationSummaryResponse.from(
-                reservation,
-                reservation.resolveStatus(),
-            ),
+            reservationQueryService.findReservationDetail(reservationIdLong, userId),
         )
     }
 }

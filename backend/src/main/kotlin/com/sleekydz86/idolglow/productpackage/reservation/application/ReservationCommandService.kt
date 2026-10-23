@@ -7,10 +7,14 @@ import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.application.GlowPassBenefitPolicy
 import com.sleekydz86.idolglow.payment.application.MembershipQuery
 import com.sleekydz86.idolglow.payment.application.PaymentRefundService
+import com.sleekydz86.idolglow.payment.application.PaymentViewPolicyService
+import com.sleekydz86.idolglow.payment.application.ReservationPaymentLock
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentRefundStatus
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
@@ -38,6 +42,8 @@ class ReservationCommandService(
     private val reservationSlotRepository: ReservationSlotRepository,
     private val productCommandRepository: ProductCommandRepository,
     private val paymentRepository: PaymentRepository,
+    private val reservationPaymentLock: ReservationPaymentLock,
+    private val paymentRefundJpaRepository: PaymentRefundJpaRepository,
     private val scheduleRepository: ScheduleRepository,
     private val notificationCommandService: NotificationCommandService,
     private val notificationRepository: NotificationRepository,
@@ -46,6 +52,7 @@ class ReservationCommandService(
     private val tossPaymentProperties: TossPaymentProperties,
     private val membershipQuery: MembershipQuery,
     private val glowPassBenefitPolicy: GlowPassBenefitPolicy,
+    private val paymentViewPolicyService: PaymentViewPolicyService,
     @Value("\${reservation.pending-timeout-seconds:900}")
     private val pendingTimeoutSeconds: Long,
 ) {
@@ -91,65 +98,102 @@ class ReservationCommandService(
         return ReservationCreatedResponse.from(savedReservation, payment)
     }
 
+    fun cancelMyPagePayment(
+        userId: Long,
+        paymentId: Long,
+        cancelReasonText: String? = null,
+    ): ReservationCancelOutcome {
+        val payment = reservationPaymentLock.lockByPaymentId(paymentId)
+        require(payment.reservation.userId == userId) { "본인 결제만 취소할 수 있습니다." }
+        rejectIfPaymentConfirming(payment)
+        require(paymentViewPolicyService.canUserCancel(payment)) {
+            "사용자 결제 취소 가능 기간(15일)이 지났거나 취소할 수 없는 상태입니다."
+        }
+        return cancelReservationByUser(payment.reservation.id, userId, cancelReasonText)
+    }
+
     fun cancelReservationByUser(
         reservationId: Long,
         userId: Long,
         cancelReasonText: String? = null,
-    ): Reservation {
+    ): ReservationCancelOutcome {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         reservation.validateOwner(userId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
         rejectIfPaymentConfirming(payment)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "사용자가 예약을 취소했습니다."
-        if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
-            glowPassBenefitPolicy.assertFreeCancelAllowed(userId, reservation)
-            paymentRefundService.refundBeforeReservationCancel(
-                payment = payment,
-                reservation = reservation,
-                cancelReason = cancelReason,
-                requestedBy = RefundRequestedBy.USER,
-            )
-        }
-        if (payment?.status == PaymentStatus.PENDING) {
-            payment.markCanceled(cancelReason)
-        }
-        cancelReservationInternal(
+        return finishCancel(
             reservation = reservation,
-            reason = ReservationCancelReason.USER_REQUESTED,
-            notificationType = NotificationType.RESERVATION_CANCELED,
+            payment = payment,
+            cancelReason = cancelReason,
+            requestedBy = RefundRequestedBy.USER,
+            userId = userId,
+            reservationCancelReason = ReservationCancelReason.USER_REQUESTED,
             notificationTitle = "예약 취소",
             notificationMessage = "예약 #${reservation.id} 이(가) 취소되었습니다.",
         )
-        return reservation
+    }
+
+    fun cancelAdminPayment(
+        paymentId: Long,
+        cancelReasonText: String? = null,
+    ): ReservationCancelOutcome {
+        val payment = reservationPaymentLock.lockByPaymentId(paymentId)
+        rejectIfPaymentConfirming(payment)
+        require(paymentViewPolicyService.canAdminCancel(payment)) { "관리자 취소가 가능한 결제 상태가 아닙니다." }
+        return cancelReservationByAdmin(payment.reservation.id, cancelReasonText)
     }
 
     fun cancelReservationByAdmin(
         reservationId: Long,
         cancelReasonText: String? = null,
-    ): Reservation {
+    ): ReservationCancelOutcome {
         val reservation = findReservationByReservationIdForUpdate(reservationId)
         val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
         rejectIfPaymentConfirming(payment)
         val cancelReason = cancelReasonText?.trim()?.takeIf { it.isNotEmpty() } ?: "운영자가 예약을 취소했습니다."
-        if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
-            paymentRefundService.refundBeforeReservationCancel(
-                payment = payment,
-                reservation = reservation,
-                cancelReason = cancelReason,
-                requestedBy = RefundRequestedBy.ADMIN,
-            )
-        }
+        return finishCancel(
+            reservation = reservation,
+            payment = payment,
+            cancelReason = cancelReason,
+            requestedBy = RefundRequestedBy.ADMIN,
+            userId = null,
+            reservationCancelReason = ReservationCancelReason.ADMIN_CANCELED,
+            notificationTitle = "운영자 예약 취소",
+            notificationMessage = "예약 #${reservation.id} 이(가) 운영자에 의해 취소되었습니다.",
+        )
+    }
+
+    private fun finishCancel(
+        reservation: Reservation,
+        payment: Payment?,
+        cancelReason: String,
+        requestedBy: RefundRequestedBy,
+        userId: Long?,
+        reservationCancelReason: ReservationCancelReason,
+        notificationTitle: String,
+        notificationMessage: String,
+    ): ReservationCancelOutcome {
+        val refund =
+            if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
+                if (requestedBy == RefundRequestedBy.USER) {
+                    glowPassBenefitPolicy.assertFreeCancelAllowed(userId!!, reservation)
+                }
+                paymentRefundService.refundBeforeReservationCancel(payment, reservation, cancelReason, requestedBy)
+            } else {
+                null
+            }
         if (payment?.status == PaymentStatus.PENDING) {
             payment.markCanceled(cancelReason)
         }
         cancelReservationInternal(
             reservation = reservation,
-            reason = ReservationCancelReason.ADMIN_CANCELED,
+            reason = reservationCancelReason,
             notificationType = NotificationType.RESERVATION_CANCELED,
-            notificationTitle = "운영자 예약 취소",
-            notificationMessage = "예약 #${reservation.id} 이(가) 운영자에 의해 취소되었습니다.",
+            notificationTitle = notificationTitle,
+            notificationMessage = notificationMessage,
         )
-        return reservation
+        return ReservationCancelOutcome(reservation.id, refund)
     }
 
     fun confirmReservation(reservationId: Long): Reservation {
@@ -235,6 +279,21 @@ class ReservationCommandService(
         require(payment?.status != PaymentStatus.CONFIRMING) {
             "결제 처리 중입니다. 잠시 후 다시 시도해 주세요."
         }
+        if (payment?.status != PaymentStatus.REFUNDING) {
+            return
+        }
+        val rejected =
+            paymentRefundJpaRepository
+                .findAllByPaymentIdOrderByCreatedAtDesc(payment.id)
+                .firstOrNull()
+                ?.status == PaymentRefundStatus.FAILED
+        val message =
+            if (rejected) {
+                "환불이 거절되어 관리자 확인이 필요합니다."
+            } else {
+                "환불 처리 중입니다. 잠시 후 다시 확인해 주세요."
+            }
+        throw IllegalArgumentException(message)
     }
 
     private fun findReservationTimeSlotByReservationSlotIdWithPessimisticLock(reservationSlotId: Long): ReservationSlot =

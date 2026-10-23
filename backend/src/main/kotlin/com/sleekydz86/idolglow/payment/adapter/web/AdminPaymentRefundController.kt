@@ -104,7 +104,10 @@ class AdminPaymentRefundController(
     ): ResponseEntity<List<PaymentRefundResponse>> =
         ResponseEntity.ok(paymentRefundService.findRefundsByPaymentId(paymentId).map(PaymentRefundResponse::from))
 
-    @Operation(summary = "환불 재시도")
+    @Operation(
+        summary = "환불 재시도",
+        description = "결과는 status로 확인. PENDING이면 조회 스케줄러가 이어서 처리",
+    )
     @PostMapping("/{paymentId}/refunds/retry")
     fun retry(
         @PathVariable paymentId: Long,

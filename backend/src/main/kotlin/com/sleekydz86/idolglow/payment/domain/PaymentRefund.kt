@@ -16,6 +16,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "payment_refunds")
@@ -46,8 +47,10 @@ class PaymentRefund(
     @Column(name = "fail_message", length = 500)
     var failMessage: String? = null,
     @Column(name = "idempotency_key", length = 100)
-    val idempotencyKey: String? = null,
+    var idempotencyKey: String? = null,
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "raw_response_json")
     var rawResponseJson: String? = null,
+    @Column(name = "first_requested_at")
+    var firstRequestedAt: LocalDateTime? = null,
 ) : BaseEntity()

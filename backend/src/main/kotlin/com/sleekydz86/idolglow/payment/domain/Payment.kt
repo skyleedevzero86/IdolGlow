@@ -174,12 +174,23 @@ class Payment(
     }
 
     fun markFullRefund(canceledAt: LocalDateTime = LocalDateTime.now()) {
-        require(status == PaymentStatus.SUCCEEDED || status == PaymentStatus.PARTIAL_CANCELED) {
-            "승인된 결제만 전액 환불 처리할 수 있습니다."
+        require(
+            status == PaymentStatus.SUCCEEDED ||
+                status == PaymentStatus.PARTIAL_CANCELED ||
+                status == PaymentStatus.REFUNDING,
+        ) {
+            "승인되었거나 환불 처리 중인 결제만 전액 환불 처리할 수 있습니다. status=$status"
         }
         status = PaymentStatus.REFUNDED
         this.canceledAt = canceledAt
         cancelAmount = amount
+    }
+
+    fun markRefunding() {
+        require(status == PaymentStatus.SUCCEEDED) {
+            "승인된 결제만 환불 처리 중으로 바꿀 수 있습니다. status=$status"
+        }
+        status = PaymentStatus.REFUNDING
     }
 
     fun markPartialRefund(

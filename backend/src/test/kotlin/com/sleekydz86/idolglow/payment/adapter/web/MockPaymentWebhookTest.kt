@@ -184,6 +184,7 @@ class MockPaymentWebhookTest {
                 reservationSlotWaitlistService = mockk<ReservationSlotWaitlistService>(relaxed = true),
                 paymentNotificationMailService = mockk<PaymentNotificationMailService>(relaxed = true),
                 paymentRefundService = mockk<PaymentRefundService>(relaxed = true),
+                reservationPaymentLock = mockk(relaxed = true),
             )
         return service to reservationRepository
     }

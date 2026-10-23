@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.payment.domain.Payment
+import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
+import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
@@ -8,6 +10,7 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
+import tools.jackson.databind.ObjectMapper
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -23,6 +26,7 @@ class TossPaymentConfirmServiceTest {
     private val paymentRepository = mockk<PaymentRepository>()
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>()
     private val paymentLogCommandService = mockk<PaymentLogCommandService>(relaxed = true)
+    private val paymentRefundService = mockk<PaymentRefundService>(relaxed = true)
 
     private lateinit var service: TossPaymentConfirmService
 
@@ -34,6 +38,7 @@ class TossPaymentConfirmServiceTest {
                 paymentRepository = paymentRepository,
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 paymentLogCommandService = paymentLogCommandService,
+                paymentRefundService = paymentRefundService,
             )
     }
 
@@ -95,6 +100,82 @@ class TossPaymentConfirmServiceTest {
         // then
         assertEquals(PaymentStatus.CONFIRMING, result.status)
         verify(exactly = 0) { tossPaymentConfirmTxService.completeConfirm(any(), any(), any(), any()) }
+    }
+
+    @DisplayName("토스 승인이 409 멱등 처리 중이면 실패로 끝내지 않고 승인 처리 중으로 남긴다")
+    @Test
+    fun confirmIdempotentProcessingTreatedAsUnknown() {
+        // given
+        val payment = tossPayment()
+        payment.markConfirming()
+        val body = """{"code":"IDEMPOTENT_REQUEST_PROCESSING"}"""
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = false, idempotencyKey = "confirm-${payment.orderId}")
+        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
+            TossApiResponse(409, ObjectMapper().readTree(body), body)
+        every { paymentRepository.findByOrderId(payment.orderId) } returns payment
+
+        // when
+        val result = service.confirm(10L, "pk-409", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.CONFIRMING, result.status)
+        verify(exactly = 0) { tossPaymentConfirmTxService.completeConfirm(any(), any(), any(), any()) }
+    }
+
+    @DisplayName("이미 환불 처리 중인 결제를 다시 확인해도 정산 실패가 응답을 깨지 않는다")
+    @Test
+    fun skipGatewayKeepsResponseWhenRefundSettlementFails() {
+        // given
+        val payment = tossPayment()
+        payment.markSucceeded()
+        payment.markRefunding()
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = true, idempotencyKey = "confirm-${payment.orderId}")
+        every { paymentRefundService.settlePreparedRefund(payment.id) } throws IllegalStateException("정산 실패")
+
+        // when
+        val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.REFUNDING, result.status)
+        verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
+        verify(exactly = 1) { paymentRefundService.settlePreparedRefund(payment.id) }
+        verify(exactly = 1) {
+            paymentLogCommandService.append(
+                payment = payment,
+                orderId = payment.orderId,
+                paymentKey = payment.paymentKey,
+                logType = PaymentLogType.CANCEL_ERROR,
+                step = PaymentLogStep.SERVER,
+                errorMessage = "승인 뒤 환불 정산에 실패했습니다. paymentId=${payment.id}",
+            )
+        }
+    }
+
+    @DisplayName("승인만 끝난 결제는 환불 정산을 조회하지 않는다")
+    @Test
+    fun confirmSkipsRefundSettlementUnlessRefunding() {
+        // given
+        val payment = tossPayment()
+        payment.markSucceeded()
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = false, idempotencyKey = "confirm-${payment.orderId}")
+        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
+            TossApiResponse(200, null, """{"status":"DONE"}""")
+        every {
+            tossPaymentConfirmTxService.completeConfirm(10L, payment.orderId, BigDecimal("35000"), any())
+        } returns payment
+
+        // when
+        val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.SUCCEEDED, result.status)
+        verify(exactly = 0) { paymentRefundService.settlePreparedRefund(any()) }
     }
 
     private fun tossPayment(expired: Boolean = false): Payment {

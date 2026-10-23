@@ -80,6 +80,23 @@ class PaymentDomainTest {
         assertEquals(PaymentStatus.EXPIRED, payment.status)
     }
 
+    @DisplayName("승인된 결제만 환불 처리 중으로 바꿀 수 있다")
+    @Test
+    fun markRefundingOnlyFromSucceeded() {
+        // given
+        val succeeded = samplePendingPayment()
+        succeeded.markSucceeded()
+        val pending = samplePendingPayment()
+
+        // when
+        succeeded.markRefunding()
+
+        // then
+        assertEquals(PaymentStatus.REFUNDING, succeeded.status)
+        assertThrows(IllegalArgumentException::class.java) { pending.markRefunding() }
+        assertEquals(PaymentStatus.PENDING, pending.status)
+    }
+
     private fun samplePendingPayment(): Payment {
         val visitDate = LocalDate.now().plusDays(3)
         val product =

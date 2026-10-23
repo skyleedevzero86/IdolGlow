@@ -26,6 +26,7 @@ class ReservationPaymentService(
     private val reservationSlotWaitlistService: ReservationSlotWaitlistService,
     private val paymentNotificationMailService: PaymentNotificationMailService,
     private val paymentRefundService: PaymentRefundService,
+    private val reservationPaymentLock: ReservationPaymentLock,
 ) {
     fun requireMockPayment(paymentReference: String) {
         val payment =
@@ -37,7 +38,7 @@ class ReservationPaymentService(
     }
 
     fun handlePaymentSucceeded(paymentReference: String): Payment {
-        val (_, payment) = lockReservationThenPayment(paymentReference)
+        val (_, payment) = reservationPaymentLock.lockByPaymentReference(paymentReference)
         return finalizeAfterGatewaySuccess(payment)
     }
 
@@ -88,7 +89,7 @@ class ReservationPaymentService(
         paymentReference: String,
         reason: String,
     ): Payment {
-        val (reservation, payment) = lockReservationThenPayment(paymentReference)
+        val (reservation, payment) = reservationPaymentLock.lockByPaymentReference(paymentReference)
 
         if (payment.status in setOf(PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED) &&
             reservation.status == ReservationStatus.CANCELED
@@ -129,7 +130,7 @@ class ReservationPaymentService(
         paymentReference: String,
         reason: String,
     ): Payment {
-        val (reservation, payment) = lockReservationThenPayment(paymentReference)
+        val (reservation, payment) = reservationPaymentLock.lockByPaymentReference(paymentReference)
 
         if (payment.status in setOf(PaymentStatus.FAILED, PaymentStatus.CANCELED, PaymentStatus.EXPIRED) &&
             reservation.status == ReservationStatus.CANCELED
@@ -177,24 +178,7 @@ class ReservationPaymentService(
         return payment
     }
 
-    fun lockReservationThenPaymentByOrderId(orderId: String): Payment? =
-        paymentRepository.findByOrderId(orderId)?.let { lockByReservationOf(it).second }
-
-    private fun lockReservationThenPayment(paymentReference: String): Pair<Reservation, Payment> {
-        val found =
-            paymentRepository.findByPaymentReference(paymentReference)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentReference")
-        return lockByReservationOf(found)
-    }
-
-    private fun lockByReservationOf(found: Payment): Pair<Reservation, Payment> {
-        val reservationId = found.reservation.id
-        val reservation = findReservationForUpdate(reservationId)
-        val payment =
-            paymentRepository.findByReservationIdForUpdate(reservationId)
-                ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: reservationId=$reservationId")
-        return reservation to payment
-    }
+    fun lockReservationThenPaymentByOrderId(orderId: String): Payment? = reservationPaymentLock.lockByOrderId(orderId)
 
     private fun findReservationForUpdate(reservationId: Long) =
         reservationRepository.findByIdForUpdate(reservationId)

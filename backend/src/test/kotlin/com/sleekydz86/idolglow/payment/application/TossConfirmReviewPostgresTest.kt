@@ -73,7 +73,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
             tossDone(created)
         }
         every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
-            TossApiResponse(200, objectMapper.readTree("""{"transactionKey":"tx-1"}"""), "{}")
+            fullCancel(created.payment.amount, "tx-1")
 
         // when
         val thread = Thread { confirm(user.id, created, "pk-late") }
@@ -168,7 +168,7 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
             tossDone(created)
         }
         every { tossPaymentsApiClient.cancel(any(), any(), any(), any()) } returns
-            TossApiResponse(200, objectMapper.readTree("""{"transactionKey":"tx-2"}"""), "{}")
+            fullCancel(created.payment.amount, "tx-2")
 
         // when
         val thread = Thread { confirm(user.id, created, "pk-canceled") }
@@ -322,6 +322,17 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
             ),
             """{"status":"DONE"}""",
         )
+
+    private fun fullCancel(
+        amount: java.math.BigDecimal,
+        transactionKey: String,
+    ): TossApiResponse {
+        val plain = amount.stripTrailingZeros().toPlainString()
+        val body =
+            """{"status":"CANCELED","balanceAmount":0,"totalAmount":$plain,""" +
+                """"cancels":[{"transactionKey":"$transactionKey","cancelAmount":$plain}]}"""
+        return TossApiResponse(200, objectMapper.readTree(body), body)
+    }
 
     private fun tossFailure(): TossApiResponse =
         TossApiResponse(400, objectMapper.readTree("""{"message":"승인 거절"}"""), """{"message":"승인 거절"}""")

@@ -27,8 +27,9 @@ class PaymentLogCommandService(
         errorMessage: String? = null,
         stackTrace: String? = null,
         traceId: String? = null,
+        linkedPaymentId: Long? = null,
     ): PaymentLog {
-        val paymentId = payment?.id?.takeIf { it > 0L }
+        val paymentId = payment?.id?.takeIf { it > 0L } ?: linkedPaymentId?.takeIf { it > 0L }
         val log =
             PaymentLog(
                 payment = null,

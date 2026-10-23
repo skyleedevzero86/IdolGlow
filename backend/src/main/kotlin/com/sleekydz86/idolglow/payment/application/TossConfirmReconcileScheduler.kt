@@ -14,6 +14,7 @@ class TossConfirmReconcileScheduler(
     private val paymentRepository: PaymentRepository,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val tossPaymentConfirmTxService: TossPaymentConfirmTxService,
+    private val paymentRefundService: PaymentRefundService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -45,12 +46,13 @@ class TossConfirmReconcileScheduler(
         val status = remote.json!!.path("status").asText(null)
         when (status) {
             "DONE" ->
-                tossPaymentConfirmTxService.completeConfirm(
-                    payment.reservation.userId,
-                    payment.orderId,
-                    payment.amount,
-                    remote,
-                )
+                tossPaymentConfirmTxService
+                    .completeConfirm(
+                        payment.reservation.userId,
+                        payment.orderId,
+                        payment.amount,
+                        remote,
+                    ).let { paymentRefundService.settlePreparedRefund(it.id) }
             "ABORTED", "EXPIRED", "CANCELED" -> failUnresolved(payment, "토스 결제가 $status 상태입니다.")
             else -> leaveOrFailIfStale(payment, remote, "토스 결제 status=$status")
         }

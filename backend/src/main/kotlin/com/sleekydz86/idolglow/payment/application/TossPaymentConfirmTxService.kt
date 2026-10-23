@@ -69,17 +69,19 @@ class TossPaymentConfirmTxService(
         idempotencyKey: String?,
     ): TossConfirmPrepareResult {
         val payment = lockOwnedTossPayment(userId, orderId, amount)
-        val open =
-            payment.status == PaymentStatus.PENDING ||
-                payment.status == PaymentStatus.CONFIRMING ||
-                payment.status == PaymentStatus.SUCCEEDED
-        require(open) { "처리할 수 없는 결제 상태입니다: ${payment.status}" }
         val skipTarget =
-            if (payment.status == PaymentStatus.SUCCEEDED) {
-                payment
-            } else {
-                markExpiredIfReservationClosed(payment)
+            when (payment.status) {
+                PaymentStatus.REFUNDING, PaymentStatus.SUCCEEDED -> payment
+                PaymentStatus.PENDING, PaymentStatus.CONFIRMING -> markExpiredIfReservationClosed(payment)
+                else -> null
             }
+        require(
+            skipTarget != null ||
+                payment.status == PaymentStatus.PENDING ||
+                payment.status == PaymentStatus.CONFIRMING,
+        ) {
+            "처리할 수 없는 결제 상태입니다: ${payment.status}"
+        }
         if (skipTarget != null) {
             return skipGateway(skipTarget, skipTarget.idempotencyKey.orEmpty())
         }
