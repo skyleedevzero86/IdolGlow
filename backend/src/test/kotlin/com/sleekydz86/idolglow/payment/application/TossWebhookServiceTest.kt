@@ -16,6 +16,7 @@ import io.mockk.MockKVerificationScope
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -33,11 +34,20 @@ class TossWebhookServiceTest {
     private val paymentLogCommandService = mockk<PaymentLogCommandService>(relaxed = true)
     private val paymentLogJpaRepository = mockk<PaymentLogJpaRepository>(relaxed = true)
     private val reservationPaymentService = mockk<ReservationPaymentService>()
+    private val reservationPaymentLock = mockk<ReservationPaymentLock>()
 
     private lateinit var service: TossWebhookService
 
     @BeforeEach
     fun setUp() {
+        val txService =
+            TossWebhookTxService(
+                reservationPaymentLock = reservationPaymentLock,
+                reservationPaymentService = reservationPaymentService,
+                paymentRefundTxService = mockk(relaxed = true),
+                paymentLogCommandService = paymentLogCommandService,
+                paymentLogJpaRepository = paymentLogJpaRepository,
+            )
         service =
             TossWebhookService(
                 objectMapper = objectMapper,
@@ -45,9 +55,7 @@ class TossWebhookServiceTest {
                 tossPaymentsApiClient = tossPaymentsApiClient,
                 tossPaymentProperties = TossPaymentProperties(enabled = true),
                 paymentLogCommandService = paymentLogCommandService,
-                reservationPaymentService = reservationPaymentService,
-                paymentRefundTxService = mockk(relaxed = true),
-                paymentLogJpaRepository = paymentLogJpaRepository,
+                tossWebhookTxService = txService,
             )
     }
 
@@ -55,15 +63,22 @@ class TossWebhookServiceTest {
     @Test
     fun webhookUsesReservationFirstLock() {
         // given
-        val body = """{"eventType":"PAYMENT_STATUS_CHANGED","data":{"orderId":"ORD-1","paymentKey":"pk-1"}}"""
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId("ORD-1") } returns null
+        val payment = pendingTossPayment()
+        val body = statusChangedBody(payment.orderId, "READY")
+        stubLockedPayment(payment)
+        every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "READY", 35000)
 
         // when
         service.handlePayload(body)
 
         // then
-        verify(exactly = 1) { reservationPaymentService.lockReservationThenPaymentByOrderId("ORD-1") }
+        verifyOrder {
+            tossPaymentsApiClient.getPayment("pk-1")
+            reservationPaymentLock.lockByOrderId(payment.orderId)
+        }
+        verify(exactly = 1) { reservationPaymentLock.lockByOrderId(payment.orderId) }
         verify(exactly = 0) { paymentRepository.findByOrderIdForUpdate(any()) }
+        verify(exactly = 0) { reservationPaymentService.lockReservationThenPaymentByOrderId(any()) }
     }
 
     @DisplayName("본문 status가 DONE이어도 토스 조회 상태가 대기면 성공 처리하지 않는다")
@@ -72,7 +87,7 @@ class TossWebhookServiceTest {
         // given
         val payment = pendingTossPayment()
         val body = statusChangedBody(payment.orderId, "DONE")
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        stubLockedPayment(payment)
         val remote = remotePayment(payment.orderId, "WAITING_FOR_DEPOSIT", 35000)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remote
 
@@ -103,7 +118,7 @@ class TossWebhookServiceTest {
         // given
         val payment = pendingTossPayment()
         val body = statusChangedBody(payment.orderId, "DONE")
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        stubLockedPayment(payment)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 1)
 
         // when
@@ -121,7 +136,7 @@ class TossWebhookServiceTest {
         val payment = failedTossPayment()
         val reservationStatus = payment.reservation.status
         val body = statusChangedBody(payment.orderId, "DONE")
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        stubLockedPayment(payment)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 35000)
         every {
             paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(
@@ -150,7 +165,7 @@ class TossWebhookServiceTest {
         // given
         val payment = failedTossPayment()
         val body = statusChangedBody(payment.orderId, "DONE")
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        stubLockedPayment(payment)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 35000)
         every {
             paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(
@@ -174,7 +189,7 @@ class TossWebhookServiceTest {
         // given
         val payment = failedTossPayment()
         val body = statusChangedBody(payment.orderId, "ABORTED")
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        stubLockedPayment(payment)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "ABORTED", 35000)
 
         // when
@@ -193,7 +208,7 @@ class TossWebhookServiceTest {
         // given
         val payment = failedTossPayment()
         val body = statusChangedBody(payment.orderId, "DONE")
-        every { reservationPaymentService.lockReservationThenPaymentByOrderId(payment.orderId) } returns payment
+        stubLockedPayment(payment)
         every { tossPaymentsApiClient.getPayment("pk-1") } returns remotePayment(payment.orderId, "DONE", 1)
 
         // when
@@ -230,6 +245,11 @@ class TossWebhookServiceTest {
             requestBody = any(),
             errorMessage = "종료된 결제 상태: FAILED",
         )
+    }
+
+    private fun stubLockedPayment(payment: Payment) {
+        every { paymentRepository.findByOrderId(payment.orderId) } returns payment
+        every { reservationPaymentLock.lockByOrderId(payment.orderId) } returns payment
     }
 
     private fun statusChangedBody(

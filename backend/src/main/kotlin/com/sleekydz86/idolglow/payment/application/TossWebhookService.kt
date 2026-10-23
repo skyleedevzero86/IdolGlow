@@ -4,20 +4,11 @@ import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
-import com.sleekydz86.idolglow.payment.domain.PaymentProvider
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
-import com.sleekydz86.idolglow.payment.domain.PaymentStatus
-import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
-import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
-import java.time.LocalDateTime
 
-@Transactional
 @Service
 class TossWebhookService(
     private val objectMapper: ObjectMapper,
@@ -25,12 +16,8 @@ class TossWebhookService(
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val tossPaymentProperties: TossPaymentProperties,
     private val paymentLogCommandService: PaymentLogCommandService,
-    private val reservationPaymentService: ReservationPaymentService,
-    private val paymentRefundTxService: PaymentRefundTxService,
-    private val paymentLogJpaRepository: PaymentLogJpaRepository,
+    private val tossWebhookTxService: TossWebhookTxService,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
-
     fun handlePayload(
         rawBody: String,
         transmissionId: String? = null,
@@ -96,32 +83,11 @@ class TossWebhookService(
             return
         }
 
-        val payment = reservationPaymentService.lockReservationThenPaymentByOrderId(orderId)
-        if (payment == null) {
-            logSystem(null, orderId, paymentKey, rawBody, "orderId에 해당하는 결제 없음")
+        val preview = paymentRepository.findByOrderId(orderId)
+        if (tossWebhookTxService.isTerminalOrMissing(preview, orderId, paymentKey, rawBody)) {
             return
         }
-
-        if (payment.provider != PaymentProvider.TOSS) {
-            logSystem(payment, orderId, paymentKey, rawBody, "TOSS 결제가 아님")
-            return
-        }
-
-        when (payment.status) {
-            PaymentStatus.SUCCEEDED -> {
-                logSystem(payment, orderId, paymentKey, rawBody, "이미 승인됨(멱등)")
-                return
-            }
-            PaymentStatus.CANCELED, PaymentStatus.EXPIRED,
-            PaymentStatus.REFUNDED, PaymentStatus.PARTIAL_CANCELED,
-            -> {
-                logSystem(payment, orderId, paymentKey, rawBody, "종료된 결제 상태: ${payment.status}")
-                return
-            }
-            PaymentStatus.FAILED -> Unit
-            PaymentStatus.REFUNDING -> Unit
-            PaymentStatus.PENDING, PaymentStatus.CONFIRMING -> Unit
-        }
+        val payment = requireNotNull(preview) { "잠그기 전 조회한 결제가 없습니다." }
 
         val remote = tossPaymentsApiClient.getPayment(paymentKey)
         paymentLogCommandService.append(
@@ -141,113 +107,7 @@ class TossWebhookService(
             logSystem(payment, orderId, paymentKey, rawBody, "토스 결제 조회 실패")
             return
         }
-
-        val pjson = remote.json!!
-        val remoteOrderId = pjson.path("orderId").asText(null)
-        if (remoteOrderId != payment.orderId) {
-            logSystem(payment, orderId, paymentKey, remote.rawBody, "orderId 불일치")
-            return
-        }
-        if (payment.status == PaymentStatus.REFUNDING) {
-            finishRefundingFromRemote(payment, pjson, remote)
-            return
-        }
-        if (payment.status == PaymentStatus.FAILED) {
-            flagLateApproval(payment, pjson, remote)
-            return
-        }
-
-        val status = pjson.path("status").asText(null)?.trim() ?: ""
-        when (status) {
-            "DONE" -> applyDoneFromRemote(payment, pjson, remote.rawBody, orderId, paymentKey)
-            "CANCELED" ->
-                reservationPaymentService.handlePaymentCanceled(
-                    payment.paymentReference,
-                    "결제 취소",
-                )
-            "ABORTED" ->
-                reservationPaymentService.handlePaymentCanceled(
-                    payment.paymentReference,
-                    "결제 중단",
-                )
-            "EXPIRED" ->
-                reservationPaymentService.handlePaymentFailed(
-                    payment.paymentReference,
-                    "결제 만료",
-                )
-            "WAITING_FOR_DEPOSIT", "IN_PROGRESS", "READY" -> {
-                logSystem(payment, orderId, paymentKey, remote.rawBody, "토스 상태 보류: $status")
-            }
-            "PARTIAL_CANCELED" -> {
-                logSystem(payment, orderId, paymentKey, remote.rawBody, "부분 취소 웹훅은 별도 처리 필요")
-            }
-            else -> {
-                logSystem(payment, orderId, paymentKey, remote.rawBody, "토스 상태 미처리: $status")
-            }
-        }
-    }
-
-    private fun flagLateApproval(
-        payment: Payment,
-        json: JsonNode,
-        remote: TossApiResponse,
-    ) {
-        if (!TossPaymentResponseMapper.isDoneWithMatchingAmount(json, payment.amount)) {
-            logSystem(payment, payment.orderId, payment.paymentKey, remote.rawBody, "종료된 결제 상태: FAILED")
-            return
-        }
-        if (paymentLogJpaRepository.existsByPaymentIdAndErrorMessage(payment.id, LATE_APPROVAL_MESSAGE)) {
-            return
-        }
-        log.error("{} paymentId={}", LATE_APPROVAL_MESSAGE, payment.id)
-        paymentLogCommandService.append(
-            payment = payment,
-            orderId = payment.orderId,
-            paymentKey = payment.paymentKey,
-            logType = PaymentLogType.CONFIRM_ERROR,
-            step = PaymentLogStep.SERVER,
-            httpStatus = remote.httpStatus,
-            responseBody = remote.rawBody,
-            errorMessage = LATE_APPROVAL_MESSAGE,
-        )
-    }
-
-    private fun finishRefundingFromRemote(
-        payment: Payment,
-        json: JsonNode,
-        remote: TossApiResponse,
-    ) {
-        val refundId = paymentRefundTxService.findPendingTossRefund(payment.id)?.refundId
-        if (refundId != null && TossPaymentResponseMapper.isFullyCanceled(json, payment.amount)) {
-            paymentRefundTxService.completeRefund(refundId, remote)
-            return
-        }
-        logSystem(payment, payment.orderId, payment.paymentKey, remote.rawBody, "환불 처리 중")
-    }
-
-    private fun applyDoneFromRemote(
-        payment: Payment,
-        json: JsonNode,
-        rawJson: String?,
-        orderId: String,
-        paymentKey: String,
-    ) {
-        if (!TossPaymentResponseMapper.isDoneWithMatchingAmount(json, payment.amount)) {
-            logSystem(payment, orderId, paymentKey, rawJson, "결제 금액 불일치")
-            return
-        }
-        finalizeFromRemote(payment, json, rawJson!!)
-    }
-
-    private fun finalizeFromRemote(
-        payment: Payment,
-        json: JsonNode,
-        rawJson: String,
-    ) {
-        TossPaymentResponseMapper.applyConfirmSuccess(payment, json, rawJson)
-        val approvedAt = payment.approvedAt ?: LocalDateTime.now()
-        payment.markSucceeded(approvedAt)
-        reservationPaymentService.finalizeAfterGatewaySuccess(payment)
+        tossWebhookTxService.apply(orderId, paymentKey, remote, rawBody)
     }
 
     private fun logSystem(
