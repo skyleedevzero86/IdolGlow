@@ -237,7 +237,7 @@ class TossBillingReconcileSchedulerPostgresTest : PostgresIntegrationTest() {
     fun billingReconcileLogsPendingAfterOneHour() {
         // given
         val seeded = seedPending(LocalDateTime.of(2026, 11, 1, 0, 0), oneOff = false)
-        val createdAt = LocalDateTime.of(2026, 10, 23, 15, 0)
+        val createdAt = LocalDateTime.now().minusHours(2).withNano(0)
         jdbcTemplate.update(
             "update toss_billing_charge_attempts set created_at = ? where id = ?",
             Timestamp.valueOf(createdAt),
