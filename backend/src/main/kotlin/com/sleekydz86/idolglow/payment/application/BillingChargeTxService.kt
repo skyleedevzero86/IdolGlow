@@ -11,7 +11,6 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaReposi
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
-import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -27,7 +26,6 @@ class BillingChargeTxService(
     private val chargeRepository: TossBillingChargeJpaRepository,
     private val attemptRepository: TossBillingChargeAttemptJpaRepository,
     private val methodRepository: TossBillingMethodJpaRepository,
-    private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val userRepository: UserRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -122,204 +120,186 @@ class BillingChargeTxService(
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun finalizeWithToss(
-        chargeId: Long,
-        now: LocalDateTime,
-        methodOverride: TossBillingMethod? = null,
-    ): BillingChargeFinalizeResult {
+    fun loadChargeGate(chargeId: Long): BillingChargeGate {
         val charge =
             chargeRepository.findById(chargeId).orElseThrow {
                 IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
             }
-        val reconciled =
-            if (charge.status == TossBillingChargeStatus.PENDING) {
-                reconcilePendingIfPaid(charge, now)
-            } else {
-                null
-            }
-        val openAttempt = openPendingAttempt(charge)
-        return when {
-            charge.status == TossBillingChargeStatus.DONE -> BillingChargeFinalizeResult(charge = charge)
-            reconciled != null -> BillingChargeFinalizeResult(charge = reconciled)
-            openAttempt != null -> {
-                log.warn(
-                    "PENDING 시도가 있어 새 승인을 시작하지 않습니다. chargeId={} tossOrderId={}",
-                    charge.id,
-                    openAttempt.tossOrderId,
-                )
-                BillingChargeFinalizeResult(charge = charge, pending = true)
-            }
-            else -> approveWithToss(charge, now, methodOverride)
-        }
+        val latest = attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)
+        return BillingChargeGate(
+            chargeId = charge.id,
+            status = charge.status,
+            orderId = charge.orderId,
+            amount = charge.amount,
+            latestAttemptStatus = latest?.status,
+            latestTossOrderId = latest?.tossOrderId,
+        )
     }
 
-    private fun approveWithToss(
-        charge: TossBillingCharge,
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun applyLookup(
+        chargeId: Long,
+        orderId: String,
+        remote: TossApiResponse,
         now: LocalDateTime,
-        methodOverride: TossBillingMethod?,
     ): BillingChargeFinalizeResult {
-        val method = methodOverride ?: charge.billingMethod
-        charge.billingMethod = method
-        val attempt = savePendingAttempt(charge, method)
-        val user =
-            userRepository.findById(charge.userId)
-                ?: throw IllegalArgumentException("사용자를 찾을 수 없습니다. userId=${charge.userId}")
-        val response =
-            tossPaymentsApiClient.chargeBilling(
-                billingKey = method.billingKey,
-                customerKey = method.customerKey,
-                amount = charge.amount,
-                orderId = attempt.tossOrderId,
-                orderName = charge.orderName,
-                customerEmail = user.email,
-                customerName = user.nickname.value,
-                idempotencyKey = "billing-charge-${attempt.tossOrderId}",
-            )
-        val subscription = charge.subscriptionId?.let { subscriptionRepository.findWithBillingMethodById(it) }
-        val json = response.json
+        val charge = lockCharge(chargeId)
         val expectedAmount = BigDecimal.valueOf(charge.amount)
-        return when {
-            response.isInconclusive -> {
-                log.warn(
-                    "정기결제 승인 결과가 불명확합니다. chargeId={} httpStatus={}",
-                    charge.id,
-                    response.httpStatus,
-                )
-                BillingChargeFinalizeResult(charge = charge, pending = true)
+        val confirmed =
+            remote.json?.takeIf {
+                charge.status == TossBillingChargeStatus.PENDING &&
+                    TossPaymentResponseMapper.isDoneWithMatchingAmount(it, expectedAmount)
             }
-            response.isSuccess2xx &&
-                json != null &&
-                TossPaymentResponseMapper.isDoneWithMatchingAmount(json, expectedAmount) -> {
-                val paymentKey = json.path("paymentKey").asText(null)
-                val approvedAt = parseDateTime(json.path("approvedAt").asText(null)) ?: now
-                attempt.markDone(paymentKey, response.rawBody, approvedAt)
-                charge.markDone(paymentKey, response.rawBody, approvedAt)
-                subscription?.markCharged(now)
-                BillingChargeFinalizeResult(charge = charge)
-            }
-            response.isSuccess2xx -> {
-                log.error(
-                    "정기결제 승인 응답이 완료·금액 일치가 아닙니다. chargeId={} httpStatus={}",
-                    charge.id,
-                    response.httpStatus,
-                )
-                BillingChargeFinalizeResult(charge = charge, pending = true)
-            }
-            else -> {
-                val message = json?.path("message")?.asText(null) ?: response.rawBody ?: "자동결제 승인 실패"
-                attempt.markFailed(message, response.rawBody)
-                charge.markFailed(message, response.rawBody)
-                subscription?.markChargeFailed(now)
-                BillingChargeFinalizeResult(charge = charge, failureMessage = message)
-            }
+        if (confirmed != null) {
+            val paymentKey = confirmed.path("paymentKey").asText(null)
+            val approvedAt = parseDateTime(confirmed.path("approvedAt").asText(null)) ?: now
+            val latest = attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)
+            latest
+                ?.takeIf { it.tossOrderId == orderId && it.status == TossBillingChargeStatus.PENDING }
+                ?.markDone(paymentKey, remote.rawBody, approvedAt)
+            charge.markDone(paymentKey, remote.rawBody, approvedAt)
+            charge.subscriptionId
+                ?.let { subscriptionRepository.findWithBillingMethodById(it) }
+                ?.markCharged(now)
+            log.info("PENDING 회차를 토스 조회로 확정했습니다. orderId={}", orderId)
         }
+        val stayPending = charge.status == TossBillingChargeStatus.PENDING
+        return BillingChargeFinalizeResult(charge = charge, pending = stayPending)
     }
 
-    private fun openPendingAttempt(charge: TossBillingCharge): TossBillingChargeAttempt? {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun prepareAttempt(
+        chargeId: Long,
+        methodId: Long?,
+    ): PreparedBillingAttempt? {
+        val charge = lockCharge(chargeId)
+        if (methodId != null) {
+            charge.billingMethod =
+                methodRepository.findById(methodId).orElseThrow {
+                    IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
+                }
+        }
         val latest =
             if (charge.status == TossBillingChargeStatus.PENDING) {
                 attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)
             } else {
                 null
             }
-        return latest?.takeIf { it.status == TossBillingChargeStatus.PENDING }
+        if (latest?.status == TossBillingChargeStatus.PENDING) {
+            log.warn(
+                "PENDING 시도가 있어 새 승인을 시작하지 않습니다. chargeId={} tossOrderId={}",
+                charge.id,
+                latest.tossOrderId,
+            )
+        }
+        val pending = charge.status == TossBillingChargeStatus.PENDING
+        val open = pending && latest?.status != TossBillingChargeStatus.PENDING
+        return if (open) savePendingAttempt(charge, latest) else null
     }
 
     private fun savePendingAttempt(
         charge: TossBillingCharge,
-        method: TossBillingMethod,
-    ): TossBillingChargeAttempt {
-        val attemptNo = (attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)?.attemptNo ?: 0) + 1
-        return attemptRepository.save(
-            TossBillingChargeAttempt(
-                chargeId = charge.id,
-                billingMethod = method,
-                attemptNo = attemptNo,
-                tossOrderId = BillingChargeExecutor.attemptOrderId(charge.orderId, attemptNo),
-                status = TossBillingChargeStatus.PENDING,
-            ),
+        latest: TossBillingChargeAttempt?,
+    ): PreparedBillingAttempt {
+        val method = charge.billingMethod
+        val attemptNo = (latest?.attemptNo ?: 0) + 1
+        val attempt =
+            attemptRepository.save(
+                TossBillingChargeAttempt(
+                    chargeId = charge.id,
+                    billingMethod = method,
+                    attemptNo = attemptNo,
+                    tossOrderId = BillingChargeExecutor.attemptOrderId(charge.orderId, attemptNo),
+                    status = TossBillingChargeStatus.PENDING,
+                ),
+            )
+        val user =
+            userRepository.findById(charge.userId)
+                ?: throw IllegalArgumentException("사용자를 찾을 수 없습니다. userId=${charge.userId}")
+        return PreparedBillingAttempt(
+            attemptId = attempt.id,
+            tossOrderId = attempt.tossOrderId,
+            billingKey = method.billingKey,
+            customerKey = method.customerKey,
+            amount = charge.amount,
+            orderName = charge.orderName,
+            customerEmail = user.email,
+            customerName = user.nickname.value,
         )
     }
 
-    private fun reconcilePendingIfPaid(
-        charge: TossBillingCharge,
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun applyChargeResult(
+        attemptId: Long,
+        remote: TossApiResponse,
         now: LocalDateTime,
-    ): TossBillingCharge? {
-        val latest = attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)
-        val orderIds =
-            buildList {
-                if (latest != null) add(latest.tossOrderId)
-                add(charge.orderId)
-            }.distinct()
-        val hit =
-            orderIds.firstNotNullOfOrNull { orderId ->
-                reconcileOrder(charge, latest, orderId, now)
+    ): BillingChargeFinalizeResult {
+        val chargeId =
+            attemptRepository.findChargeIdById(attemptId)
+                ?: throw IllegalArgumentException("결제 시도를 찾을 수 없습니다. attemptId=$attemptId")
+        val charge = lockCharge(chargeId)
+        val attempt =
+            attemptRepository.findById(attemptId).orElseThrow {
+                IllegalArgumentException("결제 시도를 찾을 수 없습니다. attemptId=$attemptId")
             }
-        return hit?.takeUnless { it.stop }?.charge
-    }
-
-    private fun reconcileOrder(
-        charge: TossBillingCharge,
-        latest: TossBillingChargeAttempt?,
-        orderId: String,
-        now: LocalDateTime,
-    ): ReconcileHit? {
-        val remote = tossPaymentsApiClient.getPaymentByOrderId(orderId)
+        val alreadySettled =
+            charge.status != TossBillingChargeStatus.PENDING ||
+                attempt.status != TossBillingChargeStatus.PENDING
+        if (alreadySettled) {
+            val stillPending = charge.status == TossBillingChargeStatus.PENDING
+            return BillingChargeFinalizeResult(charge = charge, pending = stillPending)
+        }
+        val subscription = charge.subscriptionId?.let { subscriptionRepository.findWithBillingMethodById(it) }
         val json = remote.json
         val expectedAmount = BigDecimal.valueOf(charge.amount)
-        val matched =
-            remote.isSuccess2xx &&
-                json != null &&
-                TossPaymentResponseMapper.isDoneWithMatchingAmount(json, expectedAmount)
-        val doneWithOtherAmount =
-            remote.isSuccess2xx &&
-                json != null &&
-                json.path("status").asText(null)?.trim() == "DONE" &&
-                !matched
         return when {
-            doneWithOtherAmount -> {
-                log.error(
-                    "정기결제 조회 금액이 회차 금액과 다릅니다. chargeId={} orderId={} amount={}",
+            remote.isInconclusive -> {
+                log.warn(
+                    "정기결제 승인 결과가 불명확합니다. chargeId={} httpStatus={}",
                     charge.id,
-                    orderId,
-                    charge.amount,
+                    remote.httpStatus,
                 )
-                ReconcileHit(charge = null, stop = true)
+                BillingChargeFinalizeResult(charge = charge, pending = true)
             }
-            matched -> {
-                markReconciled(charge, latest, orderId, remote, now)
-                ReconcileHit(charge = charge, stop = false)
+            remote.isSuccess2xx &&
+                json != null &&
+                TossPaymentResponseMapper.isDoneWithMatchingAmount(json, expectedAmount) -> {
+                val paymentKey = json.path("paymentKey").asText(null)
+                val approvedAt = parseDateTime(json.path("approvedAt").asText(null)) ?: now
+                attempt.markDone(paymentKey, remote.rawBody, approvedAt)
+                charge.markDone(paymentKey, remote.rawBody, approvedAt)
+                subscription?.markCharged(now)
+                BillingChargeFinalizeResult(charge = charge)
             }
-            else -> null
+            remote.isSuccess2xx -> {
+                log.error(
+                    "정기결제 승인 응답이 완료·금액 일치가 아닙니다. chargeId={} httpStatus={}",
+                    charge.id,
+                    remote.httpStatus,
+                )
+                BillingChargeFinalizeResult(charge = charge, pending = true)
+            }
+            else -> {
+                val message = json?.path("message")?.asText(null) ?: remote.rawBody ?: "자동결제 승인 실패"
+                attempt.markFailed(message, remote.rawBody)
+                charge.markFailed(message, remote.rawBody)
+                subscription?.markChargeFailed(now)
+                BillingChargeFinalizeResult(charge = charge, failureMessage = message)
+            }
         }
     }
 
-    private fun markReconciled(
-        charge: TossBillingCharge,
-        latest: TossBillingChargeAttempt?,
-        orderId: String,
-        remote: TossApiResponse,
-        now: LocalDateTime,
-    ) {
-        val json = remote.json ?: return
-        val paymentKey = json.path("paymentKey").asText(null)
-        val approvedAt = parseDateTime(json.path("approvedAt").asText(null)) ?: now
-        latest
-            ?.takeIf { it.tossOrderId == orderId && it.status == TossBillingChargeStatus.PENDING }
-            ?.markDone(paymentKey, remote.rawBody, approvedAt)
-        charge.markDone(paymentKey, remote.rawBody, approvedAt)
-        charge.subscriptionId
-            ?.let { subscriptionRepository.findWithBillingMethodById(it) }
-            ?.markCharged(now)
-        log.info("PENDING 회차를 토스 조회로 확정했습니다. orderId={}", orderId)
-    }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun requireCharge(chargeId: Long): TossBillingCharge =
+        chargeRepository.findById(chargeId).orElseThrow {
+            IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
+        }
+
+    private fun lockCharge(chargeId: Long): TossBillingCharge =
+        chargeRepository.findByIdForUpdate(chargeId)
+            ?: throw IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
 
     private fun parseDateTime(raw: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(raw)
-
-    private data class ReconcileHit(
-        val charge: TossBillingCharge?,
-        val stop: Boolean,
-    )
 }
 
 data class PreparedBillingCharge(
@@ -331,4 +311,24 @@ data class BillingChargeFinalizeResult(
     val charge: TossBillingCharge,
     val failureMessage: String? = null,
     val pending: Boolean = false,
+)
+
+data class BillingChargeGate(
+    val chargeId: Long,
+    val status: TossBillingChargeStatus,
+    val orderId: String,
+    val amount: Long,
+    val latestAttemptStatus: TossBillingChargeStatus?,
+    val latestTossOrderId: String?,
+)
+
+data class PreparedBillingAttempt(
+    val attemptId: Long,
+    val tossOrderId: String,
+    val billingKey: String,
+    val customerKey: String,
+    val amount: Long,
+    val orderName: String,
+    val customerEmail: String,
+    val customerName: String,
 )
