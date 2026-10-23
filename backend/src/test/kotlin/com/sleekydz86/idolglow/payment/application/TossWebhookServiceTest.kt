@@ -35,6 +35,7 @@ class TossWebhookServiceTest {
     private val paymentLogJpaRepository = mockk<PaymentLogJpaRepository>(relaxed = true)
     private val reservationPaymentService = mockk<ReservationPaymentService>()
     private val reservationPaymentLock = mockk<ReservationPaymentLock>()
+    private val billingKeyDeletionService = mockk<BillingKeyDeletionService>(relaxed = true)
 
     private lateinit var service: TossWebhookService
 
@@ -56,7 +57,22 @@ class TossWebhookServiceTest {
                 tossPaymentProperties = TossPaymentProperties(enabled = true),
                 paymentLogCommandService = paymentLogCommandService,
                 tossWebhookTxService = txService,
+                billingKeyDeletionService = billingKeyDeletionService,
             )
+    }
+
+    @DisplayName("BILLING_DELETED는 결제 조회 흐름으로 들어가지 않는다")
+    @Test
+    fun billingDeletedDoesNotEnterPaymentFlow() {
+        // given
+        val body = """{"eventType":"BILLING_DELETED","data":{"billingKey":"bk-1"}}"""
+
+        // when
+        service.handlePayload(body)
+
+        // then
+        verify(exactly = 1) { billingKeyDeletionService.acceptBillingDeleted(any()) }
+        verify(exactly = 0) { tossPaymentsApiClient.getPayment(any()) }
     }
 
     @DisplayName("웹훅도 결제를 직접 잠그지 않고 예약 → 결제 순서 잠금 경로를 쓴다")

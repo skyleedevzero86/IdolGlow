@@ -44,6 +44,7 @@ class TossBillingService(
     private val attemptRepository: TossBillingChargeAttemptJpaRepository,
     private val dueClaimRepository: TossBillingDueClaimRepository,
     private val billingChargeExecutor: BillingChargeExecutor,
+    private val billingKeyDeletionService: BillingKeyDeletionService,
     @Lazy private val self: TossBillingService,
     @param:Value("\${app.frontend-base-url:http://localhost:3000}")
     private val frontendBaseUrl: String,
@@ -177,29 +178,10 @@ class TossBillingService(
         return TossBillingMethodResponse.from(method)
     }
 
-    @Transactional
     fun deactivateMethod(
         userId: Long,
         methodId: Long,
-    ): TossBillingMethodResponse {
-        val method =
-            methodRepository.findByIdAndUserIdAndActiveTrue(methodId, userId)
-                ?: throw IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
-        val wasDefault = method.isDefault
-        method.deactivate()
-        if (wasDefault) {
-            val next = methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).firstOrNull()
-            next?.markAsDefault()
-            subscriptionRepository.findByUserIdAndPlanCode(userId, PLAN_MONTHLY)?.let { sub ->
-                if (sub.status != TossBillingSubscriptionStatus.CANCELED) {
-                    if (next != null) {
-                        sub.billingMethod = next
-                    }
-                }
-            }
-        }
-        return TossBillingMethodResponse.from(method)
-    }
+    ): TossBillingMethodResponse = billingKeyDeletionService.deactivate(userId, methodId)
 
     @Transactional
     fun resumePausedSubscription(

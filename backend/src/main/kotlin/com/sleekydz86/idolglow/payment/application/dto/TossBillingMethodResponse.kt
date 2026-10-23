@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.payment.application.dto
 
+import com.sleekydz86.idolglow.payment.domain.TossBillingKeyDeletionStatus
 import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
 import java.time.LocalDateTime
 
@@ -13,6 +14,9 @@ data class TossBillingMethodResponse(
     val active: Boolean,
     val isDefault: Boolean,
     val authenticatedAt: LocalDateTime?,
+    val deletionStatus: TossBillingKeyDeletionStatus = TossBillingKeyDeletionStatus.ACTIVE,
+    val deletionRequestedAt: LocalDateTime? = null,
+    val deletionCompletedAt: LocalDateTime? = null,
 ) {
     companion object {
         fun from(entity: TossBillingMethod) =
@@ -26,6 +30,9 @@ data class TossBillingMethodResponse(
                 active = entity.active,
                 isDefault = entity.isDefault,
                 authenticatedAt = entity.authenticatedAt,
+                deletionStatus = entity.deletionStatus,
+                deletionRequestedAt = entity.deletionRequestedAt,
+                deletionCompletedAt = entity.deletionCompletedAt,
             )
     }
 }

@@ -109,30 +109,29 @@ class TossPaymentsApiClient(
         )
     }
 
-    private fun get(path: String): TossApiResponse {
-        val secret = props.secretKey.trim()
-        require(secret.isNotEmpty()) { "payment.toss.secret-key 가 설정되어 있어야 합니다." }
-        val auth = Base64.getEncoder().encodeToString("$secret:".toByteArray(StandardCharsets.UTF_8))
+    fun deleteBillingKey(billingKey: String): TossApiResponse {
+        val encoded = UriUtils.encodePathSegment(billingKey, StandardCharsets.UTF_8)
+        val auth = basicAuth()
+        return exchange(
+            restClient
+                .delete()
+                .uri("/v1/billing/$encoded")
+                .headers { h ->
+                    h.add(HttpHeaders.AUTHORIZATION, "Basic $auth")
+                },
+        )
+    }
 
-        return try {
-            val entity =
-                restClient
-                    .get()
-                    .uri(path)
-                    .headers { h ->
-                        h.add(HttpHeaders.AUTHORIZATION, "Basic $auth")
-                    }.retrieve()
-                    .toEntity(String::class.java)
-            val text = entity.body ?: ""
-            val node = runCatching { objectMapper.readTree(text) }.getOrNull()
-            TossApiResponse(entity.statusCode.value(), node, text, null)
-        } catch (e: RestClientResponseException) {
-            val text = e.responseBodyAsString
-            val node = runCatching { objectMapper.readTree(text) }.getOrNull()
-            TossApiResponse(e.statusCode.value(), node, text, e)
-        } catch (e: Exception) {
-            TossApiResponse(0, null, e.message, e)
-        }
+    private fun get(path: String): TossApiResponse {
+        val auth = basicAuth()
+        return exchange(
+            restClient
+                .get()
+                .uri(path)
+                .headers { h ->
+                    h.add(HttpHeaders.AUTHORIZATION, "Basic $auth")
+                },
+        )
     }
 
     private fun post(
@@ -141,24 +140,24 @@ class TossPaymentsApiClient(
         idempotencyKey: String?,
         client: RestClient = restClient,
     ): TossApiResponse {
-        val secret = props.secretKey.trim()
-        require(secret.isNotEmpty()) { "payment.toss.secret-key 가 설정되어 있어야 합니다." }
-        val auth = Base64.getEncoder().encodeToString("$secret:".toByteArray(StandardCharsets.UTF_8))
+        val auth = basicAuth()
+        return exchange(
+            client
+                .post()
+                .uri(path)
+                .headers { h ->
+                    h.add(HttpHeaders.AUTHORIZATION, "Basic $auth")
+                    h.contentType = MediaType.APPLICATION_JSON
+                    if (!idempotencyKey.isNullOrBlank()) {
+                        h.add("Idempotency-Key", idempotencyKey)
+                    }
+                }.body(jsonBody),
+        )
+    }
 
-        return try {
-            val entity =
-                client
-                    .post()
-                    .uri(path)
-                    .headers { h ->
-                        h.add(HttpHeaders.AUTHORIZATION, "Basic $auth")
-                        h.contentType = MediaType.APPLICATION_JSON
-                        if (!idempotencyKey.isNullOrBlank()) {
-                            h.add("Idempotency-Key", idempotencyKey)
-                        }
-                    }.body(jsonBody)
-                    .retrieve()
-                    .toEntity(String::class.java)
+    private fun exchange(spec: RestClient.RequestHeadersSpec<*>): TossApiResponse =
+        try {
+            val entity = spec.retrieve().toEntity(String::class.java)
             val text = entity.body ?: ""
             val node = runCatching { objectMapper.readTree(text) }.getOrNull()
             TossApiResponse(entity.statusCode.value(), node, text, null)
@@ -169,5 +168,10 @@ class TossPaymentsApiClient(
         } catch (e: Exception) {
             TossApiResponse(0, null, e.message, e)
         }
+
+    private fun basicAuth(): String {
+        val secret = props.secretKey.trim()
+        require(secret.isNotEmpty()) { "payment.toss.secret-key 가 설정되어 있어야 합니다." }
+        return Base64.getEncoder().encodeToString("$secret:".toByteArray(StandardCharsets.UTF_8))
     }
 }

@@ -79,6 +79,26 @@ class TossBillingReadTimeoutTest {
         assertEquals(listOf("/v1/billing/bk-1"), billing.paths)
     }
 
+    @DisplayName("빌링키 삭제는 공용 클라이언트를 사용한다")
+    @Test
+    fun deleteBillingKeyUsesSharedRestClient() {
+        // given
+        val shared = RecordingServer()
+        val billing = RecordingServer()
+        val api = apiClient(shared.restClient(), billing.restClient())
+
+        // when
+        shared.use {
+            billing.use {
+                api.deleteBillingKey("bk-1")
+            }
+        }
+
+        // then
+        assertEquals(listOf("/v1/billing/bk-1"), shared.paths)
+        assertTrue(billing.paths.isEmpty())
+    }
+
     @DisplayName("주문번호 조회는 공용 클라이언트를 사용한다")
     @Test
     fun paymentLookupStillUsesDefaultRestClient() {

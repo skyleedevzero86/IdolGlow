@@ -38,6 +38,9 @@ class BillingChargeTxService(
         require(subscription.status == TossBillingSubscriptionStatus.ACTIVE) {
             "ACTIVE 구독만 자동결제할 수 있습니다. status=${subscription.status}"
         }
+        require(subscription.billingMethod.usableForCharge()) {
+            "삭제된 결제 수단으로는 자동결제할 수 없습니다. methodId=${subscription.billingMethod.id}"
+        }
         val dueAt =
             subscription.nextBillingAt
                 ?: throw IllegalStateException("nextBillingAt 이 비어 있습니다. subscriptionId=$subscriptionId")
@@ -83,6 +86,9 @@ class BillingChargeTxService(
             methodRepository.findById(methodId).orElseThrow {
                 IllegalArgumentException("결제 수단을 찾을 수 없습니다. methodId=$methodId")
             }
+        require(method.usableForCharge()) {
+            "삭제된 결제 수단으로는 결제할 수 없습니다. methodId=$methodId"
+        }
         val suffix =
             UUID
                 .randomUUID()
