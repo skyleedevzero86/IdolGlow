@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentProvider
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,6 +24,7 @@ class TossWebhookService(
     private val tossPaymentProperties: TossPaymentProperties,
     private val paymentLogCommandService: PaymentLogCommandService,
     private val reservationPaymentService: ReservationPaymentService,
+    private val paymentRefundTxService: PaymentRefundTxService,
 ) {
     fun handlePayload(
         rawBody: String,
@@ -111,10 +113,7 @@ class TossWebhookService(
                 logSystem(payment, orderId, paymentKey, rawBody, "종료된 결제 상태: ${payment.status}")
                 return
             }
-            PaymentStatus.REFUNDING -> {
-                logSystem(payment, orderId, paymentKey, rawBody, "환불 처리 중")
-                return
-            }
+            PaymentStatus.REFUNDING -> Unit
             PaymentStatus.PENDING, PaymentStatus.CONFIRMING -> Unit
         }
 
@@ -141,6 +140,10 @@ class TossWebhookService(
         val remoteOrderId = pjson.path("orderId").asText(null)
         if (remoteOrderId != payment.orderId) {
             logSystem(payment, orderId, paymentKey, remote.rawBody, "orderId 불일치")
+            return
+        }
+        if (payment.status == PaymentStatus.REFUNDING) {
+            finishRefundingFromRemote(payment, pjson, remote)
             return
         }
 
@@ -172,6 +175,19 @@ class TossWebhookService(
                 logSystem(payment, orderId, paymentKey, remote.rawBody, "토스 상태 미처리: $status")
             }
         }
+    }
+
+    private fun finishRefundingFromRemote(
+        payment: Payment,
+        json: JsonNode,
+        remote: TossApiResponse,
+    ) {
+        val refundId = paymentRefundTxService.findPendingTossRefund(payment.id)?.refundId
+        if (refundId != null && TossPaymentResponseMapper.isFullyCanceled(json, payment.amount)) {
+            paymentRefundTxService.completeRefund(refundId, remote)
+            return
+        }
+        logSystem(payment, payment.orderId, payment.paymentKey, remote.rawBody, "환불 처리 중")
     }
 
     private fun applyDoneFromRemote(

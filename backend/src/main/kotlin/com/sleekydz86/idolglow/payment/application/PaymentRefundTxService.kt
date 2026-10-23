@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.payment.infrastructure.PaymentJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.JsonNode
@@ -76,6 +77,23 @@ class PaymentRefundTxService(
         }
         return pendingRefund(payment).takeIf { it.needsTossCancel }
     }
+
+    @Transactional(readOnly = true)
+    fun findPaymentIdsToReconcile(
+        requestedBefore: LocalDateTime,
+        stopRetryBefore: LocalDateTime,
+        stopMessage: String,
+        stopLoggedSince: LocalDateTime,
+        limit: Int,
+    ): List<Long> =
+        paymentRefundJpaRepository
+            .findIdsToReconcile(
+                requestedBefore,
+                stopRetryBefore,
+                stopMessage,
+                stopLoggedSince,
+                PageRequest.of(0, limit),
+            ).distinct()
 
     @Transactional(readOnly = true)
     fun loadPayment(paymentId: Long): Payment =
@@ -187,6 +205,7 @@ class PaymentRefundTxService(
             idempotencyKey = pending.idempotencyKey,
             cancelReason = pending.cancelReason,
             needsTossCancel = true,
+            firstRequestedAt = pending.firstRequestedAt,
         )
     }
 

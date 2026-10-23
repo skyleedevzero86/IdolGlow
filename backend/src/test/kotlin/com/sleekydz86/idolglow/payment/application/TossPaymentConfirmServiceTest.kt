@@ -142,6 +142,7 @@ class TossPaymentConfirmServiceTest {
         // then
         assertEquals(PaymentStatus.REFUNDING, result.status)
         verify(exactly = 0) { tossPaymentsApiClient.confirm(any(), any(), any(), any()) }
+        verify(exactly = 1) { paymentRefundService.settlePreparedRefund(payment.id) }
         verify(exactly = 1) {
             paymentLogCommandService.append(
                 payment = payment,
@@ -152,6 +153,29 @@ class TossPaymentConfirmServiceTest {
                 errorMessage = "승인 뒤 환불 정산에 실패했습니다. paymentId=${payment.id}",
             )
         }
+    }
+
+    @DisplayName("승인만 끝난 결제는 환불 정산을 조회하지 않는다")
+    @Test
+    fun confirmSkipsRefundSettlementUnlessRefunding() {
+        // given
+        val payment = tossPayment()
+        payment.markSucceeded()
+        every {
+            tossPaymentConfirmTxService.prepareConfirm(10L, payment.orderId, BigDecimal("35000"), null)
+        } returns TossConfirmPrepareResult(payment, skipGateway = false, idempotencyKey = "confirm-${payment.orderId}")
+        every { tossPaymentsApiClient.confirm(any(), any(), any(), any()) } returns
+            TossApiResponse(200, null, """{"status":"DONE"}""")
+        every {
+            tossPaymentConfirmTxService.completeConfirm(10L, payment.orderId, BigDecimal("35000"), any())
+        } returns payment
+
+        // when
+        val result = service.confirm(10L, "pk-1", payment.orderId, BigDecimal("35000"), null, null)
+
+        // then
+        assertEquals(PaymentStatus.SUCCEEDED, result.status)
+        verify(exactly = 0) { paymentRefundService.settlePreparedRefund(any()) }
     }
 
     private fun tossPayment(expired: Boolean = false): Payment {

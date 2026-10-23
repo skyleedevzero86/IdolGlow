@@ -32,6 +32,7 @@ class PaymentViewPolicyService {
         payment.status in
             setOf(
                 PaymentStatus.SUCCEEDED,
+                PaymentStatus.REFUNDING,
                 PaymentStatus.CANCELED,
                 PaymentStatus.REFUNDED,
                 PaymentStatus.PARTIAL_CANCELED,

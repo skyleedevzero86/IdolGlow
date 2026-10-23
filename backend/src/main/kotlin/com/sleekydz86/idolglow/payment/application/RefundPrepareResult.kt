@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.payment.application
 
+import java.time.LocalDateTime
+
 data class RefundPrepareResult(
     val paymentId: Long,
     val orderId: String? = null,
@@ -8,4 +10,5 @@ data class RefundPrepareResult(
     val idempotencyKey: String? = null,
     val cancelReason: String? = null,
     val needsTossCancel: Boolean = false,
+    val firstRequestedAt: LocalDateTime? = null,
 )

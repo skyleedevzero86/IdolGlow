@@ -42,6 +42,7 @@ class TossWebhookServiceTest {
                 tossPaymentProperties = TossPaymentProperties(enabled = true),
                 paymentLogCommandService = paymentLogCommandService,
                 reservationPaymentService = reservationPaymentService,
+                paymentRefundTxService = mockk(relaxed = true),
             )
     }
 

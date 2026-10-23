@@ -90,8 +90,11 @@ class TossPaymentConfirmService(
             payment
         }
 
-    private fun settleQuietly(payment: Payment): Payment =
-        runCatching { paymentRefundService.settlePreparedRefund(payment.id) }
+    private fun settleQuietly(payment: Payment): Payment {
+        if (payment.status != PaymentStatus.REFUNDING) {
+            return payment
+        }
+        return runCatching { paymentRefundService.settlePreparedRefund(payment.id) }
             .onFailure { error ->
                 log.error("승인 뒤 환불 정산에 실패했습니다. paymentId={}", payment.id, error)
                 paymentLogCommandService.append(
@@ -103,6 +106,7 @@ class TossPaymentConfirmService(
                     errorMessage = "승인 뒤 환불 정산에 실패했습니다. paymentId=${payment.id}",
                 )
             }.getOrElse { payment }
+    }
 
     private fun toKrwLong(amount: BigDecimal): Long {
         val normalized = amount.stripTrailingZeros()
