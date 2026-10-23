@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationExpirationScheduler
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
@@ -15,6 +16,7 @@ import com.sleekydz86.idolglow.support.PostgresReservationFixture
 import io.mockk.every
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
@@ -225,25 +227,90 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         assertEquals(PaymentStatus.FAILED, payment.status)
     }
 
-    @DisplayName("10분이 지나도 결론이 없으면 결제를 실패로 정리한다")
+    @DisplayName("10분이 지나고 조회가 실패해도 결제를 실패로 만들지 않고 확인 로그를 한 번 남긴다")
     @Test
-    fun reconcileStaleConfirmingFails() {
+    fun confirmingIsNotFailedByTimeAlone() {
         // given
-        val created = timeoutConfirming()
-        every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns
-            TossApiResponse(200, objectMapper.readTree("""{"status":"IN_PROGRESS"}"""), "{}")
-        jdbcTemplate.update(
-            "update payments set updated_at = ? where id = ?",
-            LocalDateTime.now().minusMinutes(11),
-            created.payment.paymentId,
-        )
+        val created = agedConfirming(lookupFailure())
 
         // when
-        tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
+        reconcile()
 
         // then
-        val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
-        assertEquals(PaymentStatus.FAILED, payment.status)
+        assertStillConfirming(created)
+        assertEquals(1, reviewLogCount(created.payment.paymentId))
+        val logged = reviewLog(created.payment.paymentId)
+        assertEquals("CONFIRM_ERROR", logged["log_type"])
+        assertEquals("SERVER", logged["step"])
+        assertEquals(500, (logged["http_status"] as Number).toInt())
+        assertEquals("internal", logged["response_body"])
+    }
+
+    @DisplayName("10분이 지난 같은 결제의 확인 로그는 다시 조회해도 한 건이다")
+    @Test
+    fun confirmingStaleIsFlaggedOnce() {
+        // given
+        val created = agedConfirming(lookupFailure())
+
+        // when
+        reconcile()
+        reconcile()
+
+        // then
+        assertStillConfirming(created)
+        assertEquals(1, reviewLogCount(created.payment.paymentId))
+    }
+
+    @DisplayName("10분이 지나도 조회 상태가 결론이 아니면 승인 처리 중을 유지한다")
+    @Test
+    fun confirmingUnresolvedStatusIsNotFailed() {
+        // given
+        val created =
+            agedConfirming(
+                TossApiResponse(
+                    200,
+                    objectMapper.readTree("""{"status":"IN_PROGRESS"}"""),
+                    """{"status":"IN_PROGRESS"}""",
+                ),
+            )
+
+        // when
+        reconcile()
+
+        // then
+        assertStillConfirming(created)
+        assertEquals(1, reviewLogCount(created.payment.paymentId))
+    }
+
+    @DisplayName("10분이 지나기 전 조회 실패는 확인 로그를 남기지 않는다")
+    @Test
+    fun confirmingNotYetStaleIsNotFlagged() {
+        // given
+        val created = timeoutConfirming()
+        every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns lookupFailure()
+
+        // when
+        reconcile()
+
+        // then
+        assertStillConfirming(created)
+        assertEquals(0, reviewLogCount(created.payment.paymentId))
+    }
+
+    @DisplayName("승인 조회 스케줄은 인자 없는 메서드만 잠근다")
+    @Test
+    fun confirmReconcileUsesSchedulerLock() {
+        val locked = TossConfirmReconcileScheduler::class.java.getMethod("reconcileConfirmingPayments")
+        val lock = locked.getAnnotation(SchedulerLock::class.java)
+        assertEquals("tossConfirmReconcile", lock.name)
+        assertEquals("PT5S", lock.lockAtLeastFor)
+        assertEquals("PT1M", lock.lockAtMostFor)
+        val direct =
+            TossConfirmReconcileScheduler::class.java.getMethod(
+                "reconcileConfirmingPayments",
+                LocalDateTime::class.java,
+            )
+        assertNull(direct.getAnnotation(SchedulerLock::class.java))
     }
 
     @DisplayName("토스 승인 응답이 5xx면 처리 중으로 두고 조회로 맞춘다")
@@ -277,6 +344,51 @@ class TossConfirmReviewPostgresTest : PostgresIntegrationTest() {
         val afterReconcile = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
         assertEquals(PaymentStatus.SUCCEEDED, afterReconcile.status)
     }
+
+    private fun agedConfirming(remote: TossApiResponse): ReservationCreatedResponse {
+        val created = timeoutConfirming()
+        every { tossPaymentsApiClient.getPaymentByOrderId(created.payment.orderId) } returns remote
+        jdbcTemplate.update(
+            "update payments set updated_at = ? where id = ?",
+            LocalDateTime.now().minusMinutes(11),
+            created.payment.paymentId,
+        )
+        return created
+    }
+
+    private fun reconcile() {
+        tossConfirmReconcileScheduler.reconcileConfirmingPayments(LocalDateTime.now().plusMinutes(1))
+    }
+
+    private fun assertStillConfirming(created: ReservationCreatedResponse) {
+        val payment = paymentJpaRepository.findByOrderId(created.payment.orderId)!!
+        val reservation = reservationRepository.findById(created.id)!!
+        assertEquals(PaymentStatus.CONFIRMING, payment.status)
+        assertEquals(ReservationStatus.PENDING, reservation.status)
+    }
+
+    private fun reviewLogCount(paymentId: Long): Int =
+        jdbcTemplate
+            .queryForObject(
+                "select count(*) from payment_logs where payment_id = ? and error_message = ?",
+                Long::class.java,
+                paymentId,
+                TossConfirmReconcileScheduler.REVIEW_REQUIRED_MESSAGE,
+            )!!
+            .toInt()
+
+    private fun reviewLog(paymentId: Long): Map<String, Any?> =
+        jdbcTemplate.queryForMap(
+            """
+            select log_type, step, http_status, response_body
+            from payment_logs
+            where payment_id = ? and error_message = ?
+            """.trimIndent(),
+            paymentId,
+            TossConfirmReconcileScheduler.REVIEW_REQUIRED_MESSAGE,
+        )
+
+    private fun lookupFailure(): TossApiResponse = TossApiResponse(500, null, "internal")
 
     private fun timeoutConfirming(): ReservationCreatedResponse {
         val user = fixture.persistUser()

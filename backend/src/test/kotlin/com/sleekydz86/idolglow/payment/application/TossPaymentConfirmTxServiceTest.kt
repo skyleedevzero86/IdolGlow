@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
+import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
@@ -253,6 +254,8 @@ class TossPaymentConfirmTxServiceTest {
                 tossPaymentsApiClient = client,
                 tossPaymentConfirmTxService = service,
                 paymentRefundService = mockk(relaxed = true),
+                paymentLogCommandService = mockk(relaxed = true),
+                paymentLogJpaRepository = mockk<PaymentLogJpaRepository>(relaxed = true),
             )
         val cutoff = LocalDateTime.now().plusMinutes(1)
 
