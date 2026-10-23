@@ -4,6 +4,16 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.11.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.11.0...v0.11.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **#47:** 승인 처리 중 결제와 웹훅을 토스 조회 결과로만 정리한다 ([4ecfbc9](https://github.com/skyleedevzero86/IdolGlow/commit/4ecfbc9b34be0acfaf8f62b86c4831e1614d878a))
+* 승인 처리 중 결제를 시간만으로 실패 처리하지 않고 조회 결과로만 정리 ([1094dca](https://github.com/skyleedevzero86/IdolGlow/commit/1094dcaa0b30304ac9682289985e6b565dd4166a))
+* 실패로 정리된 결제에 늦게 확인된 토스 승인은 관리자 확인 로그만 작성 ([14fe043](https://github.com/skyleedevzero86/IdolGlow/commit/14fe0437fcb51a75bac0e761ffacbc3a9fc2566f))
+* 토스 웹훅은 결제 조회를 끝낸 뒤 짧게 잠가 반영 ([7bce97b](https://github.com/skyleedevzero86/IdolGlow/commit/7bce97beccb9e900d11946c615cad522a31bcd8b))
+
 ## [0.11.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.10.2...v0.11.0) (2026-10-23)
 
 
