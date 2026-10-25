@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.payment.infrastructure
 
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -18,6 +20,7 @@ class TossPaymentsApiClient(
     @param:Qualifier("tossRestClient") private val restClient: RestClient,
     @param:Qualifier("tossBillingRestClient") private val billingRestClient: RestClient,
     private val objectMapper: ObjectMapper,
+    private val meterRegistry: MeterRegistry = SimpleMeterRegistry(),
 ) {
     fun confirm(
         paymentKey: String,
@@ -32,18 +35,18 @@ class TossPaymentsApiClient(
                 put("orderId", orderId)
                 put("amount", amount)
             }
-        return post(path, objectMapper.writeValueAsString(body), idempotencyKey)
+        return post("confirm", path, objectMapper.writeValueAsString(body), idempotencyKey)
     }
 
     fun getPayment(paymentKey: String): TossApiResponse {
         val encoded = UriUtils.encodePathSegment(paymentKey, StandardCharsets.UTF_8)
         val path = "/v1/payments/$encoded"
-        return get(path)
+        return get("getPayment", path)
     }
 
     fun getPaymentByOrderId(orderId: String): TossApiResponse {
         val encoded = UriUtils.encodePathSegment(orderId, StandardCharsets.UTF_8)
-        return get("/v1/payments/orders/$encoded")
+        return get("getPaymentByOrderId", "/v1/payments/orders/$encoded")
     }
 
     fun cancel(
@@ -61,7 +64,7 @@ class TossPaymentsApiClient(
                     put("cancelAmount", cancelAmount)
                 }
             }
-        return post(path, objectMapper.writeValueAsString(body), idempotencyKey)
+        return post("cancel", path, objectMapper.writeValueAsString(body), idempotencyKey)
     }
 
     fun issueBillingKey(
@@ -73,7 +76,7 @@ class TossPaymentsApiClient(
                 put("authKey", authKey)
                 put("customerKey", customerKey)
             }
-        return post("/v1/billing/authorizations/issue", objectMapper.writeValueAsString(body), null)
+        return post("issueBillingKey", "/v1/billing/authorizations/issue", objectMapper.writeValueAsString(body), null)
     }
 
     fun chargeBilling(
@@ -102,6 +105,7 @@ class TossPaymentsApiClient(
                 put("taxFreeAmount", 0)
             }
         return post(
+            api = "chargeBilling",
             path = "/v1/billing/$encoded",
             jsonBody = objectMapper.writeValueAsString(body),
             idempotencyKey = idempotencyKey,
@@ -113,6 +117,7 @@ class TossPaymentsApiClient(
         val encoded = UriUtils.encodePathSegment(billingKey, StandardCharsets.UTF_8)
         val auth = basicAuth()
         return exchange(
+            "deleteBillingKey",
             restClient
                 .delete()
                 .uri("/v1/billing/$encoded")
@@ -122,9 +127,13 @@ class TossPaymentsApiClient(
         )
     }
 
-    private fun get(path: String): TossApiResponse {
+    private fun get(
+        api: String,
+        path: String,
+    ): TossApiResponse {
         val auth = basicAuth()
         return exchange(
+            api,
             restClient
                 .get()
                 .uri(path)
@@ -135,6 +144,7 @@ class TossPaymentsApiClient(
     }
 
     private fun post(
+        api: String,
         path: String,
         jsonBody: String,
         idempotencyKey: String?,
@@ -142,6 +152,7 @@ class TossPaymentsApiClient(
     ): TossApiResponse {
         val auth = basicAuth()
         return exchange(
+            api,
             client
                 .post()
                 .uri(path)
@@ -155,19 +166,26 @@ class TossPaymentsApiClient(
         )
     }
 
-    private fun exchange(spec: RestClient.RequestHeadersSpec<*>): TossApiResponse =
-        try {
-            val entity = spec.retrieve().toEntity(String::class.java)
-            val text = entity.body ?: ""
-            val node = runCatching { objectMapper.readTree(text) }.getOrNull()
-            TossApiResponse(entity.statusCode.value(), node, text, null)
-        } catch (e: RestClientResponseException) {
-            val text = e.responseBodyAsString
-            val node = runCatching { objectMapper.readTree(text) }.getOrNull()
-            TossApiResponse(e.statusCode.value(), node, text, e)
-        } catch (e: Exception) {
-            TossApiResponse(0, null, e.message, e)
-        }
+    private fun exchange(
+        api: String,
+        spec: RestClient.RequestHeadersSpec<*>,
+    ): TossApiResponse {
+        val response =
+            try {
+                val entity = spec.retrieve().toEntity(String::class.java)
+                val text = entity.body ?: ""
+                val node = runCatching { objectMapper.readTree(text) }.getOrNull()
+                TossApiResponse(entity.statusCode.value(), node, text, null)
+            } catch (e: RestClientResponseException) {
+                val text = e.responseBodyAsString
+                val node = runCatching { objectMapper.readTree(text) }.getOrNull()
+                TossApiResponse(e.statusCode.value(), node, text, e)
+            } catch (e: Exception) {
+                TossApiResponse(0, null, e.message, e)
+            }
+        recordTossApiCall(meterRegistry, api, response)
+        return response
+    }
 
     private fun basicAuth(): String {
         val secret = props.secretKey.trim()

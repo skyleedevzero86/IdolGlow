@@ -256,6 +256,7 @@ class TossPaymentConfirmTxServiceTest {
                 paymentRefundService = mockk(relaxed = true),
                 paymentLogCommandService = mockk(relaxed = true),
                 paymentLogJpaRepository = mockk<PaymentLogJpaRepository>(relaxed = true),
+                stuckPaymentAdminAlertService = mockk(relaxed = true),
             )
         val cutoff = LocalDateTime.now().plusMinutes(1)
 

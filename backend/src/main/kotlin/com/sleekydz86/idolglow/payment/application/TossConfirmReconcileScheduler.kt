@@ -21,6 +21,7 @@ class TossConfirmReconcileScheduler(
     private val paymentRefundService: PaymentRefundService,
     private val paymentLogCommandService: PaymentLogCommandService,
     private val paymentLogJpaRepository: PaymentLogJpaRepository,
+    private val stuckPaymentAdminAlertService: StuckPaymentAdminAlertService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -82,7 +83,26 @@ class TossConfirmReconcileScheduler(
         )
         if (isStale(payment)) {
             flagNeedsReview(payment, remote)
+            notifyStuckConfirming(payment, remote)
         }
+    }
+
+    private fun notifyStuckConfirming(
+        payment: Payment,
+        remote: TossApiResponse,
+    ) {
+        val since = payment.updatedAt ?: return
+        stuckPaymentAdminAlertService.notifyOncePerDay(
+            StuckPaymentAlert(
+                subjectKey = "confirming:${payment.id}",
+                paymentId = payment.id.toString(),
+                orderId = payment.orderId,
+                status = payment.status.name,
+                stuckSince = since,
+                lastTossLookup = tossLookupSummary(remote),
+                linkedPaymentId = payment.id.takeIf { it > 0L },
+            ),
+        )
     }
 
     private fun flagNeedsReview(

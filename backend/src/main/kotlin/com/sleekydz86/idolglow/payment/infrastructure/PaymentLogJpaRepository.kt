@@ -20,4 +20,6 @@ interface PaymentLogJpaRepository : JpaRepository<PaymentLog, Long> {
         @Param("paymentId") paymentId: Long,
         @Param("errorMessage") errorMessage: String,
     ): Boolean
+
+    fun existsByErrorCode(errorCode: String): Boolean
 }

@@ -464,6 +464,8 @@ type AdminPaymentOverview {
     refundedCount: Int!
     partialCanceledCount: Int!
     cancelableCount: Int!
+    processingCount: Int!
+    processingStaleCount: Int!
     grossAmount: String!
     refundedAmount: String!
     netAmount: String!

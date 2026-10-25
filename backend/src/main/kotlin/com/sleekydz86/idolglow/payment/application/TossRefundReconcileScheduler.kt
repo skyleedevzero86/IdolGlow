@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.payment.application
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentLogStep
 import com.sleekydz86.idolglow.payment.domain.PaymentLogType
+import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
@@ -18,6 +19,7 @@ class TossRefundReconcileScheduler(
     private val paymentRefundService: PaymentRefundService,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val paymentLogCommandService: PaymentLogCommandService,
+    private val stuckPaymentAdminAlertService: StuckPaymentAdminAlertService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -58,9 +60,37 @@ class TossRefundReconcileScheduler(
         val remote = tossPaymentsApiClient.getPayment(paymentKey)
         val json = remote.json
         if (remote.isInconclusive || !remote.isSuccess2xx || json == null) {
+            alertIfRefundStale(prepared, remote, now)
             return
         }
         applyRemote(prepared, refundId, remote, json, now)
+        alertIfRefundStale(prepared, remote, now)
+    }
+
+    private fun alertIfRefundStale(
+        prepared: RefundPrepareResult,
+        remote: TossApiResponse,
+        now: LocalDateTime,
+    ) {
+        val since = prepared.firstRequestedAt
+        if (since == null || since.isAfter(now.minusMinutes(STALE_MINUTES))) {
+            return
+        }
+        val payment = paymentRefundTxService.loadPayment(prepared.paymentId)
+        if (payment.status != PaymentStatus.REFUNDING) {
+            return
+        }
+        stuckPaymentAdminAlertService.notifyOncePerDay(
+            StuckPaymentAlert(
+                subjectKey = "refunding:${payment.id}",
+                paymentId = payment.id.toString(),
+                orderId = payment.orderId,
+                status = payment.status.name,
+                stuckSince = since,
+                lastTossLookup = tossLookupSummary(remote),
+                linkedPaymentId = payment.id,
+            ),
+        )
     }
 
     private fun applyRemote(
@@ -115,5 +145,6 @@ class TossRefundReconcileScheduler(
         private const val MIN_AGE_MINUTES = 1L
         private const val RETRY_WINDOW_DAYS = 14L
         private const val STOP_LOG_INTERVAL_DAYS = 1L
+        private const val STALE_MINUTES = 30L
     }
 }

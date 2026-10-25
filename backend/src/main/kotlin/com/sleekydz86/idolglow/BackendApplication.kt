@@ -15,6 +15,7 @@ import com.sleekydz86.idolglow.global.config.KopisApiProperties
 import com.sleekydz86.idolglow.global.config.KoreaEximExchangeProperties
 import com.sleekydz86.idolglow.global.config.MinioStorageProperties
 import com.sleekydz86.idolglow.global.config.NaverDirectionsProperties
+import com.sleekydz86.idolglow.global.config.PaymentAdminAlertProperties
 import com.sleekydz86.idolglow.global.config.SeoulSjwApiProperties
 import com.sleekydz86.idolglow.global.config.SpcdeInfoApiProperties
 import com.sleekydz86.idolglow.global.config.SubwayProperties
@@ -35,6 +36,7 @@ import org.springframework.cache.annotation.EnableCaching
     AppCalendarProperties::class,
     AppMailProperties::class,
     TossPaymentProperties::class,
+    PaymentAdminAlertProperties::class,
     GemmaProperties::class,
     PlatformAuthProperties::class,
     TourApiProperties::class,
