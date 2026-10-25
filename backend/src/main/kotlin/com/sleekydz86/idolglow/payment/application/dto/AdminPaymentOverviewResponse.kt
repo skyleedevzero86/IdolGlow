@@ -12,6 +12,8 @@ data class AdminPaymentOverviewResponse(
     val refundedCount: Long,
     val partialCanceledCount: Long,
     val cancelableCount: Long,
+    val processingCount: Long,
+    val processingStaleCount: Long,
     val grossAmount: BigDecimal,
     val refundedAmount: BigDecimal,
     val netAmount: BigDecimal,

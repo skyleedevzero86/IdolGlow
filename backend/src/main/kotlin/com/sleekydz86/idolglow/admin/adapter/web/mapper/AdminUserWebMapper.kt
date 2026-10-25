@@ -44,6 +44,8 @@ private fun UserRole.toLabel(): String =
     when (this) {
         UserRole.USER -> "일반회원"
         UserRole.ADMIN -> "관리자"
+        UserRole.OPERATOR -> "운영자"
+        UserRole.APPROVER -> "승인자"
     }
 
 private fun UserAccountStatus.toLabel(): String =

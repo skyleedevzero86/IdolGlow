@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditServic
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminExportService
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminOperationsAnalyticsService
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminAuditLogResponse
+import com.sleekydz86.idolglow.productpackage.admin.application.dto.AdminAuditTopActionsResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.CancelReasonStatRow
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.CancellationComparisonResponse
 import com.sleekydz86.idolglow.productpackage.admin.application.dto.OperationsAnalyticsSummaryResponse
@@ -113,6 +114,10 @@ class AdminOperationsController(
     @Operation(summary = "감사 로그 최근", description = "최근 관리자 액션 로그 최대 200건")
     @GetMapping("/audit-logs")
     fun auditLogs(): ResponseEntity<List<AdminAuditLogResponse>> = ResponseEntity.ok(adminAuditService.findRecentLogs())
+
+    @Operation(summary = "감사 로그 반복 상위", description = "가장 많이 반복된 관리자 작업과 자동화 후보")
+    @GetMapping("/audit-logs/top")
+    fun auditLogTop(): ResponseEntity<AdminAuditTopActionsResponse> = ResponseEntity.ok(adminAuditService.topRepeatedActions())
 
     @Operation(summary = "예약 CSV", description = "방문일 구간 예약 내보내기 최대 5000행")
     @GetMapping("/export/reservations.csv", produces = ["text/csv"])

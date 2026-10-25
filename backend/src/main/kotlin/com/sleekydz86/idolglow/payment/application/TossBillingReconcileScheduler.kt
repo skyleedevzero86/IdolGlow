@@ -20,6 +20,7 @@ class TossBillingReconcileScheduler(
     private val billingChargeReconcileTxService: BillingChargeReconcileTxService,
     private val tossPaymentsApiClient: TossPaymentsApiClient,
     private val notificationCommandService: NotificationCommandService,
+    private val stuckPaymentAdminAlertService: StuckPaymentAdminAlertService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -86,21 +87,40 @@ class TossBillingReconcileScheduler(
         if (applied.outcome == BillingReconcileOutcome.FAILED) {
             notifyFailed(applied)
         }
+        alertIfBillingStale(target, remote, now, applied)
+    }
+
+    private fun alertIfBillingStale(
+        target: BillingReconcileTarget,
+        remote: TossApiResponse,
+        now: LocalDateTime,
+        applied: BillingReconcileApplyResult,
+    ) {
         val stillPending =
             applied.outcome == BillingReconcileOutcome.PENDING ||
                 applied.outcome == BillingReconcileOutcome.AMOUNT_MISMATCH
-        val stale = !target.createdAt.isAfter(now.minusHours(STALE_HOURS))
-        if (stillPending && stale) {
-            log.error(
-                "빌링 결제 승인 결과가 1시간 넘게 확인되지 않음, 관리자 확인 필요. " +
-                    "chargeId={} attemptId={} tossOrderId={} createdAt={} httpStatus={}",
-                target.chargeId,
-                target.attemptId,
-                target.tossOrderId,
-                target.createdAt,
-                remote.httpStatus,
-            )
+        if (!stillPending || target.createdAt.isAfter(now.minusHours(STALE_HOURS))) {
+            return
         }
+        log.error(
+            "빌링 결제 승인 결과가 1시간 넘게 확인되지 않음, 관리자 확인 필요. " +
+                "chargeId={} attemptId={} tossOrderId={} createdAt={} httpStatus={}",
+            target.chargeId,
+            target.attemptId,
+            target.tossOrderId,
+            target.createdAt,
+            remote.httpStatus,
+        )
+        stuckPaymentAdminAlertService.notifyOncePerDay(
+            StuckPaymentAlert(
+                subjectKey = "billing:${target.attemptId}",
+                paymentId = target.chargeId.toString(),
+                orderId = target.tossOrderId,
+                status = TossBillingChargeStatus.PENDING.name,
+                stuckSince = target.createdAt,
+                lastTossLookup = tossLookupSummary(remote),
+            ),
+        )
     }
 
     private fun notifyFailed(applied: BillingReconcileApplyResult) {

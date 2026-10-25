@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.sleekydz86.idolglow.eventinfo.application.port.out.FestivalEventExternalQueryPort
 import com.sleekydz86.idolglow.eventinfo.domain.CodeEntry
+import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalImage
@@ -24,6 +25,7 @@ class TourFestivalApiClient(
     private val tourKorApiProperties: TourKorApiProperties,
 ) : FestivalEventExternalQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private val requestedServiceLocale = ThreadLocal<String>()
 
     override fun searchFestival(
         eventStartDate: String,
@@ -48,6 +50,22 @@ class TourFestivalApiClient(
                     "numOfRows" to numOfRows.toString(),
                 ),
         ).mapNotNull { it.toDomain() }
+    }
+
+    fun searchFestivalInLocale(
+        locale: String,
+        eventStartDate: String,
+        eventEndDate: String,
+        pageNo: Int,
+        numOfRows: Int,
+    ): List<FestivalEvent> {
+        val previous = requestedServiceLocale.get()
+        requestedServiceLocale.set(EventLocale.normalize(locale))
+        try {
+            return searchFestival(eventStartDate, eventEndDate, pageNo, numOfRows)
+        } finally {
+            if (previous == null) requestedServiceLocale.remove() else requestedServiceLocale.set(previous)
+        }
     }
 
     override fun detailCommon(contentId: String): FestivalCommonDetail? {
@@ -267,7 +285,8 @@ class TourFestivalApiClient(
             params.entries.joinToString("&") { (k, v) ->
                 "$k=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
             }
-        return "${koreanServiceBaseUrl()}/$endpoint" +
+        val baseUrl = requestedServiceLocale.get()?.let(::localizedServiceBaseUrl) ?: koreanServiceBaseUrl()
+        return "$baseUrl/$endpoint" +
             "?serviceKey=$encodedServiceKey" +
             "&MobileOS=$encodedMobileOs" +
             "&MobileApp=$encodedMobileApp" +
@@ -275,10 +294,30 @@ class TourFestivalApiClient(
             if (query.isBlank()) "" else "&$query"
     }
 
+    private fun localizedServiceBaseUrl(locale: String): String {
+        val service =
+            when (locale) {
+                "en" -> "EngService2"
+                "ja" -> "JpnService2"
+                "zh" -> "ChsService2"
+                else -> "KorService2"
+            }
+        val korean = koreanServiceBaseUrl()
+        val localized = SERVICE_SUFFIX.replace(korean, "/$service")
+        if (localized == korean) {
+            log.warn("관광 다국어 주소로 바꾸지 못했습니다. locale={}", locale)
+        }
+        return localized
+    }
+
     private fun koreanServiceBaseUrl(): String =
         tourKorApiProperties.baseUrl
             .trimEnd('/')
             .replace("/EngService2", "/KorService2")
+
+    companion object {
+        private val SERVICE_SUFFIX = Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
+    }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
         val trimmed = rawServiceKey.trim().removePrefix("TOUR_API_SERVICE_KEY=").removePrefix("serviceKey=")

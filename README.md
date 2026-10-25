@@ -272,6 +272,17 @@ $env:ENCRYPT_KEY="your-encrypt-key"
 - `toggleWish`
 - `createProductReview`
 
+## 근거 검색
+
+상품, 옵션, 웹진 문단을 키워드와 임베딩으로 찾는다. 가격과 예약 가능 여부는 문단에 넣지 않는다.<br/>
+답할 때는 상품, 옵션, 슬롯 테이블이 기준이다. 답의 가격이나 날짜가 그 값과 다르면 답을 거절한다.<br/>
+지역은 서울 구 이름만 통과하고, 결과가 없으면 날짜, 예산, 지역 순으로 조건을 푼다.<br/>
+재정렬 API를 끄면 키워드와 임베딩을 합친 순서를 유지한다.<br/>
+
+임베딩은 바이트로 저장하고, 유사도는 애플리케이션 메모리에서 코사인으로 전부 계산한다.<br/>
+문단이 수만 개를 넘기 전에는 이 방식으로 충분하고, 더 커지면 검색 구현만 바꾸면 된다.
+<br/>
+
 ## 테스트 로그인
 
 `local`, `dev`, `test` 프로필에서 테스트 로그인을 사용할 수 있습니다.
@@ -304,19 +315,3 @@ $env:ENCRYPT_KEY="your-encrypt-key"
 - 삭제 대기(`DELETE_PENDING`) 동안에는 토스 재시도를 위해 암호화된 빌링키와 해시를 보관한다.
 - 삭제 완료(`DELETED`) 뒤에는 평문을 저장하지 않는다. 암호화된 빌링키는 재시도에 더 이상 필요 없으므로 복구할 수 없는 표시 값으로 바꾼다. 웹훅이 늦게 와도 같은 카드인지 확인할 수 있도록 원래 해시와 삭제 완료 시각은 남긴다. 원래 빌링키는 로그와 응답에 내지 않는다.
 - 삭제 거절(`DELETE_FAILED`)은 확인과 수동 재시도를 위해 암호화된 키를 보관한다.
-
-## 한계와 다음 단계
-
-| 한계                                                                                                                              | 다음 단계                                                                                                                  |
-| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 해결: 정기결제 REQUIRES_NEW 자기 호출                                                                                             | `BillingChargeTxService` 분리. `BillingChargeTxIntegrationTest`, `BillingNotificationRollbackPostgresTest`                 |
-| 해결: 토스 승인을 결제 행 락 안에서 호출                                                                                          | `TossPaymentConfirmTxService`로 잠금·기록을 나누고 HTTP는 트랜잭션 밖. `TossConfirmOutsideTxPostgresTest`                  |
-| 해결: 만료 직후 승인 자동 환불 없음                                                                                               | 만료 예약은 토스 미호출, 늦은 승인은 SYSTEM 환불. `TossPaymentConfirmServiceTest`, `ReservationPaymentServiceTest`         |
-| 해결: 사용자 취소와 웹훅 락 순서가 다름                                                                                           | 예약 → 결제 순서로 통일. `ReservationPaymentLockOrderPostgresTest`에서 데드락 0건, 결제 FOR UPDATE는 예약 행을 잠그지 않음 |
-| 해결: MockK만으로 락을 검증하지 못함                                                                                              | Testcontainers PostgreSQL 17. `ConcurrentReservationPostgresTest`, `PostgresSmokeTest`                                     |
-| 해결: 사용자 취소 경로에서 환불 실패가 예외로 취소 자체를 막음                                                                    | 예약 취소는 커밋하고 환불 실패만 남긴다. `TossRefundOutsideTxPostgresTest.refundFourXxPersistsFailedRecord`, `AdminReservationCancelAuditPostgresTest.adminCancelWritesAuditLogEvenIfRefundStepFails` |
-| 해결: 관리자 환불 재시도가 실패하면 예외 구조가 사용자 취소와 같음                                                                | 토스 조회 후 재시도하고 4xx는 예외 없이 FAILED로 남긴다. `TossRefundAdminRetryPostgresTest.adminRetryRejectedAgainKeepsFailedRecord` |
-| 해결: 환불 HTTP(`PaymentRefundService`)는 아직 트랜잭션 안에서 호출                                                               | 잠금 트랜잭션과 토스 HTTP를 나눈다. `TossRefundOutsideTxPostgresTest.otherThreadCanLockReservationDuringTossRefund`, `TossRefundAdminRetryPostgresTest.adminRetryDoesNotHoldLockDuringToss` |
-| 해결: 승인 처리 중 결제를 10분 뒤 실패로 정리                                                                                | 토스 조회 결론(DONE·ABORTED·EXPIRED·CANCELED·404)으로만 정리하고 10분이 지나면 확인 로그 1번. `TossConfirmReviewPostgresTest.confirmingIsNotFailedByTimeAlone` |
-| 해결: 실패로 정리된 결제에 토스가 실제로 승인하면 웹훅이 이미 FAILED인 결제를 무시한다                                          | 웹훅이 FAILED 결제도 토스 조회, DONE·금액 일치면 관리자 확인 로그 1번(자동 환불은 하지 않음). `TossWebhookServiceTest.lateApprovalOnFailedPaymentIsFlagged` |
-| 해결: 웹훅이 예약·결제를 잠근 채 토스를 조회                                                                                    | 조회는 잠금 밖, 반영할 때만 잠그고 상태 재확인. `TossWebhookOutsideTxPostgresTest.cancelDoesNotWaitForWebhookTossLookup` |

@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.payment.application.dto.AdminPaymentSummaryRespon
 import com.sleekydz86.idolglow.payment.application.dto.PaymentMonthlyChartPoint
 import com.sleekydz86.idolglow.payment.application.dto.PaymentRefundResponse
 import com.sleekydz86.idolglow.payment.application.dto.PaymentStatusChartPoint
+import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.AdminPaymentQueryRepository
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentLogJpaRepository
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(readOnly = true)
@@ -61,6 +63,7 @@ class AdminPaymentService(
 
         val grossAmount = items.fold(BigDecimal.ZERO) { acc, payment -> acc + payment.amount }
         val refundedAmount = items.fold(BigDecimal.ZERO) { acc, payment -> acc + payment.cancelAmount }
+        val processing = processingSnapshot(items)
 
         return AdminPaymentOverviewResponse(
             totalCount = items.size.toLong(),
@@ -72,6 +75,8 @@ class AdminPaymentService(
             refundedCount = items.count { it.status == PaymentStatus.REFUNDED }.toLong(),
             partialCanceledCount = items.count { it.status == PaymentStatus.PARTIAL_CANCELED }.toLong(),
             cancelableCount = items.count(paymentViewPolicyService::canAdminCancel).toLong(),
+            processingCount = processing.count,
+            processingStaleCount = processing.staleCount,
             grossAmount = grossAmount,
             refundedAmount = refundedAmount,
             netAmount = grossAmount.subtract(refundedAmount),
@@ -171,7 +176,27 @@ class AdminPaymentService(
         return paymentDocumentService.buildReceiptPdf(payment, "관리자")
     }
 
+    private fun processingSnapshot(items: List<Payment>): ProcessingSnapshot {
+        val cutoff = LocalDateTime.now().minusMinutes(PROCESSING_STALE_MINUTES)
+        val processing =
+            items.filter {
+                it.status == PaymentStatus.CONFIRMING || it.status == PaymentStatus.REFUNDING
+            }
+        val stale =
+            processing.count { payment ->
+                val updatedAt = payment.updatedAt
+                updatedAt != null && !updatedAt.isAfter(cutoff)
+            }
+        return ProcessingSnapshot(processing.size.toLong(), stale.toLong())
+    }
+
     companion object {
         private val MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM")
+        private const val PROCESSING_STALE_MINUTES = 10L
     }
 }
+
+private data class ProcessingSnapshot(
+    val count: Long,
+    val staleCount: Long,
+)

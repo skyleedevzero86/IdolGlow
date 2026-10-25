@@ -97,6 +97,8 @@ class JwtTokenUtil(
             val claims = parseSignedClaims(token)
             when (val roleStr = claims["role"] as? String) {
                 "ADMIN", "MANAGER" -> PlatformUserRole.ADMIN
+                "OPERATOR" -> PlatformUserRole.OPERATOR
+                "APPROVER" -> PlatformUserRole.APPROVER
                 "USER", null -> PlatformUserRole.USER
                 else -> PlatformUserRole.USER
             }

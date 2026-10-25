@@ -1,6 +1,0 @@
-UPDATE survey_form
-SET status = 'SCHEDULED'
-WHERE status = 'PLANNED';
-
-ALTER TABLE survey_form
-    MODIFY COLUMN status VARCHAR(30) NOT NULL DEFAULT 'SCHEDULED' COMMENT '설문 진행 상태(SCHEDULED=예정, IN_PROGRESS=진행, COMPLETED=완료)';

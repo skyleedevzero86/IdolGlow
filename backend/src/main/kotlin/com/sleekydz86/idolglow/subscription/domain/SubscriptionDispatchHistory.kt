@@ -40,15 +40,54 @@ class SubscriptionDispatchHistory(
     val dispatchChannel: SubscriptionDispatchChannel,
     @Enumerated(EnumType.STRING)
     @Column(name = "dispatch_status", nullable = false, length = 20)
-    val dispatchStatus: SubscriptionDispatchStatus,
+    var dispatchStatus: SubscriptionDispatchStatus,
     @Column(name = "recipient_count", nullable = false)
-    val recipientCount: Long,
+    var recipientCount: Long,
+    @Column(name = "success_count", nullable = false)
+    var successCount: Long = 0,
+    @Column(name = "failure_count", nullable = false)
+    var failureCount: Long = 0,
+    @Column(name = "last_attempt_at")
+    var lastAttemptAt: LocalDateTime? = null,
     @Column(name = "content_created_at")
     val contentCreatedAt: LocalDateTime? = null,
     @Column(name = "dispatched_at", nullable = false)
     val dispatchedAt: LocalDateTime,
 ) : BaseEntity() {
+    fun beginAttempt(at: LocalDateTime) {
+        lastAttemptAt = at
+    }
+
+    fun isStaleSending(staleBefore: LocalDateTime): Boolean {
+        val attemptAt = lastAttemptAt
+        return dispatchStatus == SubscriptionDispatchStatus.SENDING &&
+            (attemptAt == null || !attemptAt.isAfter(staleBefore))
+    }
+
+    fun complete(
+        status: SubscriptionDispatchStatus,
+        recipientCount: Long,
+        successCount: Long,
+        failureCount: Long,
+    ) {
+        require(dispatchStatus == SubscriptionDispatchStatus.SENDING) {
+            "발송 중 상태에서만 마칠 수 있습니다. status=$dispatchStatus"
+        }
+        require(status != SubscriptionDispatchStatus.SENDING) {
+            "발송 종료 상태가 아닙니다. status=$status"
+        }
+        require(recipientCount >= 0 && successCount >= 0 && failureCount >= 0) {
+            "발송 건수는 0 이상이어야 합니다. recipient=$recipientCount success=$successCount failure=$failureCount"
+        }
+        this.dispatchStatus = status
+        this.recipientCount = recipientCount
+        this.successCount = successCount
+        this.failureCount = failureCount
+    }
+
     companion object {
+        const val RESUME_AFTER_MINUTES: Long = 15
+
         fun record(
             contentType: SubscriptionContentType,
             contentSlug: String,
@@ -71,6 +110,7 @@ class SubscriptionDispatchHistory(
                 dispatchChannel = SubscriptionDispatchChannel.EMAIL,
                 dispatchStatus = dispatchStatus,
                 recipientCount = recipientCount,
+                lastAttemptAt = dispatchedAt,
                 contentCreatedAt = contentCreatedAt,
                 dispatchedAt = dispatchedAt,
             )
