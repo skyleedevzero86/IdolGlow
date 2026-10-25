@@ -11,6 +11,7 @@ data class GroundedSearchHitResponse(
     val keywordRank: Int?,
     val vectorRank: Int?,
     val rrfScore: Double,
+    val rerankScore: Double?,
 ) {
     companion object {
         fun from(hit: GroundedSearchHit): GroundedSearchHitResponse =
@@ -23,6 +24,7 @@ data class GroundedSearchHitResponse(
                 keywordRank = hit.keywordRank,
                 vectorRank = hit.vectorRank,
                 rrfScore = hit.rrfScore,
+                rerankScore = hit.rerankScore,
             )
     }
 }

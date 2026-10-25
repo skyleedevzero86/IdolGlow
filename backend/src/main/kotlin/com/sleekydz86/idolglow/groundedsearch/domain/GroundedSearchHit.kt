@@ -9,4 +9,5 @@ data class GroundedSearchHit(
     val keywordRank: Int?,
     val vectorRank: Int?,
     val rrfScore: Double,
+    val rerankScore: Double? = null,
 )
