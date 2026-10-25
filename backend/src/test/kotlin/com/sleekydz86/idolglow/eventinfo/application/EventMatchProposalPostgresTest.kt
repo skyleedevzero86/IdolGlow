@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
@@ -28,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import java.time.LocalDate
 import java.util.UUID
 
+@DisplayName("공연 매칭 MCP 제안")
 class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
     @Autowired
     private lateinit var eventMatchReviewService: EventMatchReviewService
@@ -55,20 +57,29 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
         SecurityContextHolder.clearContext()
     }
 
+    @DisplayName("일반 사용자는 충돌 목록을 볼 수 없다")
     @Test
     fun userCannotListConflicts() {
-        authenticate(user(UserRole.USER))
 
+        // given
+        val member = user(UserRole.USER)
+        authenticate(member)
+
+        // when
         val error =
             assertThrows(IllegalArgumentException::class.java) {
                 eventMatchMcpTools.listMatchConflicts()
             }
 
+        // then
         assertTrue(error.message?.contains("공연 매칭 조회 권한이 없습니다") == true)
     }
 
+    @DisplayName("에이전트 제안은 사람이 적용하기 전에는 요청 상태로 남는다")
     @Test
     fun agentProposalsStayRequestedUntilAPersonApplies() {
+
+        // given
         val token = UUID.randomUUID().toString().take(8)
         val same = "sin-$token"
         val wrong = "nut-$token"
@@ -79,8 +90,9 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
         conflict(same, "신해경 $token [서울]", "예술의전당")
         conflict(wrong, "호두까기 $token", "국립극장")
         conflict(apart, "백자한상 $token", "국립중앙박물관")
-
         authenticate(user(UserRole.ADMIN))
+
+        // when
         val listed = eventMatchMcpTools.listMatchConflicts()
         val compared = eventMatchMcpTools.compareSourceRecords("TOUR_API|conflict-$same", "TOUR_API|anchor-$same")
         val suggestions = eventMatchConflictAdvisor.suggestions().filter { it.target.contains(token) }
@@ -88,6 +100,7 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
         val first = suggestions.first()
         val proposed = eventMatchMcpTools.proposeMerge(first.target, first.globalId, first.reason)
 
+        // then
         assertTrue(listed.any { it.contentId == "conflict-$same" && it.venue == "예술의전당" })
         assertFalse(listed.any { it.title.contains(SECRET) || it.contentId.contains(SECRET) })
         assertTrue(compared.sameVenue)
