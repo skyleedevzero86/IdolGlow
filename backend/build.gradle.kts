@@ -130,8 +130,23 @@ kapt {
 }
 
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    maxHeapSize = "2g"
+    maxParallelForks = 1
+    jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED")
+    useJUnitPlatform {
+        when (name) {
+            "test" -> excludeTags("eval")
+            "groundedSearchEval" -> includeTags("eval")
+        }
+    }
+}
+
+tasks.register<Test>("groundedSearchEval") {
+    group = "verification"
+    description = "근거 검색 골든셋 평가. API 키가 없으면 검색 점수는 측정하지 않는다."
+    val testSet = sourceSets.getByName("test")
+    testClassesDirs = testSet.output.classesDirs
+    classpath = testSet.runtimeClasspath
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
