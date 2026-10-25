@@ -10,6 +10,11 @@ interface EventSourceRefJpaRepository : JpaRepository<EventSourceRef, Long> {
         sourceId: String,
     ): EventSourceRef?
 
+    fun findBySourceInAndSourceIdIn(
+        sources: Collection<String>,
+        sourceIds: Collection<String>,
+    ): List<EventSourceRef>
+
     fun countByGlobalId(globalId: String): Long
 
     fun countByMatchStatus(matchStatus: EventMatchStatus): Long

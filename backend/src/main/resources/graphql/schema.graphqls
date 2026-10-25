@@ -67,6 +67,18 @@ type Query {
     adminPaymentDetail(paymentId: ID!): AdminPaymentDetail!
     myPayments(size: Int = 100): [MyPaymentSummary!]!
     myPaymentDetail(paymentId: ID!): MyPaymentSummary!
+    eventContent(globalId: ID!): EventContent
+}
+
+type EventContent {
+    globalId: ID!
+    title(locale: String): EventLocalizedText!
+}
+
+type EventLocalizedText {
+    title: String!
+    synopsis: String
+    locale: String!
 }
 
 type Mutation {

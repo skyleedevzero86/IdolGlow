@@ -16,6 +16,11 @@ class EventSourceRefRepositoryImpl(
         sourceId: String,
     ): EventSourceRef? = eventSourceRefJpaRepository.findBySourceAndSourceId(source, sourceId)
 
+    override fun findBySourceInAndSourceIdIn(
+        sources: Collection<String>,
+        sourceIds: Collection<String>,
+    ): List<EventSourceRef> = eventSourceRefJpaRepository.findBySourceInAndSourceIdIn(sources, sourceIds)
+
     override fun countByGlobalId(globalId: String): Long = eventSourceRefJpaRepository.countByGlobalId(globalId)
 
     override fun countByMatchStatus(status: EventMatchStatus): Long =

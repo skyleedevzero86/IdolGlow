@@ -6,7 +6,11 @@ import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.FestivalEventResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.FestivalImageResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.KopisAreaStatResponse
 import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.SpecialDayInfoResponse
+import com.sleekydz86.idolglow.eventinfo.application.EventLocalizedTextService
 import com.sleekydz86.idolglow.eventinfo.application.port.incoming.FestivalEventQueryUseCase
+import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
+import com.sleekydz86.idolglow.eventinfo.domain.EventLocalizedText
+import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
 import com.sleekydz86.idolglow.eventinfo.infrastructure.CultureInfoApiClient
 import com.sleekydz86.idolglow.eventinfo.infrastructure.KopisPerformanceApiClient
 import com.sleekydz86.idolglow.eventinfo.infrastructure.SeoulSjwPerformApiClient
@@ -20,6 +24,8 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.context.request.ServletRequestAttributes
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -32,6 +38,7 @@ class EventInfoController(
     private val kopisPerformanceApiClient: KopisPerformanceApiClient,
     private val spcdeInfoApiClient: SpcdeInfoApiClient,
     private val cultureInfoApiClient: CultureInfoApiClient,
+    private val eventLocalizedTextService: EventLocalizedTextService,
 ) {
     @Operation(
         summary = "통합 행사 목록 조회",
@@ -95,7 +102,7 @@ class EventInfoController(
                 bookingPlaces = event.bookingPlaces,
                 introImageUrls = event.introImageUrls,
             )
-        }
+        }.inRequestedLanguage()
     }
 
     @Operation(summary = "KOPIS 공연 목록 조회", description = "signgucode(기본 11=서울), prfstate(기본 02=공연중) 필터 지원.")
@@ -119,7 +126,7 @@ class EventInfoController(
                 rows = numOfRows,
                 signguCode = signgucode,
                 prfState = prfstate,
-            ).map(::toFestivalResponse)
+            ).map(::toFestivalResponse).inRequestedLanguage()
     }
 
     @Operation(summary = "KOPIS 공연 상세 조회")
@@ -130,7 +137,9 @@ class EventInfoController(
         @PathVariable mt20id: String,
     ): FestivalEventResponse? {
         check(userId > 0L) { "로그인이 필요합니다." }
-        return kopisPerformanceApiClient.detailPerformance(mt20id)?.let(::toFestivalResponse)
+        return kopisPerformanceApiClient.detailPerformance(mt20id)?.let {
+            toFestivalResponse(it).inRequestedLanguage()
+        }
     }
 
     @Operation(summary = "KOPIS 축제 목록 조회")
@@ -150,7 +159,7 @@ class EventInfoController(
                 edDate = yyyymmdd,
                 page = pageNo,
                 rows = numOfRows,
-            ).map(::toFestivalResponse)
+            ).map(::toFestivalResponse).inRequestedLanguage()
     }
 
     @Operation(summary = "KOPIS 지역 통계 조회", description = "stDate~edDate 구간 최대 31일.")
@@ -252,7 +261,7 @@ class EventInfoController(
                 bookingPlaces = event.bookingPlaces,
                 introImageUrls = event.introImageUrls,
             )
-        }
+        }.inRequestedLanguage()
     }
 
     @Operation(summary = "서울문화재단 공연 상세 조회")
@@ -284,7 +293,7 @@ class EventInfoController(
             age = event.age,
             bookingPlaces = event.bookingPlaces,
             introImageUrls = event.introImageUrls,
-        )
+        ).inRequestedLanguage()
     }
 
     @Operation(summary = "축제 공통 상세 조회", description = "한국관광공사 contentId 기준 공통 상세.")
@@ -381,7 +390,7 @@ class EventInfoController(
                     bookingPlaces = event.bookingPlaces,
                     introImageUrls = event.introImageUrls,
                 )
-            }
+            }.inRequestedLanguage()
     }
 
     @Operation(summary = "법정동 코드 조회")
@@ -514,7 +523,7 @@ class EventInfoController(
                 sortStdr = sortStdr,
                 pageNo = pageNo,
                 numOfrows = numOfrows,
-            ).map(::toFestivalResponse)
+            ).map(::toFestivalResponse).inRequestedLanguage()
     }
 
     @Operation(summary = "문화정보 지역별 행사 조회", description = "serviceTp: A(전체), B(무료), C(유료). from~to yyyyMMdd.")
@@ -543,7 +552,7 @@ class EventInfoController(
                 sortStdr = sortStdr,
                 pageNo = pageNo,
                 numOfrows = numOfrows,
-            ).map(::toFestivalResponse)
+            ).map(::toFestivalResponse).inRequestedLanguage()
     }
 
     @Operation(summary = "문화정보 분야 코드 참조 목록")
@@ -673,6 +682,33 @@ class EventInfoController(
             bookingPlaces = event.bookingPlaces,
             introImageUrls = event.introImageUrls,
         )
+
+    private fun List<FestivalEventResponse>.inRequestedLanguage(): List<FestivalEventResponse> {
+        val request = (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
+        if (request == null) return this
+        val requested = EventLocale.requested(request.getParameter("lang"), request.getHeader("Accept-Language"))
+        val resolved = eventLocalizedTextService.resolve(toTextLookups(), requested)
+        return zip(resolved, ::withResolvedText)
+    }
+
+    private fun List<FestivalEventResponse>.toTextLookups(): List<EventTextLookup> =
+        map {
+            EventTextLookup(
+                source = it.source,
+                sourceId = it.contentId,
+                title = it.title,
+                synopsis = it.synopsis,
+            )
+        }
+
+    private fun withResolvedText(
+        response: FestivalEventResponse,
+        text: EventLocalizedText,
+    ): FestivalEventResponse =
+        response.copy(title = text.title, synopsis = text.synopsis, resolvedLocale = text.locale)
+
+    private fun FestivalEventResponse.inRequestedLanguage(): FestivalEventResponse =
+        listOf(this).inRequestedLanguage().first()
 
     private fun daysBetween(
         start: String,

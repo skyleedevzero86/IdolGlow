@@ -20,4 +20,5 @@ data class FestivalEventResponse(
     val age: String? = null,
     val bookingPlaces: String? = null,
     val introImageUrls: List<String> = emptyList(),
+    val resolvedLocale: String = "ko",
 )
