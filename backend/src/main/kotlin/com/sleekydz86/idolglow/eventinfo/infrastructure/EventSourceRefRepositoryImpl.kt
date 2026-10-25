@@ -26,5 +26,12 @@ class EventSourceRefRepositoryImpl(
     override fun countByMatchStatus(status: EventMatchStatus): Long =
         eventSourceRefJpaRepository.countByMatchStatus(status)
 
+    override fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef> =
+        if (statuses.isEmpty()) {
+            emptyList()
+        } else {
+            eventSourceRefJpaRepository.findByMatchStatusIn(statuses)
+        }
+
     override fun findAll(): List<EventSourceRef> = eventSourceRefJpaRepository.findAll()
 }

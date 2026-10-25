@@ -95,6 +95,8 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook")
                     .permitAll()
+                    .requestMatchers("/mcp", "/mcp/**", "/sse", "/sse/**")
+                    .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated()
             }.oauth2Login { oauth ->

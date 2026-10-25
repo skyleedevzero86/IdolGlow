@@ -20,5 +20,7 @@ interface EventSourceRefPort {
 
     fun countByMatchStatus(status: EventMatchStatus): Long
 
+    fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef>
+
     fun findAll(): List<EventSourceRef>
 }

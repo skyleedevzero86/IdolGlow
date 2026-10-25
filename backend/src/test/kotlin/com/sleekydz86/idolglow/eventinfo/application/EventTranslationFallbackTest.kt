@@ -189,6 +189,9 @@ private class InMemoryEventSourceRefPort : EventSourceRefPort {
 
     override fun countByMatchStatus(status: EventMatchStatus): Long = rows.count { it.matchStatus == status }.toLong()
 
+    override fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef> =
+        rows.filter { it.matchStatus in statuses }
+
     override fun findAll(): List<EventSourceRef> = rows.toList()
 }
 

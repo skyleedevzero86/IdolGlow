@@ -85,8 +85,17 @@ class EventMatchMergeHandler(
     private fun readPayload(
         payload: String,
         target: String,
-    ): EventMatchMergePayload =
-        runCatching { objectMapper.readValue(payload, EventMatchMergePayload::class.java) }.getOrElse {
+    ): EventMatchMergePayload {
+        val globalId = globalIdOf(payload, target)
+        require(globalId.isNotBlank()) { "병합 요청 본문을 읽을 수 없습니다. target=$target" }
+        return EventMatchMergePayload(globalId)
+    }
+
+    private fun globalIdOf(
+        payload: String,
+        target: String,
+    ): String =
+        runCatching { objectMapper.readTree(payload).path("globalId").asText("") }.getOrElse {
             throw IllegalArgumentException("병합 요청 본문을 읽을 수 없습니다. target=$target")
         }
 
@@ -113,6 +122,7 @@ class EventMatchMergeHandler(
 
 data class EventMatchMergePayload(
     val globalId: String = "",
+    val reason: String = "",
 )
 
 data class EventMatchSnapshot(
