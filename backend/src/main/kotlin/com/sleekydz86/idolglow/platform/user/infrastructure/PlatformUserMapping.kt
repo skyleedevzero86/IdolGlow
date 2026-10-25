@@ -16,12 +16,16 @@ fun UserRole.toPlatformUserRole(): PlatformUserRole =
     when (this) {
         UserRole.USER -> PlatformUserRole.USER
         UserRole.ADMIN -> PlatformUserRole.ADMIN
+        UserRole.OPERATOR -> PlatformUserRole.OPERATOR
+        UserRole.APPROVER -> PlatformUserRole.APPROVER
     }
 
 fun PlatformUserRole.toUserRole(): UserRole =
     when (this) {
         PlatformUserRole.USER -> UserRole.USER
         PlatformUserRole.ADMIN -> UserRole.ADMIN
+        PlatformUserRole.OPERATOR -> UserRole.OPERATOR
+        PlatformUserRole.APPROVER -> UserRole.APPROVER
     }
 
 fun User.toPlatformUser(): PlatformUser {

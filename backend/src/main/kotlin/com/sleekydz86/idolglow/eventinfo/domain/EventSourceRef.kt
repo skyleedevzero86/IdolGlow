@@ -53,6 +53,18 @@ class EventSourceRef(
     @Column(length = 255)
     var venue: String? = null,
 ) : BaseEntity() {
+    fun assignMatch(
+        globalId: String?,
+        status: EventMatchStatus,
+        score: Int,
+        matchedAt: LocalDateTime?,
+    ) {
+        this.globalId = globalId
+        matchStatus = status
+        matchScore = score
+        this.matchedAt = matchedAt
+    }
+
     fun record(
         globalId: String?,
         status: EventMatchStatus,
