@@ -4,6 +4,27 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.12.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.11.2...v0.12.0) (2026-10-25)
+
+
+### Features
+
+* **#65:** 공연 매칭, 운영 승인, 근거 검색, 결제·구독 알림을 추가 ([8c9e548](https://github.com/skyleedevzero86/IdolGlow/commit/8c9e548ccb751a49d8c05f1850d3dbf042d1ed5b))
+* 공연 공급처 데이터를 배치로 모아 같은 공연은 하나의 식별자로 묶는다 ([ad2d19c](https://github.com/skyleedevzero86/IdolGlow/commit/ad2d19cfa40c1b0a04add52bd7fe3aa35f86512e))
+* 공연 매칭 충돌을 조회·비교·병합 제안하는 MCP Tool을 추가 ([829d7d5](https://github.com/skyleedevzero86/IdolGlow/commit/829d7d510e552428412fea20cebbb4872ba1c658))
+* 공연 메타에 언어별 제목·소개를 두고 없는 언어는 영어·한국어로 대체하기 ([de1da53](https://github.com/skyleedevzero86/IdolGlow/commit/de1da5386bfcdc3e096706ea40e05a7b18d817e7))
+* 멈춘 승인·환불·빌링 건을 하루 한 번만 관리자에게 알림처리 ([d248f17](https://github.com/skyleedevzero86/IdolGlow/commit/d248f1764cd6c6c81c03c4c0ec9f60d6a1d3bede))
+* 반복된 관리자 작업 상위 5개를 집계하고 자동화 후보를 선택 ([bcaa7fb](https://github.com/skyleedevzero86/IdolGlow/commit/bcaa7fb6c1d12433dfe810152de18a3dcd933943))
+* 운영 변경은 다른 사람이 승인한 뒤에만 적용하고 되돌릴 수 있게 하기 ([1892c86](https://github.com/skyleedevzero86/IdolGlow/commit/1892c86e07088ef106df5c8478bdc82329781799))
+* 웹진·상품 문단을 키워드와 벡터로 같이 검색 ([f441fba](https://github.com/skyleedevzero86/IdolGlow/commit/f441fbaeb548d3e7cc4a028a562b8a8fdfd62305))
+
+
+### Bug Fixes
+
+* 1시간 넘은 빌링 승인 확인 테스트가 실행 시각에 따라 깨지지 않게 처리 ([c17cce8](https://github.com/skyleedevzero86/IdolGlow/commit/c17cce8b19176944a6e0cc62c29737077849445d))
+* 구독 메일은 발송 이력을 먼저 선점하고 트랜잭션 밖에서 보내기 ([d452788](https://github.com/skyleedevzero86/IdolGlow/commit/d4527883a53f45adf21d5a0b5eacce494308325c))
+* 근거 검색 문단 설명을 테이블 생성 SQL에 두기 ([b54a82a](https://github.com/skyleedevzero86/IdolGlow/commit/b54a82a37de921e4791c230d0cc41d30660a5282))
+
 ## [0.11.2](https://github.com/skyleedevzero86/IdolGlow/compare/v0.11.1...v0.11.2) (2026-10-23)
 
 
