@@ -68,6 +68,8 @@ class MimAdminService(
                 imageName = request.imageName,
                 imagePath = request.imagePath,
                 imageFileName = request.imageFileName,
+                linkUrl = normalizeLink(request.linkUrl),
+                categoryLabel = normalizeCategory(request.categoryLabel),
                 description = request.description,
                 activeYn = request.activeYn ?: "Y",
                 createdBy = request.createdBy,
@@ -92,6 +94,8 @@ class MimAdminService(
                 imageName = request.imageName,
                 imagePath = request.imagePath,
                 imageFileName = request.imageFileName,
+                linkUrl = normalizeLink(request.linkUrl),
+                categoryLabel = normalizeCategory(request.categoryLabel),
                 description = request.description,
                 activeYn = request.activeYn ?: existing.activeYn,
                 createdBy = request.createdBy ?: existing.createdBy,
@@ -106,5 +110,35 @@ class MimAdminService(
             throw EntityNotFoundException("메인 이미지를 찾을 수 없습니다. imageId=$imageId")
         }
         mimRepository.delete(imageId)
+    }
+
+    private fun normalizeLink(raw: String?): String? {
+        val trimmed = raw?.trim().orEmpty()
+        if (trimmed.isEmpty()) {
+            return null
+        }
+        val normalized =
+            if (
+                trimmed.startsWith("http://") ||
+                trimmed.startsWith("https://") ||
+                trimmed.startsWith("/")
+            ) {
+                trimmed
+            } else {
+                "/$trimmed"
+            }
+        require(normalized.length <= 500) {
+            "이동 경로는 500자 이하여야 합니다. 입력값=$trimmed"
+        }
+        return normalized
+    }
+
+    private fun normalizeCategory(raw: String?): String {
+        val trimmed = raw?.trim().orEmpty()
+        return if (trimmed in SLIDE_CATEGORIES) trimmed else "메인"
+    }
+
+    companion object {
+        private val SLIDE_CATEGORIES = setOf("메인", "이벤트", "할인", "공지")
     }
 }

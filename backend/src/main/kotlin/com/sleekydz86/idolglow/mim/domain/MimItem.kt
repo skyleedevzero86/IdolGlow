@@ -6,6 +6,8 @@ data class MimItem(
     val imageName: String?,
     val imagePath: String?,
     val imageFileName: String?,
+    val linkUrl: String?,
+    val categoryLabel: String?,
     val description: String?,
     val activeYn: String?,
     val createdBy: String?,

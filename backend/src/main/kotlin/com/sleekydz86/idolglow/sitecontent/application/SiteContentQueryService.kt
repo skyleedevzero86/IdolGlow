@@ -38,8 +38,8 @@ class SiteContentQueryService(
                         title = it.imageName?.takeIf(String::isNotBlank) ?: "메인 슬라이드",
                         subtitle = it.description?.takeIf(String::isNotBlank),
                         imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
-                        linkUrl = "/articles",
-                        categoryLabel = "메인",
+                        linkUrl = it.linkUrl?.takeIf(String::isNotBlank) ?: "/articles",
+                        categoryLabel = it.categoryLabel?.takeIf(String::isNotBlank) ?: "메인",
                     )
                 }.toList()
 
@@ -47,13 +47,13 @@ class SiteContentQueryService(
             bnrRepository
                 .findActiveByDomain(resolvedDomainId)
                 .asSequence()
-                .filter { !it.imagePath.isNullOrBlank() }
                 .map {
+                    val imagePath = it.imagePath?.trim().orEmpty()
                     SiteBannerResponse(
                         bannerId = it.bannerId,
                         title = it.bannerName?.takeIf(String::isNotBlank) ?: "배너",
                         description = it.description?.takeIf(String::isNotBlank),
-                        imageUrl = toAssetUrl(it.imagePath) ?: it.imagePath!!,
+                        imageUrl = imagePath.takeIf(String::isNotBlank)?.let { path -> toAssetUrl(path) ?: path },
                         linkUrl = it.linkUrl?.takeIf(String::isNotBlank) ?: "/articles",
                     )
                 }.toList()
