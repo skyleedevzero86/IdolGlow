@@ -12,5 +12,7 @@ interface UserOAuthJpaRepository : JpaRepository<UserOAuth, Long> {
 
     fun findAllByUserId(userId: Long): List<UserOAuth>
 
+    fun findAllByUserIdIn(userIds: Collection<Long>): List<UserOAuth>
+
     fun findByEmail(email: String): UserOAuth?
 }

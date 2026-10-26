@@ -46,11 +46,15 @@ class SurveyStatisticsWorkbookTest {
             assertEquals("미입력", subjective.getRow(2).getCell(4).stringCellValue)
             assertEquals(1.0, subjective.getRow(3).getCell(3).numericCellValue)
             assertEquals(1.0, subjective.getRow(3).getCell(4).numericCellValue)
-            assertEquals("아이디", subjective.getRow(6).getCell(0).stringCellValue)
-            assertEquals(9.0, subjective.getRow(7).getCell(0).numericCellValue)
-            assertEquals("강남에서 하루", subjective.getRow(7).getCell(4).stringCellValue)
-            assertEquals("입력", subjective.getRow(7).getCell(5).stringCellValue)
-            assertEquals("미입력", subjective.getRow(8).getCell(5).stringCellValue)
+            assertEquals("접속", subjective.getRow(6).getCell(0).stringCellValue)
+            assertEquals("사용자명", subjective.getRow(6).getCell(1).stringCellValue)
+            assertEquals("아이디", subjective.getRow(6).getCell(2).stringCellValue)
+            assertEquals("구글로그인", subjective.getRow(7).getCell(0).stringCellValue)
+            assertEquals("이경용", subjective.getRow(7).getCell(1).stringCellValue)
+            assertEquals("sleeky@example.com", subjective.getRow(7).getCell(2).stringCellValue)
+            assertEquals("강남에서 하루", subjective.getRow(7).getCell(6).stringCellValue)
+            assertEquals("입력", subjective.getRow(7).getCell(7).stringCellValue)
+            assertEquals("미입력", subjective.getRow(8).getCell(7).stringCellValue)
         }
     }
 
@@ -110,17 +114,21 @@ class SurveyStatisticsWorkbookTest {
                 ),
             rows =
                 listOf(
-                    writtenRow(9L, "강남에서 하루"),
-                    writtenRow(15L, ""),
+                    writtenRow("구글로그인", "이경용", "sleeky@example.com", "강남에서 하루"),
+                    writtenRow("웹로그인", "김하늘", "haneul@example.com", ""),
                 ),
         )
 
     private fun writtenRow(
-        userId: Long,
+        accessLabel: String,
+        userName: String,
+        loginId: String,
         answer: String,
     ): SurveyWrittenAnswerRow =
         SurveyWrittenAnswerRow(
-            userId = userId,
+            accessLabel = accessLabel,
+            userName = userName,
+            loginId = loginId,
             order = 2,
             typeLabel = "장문형",
             questionTitle = "하루 이야기",

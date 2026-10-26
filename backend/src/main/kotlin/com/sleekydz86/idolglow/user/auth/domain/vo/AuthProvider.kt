@@ -4,12 +4,21 @@ enum class AuthProvider(
     val registrationId: String,
 ) {
     GOOGLE("google"),
+    KAKAO("kakao"),
+    NAVER("naver"),
     TEST("test"),
     ;
 
+    fun accessLabel(): String =
+        when (this) {
+            GOOGLE -> "구글로그인"
+            KAKAO -> "카카오로그인"
+            NAVER -> "네이버로그인"
+            TEST -> "테스트"
+        }
+
     companion object {
-        private val allowedRegistrationIds: Set<String> =
-            entries.map { it.registrationId }.toSet()
+        private val allowedRegistrationIds: Set<String> = setOf(GOOGLE.registrationId, TEST.registrationId)
 
         fun isAllowedRegistrationId(registrationId: String): Boolean = registrationId in allowedRegistrationIds
 
