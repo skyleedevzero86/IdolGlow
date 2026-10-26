@@ -13,7 +13,7 @@ class GlobalExceptionAdviceUploadSizeTest {
     @DisplayName("업로드 용량을 넘기면 413과 안내 문구를 반환한다")
     fun returnsPayloadTooLargeWhenUploadExceedsLimit() {
         // given
-        val advice = GlobalExceptionAdvice()
+        val advice = MaxUploadSizeExceptionAdvice()
         val request = MockHttpServletRequest("POST", "/admin/mim/uploads/images")
 
         // when

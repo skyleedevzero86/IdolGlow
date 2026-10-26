@@ -11,7 +11,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import org.springframework.web.multipart.MaxUploadSizeExceededException
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import tools.jackson.databind.DatabindException
@@ -246,28 +245,6 @@ class GlobalExceptionAdvice {
                     name = "DATA_INTEGRITY_VIOLATION",
                     errorCode = "BAD_REQUEST",
                     message = message,
-                ),
-            )
-    }
-
-    @ExceptionHandler(MaxUploadSizeExceededException::class)
-    fun handleMaxUploadSizeExceeded(
-        request: HttpServletRequest,
-        exception: MaxUploadSizeExceededException,
-    ): ResponseEntity<ExceptionResponse> {
-        log.warn(
-            "업로드 용량 초과: {} {} | maxBytes={}",
-            request.method,
-            request.requestURI,
-            exception.maxUploadSize,
-        )
-        return ResponseEntity
-            .status(HttpStatus.PAYLOAD_TOO_LARGE)
-            .body(
-                ExceptionResponse(
-                    name = "PAYLOAD_TOO_LARGE",
-                    errorCode = "PAYLOAD_TOO_LARGE",
-                    message = "이미지 업로드는 최대 150MB까지 가능합니다.",
                 ),
             )
     }
