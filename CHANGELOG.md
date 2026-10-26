@@ -4,6 +4,27 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.13.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.12.0...v0.13.0) (2026-10-26)
+
+
+### Features
+
+* **#70:** add survey sheets, hero slide links, and grounded-search eval ([5df8085](https://github.com/skyleedevzero86/IdolGlow/commit/5df8085c857fcbeaa072077a90d4eac6095eeda6))
+* 근거 검색 골든셋 평가를 일반 테스트와 분리하고 CI 테스트 힙을 고정 ([c0da107](https://github.com/skyleedevzero86/IdolGlow/commit/c0da107ad81a54fcda35cd6558eeb6cb354f44ac))
+* 메인 슬라이드에 이동 경로와 분류를 두고 이미지 업로드 한도를 맞추기 ([33b4462](https://github.com/skyleedevzero86/IdolGlow/commit/33b4462e3538d33c97025649677378fc9ed5e05e))
+* 설문 문항에 단문형과 장문형을 나누기 ([b6909be](https://github.com/skyleedevzero86/IdolGlow/commit/b6909be3fe7657fadac39dd490ce25e65630fbb3))
+* 설문 통계를 객관식·주관식 시트로 나누고 참여는 로그인으로 제한 ([e12e8c3](https://github.com/skyleedevzero86/IdolGlow/commit/e12e8c31c4612b07818cd9bc4165541b50cb253f))
+
+
+### Bug Fixes
+
+* 설문 목록 검색의 lower 오류를 없애고 문항 상한을 10개로 올리기 ([9aec2fd](https://github.com/skyleedevzero86/IdolGlow/commit/9aec2fd4f0e5ea34e8e19efeaba388daf7e9852c))
+
+
+### Refactoring
+
+* 슬라이드 컬럼과 근거 검색 SQL을 1번부터 7번 파일로 정리 ([cec0a5c](https://github.com/skyleedevzero86/IdolGlow/commit/cec0a5cff304066572944912b4839fa391196291))
+
 ## [0.12.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.11.2...v0.12.0) (2026-10-25)
 
 
