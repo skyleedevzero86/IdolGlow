@@ -26,6 +26,6 @@ data class AdminUpsertSurveyFormRequest(
     val primaryCategory: SurveyFormPrimaryCategory = SurveyFormPrimaryCategory.ALL,
     val secondaryCategory: SurveyFormSecondaryCategory? = null,
     @field:NotEmpty
-    @field:Size(min = 1, max = 5, message = "문항은 1개 이상 5개 이하여야 합니다.")
+    @field:Size(min = 1, max = 10, message = "문항은 1개 이상 10개 이하여야 합니다.")
     val questions: List<@Valid AdminSurveyQuestionRequest>,
 )

@@ -12,6 +12,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(name = "survey_form_description")
@@ -22,6 +24,7 @@ class SurveyFormDescription(
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "survey_form_id", nullable = false, unique = true)
     val form: SurveyForm,
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(columnDefinition = "TEXT", nullable = false)
     var markdown: String,
     @OneToMany(
