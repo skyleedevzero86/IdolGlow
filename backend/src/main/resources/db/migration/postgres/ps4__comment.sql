@@ -871,6 +871,10 @@ comment on column tb_main_image.image_file is '파일명';
 
 comment on column tb_main_image.image_dc is '설명';
 
+comment on column tb_main_image.link_url is '슬라이드 클릭 시 이동 경로';
+
+comment on column tb_main_image.category_label is '슬라이드 분류. 메인, 이벤트, 할인, 공지';
+
 comment on column tb_main_image.reflct_at is '게시 반영 여부 Y/N';
 
 comment on column tb_main_image.frst_register_id is '최초 등록자';

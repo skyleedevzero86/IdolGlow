@@ -844,6 +844,8 @@ create table if not exists tb_main_image (
     image varchar(500),
     image_file varchar(500),
     image_dc varchar(1000),
+    link_url varchar(500),
+    category_label varchar(20) default '메인',
     reflct_at char(1) default 'Y',
     frst_register_id varchar(50),
     frst_regist_pnttm timestamp default current_timestamp,
