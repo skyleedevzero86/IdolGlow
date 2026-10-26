@@ -261,7 +261,7 @@ class AdminSurveyFormService(
         type: SurveyQuestionType,
         options: List<String>,
     ) {
-        if (type == SurveyQuestionType.TEXT) {
+        if (type.isWrittenAnswer()) {
             return
         }
         val normalized = options.map { it.trim() }.filter { it.isNotBlank() }.distinct()
