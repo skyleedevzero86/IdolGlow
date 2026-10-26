@@ -11,6 +11,21 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface SurveyFormJpaRepository : JpaRepository<SurveyForm, Long> {
+    companion object {
+        private const val STATUS_FILTER =
+            "where (:status is null or f.status = :status) " +
+                "and (:primaryCategory is null or f.primaryCategory = :primaryCategory) " +
+                "and (:secondaryCategory is null or f.secondaryCategory = :secondaryCategory) "
+        private const val KEYWORD_FILTER =
+            "where (" +
+                "lower(f.title) like lower(concat('%', :keyword, '%')) " +
+                "or lower(d.markdown) like lower(concat('%', :keyword, '%')) " +
+                "or lower(f.description) like lower(concat('%', :keyword, '%'))) " +
+                "and (:status is null or f.status = :status) " +
+                "and (:primaryCategory is null or f.primaryCategory = :primaryCategory) " +
+                "and (:secondaryCategory is null or f.secondaryCategory = :secondaryCategory) "
+    }
+
     fun findFirstByActiveTrueOrderByIdDesc(): SurveyForm?
 
     fun findAllByOrderByUpdatedAtDesc(): List<SurveyForm>
@@ -18,54 +33,60 @@ interface SurveyFormJpaRepository : JpaRepository<SurveyForm, Long> {
     fun findAllByOrderByUpdatedAtDesc(pageable: Pageable): Page<SurveyForm>
 
     @Query(
-        """
-        select distinct f
-        from SurveyForm f
-        left join fetch f.questions q
-        left join f.descriptionContent d
-        where (:keyword is null
-              or lower(f.title) like lower(concat('%', :keyword, '%'))
-              or lower(coalesce(d.markdown, f.description, '')) like lower(concat('%', :keyword, '%')))
-          and (:status is null or f.status = :status)
-          and (:primaryCategory is null or f.primaryCategory = :primaryCategory)
-          and (:secondaryCategory is null or f.secondaryCategory = :secondaryCategory)
-        order by f.updatedAt desc
-        """,
+        "select distinct f from SurveyForm f " +
+            "left join fetch f.questions q " +
+            STATUS_FILTER +
+            "order by f.updatedAt desc",
     )
-    fun search(
-        @Param("keyword") keyword: String?,
+    fun searchWithoutKeyword(
         @Param("status") status: SurveyFormStatus?,
         @Param("primaryCategory") primaryCategory: SurveyFormPrimaryCategory?,
         @Param("secondaryCategory") secondaryCategory: SurveyFormSecondaryCategory?,
     ): List<SurveyForm>
 
     @Query(
-        value = """
-        select f.id
-        from SurveyForm f
-        left join f.descriptionContent d
-        where (:keyword is null
-              or lower(f.title) like lower(concat('%', :keyword, '%'))
-              or lower(coalesce(d.markdown, f.description, '')) like lower(concat('%', :keyword, '%')))
-          and (:status is null or f.status = :status)
-          and (:primaryCategory is null or f.primaryCategory = :primaryCategory)
-          and (:secondaryCategory is null or f.secondaryCategory = :secondaryCategory)
-        order by f.updatedAt desc
-        """,
-        countQuery = """
-        select count(f)
-        from SurveyForm f
-        left join f.descriptionContent d
-        where (:keyword is null
-              or lower(f.title) like lower(concat('%', :keyword, '%'))
-              or lower(coalesce(d.markdown, f.description, '')) like lower(concat('%', :keyword, '%')))
-          and (:status is null or f.status = :status)
-          and (:primaryCategory is null or f.primaryCategory = :primaryCategory)
-          and (:secondaryCategory is null or f.secondaryCategory = :secondaryCategory)
-        """,
+        "select distinct f from SurveyForm f " +
+            "left join fetch f.questions q " +
+            "left join f.descriptionContent d " +
+            KEYWORD_FILTER +
+            "order by f.updatedAt desc",
     )
-    fun search(
-        @Param("keyword") keyword: String?,
+    fun searchByKeyword(
+        @Param("keyword") keyword: String,
+        @Param("status") status: SurveyFormStatus?,
+        @Param("primaryCategory") primaryCategory: SurveyFormPrimaryCategory?,
+        @Param("secondaryCategory") secondaryCategory: SurveyFormSecondaryCategory?,
+    ): List<SurveyForm>
+
+    @Query(
+        value =
+            "select f.id from SurveyForm f " +
+                STATUS_FILTER +
+                "order by f.updatedAt desc",
+        countQuery =
+            "select count(f) from SurveyForm f " +
+                STATUS_FILTER,
+    )
+    fun searchWithoutKeyword(
+        @Param("status") status: SurveyFormStatus?,
+        @Param("primaryCategory") primaryCategory: SurveyFormPrimaryCategory?,
+        @Param("secondaryCategory") secondaryCategory: SurveyFormSecondaryCategory?,
+        pageable: Pageable,
+    ): Page<Long>
+
+    @Query(
+        value =
+            "select f.id from SurveyForm f " +
+                "left join f.descriptionContent d " +
+                KEYWORD_FILTER +
+                "order by f.updatedAt desc",
+        countQuery =
+            "select count(f) from SurveyForm f " +
+                "left join f.descriptionContent d " +
+                KEYWORD_FILTER,
+    )
+    fun searchByKeyword(
+        @Param("keyword") keyword: String,
         @Param("status") status: SurveyFormStatus?,
         @Param("primaryCategory") primaryCategory: SurveyFormPrimaryCategory?,
         @Param("secondaryCategory") secondaryCategory: SurveyFormSecondaryCategory?,

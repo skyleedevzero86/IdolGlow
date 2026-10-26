@@ -29,6 +29,10 @@ class MimEntity(
     var image: String? = null,
     @Column(name = "image_file", length = 500)
     var imageFile: String? = null,
+    @Column(name = "link_url", length = 500)
+    var linkUrl: String? = null,
+    @Column(name = "category_label", length = 20)
+    var categoryLabel: String? = null,
     @Column(name = "image_dc", length = 1000)
     var imageDc: String? = null,
     @JdbcTypeCode(Types.CHAR)

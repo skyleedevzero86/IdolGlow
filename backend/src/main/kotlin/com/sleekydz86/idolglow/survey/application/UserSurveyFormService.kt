@@ -23,6 +23,12 @@ class UserSurveyFormService(
     @Transactional(readOnly = true)
     fun findCurrentForm(): SurveyFormResponse? = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
 
+    @Transactional(readOnly = true)
+    fun countCurrentParticipants(): Long {
+        val form = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc() ?: return 0
+        return surveySubmissionJpaRepository.countByFormId(form.id)
+    }
+
     fun submitCurrentForm(
         userId: Long,
         command: SubmitSurveyResponseCommand,
@@ -47,13 +53,10 @@ class UserSurveyFormService(
             }
             val answer = SurveyAnswer(submission = submission, question = question)
             when (question.questionType) {
-                SurveyQuestionType.TEXT -> {
-                    val text = answerRequest.answerText?.trim().orEmpty()
-                    if (question.required && text.isBlank()) {
-                        throw IllegalArgumentException("필수 문항 텍스트 응답이 비어 있습니다. questionId=${question.id}")
-                    }
-                    answer.answerText = text.ifBlank { null }
-                }
+                SurveyQuestionType.SHORT_TEXT,
+                SurveyQuestionType.LONG_TEXT,
+                SurveyQuestionType.TEXT,
+                -> applyWrittenAnswer(answer, question.required, question.id, answerRequest.answerText)
                 SurveyQuestionType.SINGLE_CHOICE,
                 SurveyQuestionType.MULTIPLE_CHOICE,
                 -> {
@@ -88,6 +91,19 @@ class UserSurveyFormService(
 
         val saved = surveySubmissionJpaRepository.save(submission)
         return SurveySubmissionResponse.from(saved)
+    }
+
+    private fun applyWrittenAnswer(
+        answer: SurveyAnswer,
+        required: Boolean,
+        questionId: Long,
+        answerText: String?,
+    ) {
+        val text = answerText?.trim().orEmpty()
+        if (required && text.isBlank()) {
+            throw IllegalArgumentException("필수 문항 텍스트 응답이 비어 있습니다. questionId=$questionId")
+        }
+        answer.answerText = text.ifBlank { null }
     }
 
     @Transactional(readOnly = true)

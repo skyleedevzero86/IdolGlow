@@ -13,6 +13,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(name = "survey_form")
@@ -22,6 +24,7 @@ class SurveyForm(
     val id: Long = 0L,
     @Column(nullable = false, length = 200)
     var title: String,
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
     @Column(nullable = false)

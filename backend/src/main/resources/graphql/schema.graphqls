@@ -583,9 +583,11 @@ enum ConceptType {
 }
 
 enum SurveyQuestionType {
-    TEXT
+    SHORT_TEXT
+    LONG_TEXT
     SINGLE_CHOICE
     MULTIPLE_CHOICE
+    TEXT
 }
 
 enum SurveyFormStatus {

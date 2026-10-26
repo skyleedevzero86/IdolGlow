@@ -659,6 +659,8 @@ create table if not exists tb_main_image (
     image varchar(500) comment '이미지 경로나 URL. 기존 운영 스키마와 맞추기 위해 컬럼 이름을 image 로 둔다',
     image_file varchar(500) comment '파일명',
     image_dc varchar(1000) comment '설명',
+    link_url varchar(500) comment '슬라이드 클릭 시 이동 경로',
+    category_label varchar(20) default '메인' comment '슬라이드 분류. 메인, 이벤트, 할인, 공지',
     reflct_at char(1) default 'Y' comment '게시 반영 여부 Y/N',
     frst_register_id varchar(50) comment '최초 등록자',
     frst_regist_pnttm timestamp default current_timestamp comment '최초 등록 일시',

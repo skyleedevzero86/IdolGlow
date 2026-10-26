@@ -21,7 +21,7 @@ class WebzineImageUploadService(
 
         val bytes = file.bytes
         require(bytes.isNotEmpty()) { "업로드할 이미지 파일을 선택해 주세요." }
-        require(bytes.size <= MAX_BYTES) { "이미지 업로드는 최대 15MB까지 가능합니다." }
+        require(bytes.size <= MAX_BYTES) { "이미지 업로드는 최대 150MB까지 가능합니다." }
 
         val contentType =
             file.contentType
@@ -131,6 +131,6 @@ class WebzineImageUploadService(
         }
 
     companion object {
-        private const val MAX_BYTES = 15 * 1024 * 1024
+        private const val MAX_BYTES = 150 * 1024 * 1024
     }
 }

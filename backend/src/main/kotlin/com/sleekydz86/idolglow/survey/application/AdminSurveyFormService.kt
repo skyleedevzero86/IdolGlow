@@ -26,7 +26,7 @@ class AdminSurveyFormService(
     private val surveyFormJpaRepository: SurveyFormJpaRepository,
 ) {
     companion object {
-        private const val MAX_SURVEY_QUESTIONS = 5
+        private const val MAX_SURVEY_QUESTIONS = 10
         private const val DEFAULT_PAGE_SIZE = 10
         private const val MAX_PAGE_SIZE = 50
     }
@@ -44,12 +44,20 @@ class AdminSurveyFormService(
         val normalized = keyword?.trim().orEmpty()
         val normalizedFilters = normalizeFilters(primaryCategory, secondaryCategory)
         val forms =
-            surveyFormJpaRepository.search(
-                keyword = normalized.takeIf { it.isNotBlank() },
-                status = status,
-                primaryCategory = normalizedFilters.first,
-                secondaryCategory = normalizedFilters.second,
-            )
+            if (normalized.isBlank()) {
+                surveyFormJpaRepository.searchWithoutKeyword(
+                    status = status,
+                    primaryCategory = normalizedFilters.first,
+                    secondaryCategory = normalizedFilters.second,
+                )
+            } else {
+                surveyFormJpaRepository.searchByKeyword(
+                    keyword = normalized,
+                    status = status,
+                    primaryCategory = normalizedFilters.first,
+                    secondaryCategory = normalizedFilters.second,
+                )
+            }
         return forms.map(SurveyFormSummaryResponse::from)
     }
 
@@ -194,14 +202,24 @@ class AdminSurveyFormService(
         size: Int,
     ): Page<SurveyForm> {
         val pageable = PageRequest.of(pageIndex.coerceAtLeast(0), size)
+        val normalizedKeyword = keyword.trim()
         val pageIds =
-            surveyFormJpaRepository.search(
-                keyword = keyword.takeIf { it.isNotBlank() },
-                status = status,
-                primaryCategory = primaryCategory,
-                secondaryCategory = secondaryCategory,
-                pageable = pageable,
-            )
+            if (normalizedKeyword.isEmpty()) {
+                surveyFormJpaRepository.searchWithoutKeyword(
+                    status = status,
+                    primaryCategory = primaryCategory,
+                    secondaryCategory = secondaryCategory,
+                    pageable = pageable,
+                )
+            } else {
+                surveyFormJpaRepository.searchByKeyword(
+                    keyword = normalizedKeyword,
+                    status = status,
+                    primaryCategory = primaryCategory,
+                    secondaryCategory = secondaryCategory,
+                    pageable = pageable,
+                )
+            }
         if (pageIds.content.isEmpty()) {
             return PageImpl(emptyList(), pageable, pageIds.totalElements)
         }
@@ -243,7 +261,7 @@ class AdminSurveyFormService(
         type: SurveyQuestionType,
         options: List<String>,
     ) {
-        if (type == SurveyQuestionType.TEXT) {
+        if (type.isWrittenAnswer()) {
             return
         }
         val normalized = options.map { it.trim() }.filter { it.isNotBlank() }.distinct()

@@ -4,7 +4,6 @@ import com.sleekydz86.idolglow.survey.domain.SurveyForm
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
-import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import java.time.LocalDateTime
 
 data class SurveyFormSummaryResponse(
@@ -42,7 +41,7 @@ data class SurveyFormSummaryResponse(
                 secondaryCategoryLabel = form.secondaryCategory?.label,
                 questionCount = questions.size,
                 requiredQuestionCount = questions.count { it.required },
-                choiceQuestionCount = questions.count { it.questionType != SurveyQuestionType.TEXT },
+                choiceQuestionCount = questions.count { !it.questionType.isWrittenAnswer() },
                 createdAt = form.createdAt,
                 updatedAt = form.updatedAt,
             )

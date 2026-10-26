@@ -63,6 +63,8 @@ class MimRepositoryImpl(
                 imageNm = item.imageName,
                 image = item.imagePath,
                 imageFile = item.imageFileName,
+                linkUrl = item.linkUrl,
+                categoryLabel = item.categoryLabel,
                 imageDc = item.description,
                 reflctAt = item.activeYn ?: "Y",
                 frstRegisterId = item.createdBy,
@@ -79,6 +81,8 @@ class MimRepositoryImpl(
         e.imageNm = item.imageName
         e.image = item.imagePath
         e.imageFile = item.imageFileName
+        e.linkUrl = item.linkUrl
+        e.categoryLabel = item.categoryLabel
         e.imageDc = item.description
         e.reflctAt = item.activeYn ?: "Y"
         e.lastUpdusrId = item.createdBy
@@ -113,6 +117,8 @@ class MimRepositoryImpl(
                         cb.like(cb.lower(root.get("imageDc")), pattern),
                         cb.like(cb.lower(root.get("imageFile")), pattern),
                         cb.like(cb.lower(root.get("image")), pattern),
+                        cb.like(cb.lower(root.get("linkUrl")), pattern),
+                        cb.like(cb.lower(root.get("categoryLabel")), pattern),
                     )
             }
         return cb.and(domainPred, cb.or(*conditions.toTypedArray()))
@@ -140,6 +146,8 @@ class MimRepositoryImpl(
             imageName = e.imageNm,
             imagePath = e.image,
             imageFileName = e.imageFile,
+            linkUrl = e.linkUrl,
+            categoryLabel = e.categoryLabel,
             description = e.imageDc,
             activeYn = e.reflctAt,
             createdBy = e.frstRegisterId,
