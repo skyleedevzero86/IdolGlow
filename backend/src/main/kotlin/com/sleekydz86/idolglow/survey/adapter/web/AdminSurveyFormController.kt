@@ -3,16 +3,21 @@ package com.sleekydz86.idolglow.survey.adapter.web
 import com.sleekydz86.idolglow.survey.adapter.web.request.AdminUpsertSurveyFormRequest
 import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
+import com.sleekydz86.idolglow.survey.application.SurveyFormStatisticsService
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormPageResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
+import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormStatisticsResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormSummaryResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/admin/survey-forms")
 class AdminSurveyFormController(
     private val adminSurveyFormService: AdminSurveyFormService,
+    private val surveyFormStatisticsService: SurveyFormStatisticsService,
 ) {
     @Operation(summary = "설문 목록 조회")
     @GetMapping
@@ -65,6 +71,25 @@ class AdminSurveyFormController(
     fun find(
         @PathVariable id: Long,
     ): SurveyFormResponse = adminSurveyFormService.find(id)
+
+    @Operation(summary = "설문 문항별 응답 통계")
+    @GetMapping("/{id}/statistics")
+    fun statistics(
+        @PathVariable id: Long,
+    ): SurveyFormStatisticsResponse = surveyFormStatisticsService.statistics(id)
+
+    @Operation(summary = "설문 통계 엑셀 다운로드")
+    @GetMapping("/{id}/statistics.xlsx")
+    fun statisticsXlsx(
+        @PathVariable id: Long,
+    ): ResponseEntity<ByteArrayResource> {
+        val bytes = surveyFormStatisticsService.exportXlsx(id)
+        return ResponseEntity
+            .ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=survey-$id-statistics.xlsx")
+            .body(ByteArrayResource(bytes))
+    }
 
     @Operation(summary = "설문 생성")
     @PostMapping

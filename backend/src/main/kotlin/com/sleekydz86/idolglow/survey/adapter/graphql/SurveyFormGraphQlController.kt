@@ -27,6 +27,7 @@ class SurveyFormGraphQlController(
     private val authenticatedUserIdResolver: AuthenticatedUserIdResolver,
 ) {
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     fun currentSurveyForm(): SurveyFormGraphQlResponse? = userSurveyFormService.findCurrentForm()?.let(SurveyFormGraphQlResponse::from)
 
     @QueryMapping

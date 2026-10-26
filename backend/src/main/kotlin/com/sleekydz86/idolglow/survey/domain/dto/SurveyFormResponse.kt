@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.survey.domain.SurveyForm
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
+import java.time.LocalDateTime
 
 data class SurveyFormResponse(
     val id: Long,
@@ -16,6 +17,7 @@ data class SurveyFormResponse(
     val primaryCategoryLabel: String,
     val secondaryCategory: SurveyFormSecondaryCategory?,
     val secondaryCategoryLabel: String?,
+    val createdAt: LocalDateTime?,
     val questions: List<SurveyQuestionResponse>,
 ) {
     companion object {
@@ -31,6 +33,7 @@ data class SurveyFormResponse(
                 primaryCategoryLabel = form.primaryCategory.label,
                 secondaryCategory = form.secondaryCategory,
                 secondaryCategoryLabel = form.secondaryCategory?.label,
+                createdAt = form.createdAt,
                 questions =
                     form.questions
                         .sortedBy { it.displayOrder }

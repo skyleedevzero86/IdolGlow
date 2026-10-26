@@ -23,6 +23,12 @@ class UserSurveyFormService(
     @Transactional(readOnly = true)
     fun findCurrentForm(): SurveyFormResponse? = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
 
+    @Transactional(readOnly = true)
+    fun countCurrentParticipants(): Long {
+        val form = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc() ?: return 0
+        return surveySubmissionJpaRepository.countByFormId(form.id)
+    }
+
     fun submitCurrentForm(
         userId: Long,
         command: SubmitSurveyResponseCommand,

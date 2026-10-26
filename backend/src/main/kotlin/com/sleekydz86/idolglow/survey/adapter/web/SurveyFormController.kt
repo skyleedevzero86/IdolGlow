@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.survey.application.SurveyRecommendationService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyFormResponse
+import com.sleekydz86.idolglow.survey.domain.dto.SurveyParticipantCountResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendationResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "설문", description = "사용자 설문 조회·제출·추천 API")
+@PreAuthorize("isAuthenticated()")
 @RestController
 @RequestMapping("/survey-forms")
 class SurveyFormController(
@@ -37,6 +40,11 @@ class SurveyFormController(
             .findCurrentForm()
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
+
+    @Operation(summary = "현재 설문 참여자 수")
+    @GetMapping("/current/participants")
+    fun currentParticipants(): SurveyParticipantCountResponse =
+        SurveyParticipantCountResponse(count = userSurveyFormService.countCurrentParticipants())
 
     @Operation(summary = "현재 설문 제출")
     @SecurityRequirement(name = "bearerAuth")
