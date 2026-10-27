@@ -19,6 +19,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import java.security.Key
 import java.util.Date
+import java.util.UUID
 
 @Component
 class JwtProvider(
@@ -27,6 +28,7 @@ class JwtProvider(
     private val log = LoggerFactory.getLogger(JwtProvider::class.java)
 
     private val signingKey: Key by lazy { JwtSigningKeyFactory.create(properties.jwt.secret) }
+    private val processEpoch: String = UUID.randomUUID().toString()
 
     fun generateToken(
         userId: Long,
@@ -46,6 +48,7 @@ class JwtProvider(
                 .claim(JwtClaimNames.TOKEN_TYPE, JwtTokenType.ACCESS.name)
                 .claim(JwtClaimNames.CHANNEL, AuthChannel.GLOBAL.name)
                 .claim(JwtClaimNames.USER_ID, userId)
+                .claim(JwtClaimNames.PROCESS_EPOCH, processEpoch)
                 .setIssuedAt(issuedAt)
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
@@ -60,6 +63,7 @@ class JwtProvider(
                 .claim(JwtClaimNames.TOKEN_TYPE, JwtTokenType.REFRESH.name)
                 .claim(JwtClaimNames.CHANNEL, AuthChannel.GLOBAL.name)
                 .claim(JwtClaimNames.USER_ID, userId)
+                .claim(JwtClaimNames.PROCESS_EPOCH, processEpoch)
                 .setIssuedAt(issuedAt)
                 .setExpiration(refreshTokenExpiresIn)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
@@ -105,7 +109,8 @@ class JwtProvider(
         expectedType: JwtTokenType,
     ): Boolean =
         try {
-            extractTokenType(parseSignedClaims(token).body) == expectedType
+            val claims = parseSignedClaims(token).body
+            extractTokenType(claims) == expectedType && claims[JwtClaimNames.PROCESS_EPOCH]?.toString() == processEpoch
         } catch (_: JwtException) {
             false
         } catch (_: IllegalArgumentException) {
