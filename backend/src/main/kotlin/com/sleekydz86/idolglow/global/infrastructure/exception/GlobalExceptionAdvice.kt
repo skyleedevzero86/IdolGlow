@@ -3,6 +3,8 @@ package com.sleekydz86.idolglow.global.infrastructure.exception
 import io.minio.errors.ErrorResponseException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.apache.catalina.connector.ClientAbortException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
@@ -11,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import tools.jackson.databind.DatabindException
@@ -91,7 +94,6 @@ class GlobalExceptionAdvice {
             request.method,
             request.requestURI,
             type.message,
-            exception,
         )
 
         return ResponseEntity
@@ -252,8 +254,19 @@ class GlobalExceptionAdvice {
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(
         request: HttpServletRequest,
+        response: HttpServletResponse,
         exception: Exception,
-    ): ResponseEntity<ExceptionResponse> {
+    ): ResponseEntity<ExceptionResponse>? {
+        var current: Throwable? = exception
+        var clientStopped = response.isCommitted
+        while (current != null && !clientStopped) {
+            clientStopped = current is AsyncRequestNotUsableException || current is ClientAbortException
+            current = current.cause
+        }
+        if (clientStopped) {
+            log.debug("클라이언트가 응답 수신을 중단했습니다. {} {}", request.method, request.requestURI)
+            return null
+        }
         log.error(
             "예상하지 못한 오류 발생: {} {} | 메시지: {}",
             request.method,
@@ -261,7 +274,6 @@ class GlobalExceptionAdvice {
             exception.message,
             exception,
         )
-
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(
