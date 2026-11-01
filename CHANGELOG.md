@@ -4,6 +4,21 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.14.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.13.0...v0.14.0) (2026-11-01)
+
+
+### Features
+
+* App Main 이미지 변경 ([9eda33f](https://github.com/skyleedevzero86/IdolGlow/commit/9eda33f7ffe1e9125cd9c4987b388536ca45bc43))
+
+
+### Bug Fixes
+
+* 끊긴 응답과 만료된 리프레시 재발급의 로그를 줄이기 ([f9e4fe1](https://github.com/skyleedevzero86/IdolGlow/commit/f9e4fe1b1de22806907d852ce13dc2946e3cc11b))
+* 서버를 다시 켜면 이전 로그인 토큰을 거절하기 ([7517111](https://github.com/skyleedevzero86/IdolGlow/commit/75171110bed21d511dc6c525cc30944a5dc50f19))
+* 주관식 엑셀의 숫자 아이디를 사용자명과 이메일로 변경 ([9a733f7](https://github.com/skyleedevzero86/IdolGlow/commit/9a733f7dfb3ddeb24aee12f1fe21ce0ef0a255f9))
+* 품질 검사가 막은 업로드 예외와 슬라이드 경로 길이를 정리 ([3998e5e](https://github.com/skyleedevzero86/IdolGlow/commit/3998e5e1c0821ffa6118027347937029ebfc7184))
+
 ## [0.13.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.12.0...v0.13.0) (2026-10-26)
 
 
