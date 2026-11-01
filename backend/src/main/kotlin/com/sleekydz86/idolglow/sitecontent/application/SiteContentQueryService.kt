@@ -64,7 +64,6 @@ class SiteContentQueryService(
                 .findPublicByDomain(resolvedDomainId)
                 .asSequence()
                 .filter { NoticePeriodDateTimeParser.isWithinPeriod(it.noticeStartDate, it.noticeEndDate, now) }
-                .filter { !it.imagePath.isNullOrBlank() }
                 .map {
                     SitePopupResponse(
                         popupId = it.popupId,

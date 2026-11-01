@@ -5,6 +5,7 @@ object JwtClaimNames {
     const val TOKEN_TYPE = "type"
     const val CHANNEL = "channel"
     const val USER_ID = "userId"
+    const val PROCESS_EPOCH = "epoch"
     const val PLATFORM_TOKEN_TYPE = "tokenType"
     const val PLATFORM_ROLE = "role"
     const val SUBJECT_EMAIL = "sub(email)"

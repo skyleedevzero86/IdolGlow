@@ -43,10 +43,32 @@ class SiteContentHeroLinkTest {
         assertThat(home.heroSlides.single().linkUrl).isEqualTo("/articles")
     }
 
-    private fun service(item: MimItem): SiteContentQueryService =
+    @Test
+    @DisplayName("이미지가 없는 진행 중 팝업도 홈에 포함한다")
+    fun includesPopupWithoutImage() {
+        // given
+        val query =
+            service(
+                slide(linkUrl = "/glow"),
+                listOf(popupWithoutImage()),
+            )
+
+        // when
+        val home = query.readHomeContent()
+
+        // then
+        assertThat(home.popups).hasSize(1)
+        assertThat(home.popups.single().title).isEqualTo("안내 팝업")
+        assertThat(home.popups.single().imageUrl).isNull()
+    }
+
+    private fun service(
+        item: MimItem,
+        popups: List<PupItem> = emptyList(),
+    ): SiteContentQueryService =
         SiteContentQueryService(
             bnrRepository = EmptyBnrRepository(),
-            pupRepository = EmptyPupRepository(),
+            pupRepository = FixedPupRepository(popups),
             mimRepository = FixedMimRepository(listOf(item)),
             appPublicUrlProperties = AppPublicUrlProperties(publicBaseUrl = "http://localhost:8080"),
         )
@@ -64,6 +86,26 @@ class SiteContentHeroLinkTest {
             activeYn = "Y",
             createdBy = null,
             createdAtFormatted = null,
+            domainName = null,
+        )
+
+    private fun popupWithoutImage(): PupItem =
+        PupItem(
+            popupId = "POP_1",
+            domainId = "kr",
+            title = "안내 팝업",
+            fileUrl = null,
+            linkTarget = "_blank",
+            imagePath = null,
+            imageFileName = null,
+            noticeStartDate = null,
+            noticeEndDate = null,
+            stopViewYn = "Y",
+            noticeYn = "Y",
+            createdBy = null,
+            createdAtFormatted = null,
+            updatedBy = null,
+            updatedAtFormatted = null,
             domainName = null,
         )
 }
@@ -102,14 +144,16 @@ private class EmptyBnrRepository : BnrRepository {
     override fun delete(bannerId: String) = Unit
 }
 
-private class EmptyPupRepository : PupRepository {
+private class FixedPupRepository(
+    private val items: List<PupItem>,
+) : PupRepository {
     override fun findList(criteria: PupListCriteria): List<PupItem> = emptyList()
 
     override fun count(criteria: PupListCriteria): Int = 0
 
     override fun findById(popupId: String): PupItem? = null
 
-    override fun findPublicByDomain(domainId: String): List<PupItem> = emptyList()
+    override fun findPublicByDomain(domainId: String): List<PupItem> = items
 
     override fun insert(item: PupItem) = Unit
 

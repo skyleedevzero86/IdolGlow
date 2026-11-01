@@ -14,18 +14,22 @@ object SurveyWrittenAnswersSheet {
     private const val PARTICIPANT_COLUMN = 3
     private const val ENTERED_COLUMN = 3
     private const val EMPTY_COLUMN = 4
-    private const val QUESTION_COLUMN = 3
-    private const val ANSWER_COLUMN = 4
-    private const val STATUS_COLUMN = 5
+    private const val ORDER_COLUMN = 3
+    private const val TYPE_COLUMN = 4
+    private const val QUESTION_COLUMN = 5
+    private const val ANSWER_COLUMN = 6
+    private const val STATUS_COLUMN = 7
     private const val WIDTH_UNIT = 256
-    private const val USER_WIDTH = 14 * WIDTH_UNIT
-    private const val ORDER_WIDTH = 10 * WIDTH_UNIT
+    private const val ACCESS_WIDTH = 16 * WIDTH_UNIT
+    private const val NAME_WIDTH = 28 * WIDTH_UNIT
+    private const val LOGIN_WIDTH = 32 * WIDTH_UNIT
+    private const val ORDER_WIDTH = 12 * WIDTH_UNIT
     private const val TYPE_WIDTH = 12 * WIDTH_UNIT
-    private const val QUESTION_WIDTH = 28 * WIDTH_UNIT
+    private const val QUESTION_WIDTH = 36 * WIDTH_UNIT
     private const val ANSWER_WIDTH = 48 * WIDTH_UNIT
     private const val STATUS_WIDTH = 12 * WIDTH_UNIT
     private val SUMMARY_HEADERS = listOf("번호", "문항", "유형", "입력", "미입력")
-    private val DETAIL_HEADERS = listOf("아이디", "번호", "유형", "질문", "답변", "입력여부")
+    private val DETAIL_HEADERS = listOf("접속", "사용자명", "아이디", "설문번호", "유형", "질문", "답변", "입력여부")
 
     fun write(
         workbook: XSSFWorkbook,
@@ -112,9 +116,11 @@ object SurveyWrittenAnswersSheet {
         rowIndex: Int,
     ) {
         val row = sheet.createRow(rowIndex)
-        row.createCell(0).setCellValue(item.userId.toDouble())
-        row.createCell(1).setCellValue(item.order.toDouble())
-        row.createCell(2).setCellValue(item.typeLabel)
+        row.createCell(0).setCellValue(item.accessLabel)
+        row.createCell(1).setCellValue(item.userName)
+        row.createCell(2).setCellValue(item.loginId)
+        row.createCell(ORDER_COLUMN).setCellValue(item.order.toDouble())
+        row.createCell(TYPE_COLUMN).setCellValue(item.typeLabel)
         row.createCell(QUESTION_COLUMN).setCellValue(item.questionTitle)
         row.createCell(ANSWER_COLUMN).setCellValue(item.answer)
         row.createCell(STATUS_COLUMN).setCellValue(if (item.answer.isBlank()) "미입력" else "입력")
@@ -127,7 +133,17 @@ object SurveyWrittenAnswersSheet {
         }
 
     private fun sizeColumns(sheet: Sheet) {
-        val widths = listOf(USER_WIDTH, ORDER_WIDTH, TYPE_WIDTH, QUESTION_WIDTH, ANSWER_WIDTH, STATUS_WIDTH)
+        val widths =
+            listOf(
+                ACCESS_WIDTH,
+                NAME_WIDTH,
+                LOGIN_WIDTH,
+                ORDER_WIDTH,
+                TYPE_WIDTH,
+                QUESTION_WIDTH,
+                ANSWER_WIDTH,
+                STATUS_WIDTH,
+            )
         widths.forEachIndexed { index, width -> sheet.setColumnWidth(index, width) }
     }
 }

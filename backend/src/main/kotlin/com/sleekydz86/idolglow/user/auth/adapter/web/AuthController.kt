@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.adapter.web
 
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.adapter.web.dto.PasswordLoginResponse
 import com.sleekydz86.idolglow.user.auth.adapter.web.dto.TemporaryPasswordResponse
 import com.sleekydz86.idolglow.user.auth.adapter.web.request.PasswordLoginRequest
@@ -49,7 +51,15 @@ class AuthController(
     ): ResponseEntity<AccessTokenResponse> {
         refreshTokenCookieSupporter.validateCsrf(refreshCsrfHeader, refreshCsrfToken)
 
-        val tokenResponse = authService.reissue(refreshToken.orEmpty())
+        val tokenResponse =
+            try {
+                authService.reissue(refreshToken.orEmpty())
+            } catch (exception: CustomException) {
+                if (exception.getExceptionType() == AuthExceptionType.INVALID_REFRESH_TOKEN) {
+                    refreshTokenCookieSupporter.expireAuthenticationCookies(response)
+                }
+                throw exception
+            }
         refreshTokenCookieSupporter.addAuthenticationCookies(response, tokenResponse)
 
         return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))

@@ -127,8 +127,8 @@ class MimAdminService(
             } else {
                 "/$trimmed"
             }
-        require(normalized.length <= 500) {
-            "이동 경로는 500자 이하여야 합니다. 입력값=$trimmed"
+        require(normalized.length <= MAX_LINK_LENGTH) {
+            "이동 경로는 ${MAX_LINK_LENGTH}자 이하여야 합니다. 입력값=$trimmed"
         }
         return normalized
     }
@@ -139,6 +139,7 @@ class MimAdminService(
     }
 
     companion object {
+        private const val MAX_LINK_LENGTH = 500
         private val SLIDE_CATEGORIES = setOf("메인", "이벤트", "할인", "공지")
     }
 }

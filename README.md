@@ -1,9 +1,12 @@
 # IdolGlow
 
-<img width="981" height="534" alt="image" src="https://github.com/user-attachments/assets/07637feb-f9f7-42c8-9d10-ef9f5e7fc4bf" />
-<br/>
+| 메인 화면 1 | 메인 화면 2 |
+|:---:|:---:|
+| [![화면 1](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f)](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f) | [![화면 2](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b)](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b) |
 
-외국인 이용자를 대상으로 설문조사 기반 개인화 추천을 제공하는 K-pop 뷰티·공연·체험 예약 플랫폼입니다.
+<br/><br/><br/>
+
+외국인 이용자를 대상으로 설문조사 기반 개인화 추천을 제공하는 K-pop 뷰티·공연·체험 예약 플랫폼입니다.<br/>
 핵심은 Kotlin/Spring 기반 백엔드에서 1시간 단위 슬롯(09~15시)을 슬롯당 1건으로 안전하게 잡고, 결제 성공/실패/취소/만료에 따라 예약 상태를 일관되게 전이시키는 것입니다.
 <br/>
 
