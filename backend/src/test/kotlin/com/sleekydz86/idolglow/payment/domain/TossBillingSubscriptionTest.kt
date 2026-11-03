@@ -111,9 +111,45 @@ class TossBillingSubscriptionTest {
         assertEquals(LocalDateTime.of(2027, 5, 3, 9, 0), subscription.endsAt)
     }
 
+    @DisplayName("이번 기간만 이용하면 결제 성공 시 그 기간 끝에 종료되도록 해지 예약된다")
+    @Test
+    fun oneTermEndsAfterPaidPeriod() {
+        // given
+        val due = LocalDateTime.of(2026, 11, 3, 9, 0)
+        val subscription = subscription(nextBillingAt = due, cycleMonths = 3, autoRenew = false)
+
+        // when
+        subscription.markCharged(due)
+
+        // then
+        assertEquals(TossBillingSubscriptionStatus.CANCEL_SCHEDULED, subscription.status)
+        assertEquals(LocalDateTime.of(2027, 2, 3, 9, 0), subscription.endsAt)
+        assertTrue(subscription.isMembershipActive(LocalDateTime.of(2027, 2, 2, 9, 0)))
+        assertFalse(subscription.isMembershipActive(LocalDateTime.of(2027, 2, 3, 9, 1)))
+    }
+
+    @DisplayName("해지 예약하면 자동 연장이 꺼지고, 철회하면 다시 켜진다")
+    @Test
+    fun cancelAndWithdrawToggleAutoRenew() {
+        // given
+        val due = LocalDateTime.of(2026, 11, 3, 9, 0)
+        val subscription = subscription(nextBillingAt = due, cycleMonths = 6)
+
+        // when
+        subscription.scheduleCancel(due.minusDays(1))
+        val afterCancel = subscription.autoRenew
+        subscription.withdrawCancel(due.minusDays(1))
+
+        // then
+        assertFalse(afterCancel)
+        assertTrue(subscription.autoRenew)
+        assertEquals(TossBillingSubscriptionStatus.ACTIVE, subscription.status)
+    }
+
     private fun subscription(
         nextBillingAt: LocalDateTime,
         cycleMonths: Int = 1,
+        autoRenew: Boolean = true,
     ): TossBillingSubscription {
         val method =
             TossBillingMethod(
@@ -128,6 +164,7 @@ class TossBillingSubscriptionTest {
             amount = 4_900L,
             nextBillingAt = nextBillingAt,
             cycleMonths = cycleMonths,
+            autoRenew = autoRenew,
         )
     }
 }

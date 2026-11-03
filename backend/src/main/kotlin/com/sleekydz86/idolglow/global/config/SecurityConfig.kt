@@ -96,6 +96,8 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers(org.springframework.http.HttpMethod.POST, "/payments/toss/webhook")
                     .permitAll()
+                    .requestMatchers("/payments/toss/billing/renewal-notices/**")
+                    .permitAll()
                     .requestMatchers("/mcp", "/mcp/**", "/sse", "/sse/**")
                     .hasRole("ADMIN")
                     .anyRequest()

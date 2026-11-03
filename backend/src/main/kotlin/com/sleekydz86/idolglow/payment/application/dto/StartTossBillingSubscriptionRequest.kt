@@ -11,4 +11,5 @@ data class StartTossBillingSubscriptionRequest(
     val orderName: String = BillingDefaults.DEFAULT_ORDER_NAME,
     val chargeImmediately: Boolean = true,
     val cycleMonths: Int = BillingCycle.MONTHLY.months,
+    val autoRenew: Boolean = true,
 )

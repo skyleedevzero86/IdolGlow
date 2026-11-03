@@ -33,4 +33,19 @@ interface TossBillingSubscriptionJpaRepository : JpaRepository<TossBillingSubscr
         @Param("active") active: TossBillingSubscriptionStatus,
         @Param("now") now: LocalDateTime,
     ): List<Long>
+
+    @Query(
+        """
+        SELECT s.id FROM TossBillingSubscription s
+        WHERE s.status IN :statuses
+          AND s.nextBillingAt IS NOT NULL
+          AND s.nextBillingAt > :now
+          AND s.nextBillingAt <= :until
+        """,
+    )
+    fun findRenewalNoticeTargetIds(
+        @Param("statuses") statuses: Collection<TossBillingSubscriptionStatus>,
+        @Param("now") now: LocalDateTime,
+        @Param("until") until: LocalDateTime,
+    ): List<Long>
 }

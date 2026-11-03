@@ -231,6 +231,9 @@ class TossBillingService(
                 ?: throw IllegalArgumentException("등록된 결제 수단이 없습니다. 먼저 카드를 등록하세요.")
 
         val cycle = BillingCycle.ofMonths(request.cycleMonths)
+        require(request.autoRenew || request.chargeImmediately) {
+            "이번 기간만 이용은 지금 결제하고 시작할 때만 고를 수 있습니다."
+        }
         val amount = if (cycle == BillingCycle.MONTHLY) defaultAmount else cycle.amount
         val orderName = request.orderName.ifBlank { defaultOrderName }
         val now = LocalDateTime.now()
@@ -246,12 +249,14 @@ class TossBillingService(
                     status = TossBillingSubscriptionStatus.ACTIVE,
                     nextBillingAt = if (request.chargeImmediately) now else now.plusMonths(1),
                     cycleMonths = cycle.months,
+                    autoRenew = request.autoRenew,
                 )
             } else {
                 existing.billingMethod = method
                 existing.orderName = orderName
                 existing.amount = amount
                 existing.cycleMonths = cycle.months
+                existing.autoRenew = request.autoRenew
                 existing.status = TossBillingSubscriptionStatus.ACTIVE
                 existing.failCount = 0
                 existing.retryAt = null
