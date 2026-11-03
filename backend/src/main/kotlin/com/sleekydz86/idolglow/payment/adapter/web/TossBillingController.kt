@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
+import com.sleekydz86.idolglow.payment.application.BillingChargeCancelService
 import com.sleekydz86.idolglow.payment.application.TossBillingService
 import com.sleekydz86.idolglow.payment.application.dto.IssueTossBillingKeyRequest
 import com.sleekydz86.idolglow.payment.application.dto.RetryTossBillingChargeRequest
@@ -26,7 +27,16 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/payments/toss/billing")
 class TossBillingController(
     private val tossBillingService: TossBillingService,
+    private val billingChargeCancelService: BillingChargeCancelService,
 ) {
+    @Operation(summary = "자동결제 회차 취소 (결제일로부터 14일 이내)")
+    @PostMapping("/charges/{chargeId}/cancel")
+    fun cancelCharge(
+        @LoginUser userId: Long,
+        @PathVariable chargeId: Long,
+    ): ResponseEntity<TossBillingChargeResponse> =
+        ResponseEntity.ok(billingChargeCancelService.cancel(userId, chargeId, null))
+
     @Operation(summary = "빌링 클라이언트 설정 조회")
     @GetMapping("/client-config")
     fun clientConfig(

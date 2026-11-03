@@ -990,6 +990,7 @@ CREATE TABLE IF NOT EXISTS toss_billing_charges (
     raw_response TEXT NULL COMMENT '토스 에이피아이 원문 응답. 디버깅과 대사에 사용',
     fail_message VARCHAR(500) NULL COMMENT '실패 시 사용자와 운영 안내 메시지',
     approved_at DATETIME(6) NULL COMMENT '토스 승인 완료 시각',
+    canceled_at DATETIME(6) NULL COMMENT '고객 취소 시각. 결제일로부터 14일 안에만 가능',
     created_at DATETIME(6) NOT NULL COMMENT '회차 행 생성 시각. 대기 상태로 먼저 저장하는 시점',
     updated_at DATETIME(6) NOT NULL COMMENT '행 수정 시각',
     CONSTRAINT uk_toss_billing_charges_order_id UNIQUE (order_id),

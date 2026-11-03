@@ -151,6 +151,9 @@ class TossBillingSubscriptionAmountTest {
     class BillingControllerProfileSlice {
         @Bean
         fun tossBillingService(): TossBillingService = mockk(relaxed = true)
+
+        @Bean
+        fun billingChargeCancelService(): BillingChargeCancelService = mockk(relaxed = true)
     }
 
     companion object {

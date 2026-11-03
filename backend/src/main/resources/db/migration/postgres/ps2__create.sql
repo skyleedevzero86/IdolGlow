@@ -1177,6 +1177,7 @@ CREATE TABLE IF NOT EXISTS toss_billing_charges (
     raw_response TEXT,
     fail_message VARCHAR(500),
     approved_at TIMESTAMP(6),
+    canceled_at TIMESTAMP(6),
     created_at TIMESTAMP(6) NOT NULL,
     updated_at TIMESTAMP(6) NOT NULL,
     CONSTRAINT uk_toss_billing_charges_order_id UNIQUE (order_id),

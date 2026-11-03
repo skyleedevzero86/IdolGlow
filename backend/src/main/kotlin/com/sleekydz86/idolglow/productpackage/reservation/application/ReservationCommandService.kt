@@ -107,7 +107,7 @@ class ReservationCommandService(
         require(payment.reservation.userId == userId) { "본인 결제만 취소할 수 있습니다." }
         rejectIfPaymentConfirming(payment)
         require(paymentViewPolicyService.canUserCancel(payment)) {
-            "사용자 결제 취소 가능 기간(15일)이 지났거나 취소할 수 없는 상태입니다."
+            "카드 결제는 결제일로부터 14일이 지나면 취소할 수 없습니다. 또는 취소할 수 없는 상태입니다."
         }
         return cancelReservationByUser(payment.reservation.id, userId, cancelReasonText)
     }
@@ -140,7 +140,9 @@ class ReservationCommandService(
     ): ReservationCancelOutcome {
         val payment = reservationPaymentLock.lockByPaymentId(paymentId)
         rejectIfPaymentConfirming(payment)
-        require(paymentViewPolicyService.canAdminCancel(payment)) { "관리자 취소가 가능한 결제 상태가 아닙니다." }
+        require(paymentViewPolicyService.canAdminCancel(payment)) {
+            "카드 결제는 결제일로부터 14일이 지나면 관리자도 취소할 수 없습니다. 또는 취소할 수 없는 결제 상태입니다."
+        }
         return cancelReservationByAdmin(payment.reservation.id, cancelReasonText)
     }
 
