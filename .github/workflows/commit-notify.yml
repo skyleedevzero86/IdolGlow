@@ -107,36 +107,54 @@ jobs:
 
           def join_html_lines_with_limit(
               lines,
+              required_tail_lines=None,
               max_length=4000
           ):
-              message = "\n".join(lines)
+              tail_lines = list(
+                  required_tail_lines or []
+              )
+              complete_lines = list(lines)
+
+              if tail_lines:
+                  complete_lines.extend([
+                      "",
+                      *tail_lines
+                  ])
+
+              message = "\n".join(complete_lines)
 
               if len(message) <= max_length:
                   return message
 
-              truncation_notice = (
-                  "\n\n… 메시지가 길어 일부 생략됐습니다."
-              )
+              required_suffix_lines = [
+                  "",
+                  "… 메시지가 길어 일부 생략됐습니다."
+              ]
+
+              if tail_lines:
+                  required_suffix_lines.extend([
+                      "",
+                      *tail_lines
+                  ])
+
               included_lines = []
 
               for line in lines:
-                  candidate = "\n".join(
-                      [*included_lines, line]
-                  )
+                  candidate = "\n".join([
+                      *included_lines,
+                      line,
+                      *required_suffix_lines
+                  ])
 
-                  if (
-                      len(candidate)
-                      + len(truncation_notice)
-                      > max_length
-                  ):
+                  if len(candidate) > max_length:
                       break
 
                   included_lines.append(line)
 
-              return (
-                  "\n".join(included_lines)
-                  + truncation_notice
-              )
+              return "\n".join([
+                  *included_lines,
+                  *required_suffix_lines
+              ])
 
 
           def first_line(value):
@@ -640,19 +658,21 @@ jobs:
               ])
 
 
+          required_tail_lines = []
+
           if compare_url:
-              lines.extend([
-                  "",
+              required_tail_lines.append(
                   (
                       f'🔎 <a href="'
                       f'{escape_url(compare_url)}">'
                       "이번 Push 변경 내용 보기</a>"
                   )
-              ])
+              )
 
 
           message = join_html_lines_with_limit(
-              lines
+              lines,
+              required_tail_lines=required_tail_lines
           )
 
 
