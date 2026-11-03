@@ -44,11 +44,13 @@ class TossBillingSubscription(
     var retryAt: LocalDateTime? = null,
     @Column(name = "ends_at")
     var endsAt: LocalDateTime? = null,
+    @Column(name = "cycle_months", nullable = false)
+    var cycleMonths: Int = BillingCycle.MONTHLY.months,
 ) : BaseEntity() {
     fun markCharged(now: LocalDateTime = LocalDateTime.now()) {
         val billedPeriodStart = nextBillingAt ?: now
         lastChargedAt = now
-        nextBillingAt = billedPeriodStart.plusMonths(1)
+        nextBillingAt = billedPeriodStart.plusMonths(cycleMonths.toLong())
         failCount = 0
         retryAt = null
         if (status != TossBillingSubscriptionStatus.CANCEL_SCHEDULED) {

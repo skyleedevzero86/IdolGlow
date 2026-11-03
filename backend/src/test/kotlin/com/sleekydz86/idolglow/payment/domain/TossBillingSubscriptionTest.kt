@@ -68,7 +68,53 @@ class TossBillingSubscriptionTest {
         assertEquals(TossBillingSubscriptionStatus.CANCELED, subscription.status)
     }
 
-    private fun subscription(nextBillingAt: LocalDateTime): TossBillingSubscription {
+    @DisplayName("3개월 주기 구독은 결제 성공 시 다음 결제일이 세 달 뒤로 간다")
+    @Test
+    fun quarterlyMovesNextBillingThreeMonths() {
+        // given
+        val due = LocalDateTime.of(2026, 11, 3, 9, 0)
+        val subscription = subscription(nextBillingAt = due, cycleMonths = 3)
+
+        // when
+        subscription.markCharged(due)
+
+        // then
+        assertEquals(LocalDateTime.of(2027, 2, 3, 9, 0), subscription.nextBillingAt)
+    }
+
+    @DisplayName("1년 주기 구독은 결제 성공 시 다음 결제일이 열두 달 뒤로 간다")
+    @Test
+    fun yearlyMovesNextBillingTwelveMonths() {
+        // given
+        val due = LocalDateTime.of(2026, 11, 3, 9, 0)
+        val subscription = subscription(nextBillingAt = due, cycleMonths = 12)
+
+        // when
+        subscription.markCharged(due.plusHours(2))
+
+        // then
+        assertEquals(LocalDateTime.of(2027, 11, 3, 9, 0), subscription.nextBillingAt)
+    }
+
+    @DisplayName("해지 예약하면 종료 시각은 이미 결제한 기간이 끝나는 다음 결제일이다")
+    @Test
+    fun cancelOfHalfYearEndsAtPaidPeriodEnd() {
+        // given
+        val due = LocalDateTime.of(2026, 11, 3, 9, 0)
+        val subscription = subscription(nextBillingAt = due, cycleMonths = 6)
+        subscription.markCharged(due)
+
+        // when
+        subscription.scheduleCancel(due.plusDays(10))
+
+        // then
+        assertEquals(LocalDateTime.of(2027, 5, 3, 9, 0), subscription.endsAt)
+    }
+
+    private fun subscription(
+        nextBillingAt: LocalDateTime,
+        cycleMonths: Int = 1,
+    ): TossBillingSubscription {
         val method =
             TossBillingMethod(
                 userId = 1L,
@@ -81,6 +127,7 @@ class TossBillingSubscriptionTest {
             orderName = "IdolGlow 월간 구독",
             amount = 4_900L,
             nextBillingAt = nextBillingAt,
+            cycleMonths = cycleMonths,
         )
     }
 }
