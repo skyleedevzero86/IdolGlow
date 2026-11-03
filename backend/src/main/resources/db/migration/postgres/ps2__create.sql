@@ -1149,12 +1149,20 @@ CREATE TABLE IF NOT EXISTS toss_billing_subscriptions (
     status VARCHAR(30) NOT NULL,
     next_billing_at TIMESTAMP(6),
     last_charged_at TIMESTAMP(6),
+    fail_count INT NOT NULL DEFAULT 0,
+    retry_at TIMESTAMP(6),
+    ends_at TIMESTAMP(6),
+    cycle_months INT NOT NULL DEFAULT 1,
+    auto_renew BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP(6) NOT NULL,
     updated_at TIMESTAMP(6) NOT NULL,
     CONSTRAINT fk_toss_billing_subscriptions_method
         FOREIGN KEY (billing_method_id) REFERENCES toss_billing_methods (id),
     CONSTRAINT uk_toss_billing_subscriptions_user_plan UNIQUE (user_id, plan_code)
 );
+
+COMMENT ON COLUMN toss_billing_subscriptions.cycle_months IS '결제 주기 개월 수. 1, 3, 6, 12. 결제 성공 시 다음 결제일을 이 개월 수만큼 미룸';
+COMMENT ON COLUMN toss_billing_subscriptions.auto_renew IS '기간이 끝나면 자동 연장할지 여부. false면 결제 성공 시 그 기간 끝에 종료되도록 해지 예약';
 
 CREATE TABLE IF NOT EXISTS toss_billing_charges (
     id BIGSERIAL PRIMARY KEY,
@@ -1236,6 +1244,31 @@ CREATE TABLE IF NOT EXISTS toss_billing_customers (
     CONSTRAINT uk_toss_billing_customers_user_id UNIQUE (user_id),
     CONSTRAINT uk_toss_billing_customers_customer_key UNIQUE (customer_key)
 );
+
+-- 정기결제 갱신 안내 메일. 구독과 이용 기간 끝 조합당 1건이라 같은 안내를 두 번 보내지 않음
+CREATE TABLE IF NOT EXISTS toss_billing_renewal_notices (
+    id BIGSERIAL PRIMARY KEY,
+    subscription_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    period_end TIMESTAMP(6) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
+    sent_at TIMESTAMP(6),
+    decision VARCHAR(20),
+    decided_at TIMESTAMP(6),
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    CONSTRAINT fk_toss_billing_renewal_notices_subscription
+        FOREIGN KEY (subscription_id) REFERENCES toss_billing_subscriptions (id),
+    CONSTRAINT uk_toss_billing_renewal_notices_period UNIQUE (subscription_id, period_end),
+    CONSTRAINT uk_toss_billing_renewal_notices_token UNIQUE (token_hash)
+);
+
+COMMENT ON TABLE toss_billing_renewal_notices IS '정기결제 갱신 안내 메일. 구독과 이용 기간 끝 조합당 1건';
+COMMENT ON COLUMN toss_billing_renewal_notices.period_end IS '안내 대상 이용 기간이 끝나는 시각. 다음 결제일과 같음';
+COMMENT ON COLUMN toss_billing_renewal_notices.token_hash IS '메일 링크 토큰의 SHA-256. 원문 토큰은 저장하지 않음';
+COMMENT ON COLUMN toss_billing_renewal_notices.sent_at IS '메일 발송 시각. 비어 있으면 발송 실패';
+COMMENT ON COLUMN toss_billing_renewal_notices.decision IS '고객 선택. CONTINUE 연장, STOP 이번 기간만. 비어 있으면 기존 설정대로 진행';
+COMMENT ON COLUMN toss_billing_renewal_notices.decided_at IS '고객이 선택한 시각';
 
 -- 수신자 한 명당 한 행. 성공한 주소는 재개 때 다시 보내지 않는다.
 CREATE TABLE IF NOT EXISTS subscription_dispatch_recipients (

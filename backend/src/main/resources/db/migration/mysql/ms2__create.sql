@@ -964,6 +964,11 @@ CREATE TABLE IF NOT EXISTS toss_billing_subscriptions (
     status VARCHAR(30) NOT NULL COMMENT '상태. 활성, 일시중지, 해지예약, 해지완료',
     next_billing_at DATETIME(6) NULL COMMENT '다음 자동결제 예정 시각. 스케줄러 도래 판단 기준',
     last_charged_at DATETIME(6) NULL COMMENT '최근 결제 성공 시각',
+    fail_count INT NOT NULL DEFAULT 0 COMMENT '연속 결제 실패 횟수. 1회는 하루 뒤, 2회는 이틀 뒤 재시도, 3회는 일시중지',
+    retry_at DATETIME(6) NULL COMMENT '다음 재시도 시각. 비어 있으면 다음결제일 기준으로 도래 판단',
+    ends_at DATETIME(6) NULL COMMENT '해지 예약 시 혜택 유지 종료 시각. 보통 다음 결제일. 이후 해지완료',
+    cycle_months INT NOT NULL DEFAULT 1 COMMENT '결제 주기 개월 수. 1, 3, 6, 12. 결제 성공 시 다음 결제일을 이 개월 수만큼 미룸',
+    auto_renew BOOLEAN NOT NULL DEFAULT TRUE COMMENT '기간이 끝나면 자동 연장할지 여부. false면 결제 성공 시 그 기간 끝에 종료되도록 해지 예약',
     created_at DATETIME(6) NOT NULL COMMENT '행 생성 시각',
     updated_at DATETIME(6) NOT NULL COMMENT '행 수정 시각',
     CONSTRAINT fk_toss_billing_subscriptions_method
@@ -1054,6 +1059,24 @@ CREATE TABLE IF NOT EXISTS toss_billing_customers (
     CONSTRAINT uk_toss_billing_customers_user_id UNIQUE (user_id),
     CONSTRAINT uk_toss_billing_customers_customer_key UNIQUE (customer_key)
 ) COMMENT='글로우패스 토스 구매자 키. 사용자당 UUID 1개';
+
+-- 정기결제 갱신 안내 메일. 구독과 이용 기간 끝 조합당 1건이라 같은 안내를 두 번 보내지 않음
+CREATE TABLE IF NOT EXISTS toss_billing_renewal_notices (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '갱신 안내 기본키',
+    subscription_id BIGINT NOT NULL COMMENT '구독 아이디 외래키',
+    user_id BIGINT NOT NULL COMMENT '회원 아이디',
+    period_end DATETIME(6) NOT NULL COMMENT '안내 대상 이용 기간이 끝나는 시각. 다음 결제일과 같음',
+    token_hash VARCHAR(64) NOT NULL COMMENT '메일 링크 토큰의 SHA-256. 원문 토큰은 저장하지 않음',
+    sent_at DATETIME(6) NULL COMMENT '메일 발송 시각. 비어 있으면 발송 실패',
+    decision VARCHAR(20) NULL COMMENT '고객 선택. CONTINUE 연장, STOP 이번 기간만. 비어 있으면 기존 설정대로 진행',
+    decided_at DATETIME(6) NULL COMMENT '고객이 선택한 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '행 생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '행 수정 시각',
+    CONSTRAINT fk_toss_billing_renewal_notices_subscription
+        FOREIGN KEY (subscription_id) REFERENCES toss_billing_subscriptions (id),
+    CONSTRAINT uk_toss_billing_renewal_notices_period UNIQUE (subscription_id, period_end),
+    CONSTRAINT uk_toss_billing_renewal_notices_token UNIQUE (token_hash)
+) COMMENT='정기결제 갱신 안내 메일. 구독과 이용 기간 끝 조합당 1건';
 
 -- 수신자 한 명당 한 행. 성공한 주소는 재개 때 다시 보내지 않는다.
 CREATE TABLE IF NOT EXISTS subscription_dispatch_recipients (
