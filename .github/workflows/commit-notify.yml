@@ -105,6 +105,40 @@ jobs:
               )
 
 
+          def join_html_lines_with_limit(
+              lines,
+              max_length=4000
+          ):
+              message = "\n".join(lines)
+
+              if len(message) <= max_length:
+                  return message
+
+              truncation_notice = (
+                  "\n\n… 메시지가 길어 일부 생략됐습니다."
+              )
+              included_lines = []
+
+              for line in lines:
+                  candidate = "\n".join(
+                      [*included_lines, line]
+                  )
+
+                  if (
+                      len(candidate)
+                      + len(truncation_notice)
+                      > max_length
+                  ):
+                      break
+
+                  included_lines.append(line)
+
+              return (
+                  "\n".join(included_lines)
+                  + truncation_notice
+              )
+
+
           def first_line(value):
               text = str(value or "").strip()
 
@@ -617,15 +651,9 @@ jobs:
               ])
 
 
-          message = "\n".join(
+          message = join_html_lines_with_limit(
               lines
           )
-
-          if len(message) > 4000:
-              message = (
-                  message[:3900]
-                  + "\n\n… 메시지가 길어 일부 생략됐습니다."
-              )
 
 
           result = send_telegram_message(
