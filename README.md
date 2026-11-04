@@ -1,3 +1,5 @@
+
+
 # IdolGlow
 
 | 메인 화면 1 | 메인 화면 2 |
@@ -7,6 +9,9 @@
 | [![화면 1](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06)](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06) | [![화면 2](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6)](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6) |
 |Glow메뉴(glow정보) | Glow메뉴(최근리뷰) |
 | [![화면 1](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d)](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d) | [![화면 2](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5)](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5) |
+|이벤트 | 
+| [![화면 1](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145)](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145) |
+
 
 <br/><br/><br/>
 
