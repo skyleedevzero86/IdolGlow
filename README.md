@@ -4,7 +4,8 @@
 |:---:|:---:|
 | [![화면 1](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f)](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f) | [![화면 2](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b)](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b) 
 | Glow메뉴(전체) | Glow메뉴(트렌드) |
-| [![화면 1](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06)](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06) | [![화면 2](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6)](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6) |Glow메뉴(glow정보) | Glow메뉴(최근리뷰) |
+| [![화면 1](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06)](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06) | [![화면 2](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6)](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6) |
+|Glow메뉴(glow정보) | Glow메뉴(최근리뷰) |
 | [![화면 1](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d)](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d) | [![화면 2](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5)](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5) |
 
 <br/><br/><br/>
