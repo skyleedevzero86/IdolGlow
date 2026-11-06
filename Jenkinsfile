@@ -584,11 +584,13 @@ def verifyBackendGradleWrapper() {
 
 def runBackendGradle(String stageLabel, String goals, int timeoutMinutes = 20) {
     try {
+        def logName = goals.replaceAll(/[^A-Za-z0-9]+/, '-')
         dir('backend') {
             timeout(time: timeoutMinutes, unit: 'MINUTES') {
                 if (isUnix()) {
                     sh 'chmod +x gradlew || true'
-                    sh "./gradlew ${goals} ${backendGradleFlags()}"
+                    sh 'mkdir -p ../ci-logs'
+                    sh "bash -o pipefail -c './gradlew ${goals} ${backendGradleFlags()} 2>&1 | tee ../ci-logs/backend-${logName}.log'"
                 } else {
                     bat "gradlew.bat ${goals} ${backendGradleFlags()}"
                 }
@@ -851,6 +853,9 @@ pipeline {
             steps {
                 checkout scm
                 script {
+                    if (isUnix()) {
+                        sh 'rm -rf ci-logs && mkdir -p ci-logs'
+                    }
                     fetchGitTagsForReleaseDetection()
                     env.REPO_ROOT = pwd()
                     env.FRONTEND_DIR = resolveFrontendDir()
@@ -1021,7 +1026,8 @@ pipeline {
                                 sh 'corepack prepare pnpm@9.15.4 --activate || true'
                                 sh 'pnpm -v'
                                 installFrontendDependencies(frontendDir)
-                                sh 'pnpm build'
+                                sh "mkdir -p '${env.REPO_ROOT}/ci-logs'"
+                                sh "bash -o pipefail -c 'pnpm build 2>&1 | tee \"${env.REPO_ROOT}/ci-logs/frontend-build.log\"'"
                             } else {
                                 bat 'node -v'
                                 bat 'corepack enable'

@@ -42,3 +42,4 @@ frontend/package-lock.json
 frontend/yarn.lock
 frontend/pnpm-workspace.yaml
 infra/**/*
+ci-logs/
