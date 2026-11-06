@@ -582,6 +582,38 @@ def verifyBackendGradleWrapper() {
     }
 }
 
+def runFailureAnalysis() {
+    if (!params.AI_FAILURE_ANALYSIS || !isUnix()) {
+        return
+    }
+    try {
+        def failedStage = resolveFailedStageName() ?: ''
+        def envs = [
+            "FAILED_STAGE=${failedStage}",
+            "CI_LLM_API_ENABLED=${params.AI_ANALYSIS_EXTERNAL_API ? 'true' : 'false'}",
+        ]
+        def run = {
+            withEnv(envs) {
+                timeout(time: 150, unit: 'SECONDS') {
+                    sh 'cd infra/jenkins-local/ci-analyzer && (test -d node_modules || npm ci --no-audit --no-fund) && cd ../../.. && node infra/jenkins-local/ci-analyzer/analyze-failure.mjs || true'
+                }
+            }
+        }
+        if (params.AI_ANALYSIS_EXTERNAL_API) {
+            withCredentials([string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_API_KEY')]) {
+                run()
+            }
+        } else {
+            run()
+        }
+        if (fileExists('ci-logs/failure-analysis.txt')) {
+            env.AI_FAILURE_ANALYSIS_TEXT = readFile(file: 'ci-logs/failure-analysis.txt', encoding: 'UTF-8')
+        }
+    } catch (Exception analysisError) {
+        echo "실패 분석 건너뜀: ${analysisError.message}"
+    }
+}
+
 def runBackendGradle(String stageLabel, String goals, int timeoutMinutes = 20) {
     try {
         def logName = goals.replaceAll(/[^A-Za-z0-9]+/, '-')
@@ -725,6 +757,10 @@ ${buildTelegramContextBlock(true)}
         } else if (outcome == 'failure') {
             def failedStage = resolveFailedStageName()
             def guide = resolveFailureGuide(failedStage)
+            def aiText = env.AI_FAILURE_ANALYSIS_TEXT?.trim()
+            def aiBlock = aiText
+                ? "\n<b>🤖 로그 분석 (참고용)</b>\n${escapeTelegramHtml(truncateTelegramText(aiText, 1200))}\n"
+                : ''
 
             message = """❌ <b>IdolGlow 배포 중단</b>
 
@@ -739,7 +775,7 @@ ${escapeTelegramHtml(guide.impact)}
 
 <b>✅ 다음 조치 (개발팀)</b>
 ${formatTelegramActionLines(guide.action)}
-
+${aiBlock}
 ${buildTelegramContextBlock(false)}
 <i>알림 summary-v5 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'aborted') {
@@ -1211,6 +1247,8 @@ booleanParam(
                     notifyTelegramSummary('success')
                     echo '배포 파이프라인이 성공적으로 완료되었습니다.'
                 } else if (result == 'FAILURE') {
+                    captureFailureStageIfMissing()
+                    runFailureAnalysis()
                     notifyTelegramSummary('failure')
                     echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
                 } else if (result == 'ABORTED') {
@@ -1220,6 +1258,7 @@ booleanParam(
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
             archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: true
             archiveArtifacts artifacts: 'backend/build/reports/profile/*.html', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'ci-logs/failure-analysis.*', allowEmptyArchive: true
         }
     }
 }
