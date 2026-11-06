@@ -4,6 +4,36 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.16.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.4...v0.16.0) (2026-11-06)
+
+
+### Features
+
+* **llm:** 로컬 우선 LLM 게이트웨이와 기능 이전, 설문 추천 품질 평가 ([#96](https://github.com/skyleedevzero86/IdolGlow/issues/96)) ([6e41b30](https://github.com/skyleedevzero86/IdolGlow/commit/6e41b303e0079e309ebbc8fca4ac4667aa7179bd))
+* 로컬 우선 LLM 게이트웨이 추가 ([e06570b](https://github.com/skyleedevzero86/IdolGlow/commit/e06570b82e1b36550d1b71b9be26dfa87b135e87))
+* 로컬 우선 LLM 게이트웨이 추가 ([6483211](https://github.com/skyleedevzero86/IdolGlow/commit/6483211d8afa4e86bb5334abaf470907d1f7e337))
+* 서울시 역사마스터 CSV로 지하철역 좌표를 찾기 ([fe57a30](https://github.com/skyleedevzero86/IdolGlow/commit/fe57a305f3cc01b0d830ce4fa9d4d1b3f01c4a22))
+* 설문 추천은 기본 문구로 바로 응답하고 LLM 문구는 뒤에서 만듬 ([f1c530d](https://github.com/skyleedevzero86/IdolGlow/commit/f1c530d8df412f32bcee3a8e466fe1b6d99d949c))
+* 지하철역 요약에 실제 노선·주변 장소 데이터를 넣고 사실과 맞는지 검증 ([292df7c](https://github.com/skyleedevzero86/IdolGlow/commit/292df7ca181088236cb08afe333482ae228c853f))
+
+
+### Bug Fixes
+
+* ArticleViewModel에 likeCount 추가 ([76c0fd9](https://github.com/skyleedevzero86/IdolGlow/commit/76c0fd9723f4aebdd5c406a4ea818d260535e7dd))
+* 로컬 LLM 주소와 모델은 설정에 있을 때만 사용 ([08c0881](https://github.com/skyleedevzero86/IdolGlow/commit/08c0881c63c8ed5c9c2580d3fd59a9373fd58f2b))
+* 지하철역 요약은 영어로 만든 뒤 한국어로 번역하고 섞인 문자는 제거 ([309858e](https://github.com/skyleedevzero86/IdolGlow/commit/309858eb55b0730da160e49a11bbf45717fb00ef))
+
+
+### Refactoring
+
+* 공연 매칭 근거를 LLM 게이트웨이로 옮기고 규칙 판정과 맞는지 검증 ([33225ae](https://github.com/skyleedevzero86/IdolGlow/commit/33225ae1f7e696e6f9b6f83cbbcae7450d3aacb6))
+* 지하철역 요약을 LLM 게이트웨이로 리팩토링 ([de24daf](https://github.com/skyleedevzero86/IdolGlow/commit/de24daf8c6afce509b2de8903db5950707505ca9))
+
+
+### Tests
+
+* 설문 추천 LLM 품질 평가 추가 ([020a101](https://github.com/skyleedevzero86/IdolGlow/commit/020a101ebd837479ab76e63a2b9900bb51236589))
+
 ## [0.15.4](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.3...v0.15.4) (2026-11-06)
 
 
