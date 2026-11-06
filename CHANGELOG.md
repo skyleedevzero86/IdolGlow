@@ -4,6 +4,14 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.15.4](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.3...v0.15.4) (2026-11-06)
+
+
+### CI
+
+* Discord 빌드 알림 추가와 실패 단계 표시 버그 수정 ([afb276b](https://github.com/skyleedevzero86/IdolGlow/commit/afb276bc8ec6c6d482096b180db57a06838c5f4c))
+* send build summary to Discord and fix failed stage name ([#94](https://github.com/skyleedevzero86/IdolGlow/issues/94)) ([1d942a5](https://github.com/skyleedevzero86/IdolGlow/commit/1d942a5f182da5c6dc0d13b694b3c21169739762))
+
 ## [0.15.3](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.2...v0.15.3) (2026-11-06)
 
 
