@@ -1,6 +1,8 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import type { To } from "react-router-dom";
 import { useAuth } from "../../../auth/AuthContext";
 import {
   changePassword,
@@ -38,7 +40,7 @@ type NavId = "glow" | "wish" | "events" | "archive";
 
 type NavItemDef = {
   readonly id: NavId;
-  readonly to: To;
+  readonly to: string;
   readonly label: string;
   readonly ariaLabel: string;
 };
@@ -223,8 +225,11 @@ const IconLoginGoogle = () => (
 );
 
 export const Header = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const query = searchParams.toString();
+  const search = query ? `?${query}` : "";
   const loginTitleId = useId();
   const joinTitleId = useId();
   const pwdTitleId = useId();
@@ -338,7 +343,7 @@ export const Header = () => {
       window.clearInterval(timerId);
       window.removeEventListener(GLOW_ALERTS_CHANGED_EVENT, handleGlowAlertsChanged);
     };
-  }, [accessToken, location.pathname]);
+  }, [accessToken, pathname]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -377,7 +382,7 @@ export const Header = () => {
 
   useEffect(() => {
     if (!authReady) return;
-    if (location.pathname !== "/mypage") {
+    if (pathname !== "/mypage") {
       mypageGuestModalShownRef.current = false;
       return;
     }
@@ -388,10 +393,10 @@ export const Header = () => {
     if (mypageGuestModalShownRef.current) return;
     mypageGuestModalShownRef.current = true;
     openLoginModal();
-  }, [authReady, user, location.pathname, openLoginModal]);
+  }, [authReady, user, pathname, openLoginModal]);
 
   useEffect(() => {
-    const q = new URLSearchParams(location.search);
+    const q = new URLSearchParams(search);
     const shouldOpenLogin = q.get("login") === "1";
     const shouldOpenJoin = q.get("join") === "1" || q.get("view") === "join";
     if (!shouldOpenLogin && !shouldOpenJoin) return;
@@ -404,11 +409,8 @@ export const Header = () => {
     q.delete("join");
     q.delete("view");
     const s = q.toString();
-    navigate(
-      { pathname: location.pathname, search: s ? `?${s}` : "" },
-      { replace: true },
-    );
-  }, [location.pathname, location.search, navigate, openJoinModal, openLoginModal]);
+    router.replace(`${pathname}${s ? `?${s}` : ""}`);
+  }, [pathname, search, router, openJoinModal, openLoginModal]);
 
   const openJoinFromLogin = useCallback(() => {
     setLoginExitTarget("join");
@@ -517,13 +519,13 @@ export const Header = () => {
   }, []);
 
   const resolvePostAuthPath = useCallback(() => {
-    const q = new URLSearchParams(location.search);
+    const q = new URLSearchParams(search);
     const redirect = q.get("redirect");
     if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
       return redirect;
     }
     return "/mypage";
-  }, [location.search]);
+  }, [search]);
 
   const handleLoginSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -558,7 +560,7 @@ export const Header = () => {
         setLoginEmail(saveLoginEmail ? email : "");
         setLoginPassword("");
         setLoginMessage("");
-        navigate(resolvePostAuthPath(), { replace: true });
+        router.replace(resolvePostAuthPath());
       })();
     },
     [
@@ -566,7 +568,7 @@ export const Header = () => {
       loginPassword,
       saveLoginEmail,
       applyAccessToken,
-      navigate,
+      router,
       resolvePostAuthPath,
     ],
   );
@@ -734,7 +736,7 @@ export const Header = () => {
       setJoinSubscribe(false);
       setJoinAvatarFile(null);
       setJoinMessage("");
-      navigate(resolvePostAuthPath(), { replace: true });
+      router.replace(resolvePostAuthPath());
     },
     [
       joinAgreed,
@@ -746,7 +748,7 @@ export const Header = () => {
       applyAccessToken,
       applyLoginUser,
       refreshUser,
-      navigate,
+      router,
       resolvePostAuthPath,
     ],
   );
@@ -836,7 +838,7 @@ export const Header = () => {
         setIsLoginOpen(false);
         setAuthModalView("login");
         setLoginPassword("");
-        navigate(resolvePostAuthPath(), { replace: true });
+        router.replace(resolvePostAuthPath());
       })();
     },
     [
@@ -844,13 +846,13 @@ export const Header = () => {
       forcedNewPasswordConfirm,
       tempPasswordForChange,
       forcedAccessToken,
-      navigate,
+      router,
       resolvePostAuthPath,
     ],
   );
 
   const linkClass = (id: NavId) => {
-    const active = isNavItemActive(location.pathname, location.search, id);
+    const active = isNavItemActive(pathname, search, id);
     return `${styles.navLink} ${active ? styles.navLinkActive : ""}`;
   };
 
@@ -859,7 +861,7 @@ export const Header = () => {
       <header className={styles.header} role="banner">
         <div className={styles.headerTop}>
           <Link
-            to="/"
+            href="/"
             className={styles.logo}
             aria-label="IDOL GLOW 홈으로 이동"
           >
@@ -872,15 +874,15 @@ export const Header = () => {
               <ul className={styles.navList} role="menubar">
                 {NAV_ITEMS.map((item) => (
                   <li key={item.id} className={styles.navItem}>
-                    <NavLink
-                      to={item.to}
-                      end
-                      className={() => linkClass(item.id)}
+                    <Link
+                      href={item.to}
+                      className={linkClass(item.id)}
+                      aria-current={isNavItemActive(pathname, search, item.id) ? "page" : undefined}
                       aria-label={item.ariaLabel}
                       role="menuitem"
                     >
                       {item.label}
-                    </NavLink>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -913,7 +915,7 @@ export const Header = () => {
                         로그아웃
                       </button>
                       <Link
-                        to="/mypage"
+                        href="/mypage"
                         role="menuitem"
                         className={styles.userMenuItem}
                         onClick={() => setUserMenuOpen(false)}
@@ -981,7 +983,7 @@ export const Header = () => {
                     ? `Glow 알림으로 이동, 읽지 않은 알림 ${unreadAlertCount}개`
                     : "Glow 알림으로 이동"
                 }
-                onClick={() => navigate("/glow-alerts")}
+                onClick={() => router.push("/glow-alerts")}
               >
                 <BellIcon />
                 {unreadAlertCount > 0 ? (
@@ -1020,15 +1022,15 @@ export const Header = () => {
           <ul className={styles.mobileNavList}>
             {NAV_ITEMS.map((item) => (
               <li key={item.id} className={styles.navItem}>
-                <NavLink
-                  to={item.to}
-                  end
-                  className={() => linkClass(item.id)}
+                <Link
+                  href={item.to}
+                  className={linkClass(item.id)}
+                  aria-current={isNavItemActive(pathname, search, item.id) ? "page" : undefined}
                   onClick={closeMobileMenu}
                   aria-label={item.ariaLabel}
                 >
                   {item.label}
-                </NavLink>
+                </Link>
               </li>
             ))}
           </ul>
