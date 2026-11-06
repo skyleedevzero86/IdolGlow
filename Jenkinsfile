@@ -757,6 +757,10 @@ ${buildTelegramContextBlock(true)}
         } else if (outcome == 'failure') {
             def failedStage = resolveFailedStageName()
             def guide = resolveFailureGuide(failedStage)
+            def aiText = env.AI_FAILURE_ANALYSIS_TEXT?.trim()
+            def aiBlock = aiText
+                ? "\n<b>🤖 로그 분석 (참고용)</b>\n${escapeTelegramHtml(truncateTelegramText(aiText, 1200))}\n"
+                : ''
 
             message = """❌ <b>IdolGlow 배포 중단</b>
 
@@ -771,7 +775,7 @@ ${escapeTelegramHtml(guide.impact)}
 
 <b>✅ 다음 조치 (개발팀)</b>
 ${formatTelegramActionLines(guide.action)}
-
+${aiBlock}
 ${buildTelegramContextBlock(false)}
 <i>알림 summary-v5 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'aborted') {
