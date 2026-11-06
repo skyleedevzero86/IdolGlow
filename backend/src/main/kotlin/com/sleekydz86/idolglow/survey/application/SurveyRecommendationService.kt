@@ -7,7 +7,7 @@ import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductBro
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendationResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendedAttractionResponse
-import com.sleekydz86.idolglow.survey.infrastructure.SurveyRecommendationLlmRouter
+import com.sleekydz86.idolglow.survey.infrastructure.SurveyLlmRecommendationStore
 import com.sleekydz86.idolglow.survey.infrastructure.SurveySubmissionJpaRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,7 +21,7 @@ class SurveyRecommendationService(
     private val surveySubmissionJpaRepository: SurveySubmissionJpaRepository,
     private val productQueryService: ProductQueryService,
     private val tourAttractionQueryPort: TourAttractionQueryPort,
-    private val surveyRecommendationLlmRouter: SurveyRecommendationLlmRouter,
+    private val surveyLlmRecommendationStore: SurveyLlmRecommendationStore,
 ) {
     fun generate(
         userId: Long,
@@ -64,13 +64,7 @@ class SurveyRecommendationService(
 
         val llm =
             if (useLlm) {
-                surveyRecommendationLlmRouter.generate(
-                    titleFallback = titleFallback,
-                    subtitleFallback = subtitleFallback,
-                    narrativeFallback = narrativeFallback,
-                    answerHighlights = answerHighlights,
-                    attractions = attractions,
-                )
+                surveyLlmRecommendationStore.findOrRequest(submission.id, answerHighlights, attractions)
             } else {
                 null
             }
@@ -100,6 +94,7 @@ class SurveyRecommendationService(
         return SurveyRecommendationResponse(
             submissionId = submission.id,
             llmEnhanced = llm != null,
+            llmPending = useLlm && llm == null && surveyLlmRecommendationStore.isPending(submission.id),
             title = llm?.title ?: titleFallback,
             subtitle = llm?.subtitle ?: subtitleFallback,
             narrative = llm?.narrative ?: narrativeFallback,
