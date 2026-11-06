@@ -91,4 +91,16 @@ class SurveyFormController(
         @PathVariable submissionId: Long,
         @RequestParam(defaultValue = "true") useLlm: Boolean,
     ): ResponseEntity<SurveyRecommendationResponse> = generateRecommendation(userId, submissionId, useLlm)
+
+    @Operation(summary = "내 최신 설문의 추천 조회 (제출 직후 LLM 문구를 미리 만들어 둠)")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/current/submissions/me/latest/recommendation")
+    fun findMyLatestRecommendation(
+        @LoginUser userId: Long,
+        @RequestParam(defaultValue = "true") useLlm: Boolean,
+    ): ResponseEntity<SurveyRecommendationResponse> =
+        surveyRecommendationService
+            .generateLatest(userId, useLlm)
+            ?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.noContent().build()
 }

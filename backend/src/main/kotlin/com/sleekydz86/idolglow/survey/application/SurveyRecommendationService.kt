@@ -2,9 +2,11 @@ package com.sleekydz86.idolglow.survey.application
 
 import com.sleekydz86.idolglow.productpackage.attraction.application.port.out.TourAttractionQueryPort
 import com.sleekydz86.idolglow.productpackage.attraction.domain.SeoulDistrictTourCodeMapper
+import com.sleekydz86.idolglow.productpackage.attraction.domain.TourAttraction
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductBrowseParams
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductSort
+import com.sleekydz86.idolglow.survey.domain.SurveySubmission
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendationResponse
 import com.sleekydz86.idolglow.survey.domain.dto.SurveyRecommendedAttractionResponse
 import com.sleekydz86.idolglow.survey.infrastructure.SurveyLlmRecommendationStore
@@ -32,14 +34,7 @@ class SurveyRecommendationService(
             surveySubmissionJpaRepository.findByIdAndUserId(submissionId, userId)
                 ?: throw IllegalArgumentException("설문 제출 정보를 찾을 수 없습니다. submissionId=$submissionId")
 
-        val answerHighlights =
-            submission.answers.mapNotNull { answer ->
-                answer.answerText?.trim()?.takeIf { it.isNotEmpty() } ?: answer.selectedOptions
-                    .map { it.optionText.trim() }
-                    .filter { it.isNotEmpty() }
-                    .joinToString(", ")
-                    .takeIf { it.isNotEmpty() }
-            }
+        val answerHighlights = answerHighlights(submission)
 
         val destinationHint = answerHighlights.firstOrNull()?.take(20) ?: "서울"
         val titleFallback = "설문 기반 $destinationHint 추천 코스"
@@ -51,16 +46,7 @@ class SurveyRecommendationService(
                 "설문 응답(${answerHighlights.take(3).joinToString(" / ")})을 반영해 관광지 동선과 상품 구성을 추천합니다."
             }
 
-        val baseYm = YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMM"))
-        val attractions =
-            runCatching {
-                tourAttractionQueryPort.fetchAreaBasedAttractions(
-                    baseYm = baseYm,
-                    areaCode = SeoulDistrictTourCodeMapper.SEOUL_AREA_CODE,
-                    signguCode = 11530,
-                    size = 30,
-                )
-            }.getOrDefault(emptyList()).take(5)
+        val attractions = attractions()
 
         val llm =
             if (useLlm) {
@@ -115,5 +101,42 @@ class SurveyRecommendationService(
                 },
             recommendedProducts = products,
         )
+    }
+
+    fun generateLatest(
+        userId: Long,
+        useLlm: Boolean,
+    ): SurveyRecommendationResponse? =
+        surveySubmissionJpaRepository
+            .findFirstByUserIdOrderByIdDesc(userId)
+            ?.let { generate(userId, it.id, useLlm) }
+
+    fun prepare(
+        userId: Long,
+        submissionId: Long,
+    ) {
+        val submission = surveySubmissionJpaRepository.findByIdAndUserId(submissionId, userId) ?: return
+        surveyLlmRecommendationStore.findOrRequest(submission.id, answerHighlights(submission), attractions())
+    }
+
+    private fun answerHighlights(submission: SurveySubmission): List<String> =
+        submission.answers.mapNotNull { answer ->
+            answer.answerText?.trim()?.takeIf { it.isNotEmpty() } ?: answer.selectedOptions
+                .map { it.optionText.trim() }
+                .filter { it.isNotEmpty() }
+                .joinToString(", ")
+                .takeIf { it.isNotEmpty() }
+        }
+
+    private fun attractions(): List<TourAttraction> {
+        val baseYm = YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMM"))
+        return runCatching {
+            tourAttractionQueryPort.fetchAreaBasedAttractions(
+                baseYm = baseYm,
+                areaCode = SeoulDistrictTourCodeMapper.SEOUL_AREA_CODE,
+                signguCode = 11530,
+                size = 30,
+            )
+        }.getOrDefault(emptyList()).take(5)
     }
 }
