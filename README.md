@@ -1,5 +1,3 @@
-<img width="597" height="542" alt="image" src="" />
-
 # IdolGlow
 
 | 메인 화면 1 | 메인 화면 2 |
