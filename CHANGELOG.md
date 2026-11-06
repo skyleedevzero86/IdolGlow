@@ -4,6 +4,115 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.15.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.14.0...v0.15.0) (2026-11-06)
+
+
+### Features
+
+* **#75:** Vite 기반 프론트엔드 설정과 공통 유틸 추가 (#PR번호) ([9d7467d](https://github.com/skyleedevzero86/IdolGlow/commit/9d7467df92b5bff757252cb57beab5b2fa652ed8))
+* **#77:** 도메인 모델과 서비스 API 클라이언트 추가 ([d32a0cb](https://github.com/skyleedevzero86/IdolGlow/commit/d32a0cba35bd2641cdfea28bb137a024d6a2e661))
+* **#80:** 콘텐츠 관리와 검색·구독·설문 API 연동 추가 ([0484a28](https://github.com/skyleedevzero86/IdolGlow/commit/0484a28300b4943417258da0fda060a220e8016c))
+* **#81:** add shared UI components and billing integration foundation ([3209fc3](https://github.com/skyleedevzero86/IdolGlow/commit/3209fc375e77b2dfd4aba7082ff6c0d1d46d6fb2))
+* **#82:** webzine 프론트 기반과 공통 UI를 합치고 Jenkins 빌드 로그를 남긴다 ([72f18e9](https://github.com/skyleedevzero86/IdolGlow/commit/72f18e9516de8f1576485744d3b038c786b81a34))
+* adminAuthVerificationApi API 클라이언트 추가 ([569da23](https://github.com/skyleedevzero86/IdolGlow/commit/569da236648d0ad373e563857ca245ee8b5881d0))
+* adminEventsApi API 클라이언트 추가 ([cb7e7f7](https://github.com/skyleedevzero86/IdolGlow/commit/cb7e7f705a96734320f17a50abc38aae9f752b53))
+* adminNoticesApi API 클라이언트 추가 ([6b28ff6](https://github.com/skyleedevzero86/IdolGlow/commit/6b28ff69218f294c2f618b4ac4d6353be426edd8))
+* adminUserApi API 클라이언트 추가 ([8b8f65c](https://github.com/skyleedevzero86/IdolGlow/commit/8b8f65c0909d59f1b2267b83a0b82534cbd0d850))
+* article 도메인 domain 계층 article.types 추가 ([833f9dc](https://github.com/skyleedevzero86/IdolGlow/commit/833f9dc8f09d5075849a52153e5aae4082eb4404))
+* article 도메인 infrastructure 계층 articleMapper 추가 ([ff10511](https://github.com/skyleedevzero86/IdolGlow/commit/ff10511d6315e38fe0ee640cffe320a9bac945c8))
+* article 도메인 infrastructure 계층 mockArticleRepository 추가 ([161ca8f](https://github.com/skyleedevzero86/IdolGlow/commit/161ca8f8dcb09de93d9d0eba15dd952b4168119b))
+* banner 도메인 domain 계층 banner.types 추가 ([93261af](https://github.com/skyleedevzero86/IdolGlow/commit/93261af49fe5792ee55ee8843050a25e746fc3c6))
+* Biome 린트와 포맷 규칙 추가 ([acfaba2](https://github.com/skyleedevzero86/IdolGlow/commit/acfaba2bb967c0c7459fd58cfd68ed5769609a0c))
+* catalog 도메인 domain 계층 productSummary 추가 ([2bab9f5](https://github.com/skyleedevzero86/IdolGlow/commit/2bab9f52679bef163f0599c5a86ac01d0cac490e))
+* category 도메인 domain 계층 category.types 추가 ([2ed4ede](https://github.com/skyleedevzero86/IdolGlow/commit/2ed4ede545f29c1bc8e2571ffbc53c0aff6a1561))
+* currencyToFlagCountry 유틸 추가 ([f475587](https://github.com/skyleedevzero86/IdolGlow/commit/f4755872d16df9928fc37e3a0c38221bc3a182a5))
+* exchangeCurrencies 유틸 추가 ([e1f8119](https://github.com/skyleedevzero86/IdolGlow/commit/e1f8119ad2c908c2c8a8b6a0acfb5180275bf158))
+* exchangeRateApi API 클라이언트 추가 ([81564fd](https://github.com/skyleedevzero86/IdolGlow/commit/81564fd223e25828e30e2ef10969e4d4336f9014))
+* festivalInfoApi API 클라이언트 추가 ([0726d09](https://github.com/skyleedevzero86/IdolGlow/commit/0726d09233865a65ecfe3aa8befebdd550626a89))
+* glow 화면 업데이트 ([e89de9e](https://github.com/skyleedevzero86/IdolGlow/commit/e89de9e1dad07a02e10c73ba03deb0b32355d902))
+* glowAlertsApi API 클라이언트 추가 ([3627150](https://github.com/skyleedevzero86/IdolGlow/commit/3627150d6e06037017b797947a8e33b1654f6dbc))
+* glowWeatherApi API 클라이언트 추가 ([340c762](https://github.com/skyleedevzero86/IdolGlow/commit/340c762e0b583e12e10142ae891c65392fbf42d5))
+* gqlRequest 유틸 추가 ([070c9d6](https://github.com/skyleedevzero86/IdolGlow/commit/070c9d6a2f3f82a849ec7849995f24a9e9b9ee3e))
+* HTML 진입점 추가 ([d408845](https://github.com/skyleedevzero86/IdolGlow/commit/d408845b507d3eb4ad8405e81c2b95bc079d4369))
+* idolGlowDateTime 유틸 추가 ([76a5ec7](https://github.com/skyleedevzero86/IdolGlow/commit/76a5ec7b65cc2fe470a4a89c19e75f29b9ae4d13))
+* idolGlowMarkdown 유틸 추가 ([3f70e6a](https://github.com/skyleedevzero86/IdolGlow/commit/3f70e6aded9f7375345bfcd29b037bd93b4bd16f))
+* integratedSearchApi API 클라이언트 추가 ([9cc1c05](https://github.com/skyleedevzero86/IdolGlow/commit/9cc1c055ad55c169380d77b0a216cb3b4570effc))
+* IssueAdminContext 상태 컨텍스트 추가 ([e8ab534](https://github.com/skyleedevzero86/IdolGlow/commit/e8ab5349d31cbeed947785ab579381fa9486bd7d))
+* mbrdBoardMarkers API 클라이언트 추가 ([ae00957](https://github.com/skyleedevzero86/IdolGlow/commit/ae0095739b9bbf1da62c65ed4303fd0fa8c1d1a2))
+* newsletterAdminApi API 클라이언트 추가 ([e1e2497](https://github.com/skyleedevzero86/IdolGlow/commit/e1e2497e64d39b3ea7bc4829403d499bb4101216))
+* NewsletterAdminContext 상태 컨텍스트 추가 ([a593bab](https://github.com/skyleedevzero86/IdolGlow/commit/a593bab202808986a36602d13763cecc6b051795))
+* nicknameValidation 유틸 추가 ([c78868c](https://github.com/skyleedevzero86/IdolGlow/commit/c78868c39033ffe3403cff7d9e7833e4d04a938b))
+* noticeFiles API 클라이언트 추가 ([704efac](https://github.com/skyleedevzero86/IdolGlow/commit/704efacbf976eb1cd1525f7ddb9f4d1f561e38de))
+* opsChangeApi API 클라이언트 추가 ([739f97f](https://github.com/skyleedevzero86/IdolGlow/commit/739f97fbb5dcd7467acd25d8f23ac753897f63a7))
+* platform 도메인 health 계층 health 추가 ([a415445](https://github.com/skyleedevzero86/IdolGlow/commit/a4154451d52950d62362f75f5fec51195d5dd27a))
+* popularSearchApi API 클라이언트 추가 ([0524cae](https://github.com/skyleedevzero86/IdolGlow/commit/0524cae58ab3238a4fc94093c6a70e52d55ade8f))
+* productRecommendationApi API 클라이언트 추가 ([1c59d81](https://github.com/skyleedevzero86/IdolGlow/commit/1c59d81a64a20200b9a45b48052ff89008dd2309))
+* publicEventsApi API 클라이언트 추가 ([0f6b4e0](https://github.com/skyleedevzero86/IdolGlow/commit/0f6b4e01f03a71a2b67a9bf48dd9c9a6770baca2))
+* publicNoticesApi API 클라이언트 추가 ([33016ef](https://github.com/skyleedevzero86/IdolGlow/commit/33016ef30958c0242a21fc73a37894a13da04074))
+* seoulTourDistrictOptions API 클라이언트 추가 ([a7f409b](https://github.com/skyleedevzero86/IdolGlow/commit/a7f409b78482ca793ba40bf9da5191ae5178e8aa))
+* siteContentAdminApi API 클라이언트 추가 ([42ddcca](https://github.com/skyleedevzero86/IdolGlow/commit/42ddcca232d3d6193a32e66b50128017c1c0e13e))
+* siteContentApi API 클라이언트 추가 ([f9741b7](https://github.com/skyleedevzero86/IdolGlow/commit/f9741b7d5ecd7445538a4d9e94cb9ac21ab9d9eb))
+* subscriptionApi API 클라이언트 추가 ([0fcebf9](https://github.com/skyleedevzero86/IdolGlow/commit/0fcebf9309a7ae7d2331cc022ae94f911494bd43))
+* subwayApi API 클라이언트 추가 ([0bd9aaf](https://github.com/skyleedevzero86/IdolGlow/commit/0bd9aaf97074c614ac3e4126479bdec46ed816e4))
+* surveyAdminApi API 클라이언트 추가 ([d21254f](https://github.com/skyleedevzero86/IdolGlow/commit/d21254f7d4fa3644e370569bd3b75606332c8d3e))
+* surveyFormAdminApi API 클라이언트 추가 ([a79d313](https://github.com/skyleedevzero86/IdolGlow/commit/a79d313cded6ccea95763db5e358e30949130910))
+* surveyFormUserApi API 클라이언트 추가 ([c896d02](https://github.com/skyleedevzero86/IdolGlow/commit/c896d02051582e9bdc4d4d24d7bca673fb2dfac3))
+* uiLangStorage 유틸 추가 ([869e763](https://github.com/skyleedevzero86/IdolGlow/commit/869e763c7d9984539e63e533c80e932370aa71e6))
+* useArticles 훅 추가 ([e3c0cb6](https://github.com/skyleedevzero86/IdolGlow/commit/e3c0cb6e2d000824d73742e5ecc81fea9da2d88d))
+* useInfiniteScroll 훅 추가 ([4c14193](https://github.com/skyleedevzero86/IdolGlow/commit/4c1419360be8dc3d94785846af93c033afd0a1d7))
+* userSurveyApi API 클라이언트 추가 ([5bb53d7](https://github.com/skyleedevzero86/IdolGlow/commit/5bb53d7d23cfdc1140e0ad51b5e9b4f10daa75d7))
+* useTheme 훅 추가 ([645a74f](https://github.com/skyleedevzero86/IdolGlow/commit/645a74f6aaf1de6ea586e2639b2db2c093ee2e16))
+* Vite 개발 서버와 API 프록시 설정 추가 ([d7c9da9](https://github.com/skyleedevzero86/IdolGlow/commit/d7c9da9129b82b015660242eb6fc3c4c584dc500))
+* Vite 환경 변수 타입 선언 추가 ([f268086](https://github.com/skyleedevzero86/IdolGlow/commit/f268086a35f781d496e9b10f9ee303e92cf36193))
+* 결제기능 캡처 페이지 추가 ([53f2cad](https://github.com/skyleedevzero86/IdolGlow/commit/53f2cade6771ba2e593461cf2d373ec28e7573ff))
+* 공항 교통, GLOW 지도, 라우팅 정적 파일 추가 ([027205f](https://github.com/skyleedevzero86/IdolGlow/commit/027205f09b4490d6237215f8916899b233e42984))
+* 기사 카드 공통 컴포넌트 추가 ([6154b56](https://github.com/skyleedevzero86/IdolGlow/commit/6154b567ac2cfac8cdf49d9d0bc26f47939cea41))
+* 뉴스레터 구독 이미지 추가 ([81a10f1](https://github.com/skyleedevzero86/IdolGlow/commit/81a10f1973dafa2c266a65d2385ed84131fde805))
+* 메뉴 이벤트 화면 추가 ([7aaf70c](https://github.com/skyleedevzero86/IdolGlow/commit/7aaf70ccdbc42ed554c0104347cca5bce8339114))
+* 인증 adminSessionWall 추가 ([c230f87](https://github.com/skyleedevzero86/IdolGlow/commit/c230f87d473fc4fa3b051b9f7d156e4f2fa2912e))
+* 인증 cookieUtil 추가 ([f78ce1a](https://github.com/skyleedevzero86/IdolGlow/commit/f78ce1a8295669f0416b88008e75862f91963f26))
+* 토스 정기결제 billingDefaults 추가 ([9541ce3](https://github.com/skyleedevzero86/IdolGlow/commit/9541ce3e6f312f4133d9f2496231d32a0d768f1e))
+* 토스 정기결제 loadTossPaymentsSdk 추가 ([2143163](https://github.com/skyleedevzero86/IdolGlow/commit/2143163f9288fcde4b7e6b4d6e1a30bfbb6186ef))
+* 토스 정기결제 requestBillingAuth 추가 ([3ff57af](https://github.com/skyleedevzero86/IdolGlow/commit/3ff57af709639cbb98d921c89aeaeb02117191ec))
+* 토스 정기결제 tossBillingApi 추가 ([9adcc5e](https://github.com/skyleedevzero86/IdolGlow/commit/9adcc5e38274291c864873bb8e185b9a7edb1a85))
+* 토스 정기결제 TossBillingCharge 타입 추가 ([f6dd369](https://github.com/skyleedevzero86/IdolGlow/commit/f6dd3697af62f6bca74111e6c708effaf391d436))
+* 토스 정기결제 TossBillingClientConfig 타입 추가 ([76066b3](https://github.com/skyleedevzero86/IdolGlow/commit/76066b3d54cfd950765a91573f4701e25590c60a))
+* 토스 정기결제 TossBillingMethod 타입 추가 ([d3db85e](https://github.com/skyleedevzero86/IdolGlow/commit/d3db85ea9f9df4c2c92d73aac4252e109a40e500))
+* 토스 정기결제 TossBillingOverview 타입 추가 ([723fd94](https://github.com/skyleedevzero86/IdolGlow/commit/723fd94866f682ca1b0543b8504419638ea8e4c6))
+* 토스 정기결제 TossBillingSubscription 타입 추가 ([ae4c992](https://github.com/skyleedevzero86/IdolGlow/commit/ae4c992ef0080aff318c84a9a287306c75d126a5))
+* 푸터 공통 컴포넌트 추가 ([d6d0df9](https://github.com/skyleedevzero86/IdolGlow/commit/d6d0df9a14f3dcaca405eaf8adff29bcc33c188b))
+* 헤더 검색 패널 공통 컴포넌트 추가 ([ec09697](https://github.com/skyleedevzero86/IdolGlow/commit/ec09697c69611a1efcce92afa34dfd7c6bb835ce))
+* 헤더 공통 컴포넌트 추가 ([1fc9b20](https://github.com/skyleedevzero86/IdolGlow/commit/1fc9b204d1ebea572f3efeff31d3bb5937113d7a))
+* 홈 카테고리 메뉴 아이콘 이미지 추가 ([168eccf](https://github.com/skyleedevzero86/IdolGlow/commit/168eccf5e14a9bc9352102bcd07bb25674a306e8))
+* 홈 화면 배너 이미지 추가 ([d8c7492](https://github.com/skyleedevzero86/IdolGlow/commit/d8c74929e26bbd72f1e88fac476421defdbabb82))
+* 환율 기사 썸네일과 쿠폰 배너 이미지 추가 ([3d725e0](https://github.com/skyleedevzero86/IdolGlow/commit/3d725e024ed2a84ae2057d82b184e1ad8cadecb6))
+* 히어로 배너 공통 컴포넌트 추가 ([fa7eba4](https://github.com/skyleedevzero86/IdolGlow/commit/fa7eba4f855d69b24abd8033b4b112024327b5c1))
+
+
+### Bug Fixes
+
+* Telegram 알림에 Push 비교 링크 유지 ([6b496de](https://github.com/skyleedevzero86/IdolGlow/commit/6b496de5a24c070475be85241245a1fde473b177))
+* Telegram 커밋 알림의 HTML 잘림 오류 수정 ([36c7ae7](https://github.com/skyleedevzero86/IdolGlow/commit/36c7ae7b2e426c511c76745c712a4920d426a19d))
+* 누락된 타이틀 추가 ([6643654](https://github.com/skyleedevzero86/IdolGlow/commit/6643654d175b151d1fb1ddd69218f6666ddbafd2))
+
+
+### Build
+
+* 정적 배포용 Nginx, Docker, Netlify 설정 추가 ([3b19032](https://github.com/skyleedevzero86/IdolGlow/commit/3b19032cf97765e4a049885fa71517184f8ec887))
+
+
+### CI
+
+* 빌드·테스트 출력을 ci-logs에 남기고 pipefail로 실패를 유지하기 ([746c83a](https://github.com/skyleedevzero86/IdolGlow/commit/746c83a429c39ca0a3ba910d77d0f850b086d4fd))
+
+
+### Tests
+
+* mockArticles 개발용 목 데이터 추가 ([8782c74](https://github.com/skyleedevzero86/IdolGlow/commit/8782c74512836e095ad5f511c2584d5ac74033b0))
+* mockBanners 개발용 목 데이터 추가 ([b0579a7](https://github.com/skyleedevzero86/IdolGlow/commit/b0579a7777d7dcbf2eac0d1b7d08979635b7ab35))
+* mockIssues 개발용 목 데이터 추가 ([3fd707c](https://github.com/skyleedevzero86/IdolGlow/commit/3fd707c0c440bdb00a08508c4e488ea54f39721c))
+* mockNewsletters 개발용 목 데이터 추가 ([43bdd62](https://github.com/skyleedevzero86/IdolGlow/commit/43bdd62d9650c0f63dac256013f0599cb4f1ef4d))
+
 ## [0.14.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.13.0...v0.14.0) (2026-11-01)
 
 
