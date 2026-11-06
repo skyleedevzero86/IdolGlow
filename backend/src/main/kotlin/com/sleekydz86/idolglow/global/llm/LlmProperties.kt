@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "app.llm.local")
 data class LocalLlmProperties(
     var enabled: Boolean = false,
-    var baseUrl: String = "http://localhost:11434/v1",
-    var model: String = "qwen2.5:7b",
+    var baseUrl: String = "",
+    var model: String = "",
     var timeoutSeconds: Long = 20,
 )
 

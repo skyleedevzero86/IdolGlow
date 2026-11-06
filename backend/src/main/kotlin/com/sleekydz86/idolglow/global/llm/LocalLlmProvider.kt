@@ -15,7 +15,7 @@ class LocalLlmProvider(
     override val name = "local"
     override val external = false
 
-    override fun isConfigured(): Boolean = props.enabled
+    override fun isConfigured(): Boolean = props.enabled && props.baseUrl.isNotBlank() && props.model.isNotBlank()
 
     override fun complete(request: LlmRequest): String? {
         val payload = OpenAiCompatiblePayload.build(objectMapper, props.model, request)
