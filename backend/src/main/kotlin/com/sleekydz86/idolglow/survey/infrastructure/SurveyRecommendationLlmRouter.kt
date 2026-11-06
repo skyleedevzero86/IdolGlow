@@ -11,6 +11,7 @@ import tools.jackson.databind.ObjectMapper
 class SurveyRecommendationLlmRouter(
     private val llmGateway: LlmGateway,
     private val objectMapper: ObjectMapper,
+    private val validator: SurveyRecommendationValidator = SurveyRecommendationValidator(objectMapper),
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -30,36 +31,10 @@ class SurveyRecommendationLlmRouter(
             ) ?: return null
         val source = (answerHighlights + attractions.map { it.name }).joinToString(" ").lowercase()
         val codes = attractions.map { it.attractionCode }.toSet()
-        return parse(result.text)
+        return validator.parse(result.text)
             ?.let { it.copy(attractionReasons = it.attractionReasons.filterKeys(codes::contains)) }
-            ?.takeIf { grounded(it, source) }
+            ?.takeIf { validator.grounded(it, source) }
             .also { if (it == null) logDropped(result.provider, result.text) }
-    }
-
-    private fun parse(text: String): LlmSurveyRecommendation? {
-        val json =
-            text
-                .trim()
-                .removePrefix("```json")
-                .removePrefix("```")
-                .removeSuffix("```")
-                .trim()
-        return runCatching { objectMapper.readValue(json, LlmSurveyRecommendation::class.java).normalize() }.getOrNull()
-    }
-
-    private fun grounded(
-        recommendation: LlmSurveyRecommendation,
-        source: String,
-    ): Boolean {
-        val title = recommendation.title
-        val texts =
-            listOfNotNull(title, recommendation.subtitle, recommendation.narrative) +
-                recommendation.attractionReasons.values
-        return title != null &&
-            title.length <= MAX_TITLE_LENGTH &&
-            recommendation.narrative != null &&
-            texts.none { FOREIGN_SCRIPT.containsMatchIn(it) } &&
-            texts.all { text -> LATIN_WORD.findAll(text).all { source.contains(it.value.lowercase()) } }
     }
 
     private fun logDropped(
@@ -73,9 +48,6 @@ class SurveyRecommendationLlmRouter(
         private const val FEATURE: String = "survey"
         private const val MAX_OUTPUT_TOKENS: Int = 900
         private const val TEMPERATURE: Double = 0.3
-        private const val MAX_TITLE_LENGTH: Int = 40
         private const val LOG_TEXT_LIMIT: Int = 200
-        private val FOREIGN_SCRIPT = Regex("[\\p{IsHan}\\p{IsHiragana}\\p{IsKatakana}\\p{IsCyrillic}]")
-        private val LATIN_WORD = Regex("[A-Za-z]{2,}")
     }
 }

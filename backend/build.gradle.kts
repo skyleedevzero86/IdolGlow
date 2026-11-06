@@ -136,8 +136,9 @@ tasks.withType<Test>().configureEach {
     jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED")
     useJUnitPlatform {
         when (name) {
-            "test" -> excludeTags("eval")
+            "test" -> excludeTags("eval", "llm-eval")
             "groundedSearchEval" -> includeTags("eval")
+            "surveyLlmEval" -> includeTags("llm-eval")
         }
     }
 }
@@ -148,6 +149,16 @@ tasks.register<Test>("groundedSearchEval") {
     val testSet = sourceSets.getByName("test")
     testClassesDirs = testSet.output.classesDirs
     classpath = testSet.runtimeClasspath
+}
+
+tasks.register<Test>("surveyLlmEval") {
+    group = "verification"
+    description = "설문 추천 LLM 공급자별 품질 평가"
+    val testSet = sourceSets.getByName("test")
+    testClassesDirs = testSet.output.classesDirs
+    classpath = testSet.runtimeClasspath
+    outputs.upToDateWhen { false }
+    testLogging.showStandardStreams = true
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
