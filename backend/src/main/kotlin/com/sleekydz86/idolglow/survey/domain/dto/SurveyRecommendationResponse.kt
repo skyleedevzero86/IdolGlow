@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQu
 data class SurveyRecommendationResponse(
     val submissionId: Long,
     val llmEnhanced: Boolean,
+    val llmPending: Boolean,
     val title: String,
     val subtitle: String,
     val narrative: String,

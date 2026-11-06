@@ -47,6 +47,7 @@ export interface ArticleViewModel {
   readonly publishDateFormatted: string;
   readonly tags: readonly string[];
   readonly viewCountFormatted: string;
+  readonly likeCount: number;
   readonly likeCountFormatted: string;
 }
 

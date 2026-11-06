@@ -23,6 +23,8 @@ import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.global.config.TourApiProperties
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
+import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
+import com.sleekydz86.idolglow.global.llm.LocalLlmProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -38,6 +40,8 @@ import org.springframework.cache.annotation.EnableCaching
     TossPaymentProperties::class,
     PaymentAdminAlertProperties::class,
     GemmaProperties::class,
+    LocalLlmProperties::class,
+    LlmGatewayProperties::class,
     PlatformAuthProperties::class,
     TourApiProperties::class,
     TourKorApiProperties::class,

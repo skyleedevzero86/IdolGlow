@@ -36,6 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aop:4.0.0-M2")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.4.0")
     implementation("org.springframework.boot:spring-boot-starter-graphql")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -135,8 +136,9 @@ tasks.withType<Test>().configureEach {
     jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED")
     useJUnitPlatform {
         when (name) {
-            "test" -> excludeTags("eval")
+            "test" -> excludeTags("eval", "llm-eval")
             "groundedSearchEval" -> includeTags("eval")
+            "surveyLlmEval" -> includeTags("llm-eval")
         }
     }
 }
@@ -147,6 +149,16 @@ tasks.register<Test>("groundedSearchEval") {
     val testSet = sourceSets.getByName("test")
     testClassesDirs = testSet.output.classesDirs
     classpath = testSet.runtimeClasspath
+}
+
+tasks.register<Test>("surveyLlmEval") {
+    group = "verification"
+    description = "설문 추천 LLM 공급자별 품질 평가"
+    val testSet = sourceSets.getByName("test")
+    testClassesDirs = testSet.output.classesDirs
+    classpath = testSet.runtimeClasspath
+    outputs.upToDateWhen { false }
+    testLogging.showStandardStreams = true
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
