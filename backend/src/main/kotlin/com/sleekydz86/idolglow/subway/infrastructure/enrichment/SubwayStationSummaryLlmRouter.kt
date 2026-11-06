@@ -31,29 +31,47 @@ class SubwayStationSummaryLlmRouter(
         if (!summaryEnabled) {
             return null
         }
-        return llmGateway
+        val english =
+            askBullets(
+                systemPrompt = SubwayStationSummaryPrompts.system,
+                userPrompt =
+                    SubwayStationSummaryPrompts.userJson(objectMapper, lineId, lineName, stationCd, stationDisplayName),
+                temperature = WRITE_TEMPERATURE,
+                forbidden = CJK,
+            )
+        val korean =
+            english?.let {
+                askBullets(
+                    systemPrompt = SubwayStationSummaryPrompts.translateToKorean,
+                    userPrompt = SubwayStationSummaryPrompts.bulletsJson(objectMapper, it),
+                    temperature = TRANSLATE_TEMPERATURE,
+                    forbidden = NOT_KOREAN,
+                )
+            }
+        return korean?.let { LlmSubwayStationSummary(bullets = it) }
+    }
+
+    private fun askBullets(
+        systemPrompt: String,
+        userPrompt: String,
+        temperature: Double,
+        forbidden: Regex,
+    ): List<String>? =
+        llmGateway
             .complete(
                 LlmRequest(
                     feature = FEATURE,
-                    systemPrompt = SubwayStationSummaryPrompts.system,
-                    userPrompt =
-                        SubwayStationSummaryPrompts.userJson(
-                            objectMapper,
-                            lineId,
-                            lineName,
-                            stationCd,
-                            stationDisplayName,
-                        ),
-                    temperature = TEMPERATURE,
+                    systemPrompt = systemPrompt,
+                    userPrompt = userPrompt,
+                    temperature = temperature,
                 ),
-            )?.let { parse(it.text, it.provider, stationDisplayName) }
-    }
+            )?.let { parseBullets(it.text, it.provider, forbidden) }
 
-    private fun parse(
+    private fun parseBullets(
         text: String,
         provider: String,
-        stationDisplayName: String,
-    ): LlmSubwayStationSummary? {
+        forbidden: Regex,
+    ): List<String>? {
         val json =
             text
                 .trim()
@@ -61,17 +79,30 @@ class SubwayStationSummaryLlmRouter(
                 .removePrefix("```")
                 .removeSuffix("```")
                 .trim()
-        return runCatching {
-            objectMapper.readValue(json, LlmSubwayStationSummary::class.java).normalize(stationDisplayName)
-        }.getOrElse { e ->
-            log.warn("지하철 역 요약 JSON 파싱 실패 provider={} error={}", provider, e.message)
-            null
+        val bullets =
+            runCatching {
+                val node = objectMapper.readTree(json).path("bullets")
+                (0 until node.size())
+                    .map { node.path(it).asText("").trim() }
+                    .filter { it.isNotEmpty() }
+                    .take(BULLET_COUNT)
+            }.getOrNull()
+                .orEmpty()
+        val valid = bullets.size == BULLET_COUNT && bullets.none { forbidden.containsMatchIn(it) }
+        if (!valid) {
+            log.warn("지하철 역 요약 결과 버림 provider={} text={}", provider, text.take(LOG_TEXT_LIMIT))
         }
+        return bullets.takeIf { valid }
     }
 
     companion object {
         const val CACHE_NAME: String = "subway-station-llm-summary"
         private const val FEATURE: String = "subway"
-        private const val TEMPERATURE: Double = 0.45
+        private const val WRITE_TEMPERATURE: Double = 0.45
+        private const val TRANSLATE_TEMPERATURE: Double = 0.1
+        private const val BULLET_COUNT: Int = 3
+        private const val LOG_TEXT_LIMIT: Int = 200
+        private val CJK = Regex("[\\p{IsHan}\\p{IsHiragana}\\p{IsKatakana}]")
+        private val NOT_KOREAN = Regex("[\\p{IsHan}\\p{IsHiragana}\\p{IsKatakana}A-Za-z]")
     }
 }

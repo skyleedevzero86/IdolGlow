@@ -19,19 +19,22 @@ class SubwayStationSummaryLlmRouterTest {
     private class FakeProvider(
         override val name: String,
         override val external: Boolean,
-        private val answer: String?,
+        answers: List<String?>,
     ) : LlmProvider {
+        private val queue = ArrayDeque(answers)
         val requests = mutableListOf<LlmRequest>()
 
         override fun isConfigured(): Boolean = true
 
         override fun complete(request: LlmRequest): String? {
             requests += request
-            return answer
+            return queue.removeFirstOrNull()
         }
     }
 
     private val objectMapper = ObjectMapper()
+
+    private val english = """{"bullets":["Busy business area.","Many shops nearby.","May be crowded at rush hour."]}"""
 
     private fun router(
         providers: List<LlmProvider>,
@@ -47,49 +50,58 @@ class SubwayStationSummaryLlmRouterTest {
 
     private fun SubwayStationSummaryLlmRouter.generate() = generateSummary("2", "2호선", "222", "강남")
 
-    @DisplayName("로컬 응답의 코드펜스를 벗기고 역 요약으로 바꾼다")
+    @DisplayName("영어로 만든 문장을 한국어로 번역해 문장만 돌려준다")
     @Test
-    fun parsesLocalAnswer() {
-        val answer =
-            """
-            ```json
-            {"title":" 강남역 ","bullets":["하나"," 둘 ","셋","넷"]}
-            ```
-            """.trimIndent()
-        val local = FakeProvider("local", false, answer)
+    fun writesInEnglishThenTranslates() {
+        val korean = "```json\n{\"bullets\":[\" 업무 지역입니다. \",\"상점이 많습니다.\",\"출퇴근 때 붐빌 수 있습니다.\"]}\n```"
+        val local = FakeProvider("local", false, listOf(english, korean))
 
         val summary = router(listOf(local)).generate()
 
-        assertEquals("강남역", summary?.title)
-        assertEquals(listOf("하나", "둘", "셋"), summary?.bullets)
-        assertEquals("강남에 대해 더 알아보세요", summary?.learnMoreLabel)
-        assertEquals("subway", local.requests.single().feature)
+        assertEquals(listOf("업무 지역입니다.", "상점이 많습니다.", "출퇴근 때 붐빌 수 있습니다."), summary?.bullets)
+        assertNull(summary?.title)
+        assertNull(summary?.learnMoreLabel)
+        assertTrue(local.requests[1].userPrompt.contains("Busy business area."))
     }
 
-    @DisplayName("JSON이 아니면 null을 돌려준다")
+    @DisplayName("번역에 한자, 가나, 영문이 섞이면 버린다")
     @Test
-    fun returnsNullWhenAnswerIsNotJson() {
-        val local = FakeProvider("local", false, "강남역은 번화가입니다")
+    fun dropsTranslationWithNonKoreanLetters() {
+        val chinese = """{"bullets":["업무 지역입니다.","周边设施完善","붐빌 수 있습니다."]}"""
+        val japanese = """{"bullets":["ビジネ스 중심","상점이 많습니다.","붐빌 수 있습니다."]}"""
+        val latin = """{"bullets":["업무 지역입니다.","용hill 캠퍼스가 가깝습니다.","붐빌 수 있습니다."]}"""
 
-        assertNull(router(listOf(local)).generate())
+        listOf(chinese, japanese, latin).forEach { translated ->
+            assertNull(router(listOf(FakeProvider("local", false, listOf(english, translated)))).generate())
+        }
+    }
+
+    @DisplayName("영어 문장이 3개가 아니거나 JSON이 아니면 번역을 부르지 않는다")
+    @Test
+    fun skipsTranslationWhenEnglishIsInvalid() {
+        val twoBullets = FakeProvider("local", false, listOf("""{"bullets":["One.","Two."]}"""))
+        val notJson = FakeProvider("local", false, listOf("Gangnam is busy."))
+
+        assertNull(router(listOf(twoBullets)).generate())
+        assertNull(router(listOf(notJson)).generate())
+        assertEquals(1, twoBullets.requests.size)
+        assertEquals(1, notJson.requests.size)
     }
 
     @DisplayName("지하철 체인이 로컬뿐이면 외부가 켜져 있어도 외부를 부르지 않는다")
     @Test
     fun doesNotCallExternalWhenChainIsLocalOnly() {
-        val local = FakeProvider("local", false, null)
-        val openai = FakeProvider("openai", true, """{"title":"강남"}""")
+        val local = FakeProvider("local", false, listOf(null))
+        val openai = FakeProvider("openai", true, listOf(english))
 
-        val summary = router(listOf(local, openai), externalEnabled = true).generate()
-
-        assertNull(summary)
+        assertNull(router(listOf(local, openai), externalEnabled = true).generate())
         assertTrue(openai.requests.isEmpty())
     }
 
     @DisplayName("요약 기능이 꺼져 있으면 공급자를 부르지 않는다")
     @Test
     fun skipsWhenSummaryDisabled() {
-        val local = FakeProvider("local", false, """{"title":"강남"}""")
+        val local = FakeProvider("local", false, listOf(english))
 
         assertNull(router(listOf(local), summaryEnabled = false).generate())
         assertTrue(local.requests.isEmpty())
