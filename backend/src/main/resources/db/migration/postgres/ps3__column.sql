@@ -491,23 +491,6 @@ CREATE INDEX IF NOT EXISTS idx_toss_billing_subscriptions_next
 CREATE INDEX IF NOT EXISTS idx_toss_billing_charges_user_id
     ON toss_billing_charges (user_id);
 
--- =============================================================================
--- 토스 빌링 재시도·해지예약 컬럼
--- -----
--- 목적
--- - 결제 실패 시 실패횟수와 재시도시각으로 재시도 간격 제어
--- - 해지 예약용 종료시각 추가
--- =============================================================================
-
-ALTER TABLE toss_billing_subscriptions
-    ADD COLUMN IF NOT EXISTS fail_count INT NOT NULL DEFAULT 0;
-
-ALTER TABLE toss_billing_subscriptions
-    ADD COLUMN IF NOT EXISTS retry_at TIMESTAMP(6);
-
-ALTER TABLE toss_billing_subscriptions
-    ADD COLUMN IF NOT EXISTS ends_at TIMESTAMP(6);
-
 CREATE INDEX IF NOT EXISTS idx_toss_billing_subscriptions_retry
     ON toss_billing_subscriptions (status, retry_at);
 

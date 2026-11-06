@@ -44,15 +44,23 @@ class TossBillingSubscription(
     var retryAt: LocalDateTime? = null,
     @Column(name = "ends_at")
     var endsAt: LocalDateTime? = null,
+    @Column(name = "cycle_months", nullable = false)
+    var cycleMonths: Int = BillingCycle.MONTHLY.months,
+    @Column(name = "auto_renew", nullable = false)
+    var autoRenew: Boolean = true,
 ) : BaseEntity() {
     fun markCharged(now: LocalDateTime = LocalDateTime.now()) {
         val billedPeriodStart = nextBillingAt ?: now
         lastChargedAt = now
-        nextBillingAt = billedPeriodStart.plusMonths(1)
+        nextBillingAt = billedPeriodStart.plusMonths(cycleMonths.toLong())
         failCount = 0
         retryAt = null
         if (status != TossBillingSubscriptionStatus.CANCEL_SCHEDULED) {
             status = TossBillingSubscriptionStatus.ACTIVE
+        }
+        if (!autoRenew && status == TossBillingSubscriptionStatus.ACTIVE) {
+            status = TossBillingSubscriptionStatus.CANCEL_SCHEDULED
+            endsAt = nextBillingAt
         }
     }
 
@@ -75,6 +83,7 @@ class TossBillingSubscription(
         status = TossBillingSubscriptionStatus.CANCEL_SCHEDULED
         endsAt = nextBillingAt ?: now
         retryAt = null
+        autoRenew = false
     }
 
     fun withdrawCancel(now: LocalDateTime = LocalDateTime.now()) {
@@ -87,6 +96,7 @@ class TossBillingSubscription(
         }
         status = TossBillingSubscriptionStatus.ACTIVE
         endsAt = null
+        autoRenew = true
     }
 
     fun finalizeCanceledIfEnded(now: LocalDateTime = LocalDateTime.now()) {

@@ -32,6 +32,17 @@ class MyPaymentController(
         @LoginUser userId: Long,
     ): ResponseEntity<List<MyPagePaymentSummaryResponse>> = ResponseEntity.ok(myPagePaymentService.findPayments(userId))
 
+    @Operation(summary = "내 결제 목록 엑셀 다운로드")
+    @GetMapping("/export.xlsx")
+    fun exportXlsx(
+        @LoginUser userId: Long,
+    ): ResponseEntity<Resource> =
+        ResponseEntity
+            .ok()
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-payments.xlsx")
+            .body(ByteArrayResource(myPagePaymentService.exportPaymentsXlsx(userId)))
+
     @Operation(summary = "내 결제 상세 조회")
     @GetMapping("/{paymentId}")
     fun detail(

@@ -4,4 +4,5 @@ enum class TossBillingChargeStatus {
     PENDING,
     DONE,
     FAILED,
+    CANCELED,
 }

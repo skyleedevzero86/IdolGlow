@@ -44,7 +44,27 @@ class TossBillingCharge(
     var failMessage: String? = null,
     @Column(name = "approved_at")
     var approvedAt: LocalDateTime? = null,
+    @Column(name = "canceled_at")
+    var canceledAt: LocalDateTime? = null,
 ) : BaseEntity() {
+    fun cancelDeadline(): LocalDateTime? =
+        approvedAt?.takeIf { status == TossBillingChargeStatus.DONE }?.plusDays(CANCEL_WINDOW_DAYS)
+
+    fun assertCancelable(now: LocalDateTime) {
+        require(status == TossBillingChargeStatus.DONE && paymentKey != null) {
+            "결제 완료된 회차만 취소할 수 있습니다. status=$status"
+        }
+        val deadline = cancelDeadline()
+        require(deadline != null && !now.isAfter(deadline)) {
+            "카드 결제는 결제일로부터 14일이 지나면 취소할 수 없습니다. approvedAt=$approvedAt"
+        }
+    }
+
+    fun markCanceled(now: LocalDateTime) {
+        status = TossBillingChargeStatus.CANCELED
+        canceledAt = now
+    }
+
     fun markDone(
         paymentKey: String?,
         raw: String?,
@@ -72,5 +92,9 @@ class TossBillingCharge(
         this.rawResponse = null
         this.paymentKey = null
         this.approvedAt = null
+    }
+
+    companion object {
+        const val CANCEL_WINDOW_DAYS = 14L
     }
 }

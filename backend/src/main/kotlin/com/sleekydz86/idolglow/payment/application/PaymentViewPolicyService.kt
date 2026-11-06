@@ -8,9 +8,19 @@ import java.time.LocalDateTime
 
 @Service
 class PaymentViewPolicyService {
-    fun canAdminCancel(payment: Payment): Boolean =
-        payment.reservation.status != ReservationStatus.CANCELED &&
-            payment.status in setOf(PaymentStatus.PENDING, PaymentStatus.SUCCEEDED)
+    fun canAdminCancel(
+        payment: Payment,
+        now: LocalDateTime = LocalDateTime.now(),
+    ): Boolean {
+        if (payment.reservation.status == ReservationStatus.CANCELED) {
+            return false
+        }
+        return when (payment.status) {
+            PaymentStatus.PENDING -> true
+            PaymentStatus.SUCCEEDED -> userCancelDeadline(payment)?.let { !it.isBefore(now) } ?: false
+            else -> false
+        }
+    }
 
     fun userCancelDeadline(payment: Payment): LocalDateTime? {
         if (payment.status != PaymentStatus.SUCCEEDED) {
@@ -39,6 +49,6 @@ class PaymentViewPolicyService {
             )
 
     companion object {
-        const val USER_CANCEL_WINDOW_DAYS = 15L
+        const val USER_CANCEL_WINDOW_DAYS = 14L
     }
 }

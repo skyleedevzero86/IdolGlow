@@ -17,6 +17,11 @@ class MyPagePaymentService(
     private val reservationCancelFacade: ReservationCancelFacade,
     @Lazy private val self: MyPagePaymentService,
 ) {
+    fun exportPaymentsXlsx(userId: Long): ByteArray =
+        paymentDocumentService.exportPaymentsXlsx(
+            adminPaymentQueryRepository.findPaymentsByUser(userId, MAX_EXPORT_ROWS),
+        )
+
     fun findPayments(
         userId: Long,
         size: Int = 100,
@@ -66,5 +71,9 @@ class MyPagePaymentService(
                 ?: throw IllegalArgumentException("결제를 찾을 수 없습니다: $paymentId")
         require(paymentViewPolicyService.receiptAvailable(payment)) { "영수증을 출력할 수 없는 결제 상태입니다." }
         return paymentDocumentService.buildReceiptPdf(payment, "사용자")
+    }
+
+    companion object {
+        private const val MAX_EXPORT_ROWS = 1_000
     }
 }

@@ -201,7 +201,7 @@ class ReservationPaymentLockOrderPostgresTest : PostgresIntegrationTest() {
         // then
         val thrown = failure.get()
         assertTrue(thrown is IllegalArgumentException, thrown?.toString() ?: "예외 없음")
-        assertEquals("사용자 결제 취소 가능 기간(15일)이 지났거나 취소할 수 없는 상태입니다.", thrown?.message)
+        assertEquals("카드 결제는 결제일로부터 14일이 지나면 취소할 수 없습니다. 또는 취소할 수 없는 상태입니다.", thrown?.message)
     }
 
     private fun holdRefundWhileLockingReservation(

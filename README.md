@@ -1,10 +1,20 @@
+<img width="597" height="542" alt="image" src="" />
+
 # IdolGlow
 
 | 메인 화면 1 | 메인 화면 2 |
 |:---:|:---:|
-| [![화면 1](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f)](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f) | [![화면 2](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b)](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b) |
+| [![화면 1](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f)](https://github.com/user-attachments/assets/ca2209d7-c53c-4d46-ab7b-d919db3f3d5f) | [![화면 2](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b)](https://github.com/user-attachments/assets/d7929859-fc89-41fc-b31b-1761da43882b) 
+| Glow메뉴(전체) | Glow메뉴(트렌드) |
+| [![화면 1](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06)](https://github.com/user-attachments/assets/a1375685-a10c-4026-a46b-597f94d95e06) | [![화면 2](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6)](https://github.com/user-attachments/assets/1ad7ed9f-2413-47d9-9c31-0470447d5fd6) |
+|Glow메뉴(glow정보) | Glow메뉴(최근리뷰) |
+| [![화면 1](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d)](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d) | [![화면 2](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5)](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5) |
+|이벤트 |결제통계 | 
+| [![화면 1](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145)](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145) | [![화면 2](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5)](https://github.com/user-attachments/assets/b80ea318-47bc-4076-b619-58b12949915e) |
+| 내 이용 통계 | 멤버십 |
+| [![화면 1](https://github.com/user-attachments/assets/da63b97e-54e0-4fe9-8c3b-3c0d40b7c636)](https://github.com/user-attachments/assets/da63b97e-54e0-4fe9-8c3b-3c0d40b7c636) | [![화면 2](https://github.com/user-attachments/assets/b66365bb-021c-4850-928b-1fce2736afc6)](https://github.com/user-attachments/assets/b66365bb-021c-4850-928b-1fce2736afc6) |
 
-<br/><br/><br/>
+<br/>
 
 외국인 이용자를 대상으로 설문조사 기반 개인화 추천을 제공하는 K-pop 뷰티·공연·체험 예약 플랫폼입니다.<br/>
 핵심은 Kotlin/Spring 기반 백엔드에서 1시간 단위 슬롯(09~15시)을 슬롯당 1건으로 안전하게 잡고, 결제 성공/실패/취소/만료에 따라 예약 상태를 일관되게 전이시키는 것입니다.

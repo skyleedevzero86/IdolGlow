@@ -8,12 +8,20 @@ import jenkins.install.InstallState
 import jenkins.model.Jenkins
 
 def instance = Jenkins.get()
-def adminId = System.getenv('JENKINS_ADMIN_ID') ?: 'admin'
-def adminPassword = System.getenv('JENKINS_ADMIN_PASSWORD') ?: 'IdolGlow!7077'
+def adminId = System.getenv('JENKINS_ADMIN_ID')?.trim()
+def adminPassword = System.getenv('JENKINS_ADMIN_PASSWORD')
+
+if (!adminId || !adminPassword) {
+    throw new IllegalStateException('JENKINS_ADMIN_ID and JENKINS_ADMIN_PASSWORD are required')
+}
 
 def securityRealm = new HudsonPrivateSecurityRealm(false)
-if (securityRealm.getUser(adminId) == null) {
+def adminUser = securityRealm.getUser(adminId)
+if (adminUser == null) {
     securityRealm.createAccount(adminId, adminPassword)
+} else {
+    adminUser.addProperty(HudsonPrivateSecurityRealm.Details.fromPlainPassword(adminPassword))
+    adminUser.save()
 }
 
 instance.setSecurityRealm(securityRealm)
@@ -22,7 +30,7 @@ def authorizationStrategy = new FullControlOnceLoggedInAuthorizationStrategy()
 authorizationStrategy.setAllowAnonymousRead(false)
 instance.setAuthorizationStrategy(authorizationStrategy)
 
-instance.setNumExecutors(2)
+instance.setNumExecutors(1)
 instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)
 
 def githubToken = System.getenv('GITHUB_TOKEN')

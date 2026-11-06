@@ -16,6 +16,8 @@ data class TossBillingChargeResponse(
     val failMessage: String?,
     val approvedAt: LocalDateTime?,
     val attempts: List<TossBillingChargeAttemptResponse> = emptyList(),
+    val canceledAt: LocalDateTime? = null,
+    val cancelDeadlineAt: LocalDateTime? = null,
 ) {
     companion object {
         fun from(
@@ -32,6 +34,8 @@ data class TossBillingChargeResponse(
             failMessage = entity.failMessage,
             approvedAt = entity.approvedAt,
             attempts = attempts.map(TossBillingChargeAttemptResponse::from),
+            canceledAt = entity.canceledAt,
+            cancelDeadlineAt = entity.cancelDeadline(),
         )
     }
 }
