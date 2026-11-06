@@ -786,6 +786,16 @@ pipeline {
     }
 
     parameters {
+        booleanParam(
+    name: 'AI_FAILURE_ANALYSIS',
+    defaultValue: true,
+    description: '실패 시 로그를 규칙과 로컬 LLM(Ollama)으로 분석해 Telegram 알림에 참고용으로 덧붙입니다.'
+)
+booleanParam(
+    name: 'AI_ANALYSIS_EXTERNAL_API',
+    defaultValue: false,
+    description: 'true이면 규칙 분류가 불확실하거나 로컬 LLM이 실패했을 때만 외부 LLM API를 부릅니다. 민감 정보를 가린 로그 일부만 보냅니다.'
+)
         choice(
             name: 'DEPLOY_ENV',
             choices: ['dev', 'staging', 'prod'],
