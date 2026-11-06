@@ -4,6 +4,22 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.15.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.0...v0.15.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **#87:** 공통 컴포넌트를 Next.js 라우팅으로 바꾸고 프론트 빌드 로그 경로를 고친다 ([eda7365](https://github.com/skyleedevzero86/IdolGlow/commit/eda7365ea7d2c23f2424820fe9ab6aef873087dd))
+* 공통 컴포넌트의 react-router-dom을 Next.js 라우팅으로 바꾸기 ([6149f7d](https://github.com/skyleedevzero86/IdolGlow/commit/6149f7dc59e7d29ad38b7b3703787684ab8b3fd8))
+* 잘못된 마크다운수정 ([ff51ee1](https://github.com/skyleedevzero86/IdolGlow/commit/ff51ee1a9e35defad39d14c029d68c7651eb3536))
+* 프론트 빌드 로그를 저장소 루트 ci-logs에 저장하기 ([9b63511](https://github.com/skyleedevzero86/IdolGlow/commit/9b635113bb6d9ab44775dbe9ac546f5128a24ce0))
+
+
+### CI
+
+* **#87:** 빌드 실패 분석 파라미터를 추가한다 ([ab6530f](https://github.com/skyleedevzero86/IdolGlow/commit/ab6530f16856106231e967ba08dce0e1c39fdd5d))
+* 빌드 실패 분석 파라미터 추가 ([e661353](https://github.com/skyleedevzero86/IdolGlow/commit/e66135379e37c9280a913766e932054b4e7e38dc))
+
 ## [0.15.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.14.0...v0.15.0) (2026-11-06)
 
 
