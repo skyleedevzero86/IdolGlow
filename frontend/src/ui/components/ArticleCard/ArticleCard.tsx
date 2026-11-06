@@ -1,6 +1,9 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import type { ArticleViewModel, CategoryType } from "../../../domains/article/domain/article.types";
 import styles from './ArticleCard.module.css';
@@ -45,8 +48,9 @@ const LinkIcon = () => (
 );
 
 export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { authReady, user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(article.likeCount);
@@ -76,8 +80,9 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
   const toggleLike = () => {
     if (!authReady) return;
     if (!user) {
-      const redirect = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
-      navigate(`/?login=1&redirect=${redirect}`);
+      const query = searchParams.toString();
+      const redirect = encodeURIComponent(`${pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+      router.push(`/?login=1&redirect=${redirect}`);
       return;
     }
 
@@ -91,7 +96,7 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
     <>
     <article className={styles.card}>
       <Link
-        to={`/articles/${article.id}`}
+        href={`/articles/${article.id}`}
         className={styles.imageWrapper}
         tabIndex={-1}
         aria-hidden="true"
@@ -136,7 +141,7 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
 
         <h3 className={styles.title}>
           <Link
-            to={`/articles/${article.id}`}
+            href={`/articles/${article.id}`}
             className={styles.titleLink}
           >
             {article.title}
