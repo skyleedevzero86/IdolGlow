@@ -4,6 +4,18 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.15.3](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.2...v0.15.3) (2026-11-06)
+
+
+### CI
+
+* analyze failed builds with local LLM and attach summary to Telegram ([#93](https://github.com/skyleedevzero86/IdolGlow/issues/93)) ([6882cef](https://github.com/skyleedevzero86/IdolGlow/commit/6882ceff5bc7517c7c69860221d852fa021c5023))
+* Jenkins에서 로컬 Ollama를 부르고 첫 모델 로딩 시간을 반영하기 ([f2fd545](https://github.com/skyleedevzero86/IdolGlow/commit/f2fd545810da931f9be3240176e180a7dacceec8))
+* Telegram 실패 알림에 로그 분석 블록 추가 ([9dbb836](https://github.com/skyleedevzero86/IdolGlow/commit/9dbb836e05ce453e91ae509908ca94c85b5669ec))
+* 빌드 실패 로그 분석기 추가 ([e06c058](https://github.com/skyleedevzero86/IdolGlow/commit/e06c058ba5bf53781b64e50646d1c33192c13755))
+* 빌드 실패 분석 실행 함수 추가 ([b40ffc8](https://github.com/skyleedevzero86/IdolGlow/commit/b40ffc8b479a73eabf71589c4870f08630734134))
+* 빌드 실패 시 Telegram 알림 전에 로그 분석 실행 ([d16c60e](https://github.com/skyleedevzero86/IdolGlow/commit/d16c60e84617d37084a73e7d4c27c1054316e732))
+
 ## [0.15.2](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.1...v0.15.2) (2026-11-06)
 
 
