@@ -504,6 +504,106 @@ def sendTelegramMessage(String message, boolean finalSummary = false) {
     }
 }
 
+def telegramHtmlToDiscord(String html) {
+    if (html == null) {
+        return ''
+    }
+
+    return html
+        .replaceAll(/<br\s*\/?>/, '\n')
+        .replaceAll(/<\/?b>/, '**')
+        .replaceAll(/<\/?code>/, '`')
+        .replaceAll(/<\/?i>/, '_')
+        .replaceAll(/<[^>]+>/, '')
+        .replace('&lt;', '<')
+        .replace('&gt;', '>')
+        .replace('&quot;', '"')
+        .replace('&amp;', '&')
+}
+
+def withDiscordWebhook(Closure body) {
+    try {
+        withCredentials([string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL')]) {
+            body()
+        }
+    } catch (Exception credentialError) {
+        echo "Discord Credentials 미사용: ${credentialError.message}"
+        def fromEnv = sh(script: 'printf %s "${DISCORD_WEBHOOK_URL}"', returnStdout: true).trim()
+        if (!fromEnv) {
+            echo 'Discord 설정이 없어 전송을 건너뜁니다. DISCORD_WEBHOOK_URL 또는 discord-webhook-url Credentials를 확인하세요.'
+            return
+        }
+        withEnv(["DISCORD_URL=${fromEnv}"]) {
+            body()
+        }
+    }
+}
+
+def discordColorFor(String outcome) {
+    switch (outcome) {
+        case 'success':
+            return 5763719
+        case 'failure':
+            return 15548997
+        case 'approval_wait':
+            return 16705372
+        default:
+            return 9807270
+    }
+}
+
+def sendDiscordMessage(String telegramHtml, boolean finalSummary = false, String outcome = '') {
+    if (!params.SEND_DISCORD || !isUnix()) {
+        return
+    }
+
+    if (finalSummary && env.DISCORD_FINAL_SUMMARY_SENT == 'true') {
+        echo 'Discord 최종 요약은 이미 전송됨 — 중복 생략'
+        return
+    }
+
+    try {
+        def text = telegramHtmlToDiscord(telegramHtml).trim()
+        def newline = text.indexOf('\n')
+        def title = (newline > 0 ? text.substring(0, newline) : text).replace('**', '').trim()
+        def body = newline > 0 ? text.substring(newline + 1).trim() : ''
+        def embed = [
+            title: truncateTelegramText(title, 250),
+            description: truncateTelegramText(body, 3900),
+            color: discordColorFor(outcome),
+            footer: [text: "Jenkins 빌드 #${env.BUILD_NUMBER}"],
+        ]
+        if (env.BUILD_URL?.trim()) {
+            embed.url = env.BUILD_URL.trim()
+        }
+        def json = groovy.json.JsonOutput.toJson([
+            username: 'Jenkins Build Bot',
+            allowed_mentions: [parse: []],
+            embeds: [embed],
+        ])
+        writeFile file: 'discord-payload.json', text: json, encoding: 'UTF-8'
+
+        withDiscordWebhook {
+            def exitCode = sh(
+                script: '''
+                    set +x
+                    curl -fsS -X POST "$DISCORD_URL" \
+                      -H 'Content-Type: application/json; charset=utf-8' \
+                      --data-binary @discord-payload.json
+                ''',
+                returnStatus: true
+            )
+            if (exitCode != 0) {
+                echo "Discord 전송 실패(exit=${exitCode})"
+            } else if (finalSummary) {
+                env.DISCORD_FINAL_SUMMARY_SENT = 'true'
+            }
+        }
+    } catch (Exception discordError) {
+        echo "Discord 알림 전송 실패 (빌드는 계속): ${discordError.message}"
+    }
+}
+
 def formatTelegramActionLines(String action) {
     return action
         .split('\n')
@@ -511,6 +611,11 @@ def formatTelegramActionLines(String action) {
         .findAll { it }
         .collect { line -> "• ${escapeTelegramHtml(line)}" }
         .join('\n')
+}
+
+def failedStageFilePath() {
+    def workspace = env.WORKSPACE?.trim()
+    return workspace ? "${workspace}/.pipeline-failed-stage" : '.pipeline-failed-stage'
 }
 
 def resolveFailedStageName() {
@@ -523,8 +628,8 @@ def resolveFailedStageName() {
         return stageName
     }
 
-    if (fileExists('.pipeline-failed-stage')) {
-        return readFile(file: '.pipeline-failed-stage', encoding: 'UTF-8').trim()
+    if (fileExists(failedStageFilePath())) {
+        return readFile(file: failedStageFilePath(), encoding: 'UTF-8').trim()
     }
 
     return '알 수 없음'
@@ -538,13 +643,13 @@ def captureFailureStageIfMissing() {
     def stageName = env.STAGE_NAME?.trim()
     if (stageName && stageName != 'Declarative: Post Actions') {
         env.PIPELINE_FAILED_STAGE = stageName
-        writeFile file: '.pipeline-failed-stage', text: stageName, encoding: 'UTF-8'
+        writeFile file: failedStageFilePath(), text: stageName, encoding: 'UTF-8'
     }
 }
 
 def markPipelineFailed(String stageName) {
     env.PIPELINE_FAILED_STAGE = stageName
-    writeFile file: '.pipeline-failed-stage', text: stageName, encoding: 'UTF-8'
+    writeFile file: failedStageFilePath(), text: stageName, encoding: 'UTF-8'
 }
 
 def backendGradleFlags() {
@@ -721,7 +826,7 @@ CHANGELOG: <code>${section}</code> | 프론트: <code>${frontend}</code>
 }
 
 def notifyTelegramSummary(String outcome) {
-    if (!params.SEND_TELEGRAM) {
+    if (!params.SEND_TELEGRAM && !params.SEND_DISCORD) {
         return
     }
 
@@ -806,6 +911,7 @@ ${buildTelegramContextBlock(false)}"""
         if (message) {
             def isFinalSummary = outcome in ['success', 'failure', 'aborted']
             sendTelegramMessage(message, isFinalSummary)
+            sendDiscordMessage(message, isFinalSummary, outcome)
         }
     } catch (Exception telegramError) {
         echo "Telegram 알림 전송 실패 (빌드는 계속): ${telegramError.message}"
@@ -877,6 +983,11 @@ booleanParam(
             defaultValue: true,
             description: 'true이면 파이프라인 완료·실패·승인 대기 시 Telegram으로 요약 알림 1통을 전송합니다.'
         )
+        booleanParam(
+            name: 'SEND_DISCORD',
+            defaultValue: true,
+            description: 'true이면 Telegram과 같은 요약을 Discord 웹훅으로도 보냅니다. 웹훅 URL이 없으면 건너뜁니다.'
+        )
     }
 
     environment {
@@ -900,7 +1011,7 @@ booleanParam(
                 checkout scm
                 script {
                     if (isUnix()) {
-                        sh 'rm -rf ci-logs && mkdir -p ci-logs'
+                        sh 'rm -rf ci-logs .pipeline-failed-stage && mkdir -p ci-logs'
                     }
                     fetchGitTagsForReleaseDetection()
                     env.REPO_ROOT = pwd()

@@ -31,6 +31,7 @@ services:
       TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-}"
       TELEGRAM_CREDENTIALS_TOKEN_ID: "${TELEGRAM_CREDENTIALS_TOKEN_ID:-telegram-bot-token}"
       TELEGRAM_CREDENTIALS_CHAT_ID: "${TELEGRAM_CREDENTIALS_CHAT_ID:-telegram-chat-id}"
+      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL:-}"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
