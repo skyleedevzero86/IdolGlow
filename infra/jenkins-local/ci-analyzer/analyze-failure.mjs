@@ -143,7 +143,7 @@ async function summarizeLocal(evidence, rule) {
     const res = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(45000),
+      signal: AbortSignal.timeout(90000),
       body: JSON.stringify({
         model: OLLAMA_MODEL,
         stream: false,

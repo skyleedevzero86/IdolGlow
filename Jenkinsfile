@@ -594,7 +594,7 @@ def runFailureAnalysis() {
         ]
         def run = {
             withEnv(envs) {
-                timeout(time: 90, unit: 'SECONDS') {
+                timeout(time: 150, unit: 'SECONDS') {
                     sh 'cd infra/jenkins-local/ci-analyzer && (test -d node_modules || npm ci --no-audit --no-fund) && cd ../../.. && node infra/jenkins-local/ci-analyzer/analyze-failure.mjs || true'
                 }
             }
