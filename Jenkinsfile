@@ -582,6 +582,38 @@ def verifyBackendGradleWrapper() {
     }
 }
 
+def runFailureAnalysis() {
+    if (!params.AI_FAILURE_ANALYSIS || !isUnix()) {
+        return
+    }
+    try {
+        def failedStage = resolveFailedStageName() ?: ''
+        def envs = [
+            "FAILED_STAGE=${failedStage}",
+            "CI_LLM_API_ENABLED=${params.AI_ANALYSIS_EXTERNAL_API ? 'true' : 'false'}",
+        ]
+        def run = {
+            withEnv(envs) {
+                timeout(time: 90, unit: 'SECONDS') {
+                    sh 'cd infra/jenkins-local/ci-analyzer && (test -d node_modules || npm ci --no-audit --no-fund) && cd ../../.. && node infra/jenkins-local/ci-analyzer/analyze-failure.mjs || true'
+                }
+            }
+        }
+        if (params.AI_ANALYSIS_EXTERNAL_API) {
+            withCredentials([string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_API_KEY')]) {
+                run()
+            }
+        } else {
+            run()
+        }
+        if (fileExists('ci-logs/failure-analysis.txt')) {
+            env.AI_FAILURE_ANALYSIS_TEXT = readFile(file: 'ci-logs/failure-analysis.txt', encoding: 'UTF-8')
+        }
+    } catch (Exception analysisError) {
+        echo "실패 분석 건너뜀: ${analysisError.message}"
+    }
+}
+
 def runBackendGradle(String stageLabel, String goals, int timeoutMinutes = 20) {
     try {
         def logName = goals.replaceAll(/[^A-Za-z0-9]+/, '-')
