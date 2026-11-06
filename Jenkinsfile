@@ -1028,6 +1028,7 @@ booleanParam(
                         )
                     }
 
+                    def ciLogDir = "${pwd()}/ci-logs"
                     dir(frontendDir) {
                         try {
                             if (isUnix()) {
@@ -1036,7 +1037,6 @@ booleanParam(
                                 sh 'corepack prepare pnpm@9.15.4 --activate || true'
                                 sh 'pnpm -v'
                                 installFrontendDependencies(frontendDir)
-                                def ciLogDir = "${resolveRepoRoot()}/ci-logs"
                                 sh "mkdir -p '${ciLogDir}'"
                                 sh "bash -o pipefail -c 'pnpm build 2>&1 | tee \"${ciLogDir}/frontend-build.log\"'"
                             } else {
