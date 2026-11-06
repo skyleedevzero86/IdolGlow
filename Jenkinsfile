@@ -1026,8 +1026,9 @@ pipeline {
                                 sh 'corepack prepare pnpm@9.15.4 --activate || true'
                                 sh 'pnpm -v'
                                 installFrontendDependencies(frontendDir)
-                                sh "mkdir -p '${env.REPO_ROOT}/ci-logs'"
-                                sh "bash -o pipefail -c 'pnpm build 2>&1 | tee \"${env.REPO_ROOT}/ci-logs/frontend-build.log\"'"
+                                def ciLogDir = "${resolveRepoRoot()}/ci-logs"
+                                sh "mkdir -p '${ciLogDir}'"
+                                sh "bash -o pipefail -c 'pnpm build 2>&1 | tee \"${ciLogDir}/frontend-build.log\"'"
                             } else {
                                 bat 'node -v'
                                 bat 'corepack enable'
