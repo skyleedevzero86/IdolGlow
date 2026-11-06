@@ -4,6 +4,14 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.15.2](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.1...v0.15.2) (2026-11-06)
+
+
+### Bug Fixes
+
+* save frontend build log to repository root ci-logs ([#89](https://github.com/skyleedevzero86/IdolGlow/issues/89)) ([265bef7](https://github.com/skyleedevzero86/IdolGlow/commit/265bef7eabd769baca1451f29e17f38488e1c3e9))
+* 프론트 빌드 로그를 frontend 폴더가 아닌 저장소 루트 ci-logs에 저장하기 ([3ca3e4e](https://github.com/skyleedevzero86/IdolGlow/commit/3ca3e4ef815b3e69087ec20c386dee5dd53ced0e))
+
 ## [0.15.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.15.0...v0.15.1) (2026-11-06)
 
 
