@@ -1,46 +1,35 @@
 package com.sleekydz86.idolglow.subway.infrastructure.enrichment
 
+import com.sleekydz86.idolglow.subway.domain.SubwayStationFacts
 import tools.jackson.databind.ObjectMapper
 
 object SubwayStationSummaryPrompts {
     val system: String =
         """
-        You write short visitor tips for Seoul metropolitan subway stations.
-        Input JSON has lineId, lineName, stationCd and stationName.
-        Describe the general atmosphere, transit and daily-life context of the station's line and area.
-        Do not state unverified transfers, opening dates or facilities. Hedge guesses with "may".
-        Do not write the station name or any other place name; the page already shows it.
-        Write in plain English. Output exactly one JSON object, no code fence:
-        {"bullets": ["sentence 1", "sentence 2", "sentence 3"]}
-        bullets must have exactly 3 sentences, each under 120 characters.
-        """.trimIndent()
-
-    val translateToKorean: String =
-        """
-        Translate each sentence in the input JSON "bullets" array into natural, polite Korean.
-        Use Hangul only. Never use Chinese characters, Japanese kana or English words.
-        Keep the same number of sentences in the same order. Do not add new information.
-        Output exactly one JSON object, no code fence: {"bullets": ["...", "...", "..."]}
+        You write 3 short sentences for one Seoul subway station page.
+        Use ONLY the facts in the input JSON. Never add a place, landmark, history or number that is not in the input.
+        Copy place and station names exactly as given. Write natural polite Korean sentences ending with "~습니다" or "~요".
+        Never use Chinese characters, Japanese or English words.
+        Example output for other facts:
+        {"bullets": ["3호선 역으로 이웃 역은 안국과 종로3가입니다.", "약 300m 거리에 창덕궁이, 약 450m 거리에 북촌한옥마을이 있습니다.", "인사동거리도 약 600m로 걸어서 둘러볼 수 있습니다."]}
+        Output exactly one JSON object: {"bullets": ["...", "...", "..."]}
+        1st sentence: line, transfer lines if any, neighboring stations. 2nd and 3rd: nearby places with distance.
         """.trimIndent()
 
     fun userJson(
         objectMapper: ObjectMapper,
-        lineId: String,
-        lineName: String,
-        stationCd: String,
-        stationDisplayName: String,
+        facts: SubwayStationFacts,
     ): String =
         objectMapper.writeValueAsString(
             mapOf(
-                "lineId" to lineId,
-                "lineName" to lineName,
-                "stationCd" to stationCd,
-                "stationName" to stationDisplayName,
+                "station" to facts.station,
+                "line" to facts.line,
+                "transferLines" to facts.transferLines,
+                "neighborStations" to facts.neighborStations,
+                "nearbyPlaces" to
+                    facts.nearbyPlaces.map {
+                        mapOf("name" to it.name, "type" to it.category, "meters" to it.distanceMeters)
+                    },
             ),
         )
-
-    fun bulletsJson(
-        objectMapper: ObjectMapper,
-        bullets: List<String>,
-    ): String = objectMapper.writeValueAsString(mapOf("bullets" to bullets))
 }

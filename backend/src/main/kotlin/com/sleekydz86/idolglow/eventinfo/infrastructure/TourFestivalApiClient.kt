@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalImage
+import com.sleekydz86.idolglow.eventinfo.domain.TourNearbyPlace
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
@@ -157,6 +158,29 @@ class TourFestivalApiClient(
                     lclsSystm2?.let { put("lclsSystm2", it) }
                     lclsSystm3?.let { put("lclsSystm3", it) }
                 },
+        ).mapNotNull { it.toDomain() }
+    }
+
+    fun locationBasedList(
+        mapX: Double,
+        mapY: Double,
+        radiusMeters: Int,
+        numOfRows: Int,
+    ): List<TourNearbyPlace> {
+        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        if (encodedKey.isEmpty()) return emptyList()
+        return fetchList<NearbyItem>(
+            endpoint = "locationBasedList2",
+            encodedServiceKey = encodedKey,
+            params =
+                mapOf(
+                    "mapX" to mapX.toString(),
+                    "mapY" to mapY.toString(),
+                    "radius" to radiusMeters.toString(),
+                    "arrange" to "E",
+                    "pageNo" to "1",
+                    "numOfRows" to numOfRows.toString(),
+                ),
         ).mapNotNull { it.toDomain() }
     }
 
@@ -358,6 +382,21 @@ private fun decodeBasicHtmlEntities(raw: String?): String? =
         ?.replace("&gt;", ">")
         ?.replace("&quot;", "\"")
         ?.replace("&#39;", "'")
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class NearbyItem(
+    val contenttypeid: String? = null,
+    val title: String? = null,
+    val dist: String? = null,
+) {
+    fun toDomain(): TourNearbyPlace? {
+        val type = contenttypeid?.trim()?.takeIf { it.isNotEmpty() }
+        val name = title?.trim()?.takeIf { it.isNotEmpty() }
+        val meters = dist?.toDoubleOrNull()?.toInt()
+        if (type == null || name == null || meters == null) return null
+        return TourNearbyPlace(contentTypeId = type, title = name, distanceMeters = meters)
+    }
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class FestivalItem(

@@ -5,6 +5,10 @@ import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
 import com.sleekydz86.idolglow.global.llm.LlmInputMasker
 import com.sleekydz86.idolglow.global.llm.LlmProvider
 import com.sleekydz86.idolglow.global.llm.LlmRequest
+import com.sleekydz86.idolglow.subway.domain.SubwayLine
+import com.sleekydz86.idolglow.subway.domain.SubwayNearbyPlace
+import com.sleekydz86.idolglow.subway.domain.SubwayStationLocation
+import com.sleekydz86.idolglow.subway.domain.SubwayStationStop
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -34,65 +38,109 @@ class SubwayStationSummaryLlmRouterTest {
 
     private val objectMapper = ObjectMapper()
 
-    private val english = """{"bullets":["Busy business area.","Many shops nearby.","May be crowded at rush hour."]}"""
+    private val lines = listOf(SubwayLine("2", "2호선", "#00A84D"), SubwayLine("AREX", "공항철도", "#0099D8"))
+    private val stops =
+        mapOf(
+            "2" to listOf(stop("0238", "합정"), stop("0239", "홍대입구"), stop("0240", "신촌")),
+            "AREX" to listOf(stop("A01", "홍대입구")),
+        )
+    private val places =
+        listOf(
+            SubwayNearbyPlace("서울 인디스페이스", "문화시설", 152),
+            SubwayNearbyPlace("CGV 홍대", "문화시설", 360),
+        )
+
+    private fun stop(
+        code: String,
+        name: String,
+    ) = SubwayStationStop(code = code, name = name, frCode = code)
 
     private fun router(
         providers: List<LlmProvider>,
-        chain: List<String> = listOf("local"),
+        nearby: List<SubwayNearbyPlace> = places,
         externalEnabled: Boolean = false,
         summaryEnabled: Boolean = true,
     ): SubwayStationSummaryLlmRouter {
-        val props = LlmGatewayProperties(externalEnabled = externalEnabled, chains = mapOf("subway" to chain))
+        val props = LlmGatewayProperties(externalEnabled = externalEnabled, chains = mapOf("subway" to listOf("local")))
         val gateway =
             LlmGateway(providers, props, CircuitBreakerRegistry.ofDefaults(), SimpleMeterRegistry(), LlmInputMasker())
-        return SubwayStationSummaryLlmRouter(gateway, objectMapper, summaryEnabled)
+        val assembler =
+            SubwayStationFactsAssembler(
+                lineCatalogPort = { lines },
+                stationOrderPort = { stops[it].orEmpty() },
+                locationPort = { SubwayStationLocation(37.557, 126.924) },
+                nearbyPlacePort = { nearby },
+            )
+        return SubwayStationSummaryLlmRouter(gateway, objectMapper, assembler, summaryEnabled)
     }
 
-    private fun SubwayStationSummaryLlmRouter.generate() = generateSummary("2", "2호선", "222", "강남")
+    private fun SubwayStationSummaryLlmRouter.generate() = generateSummary("2", "2호선", "0239", "홍대입구")
 
-    @DisplayName("영어로 만든 문장을 한국어로 번역해 문장만 돌려준다")
+    private fun answer(vararg bullets: String) = objectMapper.writeValueAsString(mapOf("bullets" to bullets.toList()))
+
+    @DisplayName("환승·이웃 역·주변 장소를 프롬프트에 넣고, 사실과 맞는 문장을 돌려준다")
     @Test
-    fun writesInEnglishThenTranslates() {
-        val korean = "```json\n{\"bullets\":[\" 업무 지역입니다. \",\"상점이 많습니다.\",\"출퇴근 때 붐빌 수 있습니다.\"]}\n```"
-        val local = FakeProvider("local", false, listOf(english, korean))
+    fun returnsGroundedSentences() {
+        val local =
+            FakeProvider(
+                "local",
+                false,
+                listOf(
+                    answer(
+                        "2호선 홍대입구역은 공항철도로 갈아탈 수 있고 이웃 역은 합정과 신촌입니다.",
+                        "서울 인디스페이스가 약 150m 거리에 있습니다.",
+                        "CGV 홍대도 약 400m로 가깝습니다.",
+                    ),
+                ),
+            )
 
         val summary = router(listOf(local)).generate()
 
-        assertEquals(listOf("업무 지역입니다.", "상점이 많습니다.", "출퇴근 때 붐빌 수 있습니다."), summary?.bullets)
-        assertNull(summary?.title)
-        assertNull(summary?.learnMoreLabel)
-        assertTrue(local.requests[1].userPrompt.contains("Busy business area."))
+        assertEquals(3, summary?.bullets?.size)
+        val prompt = local.requests.single().userPrompt
+        assertTrue(prompt.contains("공항철도"))
+        assertTrue(prompt.contains("서울 인디스페이스"))
+        assertTrue(prompt.contains("합정") && prompt.contains("신촌"))
     }
 
-    @DisplayName("번역에 한자, 가나, 영문이 섞이면 버린다")
+    @DisplayName("사실에 없는 거리를 쓰면 버린다")
     @Test
-    fun dropsTranslationWithNonKoreanLetters() {
-        val chinese = """{"bullets":["업무 지역입니다.","周边设施完善","붐빌 수 있습니다."]}"""
-        val japanese = """{"bullets":["ビジネ스 중심","상점이 많습니다.","붐빌 수 있습니다."]}"""
-        val latin = """{"bullets":["업무 지역입니다.","용hill 캠퍼스가 가깝습니다.","붐빌 수 있습니다."]}"""
+    fun dropsInventedDistance() {
+        val local =
+            FakeProvider(
+                "local",
+                false,
+                listOf(answer("2호선 역입니다.", "서울 인디스페이스가 약 900m 거리에 있습니다.", "CGV 홍대도 가깝습니다.")),
+            )
 
-        listOf(chinese, japanese, latin).forEach { translated ->
-            assertNull(router(listOf(FakeProvider("local", false, listOf(english, translated)))).generate())
+        assertNull(router(listOf(local)).generate())
+    }
+
+    @DisplayName("한자·가나·영단어가 섞이면 버리지만 장소 이름의 영문은 허용한다")
+    @Test
+    fun dropsForeignLettersOutsideNames() {
+        val chinese = answer("2호선 역입니다.", "周边 서울 인디스페이스가 있습니다.", "CGV 홍대도 있습니다.")
+        val english = answer("2호선 역입니다.", "서울 인디스페이스 is near.", "CGV 홍대도 있습니다.")
+
+        listOf(chinese, english).forEach { text ->
+            assertNull(router(listOf(FakeProvider("local", false, listOf(text)))).generate())
         }
     }
 
-    @DisplayName("영어 문장이 3개가 아니거나 JSON이 아니면 번역을 부르지 않는다")
+    @DisplayName("주변 장소가 없으면 LLM을 부르지 않는다")
     @Test
-    fun skipsTranslationWhenEnglishIsInvalid() {
-        val twoBullets = FakeProvider("local", false, listOf("""{"bullets":["One.","Two."]}"""))
-        val notJson = FakeProvider("local", false, listOf("Gangnam is busy."))
+    fun skipsLlmWithoutNearbyPlaces() {
+        val local = FakeProvider("local", false, listOf(answer("a", "b", "c")))
 
-        assertNull(router(listOf(twoBullets)).generate())
-        assertNull(router(listOf(notJson)).generate())
-        assertEquals(1, twoBullets.requests.size)
-        assertEquals(1, notJson.requests.size)
+        assertNull(router(listOf(local), nearby = emptyList()).generate())
+        assertTrue(local.requests.isEmpty())
     }
 
     @DisplayName("지하철 체인이 로컬뿐이면 외부가 켜져 있어도 외부를 부르지 않는다")
     @Test
     fun doesNotCallExternalWhenChainIsLocalOnly() {
         val local = FakeProvider("local", false, listOf(null))
-        val openai = FakeProvider("openai", true, listOf(english))
+        val openai = FakeProvider("openai", true, listOf(answer("a", "b", "c")))
 
         assertNull(router(listOf(local, openai), externalEnabled = true).generate())
         assertTrue(openai.requests.isEmpty())
@@ -101,7 +149,7 @@ class SubwayStationSummaryLlmRouterTest {
     @DisplayName("요약 기능이 꺼져 있으면 공급자를 부르지 않는다")
     @Test
     fun skipsWhenSummaryDisabled() {
-        val local = FakeProvider("local", false, listOf(english))
+        val local = FakeProvider("local", false, listOf(answer("a", "b", "c")))
 
         assertNull(router(listOf(local), summaryEnabled = false).generate())
         assertTrue(local.requests.isEmpty())
