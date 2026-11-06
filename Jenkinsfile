@@ -1243,6 +1243,8 @@ booleanParam(
                     notifyTelegramSummary('success')
                     echo '배포 파이프라인이 성공적으로 완료되었습니다.'
                 } else if (result == 'FAILURE') {
+                    captureFailureStageIfMissing()
+                    runFailureAnalysis()
                     notifyTelegramSummary('failure')
                     echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
                 } else if (result == 'ABORTED') {
@@ -1252,6 +1254,7 @@ booleanParam(
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
             archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: true
             archiveArtifacts artifacts: 'backend/build/reports/profile/*.html', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'ci-logs/failure-analysis.*', allowEmptyArchive: true
         }
     }
 }
