@@ -1,0 +1,97 @@
+.form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.field,
+.button,
+.table {
+  font: inherit;
+}
+
+.field {
+  border: 1px solid var(--admin-border, #e2e4eb);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #1a1a2e;
+  color: #fff;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.secondary {
+  background: #fff;
+  color: #1a1a2e;
+  border: 1px solid var(--admin-border, #e2e4eb);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--admin-border, #e2e4eb);
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.audit {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--admin-border, #e2e4eb);
+  border-radius: 8px;
+}
+
+.auditTitle {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.basis,
+.auditList {
+  margin: 8px 0;
+}
+
+.auditList {
+  padding-left: 20px;
+}
+
+.reason {
+  max-width: 320px;
+  white-space: normal;
+}
+
+.error {
+  color: #9b1c1c;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 800px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+}
