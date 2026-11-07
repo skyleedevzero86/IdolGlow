@@ -1,0 +1,1189 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  border: 1px solid #d9dee8;
+  background: #ffffff;
+}
+
+.panelBody {
+  padding: 18px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbarLeft,
+.toolbarRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.searchInput,
+.input,
+.select,
+.dateInput,
+.numberInput {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cfd6e3;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.88rem;
+}
+
+.searchInput {
+  min-width: 220px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid #cfd6e3;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton,
+.ghostButton {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid #d0d7e4;
+  background: #ffffff;
+  color: #111827;
+}
+
+.primaryButton {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.dangerButton {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.ghostButton {
+  background: #f8fafc;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.statCard {
+  border: 1px solid #d9dee8;
+  background: #f8fafc;
+  padding: 14px 16px;
+}
+
+.statLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.statValue {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e9f0;
+  text-align: center;
+  font-size: 0.86rem;
+  color: #111827;
+}
+
+.table th {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.left {
+  text-align: left !important;
+}
+
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cIdx {
+  width: 3.25rem;
+}
+
+.cName {
+  width: 20%;
+  min-width: 7.5rem;
+}
+
+.cMoney {
+  width: 5.5rem;
+}
+
+.cTag {
+  width: 14%;
+  min-width: 5.5rem;
+}
+
+.cLoc {
+  width: 20%;
+  min-width: 8.5rem;
+}
+
+.cAct {
+  width: 6.5rem;
+}
+
+.rowButton {
+  cursor: pointer;
+}
+
+.rowButton:hover {
+  background: #f8fafc;
+}
+
+.activeRow {
+  background: #eef4ff;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.statusSuccess {
+  background: #e8f7ee;
+  color: #15803d;
+}
+
+.statusWarning {
+  background: #fff7e8;
+  color: #b45309;
+}
+
+.statusDanger {
+  background: #feeceb;
+  color: #b91c1c;
+}
+
+.statusNeutral {
+  background: #eff3f8;
+  color: #475569;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  gap: 16px;
+}
+
+.detailPanel {
+  border: 1px solid #d9dee8;
+  background: #ffffff;
+}
+
+.detailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.detailMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metaItem {
+  border: 1px solid #e5e9f0;
+  background: #f8fafc;
+  padding: 10px 12px;
+}
+
+.metaLabel {
+  display: block;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.metaValue {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  word-break: break-word;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.checkboxGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.checkboxCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #d9dee8;
+  background: #ffffff;
+}
+
+.checkboxCardToggle {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.checkboxMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkboxTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.checkboxDescription {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.optionDetailLink {
+  text-decoration: none;
+  color: inherit;
+  align-self: stretch;
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.optionDetailLink:hover .checkboxTitle {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.buttonRowAlignEnd {
+  justify-content: flex-end;
+}
+
+.helper {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.tourSearchPrompt {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #b91c1c;
+  text-align: right;
+}
+
+.message,
+.error,
+.empty {
+  padding: 14px 16px;
+  border: 1px solid #d9dee8;
+  background: #ffffff;
+  font-size: 0.9rem;
+}
+
+.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.message {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.empty {
+  color: #64748b;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.paginationWrap {
+  margin-top: 0;
+  padding: 12px 16px 14px;
+  border-top: 1px solid #e5e9f0;
+}
+
+.paginationInfo {
+  margin: 0 0 10px;
+  text-align: right;
+  color: #475569;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.paginationNumbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageButton {
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid #cfd6e3;
+  background: #ffffff;
+  color: #111827;
+}
+
+.pageArrowButton {
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid #cfd6e3;
+  background: #ffffff;
+  color: #111827;
+}
+
+.pageArrowButton:disabled {
+  opacity: 0.45;
+}
+
+.pageActive {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.refundList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.refundCard {
+  border: 1px solid #e5e9f0;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.refundTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.refundMeta {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tourFilterTopSpacer {
+  height: 20px;
+}
+
+.tourFilterGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tourFilterField {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 120px;
+}
+
+.tourAddressList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tourAddressButton {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid #d9dee8;
+  background: #ffffff;
+  font-size: 0.88rem;
+  color: #111827;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.tourAddressButton:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.tourAddressButtonActive {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.tourPickedPanel {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  background: #f8fafc;
+  border-radius: 2px;
+}
+
+.tourPickedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.tourPickedTitle {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.tourPickedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.tourPickedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  font-size: 0.84rem;
+}
+
+.tourPickedLabel {
+  color: #111827;
+  flex: 1;
+  min-width: 0;
+}
+
+.tourPickedRemove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 2px 4px;
+}
+
+.tourPickedRemove:hover {
+  color: #b91c1c;
+}
+
+.tourDetailCard {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  font-size: 0.9rem;
+  color: #1e3a8a;
+}
+
+.tourDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tourDetailTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e40af;
+  flex: 1;
+  min-width: 0;
+}
+
+.tourDetailActions {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.locationCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.tourPicksOpenButton {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tourPicksOpenButton:hover {
+  color: #1d4ed8;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.modalPanel {
+  width: min(100%, 26rem);
+  max-height: min(80vh, 28rem);
+  overflow: auto;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid #d9dee8;
+  background: #ffffff;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+}
+
+.modalTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.modalSubtitle {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.modalList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modalListItem {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #1e293b;
+}
+
+.modalListMeta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.modalFooter {
+  margin-top: 1.1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.formHint {
+  margin: 0 0 0.5rem;
+  max-width: 60rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.formHint strong,
+.modalSubtitle strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.formHintSub {
+  display: block;
+  flex: 1;
+  min-width: 8rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+.optionAddToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.optionItemMeta {
+  flex: 1 1 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  text-align: left;
+  cursor: default;
+}
+
+.optionPriceInline {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.optionItemActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.optionUnknown {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: #7c2d12;
+  text-align: left;
+  width: 100%;
+  padding: 0.2rem 0.25rem 0.2rem 0.6rem;
+}
+
+.linkishButton {
+  margin: 0 0 0 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.optionPickerPanel {
+  width: min(100%, 40rem);
+  max-height: min(88vh, 36rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.optionPickerSearchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.optionPickerTableScroll {
+  overflow: auto;
+  max-height: min(48vh, 20rem);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin: 0.2rem 0 0.5rem;
+}
+
+.optionPickerTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  background: #fff;
+}
+
+.optionPickerTable th,
+.optionPickerTable td {
+  padding: 0.4rem 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.optionPickerTable th {
+  text-align: left;
+  color: #64748b;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 1;
+}
+
+.tdName {
+  max-width: 9rem;
+  word-break: break-word;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.tdNum {
+  white-space: nowrap;
+  color: #0f172a;
+}
+
+.tdLocation {
+  max-width: 10rem;
+  word-break: break-all;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.pickerAddButton {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border: 0;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pickerAddButton:hover {
+  background: #1e3a5f;
+}
+
+.pillTag {
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.pickerMuted {
+  margin: 0 0 0.4rem;
+  font-size: 0.86rem;
+  color: #64748b;
+}
+
+.pickerError {
+  margin: 0 0 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: #b91c1c;
+}
+
+.optionPickerPager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.2rem 0 0.5rem;
+}
+
+.pagerInfo {
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+:global(html[data-theme='dark']) .statCard {
+  border-color: #334155;
+  background: #1e293b;
+}
+
+:global(html[data-theme='dark']) .statLabel {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .statValue {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .panel,
+:global(html[data-theme='dark']) .detailPanel {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+:global(html[data-theme='dark']) .summary,
+:global(html[data-theme='dark']) .paginationInfo,
+:global(html[data-theme='dark']) .pagerInfo {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .table th,
+:global(html[data-theme='dark']) .table td {
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .table th {
+  background: #1e293b;
+}
+
+:global(html[data-theme='dark']) .paginationWrap {
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .pageButton,
+:global(html[data-theme='dark']) .pageArrowButton {
+  border-color: #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .pageActive {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .primaryButton {
+  border-color: #e2e8f0;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(html[data-theme='dark']) .dangerButton {
+  border-color: #f87171;
+  color: #fecaca;
+  background: #1e1e1e;
+}
+
+:global(html[data-theme='dark']) .tourPicksOpenButton,
+:global(html[data-theme='dark']) .tourPicksOpenButton:hover {
+  color: #7dd3fc;
+}
+
+:global(html[data-theme='dark']) .modalPanel {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+:global(html[data-theme='dark']) .modalTitle {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .modalSubtitle {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .label,
+:global(html[data-theme='dark']) .detailTitle,
+:global(html[data-theme='dark']) .checkboxTitle,
+:global(html[data-theme='dark']) .optionPriceInline,
+:global(html[data-theme='dark']) .metaValue {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .helper,
+:global(html[data-theme='dark']) .metaLabel,
+:global(html[data-theme='dark']) .checkboxDescription,
+:global(html[data-theme='dark']) .formHint,
+:global(html[data-theme='dark']) .formHintSub,
+:global(html[data-theme='dark']) .tourSearchPrompt,
+:global(html[data-theme='dark']) .modalListMeta {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .input,
+:global(html[data-theme='dark']) .searchInput,
+:global(html[data-theme='dark']) .select,
+:global(html[data-theme='dark']) .dateInput,
+:global(html[data-theme='dark']) .numberInput,
+:global(html[data-theme='dark']) .textarea {
+  border-color: #334155;
+  background: #111827;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .secondaryButton,
+:global(html[data-theme='dark']) .ghostButton {
+  border-color: #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .secondaryButton:hover,
+:global(html[data-theme='dark']) .ghostButton:hover,
+:global(html[data-theme='dark']) .pageButton:hover,
+:global(html[data-theme='dark']) .pageArrowButton:hover:not(:disabled) {
+  background: #334155;
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .primaryButton:hover {
+  border-color: #f8fafc;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:global(html[data-theme='dark']) .dangerButton:hover {
+  border-color: #fca5a5;
+  background: #2b1518;
+  color: #fee2e2;
+}
+
+:global(html[data-theme='dark']) .primaryButton:disabled,
+:global(html[data-theme='dark']) .secondaryButton:disabled,
+:global(html[data-theme='dark']) .dangerButton:disabled,
+:global(html[data-theme='dark']) .ghostButton:disabled,
+:global(html[data-theme='dark']) .pageArrowButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:global(html[data-theme='dark']) .metaItem,
+:global(html[data-theme='dark']) .checkboxCard,
+:global(html[data-theme='dark']) .message,
+:global(html[data-theme='dark']) .empty,
+:global(html[data-theme='dark']) .refundCard,
+:global(html[data-theme='dark']) .tourAddressButton,
+:global(html[data-theme='dark']) .tourPickedRow,
+:global(html[data-theme='dark']) .modalListItem,
+:global(html[data-theme='dark']) .optionPickerTableScroll {
+  border-color: #334155;
+  background: #111827;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .tourAddressButtonActive {
+  border-color: #60a5fa;
+  background: #172554;
+  color: #dbeafe;
+  box-shadow: inset 0 0 0 1px #60a5fa;
+}
+
+:global(html[data-theme='dark']) .rowButton:hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+:global(html[data-theme='dark']) .activeRow {
+  background: rgba(59, 130, 246, 0.18);
+}
+
+:global(html[data-theme='dark']) .statusSuccess {
+  background: rgba(22, 163, 74, 0.2);
+  color: #86efac;
+}
+
+:global(html[data-theme='dark']) .statusWarning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+:global(html[data-theme='dark']) .statusDanger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+}
+
+:global(html[data-theme='dark']) .statusNeutral {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .tourPickedPanel,
+:global(html[data-theme='dark']) .tourDetailCard {
+  border-color: #334155;
+  background: #0b1220;
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .tourPickedTitle,
+:global(html[data-theme='dark']) .tourDetailTitle {
+  color: #bfdbfe;
+}
+
+:global(html[data-theme='dark']) .tourPickedLabel {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .tourPickedRemove {
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .tourPickedRemove:hover {
+  color: #fecaca;
+}
+
+:global(html[data-theme='dark']) .optionUnknown {
+  color: #fed7aa;
+}
+
+:global(html[data-theme='dark']) .linkishButton {
+  color: #93c5fd;
+}
+
+:global(html[data-theme='dark']) .optionPickerTable {
+  background: #0f172a;
+}
+
+:global(html[data-theme='dark']) .optionPickerTable th,
+:global(html[data-theme='dark']) .optionPickerTable td {
+  border-color: #334155;
+}
+
+:global(html[data-theme='dark']) .optionPickerTable th,
+:global(html[data-theme='dark']) .tdLocation,
+:global(html[data-theme='dark']) .pillTag,
+:global(html[data-theme='dark']) .pickerMuted {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .tdName,
+:global(html[data-theme='dark']) .tdNum {
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .pickerAddButton {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(html[data-theme='dark']) .pickerAddButton:hover {
+  background: #cbd5e1;
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .statGrid,
+  .formGrid,
+  .detailMeta,
+  .refundMeta,
+  .checkboxGrid {
+    grid-template-columns: 1fr;
+  }
+}
