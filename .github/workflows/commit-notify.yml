@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   notify-telegram:
@@ -490,6 +491,151 @@ jobs:
               "compare",
               ""
           )
+
+
+          def fetch_commit(repository, sha):
+              if not sha or set(sha) == {"0"}:
+                  return None
+              try:
+                  return github_api_get(
+                      "https://api.github.com/repos/"
+                      f"{repository}/commits/{sha}"
+                  )
+              except RuntimeError:
+                  return None
+
+
+          def first_parent_sha(commit_data):
+              parents = (commit_data or {}).get("parents") or []
+              if not parents:
+                  return ""
+              return parents[0].get("sha", "")
+
+
+          def commit_label(commit_data, sha):
+              short_sha = (sha or "")[:7] or "-------"
+              if not commit_data:
+                  return (
+                      f"<code>{escape_text(short_sha)}</code> "
+                      "(커밋 정보를 가져오지 못했습니다)"
+                  )
+              message = first_line(
+                  (commit_data.get("commit") or {}).get("message")
+              )
+              commit_url = (
+                  commit_data.get("html_url")
+                  or f"{repository_url}/commit/{sha}"
+              )
+              return (
+                  f'<a href="{escape_url(commit_url)}">'
+                  f"<code>{escape_text(short_sha)}</code></a> "
+                  f"{escape_text(message)}"
+              )
+
+
+          if event.get("forced"):
+              before_sha = event.get("before") or ""
+              after_sha = event.get("after") or ""
+              before_commit = fetch_commit(github_repository, before_sha)
+              after_commit = fetch_commit(github_repository, after_sha)
+              is_amend = bool(
+                  before_commit
+                  and after_commit
+                  and first_parent_sha(before_commit)
+                  == first_parent_sha(after_commit)
+              )
+
+              if is_amend:
+                  forced_lines = [
+                      "✏️ <b>커밋 내용 변경 알림</b>",
+                      "",
+                      "같은 위치의 커밋이 수정되어 다시 올라왔습니다.",
+                      "새 커밋이 추가된 것이 아닙니다."
+                  ]
+              else:
+                  forced_lines = [
+                      "⚠️ <b>강제 푸시 알림 (커밋 기록 변경)</b>",
+                      "",
+                      "브랜치 기록이 다시 작성되었습니다.",
+                      "이전 커밋 일부가 브랜치에서 빠졌을 수 있습니다."
+                  ]
+
+              forced_lines.extend([
+                  "",
+                  (
+                      "📦 저장소: "
+                      f"<b>{escape_text(github_repository)}</b>"
+                  ),
+                  (
+                      "🌿 브랜치: "
+                      f"<code>{escape_text(branch)}</code>"
+                  ),
+                  (
+                      "🚚 Push 실행자: "
+                      f"<b>{escape_text(push_actor)}</b>"
+                  ),
+                  "",
+                  f"이전: {commit_label(before_commit, before_sha)}",
+                  f"변경 후: {commit_label(after_commit, after_sha)}"
+              ])
+
+              if not is_amend and current_push_commits:
+                  forced_lines.extend([
+                      "",
+                      "📝 <b>이번 Push에 포함된 커밋</b>"
+                  ])
+                  for item in current_push_commits[:10]:
+                      forced_lines.append(
+                          "• "
+                          f"{escape_text(first_line(item.get('message')))}"
+                      )
+
+              forced_tail = []
+              if compare_url:
+                  forced_tail.append(
+                      f'🔎 <a href="{escape_url(compare_url)}">'
+                      "변경 내용 보기</a>"
+                  )
+
+              send_telegram_message(
+                  join_html_lines_with_limit(
+                      forced_lines,
+                      required_tail_lines=forced_tail
+                  )
+              )
+
+              print(f"ForcedPush=true Amend={is_amend}")
+              print(f"Before={before_sha} After={after_sha}")
+              sys.exit(0)
+
+
+          def merged_pull_for(repository, sha):
+              if not sha or set(sha) == {"0"}:
+                  return None
+              try:
+                  pulls = github_api_get(
+                      "https://api.github.com/repos/"
+                      f"{repository}/commits/{sha}/pulls"
+                  )
+              except RuntimeError:
+                  return None
+              for pull in pulls if isinstance(pulls, list) else []:
+                  if pull.get("merged_at") and pull.get("merge_commit_sha") == sha:
+                      return pull
+              return None
+
+
+          merged_pull = merged_pull_for(
+              github_repository,
+              event.get("after") or ""
+          )
+
+          if merged_pull:
+              print(
+                  "PR 머지로 생긴 push입니다. "
+                  f"PR 알림(#{merged_pull.get('number')})으로 대신해 생략합니다."
+              )
+              sys.exit(0)
 
 
           now_utc = datetime.now(
