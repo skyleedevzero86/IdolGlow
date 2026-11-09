@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idolglow
+  namespace: argocd
+spec:
+  description: IdolGlow 운영 배포
+  sourceRepos:
+    - https://github.com/skyleedevzero86/IdolGlow.git
+  destinations:
+    - namespace: idolglow
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  roles:
+    - name: deployer
+      description: 운영 동기화(배포) 승인자
+      policies:
+        - p, proj:idolglow:deployer, applications, get, idolglow/*, allow
+        - p, proj:idolglow:deployer, applications, sync, idolglow/*, allow
