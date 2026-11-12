@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   notify-discord:
@@ -19,6 +20,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
+          rm -f /tmp/discord-payload.json
 
           python3 <<'PYTHON'
           import json
@@ -307,6 +310,152 @@ jobs:
               or f"https://github.com/{urllib.parse.quote(push_actor, safe='')}"
           )
 
+          def fetch_commit(repository, sha):
+              if not sha or set(sha) == {"0"}:
+                  return None
+              try:
+                  return github_api_get(
+                      f"https://api.github.com/repos/{repository}/commits/{sha}"
+                  )
+              except RuntimeError:
+                  return None
+
+          def first_parent_sha(commit_data):
+              parents = (commit_data or {}).get("parents") or []
+              if not parents:
+                  return ""
+              return parents[0].get("sha", "")
+
+          def commit_label(commit_data, sha):
+              short_sha = (sha or "")[:7] or "-------"
+              if not commit_data:
+                  return f"`{short_sha}` (커밋 정보를 가져오지 못했습니다)"
+              message = first_line(
+                  (commit_data.get("commit") or {}).get("message")
+              )
+              commit_url = (
+                  commit_data.get("html_url")
+                  or f"{repository_url}/commit/{sha}"
+              )
+              return (
+                  f"[`{short_sha}`]({commit_url}) "
+                  f"{truncate(clean_text(message), 180)}"
+              )
+
+          if event.get("forced"):
+              before_commit = fetch_commit(github_repository, before_sha)
+              after_commit = fetch_commit(github_repository, after_sha)
+              is_amend = bool(
+                  before_commit
+                  and after_commit
+                  and first_parent_sha(before_commit)
+                  == first_parent_sha(after_commit)
+              )
+
+              if is_amend:
+                  forced_title = "✏️ 커밋 내용 변경 알림"
+                  forced_note = (
+                      "같은 위치의 커밋이 수정되어 다시 올라왔습니다. "
+                      "새 커밋이 추가된 것이 아닙니다."
+                  )
+              else:
+                  forced_title = "⚠️ 강제 푸시 알림 (커밋 기록 변경)"
+                  forced_note = (
+                      "브랜치 기록이 다시 작성되었습니다. "
+                      "이전 커밋 일부가 브랜치에서 빠졌을 수 있습니다."
+                  )
+
+              new_commit_lines = [
+                  "• " + truncate(
+                      clean_text(first_line(item.get("message"))),
+                      180
+                  )
+                  for item in current_push_commits[:10]
+              ]
+
+              forced_fields = [
+                  {
+                      "name": "이전",
+                      "value": commit_label(before_commit, before_sha),
+                      "inline": False
+                  },
+                  {
+                      "name": "변경 후",
+                      "value": commit_label(after_commit, after_sha),
+                      "inline": False
+                  }
+              ]
+
+              if not is_amend and new_commit_lines:
+                  forced_fields.append({
+                      "name": "이번 Push에 포함된 커밋",
+                      "value": truncate("\n".join(new_commit_lines), 1000),
+                      "inline": False
+                  })
+
+              forced_payload = {
+                  "username": "GitHub Commit Bot",
+                  "allowed_mentions": {
+                      "parse": []
+                  },
+                  "embeds": [
+                      {
+                          "title": forced_title,
+                          "url": compare_url,
+                          "description": (
+                              f"📦 [{clean_link_label(github_repository)}]"
+                              f"({repository_url})\n"
+                              f"🌿 [`{clean_link_label(branch)}`]"
+                              f"({branch_url})\n"
+                              f"🚚 Push 실행자: "
+                              f"[**{clean_link_label(push_actor)}**]"
+                              f"({actor_url})\n\n"
+                              f"{forced_note}"
+                          ),
+                          "color": 16753920,
+                          "fields": forced_fields,
+                          "timestamp": datetime.now(timezone.utc).isoformat()
+                      }
+                  ]
+              }
+
+              with open(
+                  "/tmp/discord-payload.json",
+                  "w",
+                  encoding="utf-8"
+              ) as payload_file:
+                  json.dump(
+                      forced_payload,
+                      payload_file,
+                      ensure_ascii=False
+                  )
+
+              print(f"ForcedPush=true Amend={is_amend}")
+              print(f"Before={before_sha} After={after_sha}")
+              sys.exit(0)
+
+          def merged_pull_for(repository, sha):
+              if not sha or set(sha) == {"0"}:
+                  return None
+              try:
+                  pulls = github_api_get(
+                      f"https://api.github.com/repos/{repository}/commits/{sha}/pulls"
+                  )
+              except RuntimeError:
+                  return None
+              for pull in pulls if isinstance(pulls, list) else []:
+                  if pull.get("merged_at") and pull.get("merge_commit_sha") == sha:
+                      return pull
+              return None
+
+          merged_pull = merged_pull_for(github_repository, after_sha)
+          if merged_pull:
+              print(
+                  "PR 머지로 생긴 push입니다. "
+                  f"PR 알림(#{merged_pull.get('number')})으로 대신해 생략합니다."
+              )
+              sys.exit(0)
+
           now_utc = datetime.now(timezone.utc)
           since_utc = now_utc - timedelta(hours=AGGREGATION_HOURS)
           since_value = since_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -551,6 +700,11 @@ jobs:
           print(f"ChangedFileCount={len(changed_files)}")
           print(f"AuthorCounts={dict(author_counts)}")
           PYTHON
+
+          if [[ ! -s /tmp/discord-payload.json ]]; then
+            echo "보낼 알림이 없어 종료합니다."
+            exit 0
+          fi
 
           if [[ "$DISCORD_WEBHOOK_URL" == *"?"* ]]; then
             REQUEST_URL="${DISCORD_WEBHOOK_URL}&wait=true"

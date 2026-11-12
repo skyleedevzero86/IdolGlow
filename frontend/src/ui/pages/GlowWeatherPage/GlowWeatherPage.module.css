@@ -1,0 +1,678 @@
+.shellMain {
+  min-width: 0;
+}
+
+.toolbarCard {
+  margin-bottom: 18px;
+}
+
+.statCard,
+.controlCard,
+.summaryCard,
+.forecastSection,
+.forecastRow,
+.forecastBanner,
+.forecastBannerChip,
+.expandButton,
+.recommendCard,
+.recommendButton,
+.windSection,
+.windFacts div,
+.selectField select {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pageSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.controlCard,
+.summaryCard,
+.forecastSection,
+.windSection {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.controlCard,
+.summaryCard,
+.forecastSection,
+.windSection {
+  padding: 14px 16px;
+}
+
+.selectField {
+  display: block;
+}
+
+.selectField select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #d6dae1;
+  background: #ffffff;
+  padding: 0 12px;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summaryHeader h2 {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.summaryHeader span {
+  color: #6b7280;
+  font-size: 0.88rem;
+}
+
+.summaryList {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.summaryList li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #1f2937;
+}
+
+.summaryList strong {
+  color: #0ea5a4;
+  font-size: 1.05rem;
+}
+
+.forecastSection {
+  background: #f8f9fb;
+}
+
+.forecastHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.forecastHeader h2,
+.recommendSection h2,
+.windCopy h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  color: #111827;
+}
+
+.forecastHeader p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.unitToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.unitToggle input {
+  width: 14px;
+  height: 14px;
+}
+
+.forecastList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.forecastRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 210px;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 18px;
+  border: 1px solid #eceff3;
+  background: #ffffff;
+}
+
+.forecastDate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.forecastDate strong {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.forecastDate span,
+.forecastMeta small {
+  color: #6b7280;
+}
+
+.forecastMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.forecastMeta span {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.forecastWeather {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  color: #2563eb;
+}
+
+.forecastWeather strong {
+  color: #2563eb;
+  font-size: 1rem;
+}
+
+.weatherIcon {
+  width: 28px;
+  height: 28px;
+  color: #fbbf24;
+  flex: 0 0 auto;
+}
+
+.forecastBanner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  background: linear-gradient(90deg, #d9f2ff 0%, #dff7ff 48%, #f2fbff 100%);
+}
+
+.forecastBannerContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.forecastBanner strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1.45rem;
+  color: #12314a;
+}
+
+.forecastBanner p {
+  margin: 0 0 10px;
+  color: #3b5569;
+}
+
+.forecastBannerChip {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: #1f2937;
+  font-size: 0.88rem;
+  font-weight: 700;
+  width: fit-content;
+  align-self: flex-end;
+}
+
+.forecastBannerMarks {
+  display: flex;
+  gap: 10px;
+  font-size: 2rem;
+}
+
+.expandButton,
+.recommendButton {
+  align-self: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.expandButton {
+  display: block;
+  width: fit-content;
+  margin: 16px auto 2px;
+}
+
+.recommendSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendCard {
+  padding: 16px 18px;
+}
+
+.recommendCardSunny {
+  background: #ffefa2;
+}
+
+.recommendCardMint {
+  background: #dcfce7;
+}
+
+.recommendCardRain {
+  background: #c9f0ef;
+}
+
+.recommendCardTeal {
+  background: #c2ece9;
+}
+
+.recommendCardSky {
+  background: #dbeafe;
+}
+
+.recommendCardBlue {
+  background: #61aef2;
+  color: #ffffff;
+}
+
+.recommendCardBlue .recommendHeading p,
+.recommendCardBlue .recommendDetail {
+  color: inherit;
+}
+
+.recommendCardBlue .recommendButton {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+}
+
+.recommendHeading {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.recommendHeading strong {
+  display: block;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.recommendHeading p,
+.recommendDetail {
+  margin: 0;
+  color: rgba(17, 24, 39, 0.74);
+}
+
+.recommendDetail {
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.recommendEmoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.recommendButton {
+  display: block;
+  margin: 12px auto 0;
+}
+
+.windSection {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.windCopy p {
+  margin: 8px 0 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.windClimateCaption {
+  margin: -6px 0 12px;
+  font-size: 0.86rem;
+  color: #6b7280;
+}
+
+.windFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.windFacts div {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.windFacts dt {
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.windFacts dd {
+  margin: 6px 0 0;
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.compassWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.compass {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.compassRing {
+  position: absolute;
+  inset: 28px;
+  border: 1px solid #d7dee8;
+  border-radius: 50%;
+  background:
+    linear-gradient(#edf2f7, #edf2f7) center/1px 100% no-repeat,
+    linear-gradient(90deg, #edf2f7, #edf2f7) center/100% 1px no-repeat,
+    #ffffff;
+}
+
+.compassNeedle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 100px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ef4444 0%, #2563eb 100%);
+  transform-origin: center bottom;
+}
+
+.compassCenter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 78px;
+  height: 78px;
+  margin-left: -39px;
+  margin-top: -39px;
+  border-radius: 50%;
+  border: 1px solid #d7dee8;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #111827;
+}
+
+.compassCenter strong {
+  font-size: 1rem;
+}
+
+.compassCenter span {
+  color: #6b7280;
+  font-size: 0.84rem;
+}
+
+.compassPoint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #1f2937;
+  font-size: 0.72rem;
+}
+
+.compassPoint em {
+  font-style: normal;
+  color: #2563eb;
+}
+
+.infoText,
+.errorText {
+  margin: 0 0 12px;
+  color: #4b5563;
+}
+
+.errorText {
+  color: #b91c1c;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+:global(html[data-theme='dark']) .toolbarCard,
+:global(html[data-theme='dark']) .controlCard,
+:global(html[data-theme='dark']) .summaryCard,
+:global(html[data-theme='dark']) .forecastSection,
+:global(html[data-theme='dark']) .windSection {
+  border-color: #334155;
+  background: #111827;
+}
+
+:global(html[data-theme='dark']) .statCard,
+:global(html[data-theme='dark']) .forecastRow,
+:global(html[data-theme='dark']) .windFacts div,
+:global(html[data-theme='dark']) .compassCenter,
+:global(html[data-theme='dark']) .selectField select,
+:global(html[data-theme='dark']) .expandButton,
+:global(html[data-theme='dark']) .recommendButton {
+  border-color: #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .summaryHeader h2,
+:global(html[data-theme='dark']) .forecastHeader h2,
+:global(html[data-theme='dark']) .recommendSection h2,
+:global(html[data-theme='dark']) .windCopy h2,
+:global(html[data-theme='dark']) .forecastDate strong,
+:global(html[data-theme='dark']) .forecastMeta span,
+:global(html[data-theme='dark']) .summaryList li,
+:global(html[data-theme='dark']) .windFacts dd,
+:global(html[data-theme='dark']) .compassCenter,
+:global(html[data-theme='dark']) .compassPoint {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .summaryHeader span,
+:global(html[data-theme='dark']) .forecastHeader p,
+:global(html[data-theme='dark']) .unitToggle,
+:global(html[data-theme='dark']) .forecastDate span,
+:global(html[data-theme='dark']) .forecastMeta small,
+:global(html[data-theme='dark']) .windCopy p,
+:global(html[data-theme='dark']) .windClimateCaption,
+:global(html[data-theme='dark']) .windFacts dt,
+:global(html[data-theme='dark']) .compassCenter span,
+:global(html[data-theme='dark']) .infoText {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='dark']) .selectField select {
+  color-scheme: dark;
+}
+
+:global(html[data-theme='dark']) .summaryList strong,
+:global(html[data-theme='dark']) .forecastWeather,
+:global(html[data-theme='dark']) .forecastWeather strong,
+:global(html[data-theme='dark']) .compassPoint em {
+  color: #67e8f9;
+}
+
+:global(html[data-theme='dark']) .weatherIcon {
+  color: #facc15;
+}
+
+:global(html[data-theme='dark']) .forecastBanner {
+  border-color: #334155;
+  background: linear-gradient(90deg, #0f2537 0%, #123447 52%, #0f172a 100%);
+}
+
+:global(html[data-theme='dark']) .forecastBanner strong {
+  color: #e0f2fe;
+}
+
+:global(html[data-theme='dark']) .forecastBanner p {
+  color: #bae6fd;
+}
+
+:global(html[data-theme='dark']) .forecastBannerChip {
+  border-color: #334155;
+  background: rgba(15, 23, 42, 0.92);
+  color: #e2e8f0;
+}
+
+:global(html[data-theme='dark']) .recommendCardSunny {
+  background: #4a3a08;
+  color: #fef3c7;
+}
+
+:global(html[data-theme='dark']) .recommendCardMint {
+  background: #123a2a;
+  color: #dcfce7;
+}
+
+:global(html[data-theme='dark']) .recommendCardRain,
+:global(html[data-theme='dark']) .recommendCardTeal {
+  background: #123b3c;
+  color: #ccfbf1;
+}
+
+:global(html[data-theme='dark']) .recommendCardSky {
+  background: #172c52;
+  color: #dbeafe;
+}
+
+:global(html[data-theme='dark']) .recommendCardBlue {
+  background: #123b68;
+  color: #e0f2fe;
+}
+
+:global(html[data-theme='dark']) .recommendHeading p,
+:global(html[data-theme='dark']) .recommendDetail {
+  color: currentColor;
+  opacity: 0.86;
+}
+
+:global(html[data-theme='dark']) .recommendCardBlue .recommendButton {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e0f2fe;
+}
+
+:global(html[data-theme='dark']) .compassRing {
+  border-color: #334155;
+  background:
+    linear-gradient(#26364a, #26364a) center/1px 100% no-repeat,
+    linear-gradient(90deg, #26364a, #26364a) center/100% 1px no-repeat,
+    #0f172a;
+}
+
+:global(html[data-theme='dark']) .compassNeedle {
+  background: linear-gradient(180deg, #fb7185 0%, #38bdf8 100%);
+}
+
+:global(html[data-theme='dark']) .errorText {
+  color: #fca5a5;
+}
+
+@media (max-width: 900px) {
+  .forecastRow {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .forecastWeather {
+    justify-content: flex-start;
+  }
+
+  .windSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .forecastHeader {
+    flex-direction: column;
+  }
+
+  .summaryHeader h2,
+  .forecastHeader h2,
+  .recommendSection h2,
+  .windCopy h2 {
+    font-size: 1.3rem;
+  }
+
+  .windFacts {
+    grid-template-columns: 1fr;
+  }
+
+  .compass {
+    width: 260px;
+    height: 260px;
+  }
+
+  .compassPoint {
+    font-size: 0.66rem;
+  }
+}

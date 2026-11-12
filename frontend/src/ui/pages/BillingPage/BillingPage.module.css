@@ -1,0 +1,157 @@
+.page {
+  min-height: 70vh;
+  background: #ffffff;
+  color: #111827;
+}
+
+.container {
+  width: min(860px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+  display: grid;
+  gap: 20px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+
+.lead {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.card {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 18px 18px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.meta {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  min-height: 40px;
+  border: 0;
+  padding: 0 14px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.primaryButton {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.secondaryButton {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.dangerButton {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dangerButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.status {
+  margin: 0;
+  color: #64748b;
+}
+
+.error {
+  margin: 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.success {
+  margin: 0;
+  color: #047857;
+  font-weight: 700;
+}
+
+.chargeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.chargeItem {
+  border: 1px solid #eef2f7;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.chargeTitle {
+  margin: 0;
+  font-weight: 700;
+}
+
+.chargeMeta {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.attemptList {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.attemptItem {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .container {
+    width: min(100% - 24px, 860px);
+  }
+
+  .rowActions {
+    display: grid;
+  }
+}

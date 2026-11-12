@@ -8,7 +8,7 @@
 |Glow메뉴(glow정보) | Glow메뉴(최근리뷰) |
 | [![화면 1](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d)](https://github.com/user-attachments/assets/7765a81b-2ea9-47ee-9dd1-c733fc3f1e2d) | [![화면 2](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5)](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5) |
 |이벤트 |결제통계 | 
-| [![화면 1](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145)](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145) | [![화면 2](https://github.com/user-attachments/assets/a1664033-84fe-4676-957f-96a1271b32c5)](https://github.com/user-attachments/assets/b80ea318-47bc-4076-b619-58b12949915e) |
+| [![화면 1](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145)](https://github.com/user-attachments/assets/4ce15820-86e0-4bca-bb90-33be01e7a145) | [![화면 2](https://github.com/user-attachments/assets/35de10fd-3bf1-47bf-af23-eb17082714bb)](https://github.com/user-attachments/assets/35de10fd-3bf1-47bf-af23-eb17082714bb) |
 | 내 이용 통계 | 멤버십 |
 | [![화면 1](https://github.com/user-attachments/assets/da63b97e-54e0-4fe9-8c3b-3c0d40b7c636)](https://github.com/user-attachments/assets/da63b97e-54e0-4fe9-8c3b-3c0d40b7c636) | [![화면 2](https://github.com/user-attachments/assets/b66365bb-021c-4850-928b-1fce2736afc6)](https://github.com/user-attachments/assets/b66365bb-021c-4850-928b-1fce2736afc6) |
 

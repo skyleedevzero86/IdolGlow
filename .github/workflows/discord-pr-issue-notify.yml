@@ -4,6 +4,7 @@ on:
   pull_request:
     types:
       - opened
+      - edited
       - synchronize
       - reopened
       - closed
@@ -21,6 +22,7 @@ on:
   issues:
     types:
       - opened
+      - edited
       - reopened
       - closed
       - assigned
@@ -28,6 +30,7 @@ on:
   issue_comment:
     types:
       - created
+      - edited
   release:
     types:
       - published
@@ -42,7 +45,14 @@ jobs:
   notify-discord:
     name: Send Discord GitHub activity notification
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.action == 'edited' && format('edit-{0}-{1}', github.event_name, github.event.comment.id || github.event.issue.number || github.event.pull_request.number) || github.run_id }}
+      cancel-in-progress: ${{ github.event.action == 'edited' }}
     steps:
+      - name: Wait for follow-up edits
+        if: github.event.action == 'edited'
+        run: sleep 60
+
       - name: Notify Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -53,12 +63,17 @@ jobs:
         run: |
           set -euo pipefail
 
+          rm -f /tmp/discord-payload.json
+
           python3 <<'PYTHON'
           import json
           import os
           import sys
           import urllib.error
           import urllib.request
+          from datetime import datetime, timezone
+
+          CREATION_WINDOW_SECONDS = 120
 
 
           discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
@@ -99,6 +114,39 @@ jobs:
 
           def actor_login(payload):
               return (payload.get("sender") or {}).get("login") or "unknown"
+
+          def just_created(item):
+              raw = str((item or {}).get("created_at") or "")
+              if not raw:
+                  return False
+              try:
+                  created = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+              except ValueError:
+                  return False
+              elapsed = (datetime.now(timezone.utc) - created).total_seconds()
+              return elapsed < CREATION_WINDOW_SECONDS
+
+          def skip(reason):
+              print(reason)
+              sys.exit(0)
+
+          def edited_lines(changes, current_title):
+              result = []
+              if "title" in changes:
+                  old_title = (changes.get("title") or {}).get("from") or ""
+                  result.append(
+                      f"제목: {clean_text(old_title)} → {clean_text(current_title)}"
+                  )
+              if "body" in changes:
+                  result.append("본문이 수정되었습니다.")
+              if "base" in changes:
+                  old_base = ((changes.get("base") or {}).get("ref") or {}).get("from") or ""
+                  result.append(f"대상 브랜치 변경 전: `{clean_text(old_base)}`")
+              return result
+
+          def name_list(items, key):
+              names = [str((item or {}).get(key) or "") for item in items or []]
+              return ", ".join(name for name in names if name)
 
           def md_link(label, url):
               safe_label = clean_link_label(label)
@@ -142,8 +190,20 @@ jobs:
               draft = "예" if pr.get("draft") else "아니오"
               merged = bool(pr.get("merged"))
 
+              head_repo = ((pr.get("head") or {}).get("repo") or {}).get("full_name")
+              base_repo = ((pr.get("base") or {}).get("repo") or {}).get("full_name")
+              if action == "synchronize" and head_repo and head_repo == base_repo:
+                  skip("같은 저장소 브랜치 push는 커밋 알림으로 이미 보내서 생략합니다.")
+              if action in ("review_requested", "review_request_removed") and just_created(pr):
+                  skip("PR을 만들 때 함께 지정한 리뷰어라 열림 알림에 포함해 생략합니다.")
+              if action == "edited":
+                  changes_text = edited_lines(event.get("changes") or {}, pr_title)
+                  if not changes_text:
+                      skip("바뀐 제목·본문·대상 브랜치가 없어 생략합니다.")
+
               action_label = {
                   "opened": "열림",
+                  "edited": "내용 수정",
                   "synchronize": "동기화(커밋 추가)",
                   "reopened": "다시 열림",
                   "closed": "머지됨" if merged else "닫힘(미머지)",
@@ -172,6 +232,19 @@ jobs:
                   requested = event.get("requested_reviewer") or event.get("requested_team") or {}
                   target = requested.get("login") or requested.get("name") or "-"
                   description_parts.append(f"리뷰어: `{clean_text(target)}`")
+
+              if action == "edited":
+                  title = "✏️ GitHub PR 수정 알림"
+                  color = COLOR_WARN
+                  description_parts.extend(changes_text)
+
+              if action == "opened":
+                  reviewers = name_list(pr.get("requested_reviewers"), "login")
+                  if reviewers:
+                      description_parts.append(f"리뷰어: `{clean_text(reviewers)}`")
+                  labels = name_list(pr.get("labels"), "name")
+                  if labels:
+                      description_parts.append(f"라벨: `{clean_text(labels)}`")
 
               if action in ("opened", "reopened", "ready_for_review"):
                   body = clip(pr.get("body") or "")
@@ -259,8 +332,17 @@ jobs:
               issue_title = issue.get("title") or "(제목 없음)"
               html_url = issue.get("html_url") or ""
               author = actor_login(event)
+
+              if action in ("labeled", "assigned") and just_created(issue):
+                  skip("이슈를 만들 때 함께 붙인 라벨·담당자라 생성 알림에 포함해 생략합니다.")
+              if action == "edited":
+                  changes_text = edited_lines(event.get("changes") or {}, issue_title)
+                  if not changes_text:
+                      skip("바뀐 제목·본문이 없어 생략합니다.")
+
               action_label = {
                   "opened": "생성",
+                  "edited": "내용 수정",
                   "reopened": "다시 열림",
                   "closed": "닫힘",
                   "assigned": "담당자 지정",
@@ -288,6 +370,19 @@ jobs:
                   label = (event.get("label") or {}).get("name") or "-"
                   description_parts.append(f"라벨: `{clean_text(label)}`")
 
+              if action == "edited":
+                  title = "✏️ GitHub 이슈 수정 알림"
+                  color = COLOR_WARN
+                  description_parts.extend(changes_text)
+
+              if action == "opened":
+                  labels = name_list(issue.get("labels"), "name")
+                  if labels:
+                      description_parts.append(f"라벨: `{clean_text(labels)}`")
+                  assignees = name_list(issue.get("assignees"), "login")
+                  if assignees:
+                      description_parts.append(f"담당자: `{clean_text(assignees)}`")
+
               if action in ("opened", "reopened"):
                   body = clip(issue.get("body") or "")
                   if body:
@@ -309,7 +404,12 @@ jobs:
               is_pr = bool(issue.get("pull_request"))
               target_label = "PR" if is_pr else "이슈"
 
-              title = "💬 GitHub 댓글 알림"
+              if action == "edited":
+                  old_body = ((event.get("changes") or {}).get("body") or {}).get("from")
+                  if old_body is not None and old_body == (comment.get("body") or ""):
+                      skip("댓글 본문이 바뀌지 않아 생략합니다.")
+
+              title = "✏️ GitHub 댓글 수정 알림" if action == "edited" else "💬 GitHub 댓글 알림"
               url = html_url
               color = COLOR_PURPLE
               description_parts.extend(
@@ -407,6 +507,11 @@ jobs:
 
           print(f"Discord activity payload ready. event={event_name} action={action}")
           PYTHON
+
+          if [[ ! -s /tmp/discord-payload.json ]]; then
+            echo "보낼 알림이 없어 종료합니다."
+            exit 0
+          fi
 
           if [[ "$DISCORD_WEBHOOK_URL" == *"?"* ]]; then
             REQUEST_URL="${DISCORD_WEBHOOK_URL}&wait=true"
