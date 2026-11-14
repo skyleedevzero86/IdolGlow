@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
+import com.sleekydz86.idolglow.notification.application.AdminNotificationPublisher
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeAttempt
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
@@ -27,6 +28,7 @@ class BillingChargeTxService(
     private val attemptRepository: TossBillingChargeAttemptJpaRepository,
     private val methodRepository: TossBillingMethodJpaRepository,
     private val userRepository: UserRepository,
+    private val adminNotificationPublisher: AdminNotificationPublisher = AdminNotificationPublisher.NONE,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -167,6 +169,7 @@ class BillingChargeTxService(
             charge.subscriptionId
                 ?.let { subscriptionRepository.findWithBillingMethodById(it) }
                 ?.markCharged(now)
+            adminNotificationPublisher.publish(PaymentAdminNotifications.completed(charge))
             log.info("PENDING 회차를 토스 조회로 확정했습니다. orderId={}", orderId)
         }
         val stayPending = charge.status == TossBillingChargeStatus.PENDING
@@ -275,6 +278,7 @@ class BillingChargeTxService(
                 attempt.markDone(paymentKey, remote.rawBody, approvedAt)
                 charge.markDone(paymentKey, remote.rawBody, approvedAt)
                 subscription?.markCharged(now)
+                adminNotificationPublisher.publish(PaymentAdminNotifications.completed(charge))
                 BillingChargeFinalizeResult(charge = charge)
             }
             remote.isSuccess2xx -> {
