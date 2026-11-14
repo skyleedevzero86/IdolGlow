@@ -105,7 +105,7 @@ class ProductRecommendationMailNoticeComposer(
     }
 
     private fun resolveUrl(path: String): String? {
-        val base = appPublicUrlProperties.publicBaseUrl.trim().trimEnd('/')
+        val base = appPublicUrlProperties.frontendBaseUrl.trim().trimEnd('/')
         if (base.isBlank()) return null
         return "$base$path"
     }
