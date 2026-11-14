@@ -820,6 +820,9 @@ CREATE INDEX idx_subscription_dispatch_histories_sending
 CREATE INDEX idx_subscription_dispatch_recipients_dispatch
     ON subscription_dispatch_recipients (dispatch_id);
 
+CREATE INDEX idx_product_reco_mail_subscriptions_active
+    ON product_recommendation_mail_subscriptions (active);
+
 CREATE INDEX idx_event_master_normalized_title
     ON event_master (normalized_title);
 

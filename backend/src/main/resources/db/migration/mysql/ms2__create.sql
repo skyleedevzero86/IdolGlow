@@ -1095,6 +1095,28 @@ CREATE TABLE IF NOT EXISTS subscription_dispatch_recipients (
         foreign key (dispatch_id) references subscription_dispatch_histories (id)
 ) comment='구독 발송 수신자별 결과';
 
+-- 회원 한 명당 한 행. 광고성 상품 추천 메일 수신 동의와 수신 거부 상태를 남긴다.
+CREATE TABLE IF NOT EXISTS product_recommendation_mail_subscriptions (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '추천 메일 구독 기본키',
+    user_id BIGINT NOT NULL COMMENT '회원 아이디 외래키. 회원당 1행',
+    active BOOLEAN NOT NULL COMMENT '수신 중 여부. 수신 거부하면 false',
+    preferred_basis VARCHAR(20) NOT NULL DEFAULT 'AUTO' COMMENT '추천 기준. AUTO 설문 있으면 취향, 없으면 인기순. POPULAR 인기순만',
+    consented_at DATETIME(6) NOT NULL COMMENT '광고성 정보 수신 동의 시각',
+    consent_source VARCHAR(20) NOT NULL COMMENT '동의한 화면. MY_SURVEY 회원 설문, MYPAGE 마이페이지',
+    token_version INT NOT NULL DEFAULT 1 COMMENT '수신 거부 링크 토큰 버전. 다시 구독하면 1 올려 예전 링크를 무효로 함',
+    unsubscribed_at DATETIME(6) NULL COMMENT '수신 거부 시각',
+    last_sent_at DATETIME(6) NULL COMMENT '마지막 추천 메일 발송 시각',
+    last_sent_product_ids VARCHAR(200) NULL COMMENT '바로 전 메일에 넣은 상품 아이디. 쉼표 구분',
+    consent_reminded_at DATETIME(6) NULL COMMENT '마지막 수신 동의 상태 안내 시각. 2년마다 안내',
+    created_at DATETIME(6) NOT NULL COMMENT '행 생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '행 수정 시각',
+    CONSTRAINT uk_product_reco_mail_subscriptions_user UNIQUE (user_id),
+    CONSTRAINT fk_product_reco_mail_subscriptions_user
+        FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_product_reco_mail_subscriptions_basis CHECK (preferred_basis IN ('AUTO', 'POPULAR')),
+    CONSTRAINT chk_product_reco_mail_subscriptions_source CHECK (consent_source IN ('MY_SURVEY', 'MYPAGE'))
+) COMMENT='상품 추천 메일 수신 동의. 회원당 1건';
+
 -- =============================================================================
 -- 공연 메타 글로벌 식별자
 -- -----

@@ -53,6 +53,8 @@ app:
   public-base-url: http://localhost:8080
   mail:
     enabled: false
+    recommendation:
+      unsubscribe-secret: test-recommendation-unsubscribe-secret
   storage:
     minio:
       enabled: false

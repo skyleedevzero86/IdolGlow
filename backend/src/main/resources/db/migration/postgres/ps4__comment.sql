@@ -1461,6 +1461,30 @@ COMMENT ON COLUMN subscription_dispatch_recipients.sent_at IS '발송에 성공�
 
 COMMENT ON COLUMN subscription_dispatch_recipients.error IS '실패 원인. 1000자 이내';
 
+COMMENT ON TABLE product_recommendation_mail_subscriptions IS '상품 추천 메일 수신 동의. 회원당 1건';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.user_id IS '회원 아이디 외래키. 회원당 1행';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.active IS '수신 중 여부. 수신 거부하면 false';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.preferred_basis IS '추천 기준. AUTO 설문 있으면 취향, 없으면 인기순. POPULAR 인기순만';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.consented_at IS '광고성 정보 수신 동의 시각';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.consent_source IS '동의한 화면. MY_SURVEY 회원 설문, MYPAGE 마이페이지';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.token_version IS '수신 거부 링크 토큰 버전. 다시 구독하면 1 올려 예전 링크를 무효로 함';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.unsubscribed_at IS '수신 거부 시각';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.last_sent_at IS '마지막 추천 메일 발송 시각';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.last_sent_product_ids IS '바로 전 메일에 넣은 상품 아이디. 쉼표 구분';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.consent_reminded_at IS '마지막 수신 동의 상태 안내 시각. 2년마다 안내';
+
+COMMENT ON INDEX idx_product_reco_mail_subscriptions_active IS '수신 중인 추천 메일 구독 조회용';
+
 COMMENT ON TABLE event_master IS '공연 대표 식별자. 공급처가 달라도 같은 공연은 한 행';
 
 COMMENT ON COLUMN event_master.global_id IS '글로벌 공연 ID. UUID';
