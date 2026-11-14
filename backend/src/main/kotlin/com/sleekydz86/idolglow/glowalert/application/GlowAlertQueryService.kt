@@ -419,11 +419,17 @@ private fun NotificationType.categoryId(): String =
     when (this) {
         NotificationType.PAYMENT_FAILED,
         NotificationType.PAYMENT_EXPIRED,
+        NotificationType.ADMIN_PAYMENT_COMPLETED,
+        NotificationType.ADMIN_PAYMENT_ISSUE,
         -> "finance"
         NotificationType.RESERVATION_CONFIRMED,
         NotificationType.RESERVATION_CANCELED,
         NotificationType.RESERVATION_SLOT_AVAILABLE,
         NotificationType.RESERVATION_EXPIRING_SOON,
+        NotificationType.COMMENT_ON_MY_POST,
+        NotificationType.REPLY_TO_MY_COMMENT,
+        NotificationType.ADMIN_POST_REPORTED,
+        NotificationType.ADMIN_POST_AUTO_BLINDED,
         -> "activity"
     }
 
@@ -444,6 +450,14 @@ private fun NotificationType.channelLabel(): String =
         NotificationType.RESERVATION_SLOT_AVAILABLE,
         NotificationType.RESERVATION_EXPIRING_SOON,
         -> "예약"
+        NotificationType.COMMENT_ON_MY_POST,
+        NotificationType.REPLY_TO_MY_COMMENT,
+        -> "커뮤니티"
+        NotificationType.ADMIN_POST_REPORTED,
+        NotificationType.ADMIN_POST_AUTO_BLINDED,
+        NotificationType.ADMIN_PAYMENT_COMPLETED,
+        NotificationType.ADMIN_PAYMENT_ISSUE,
+        -> "관리자"
     }
 
 private fun NotificationType.iconText(): String =
