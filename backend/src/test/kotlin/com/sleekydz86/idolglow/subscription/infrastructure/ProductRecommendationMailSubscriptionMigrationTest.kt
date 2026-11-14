@@ -15,8 +15,11 @@ class ProductRecommendationMailSubscriptionMigrationTest {
     @Test
     @DisplayName("postgres 마이그레이션이 적용되고 product_recommendation_mail_subscriptions 가 생긴다")
     fun postgresMigrationCreatesTable() {
+        // given
         PostgreSQLContainer("postgres:17-alpine").use { container ->
             container.start()
+
+            // when
             Flyway
                 .configure()
                 .dataSource(container.jdbcUrl, container.username, container.password)
@@ -25,6 +28,7 @@ class ProductRecommendationMailSubscriptionMigrationTest {
                 .load()
                 .migrate()
 
+            // then
             DriverManager.getConnection(container.jdbcUrl, container.username, container.password).use { connection ->
                 assertEquals(EXPECTED_COLUMNS, columns(connection))
                 val userId = insertUser(connection, "reco1")

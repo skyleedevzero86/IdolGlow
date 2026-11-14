@@ -46,31 +46,42 @@ class SurveyRecommendationWarmUpTest {
     @DisplayName("제출 이벤트를 받으면 응답과 관광지로 LLM 작업을 미리 요청한다")
     @Test
     fun requestsLlmRightAfterSubmission() {
+        // given
         every { submissions.findByIdAndUserId(10L, 1L) } returns submission(10L, "BTS")
         every { tourAttractions.fetchAreaBasedAttractions(any(), any(), any(), any()) } returns listOf(attraction)
         every { discovery.signalsOf(1L) } returns RecommendationSignals.EMPTY
         every { discovery.findRecommendedProducts(any<RecommendationSignals>(), any()) } returns emptyList()
 
+        // when
         SurveyRecommendationWarmUpListener(service).onSubmitted(SurveySubmittedEvent(userId = 1L, submissionId = 10L))
 
+        // then
         verify(exactly = 1) { store.findOrRequest(10L, listOf("BTS"), listOf(attraction), emptyList()) }
     }
 
     @DisplayName("다른 사용자의 제출이면 아무것도 요청하지 않는다")
     @Test
     fun ignoresOtherUsersSubmission() {
+        // given
         every { submissions.findByIdAndUserId(10L, 2L) } returns null
 
+        // when
         SurveyRecommendationWarmUpListener(service).onSubmitted(SurveySubmittedEvent(userId = 2L, submissionId = 10L))
 
+        // then
         verify(exactly = 0) { store.findOrRequest(any(), any(), any(), any()) }
     }
 
     @DisplayName("제출한 설문이 없으면 최신 추천은 null이다")
     @Test
     fun latestIsNullWithoutSubmission() {
+        // given
         every { submissions.findFirstByUserIdOrderByIdDesc(3L) } returns null
 
-        assertNull(service.generateLatest(3L, useLlm = true))
+        // when
+        val latest = service.generateLatest(3L, useLlm = true)
+
+        // then
+        assertNull(latest)
     }
 }

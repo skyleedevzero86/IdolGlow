@@ -48,6 +48,7 @@ type Query {
     me: UserProfile!
     myPromo: MypagePromo!
     mySurvey: UserSurvey!
+    myRecommendationMail: RecommendationMailSetting!
     currentSurveyForm: SurveyForm
     adminCurrentSurveyForm: SurveyForm
     myLatestSurveySubmission: SurveySubmission
@@ -95,6 +96,8 @@ type Mutation {
     markNotificationRead(notificationId: ID!): Notification!
     updateProfile(input: UpdateProfileInput!): UserProfile!
     upsertUserSurvey(input: UpsertUserSurveyInput!): UserSurveyUpsertPayload!
+    subscribeRecommendationMail(input: SubscribeRecommendationMailInput!): RecommendationMailSetting!
+    unsubscribeRecommendationMail: RecommendationMailSetting!
     createSchedule(input: CreateScheduleInput!): Schedule!
     updateSchedule(scheduleId: ID!, input: UpdateScheduleInput!): Schedule!
     deleteSchedule(scheduleId: ID!): Boolean!
@@ -401,6 +404,32 @@ type AuthToken {
 
 type ProductCreatedPayload {
     id: ID!
+}
+
+enum RecommendationMailPreferredBasis {
+    AUTO
+    POPULAR
+}
+
+enum RecommendationMailConsentSource {
+    MY_SURVEY
+    MYPAGE
+}
+
+enum RecommendationMailBasisPreview {
+    PERSONALIZED
+    POPULAR
+}
+
+type RecommendationMailSetting {
+    active: Boolean!
+    preferredBasis: RecommendationMailPreferredBasis!
+    consentSource: RecommendationMailConsentSource
+    consentedAt: String
+    unsubscribedAt: String
+    hasUserSurvey: Boolean!
+    expectedBasis: RecommendationMailBasisPreview!
+    maskedEmail: String
 }
 
 type AdminSubscriptionOverview {
@@ -841,4 +870,10 @@ input SubmitSurveyAnswerInput {
     questionId: ID!
     answerText: String
     selectedOptions: [String!]! = []
+}
+
+input SubscribeRecommendationMailInput {
+    agreedToAdvertising: Boolean!
+    preferredBasis: RecommendationMailPreferredBasis
+    consentSource: RecommendationMailConsentSource
 }

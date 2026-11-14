@@ -28,12 +28,15 @@ class UnsubscribeTokenServiceTest {
     @DisplayName("발급한 토큰은 검증되고 바꾼 토큰은 거절된다")
     @Test
     fun tokenRoundTripsAndRejectsTampered() {
+        // given
         val subscription = subscription(id = 7L)
         every { port.findById(7L) } returns subscription
         every { port.findById(8L) } returns subscription(id = 8L)
 
+        // when
         val token = service.issue(subscription)
 
+        // then
         assertSame(subscription, service.verify(token))
         assertFalse(token.any { it == '=' || it == '+' || it == '/' })
         assertNull(service.verify(flipMiddleChar(token)))
@@ -48,16 +51,22 @@ class UnsubscribeTokenServiceTest {
     @DisplayName("거부했다가 다시 구독하면 예전 토큰은 거절되고 새 토큰만 통한다")
     @Test
     fun resubscribeInvalidatesOldToken() {
+        // given
         val subscription = subscription(id = 7L)
         every { port.findById(7L) } returns subscription
         val oldToken = service.issue(subscription)
 
+        // when
         subscription.unsubscribe(now.plusDays(1))
+
+        // then
         assertSame(subscription, service.verify(oldToken))
 
+        // when
         subscription.subscribe(ProductRecommendationMailConsentSource.MYPAGE, now.plusDays(2))
         val newToken = service.issue(subscription)
 
+        // then
         assertNotEquals(oldToken, newToken)
         assertNull(service.verify(oldToken))
         assertSame(subscription, service.verify(newToken))
@@ -66,12 +75,14 @@ class UnsubscribeTokenServiceTest {
     @DisplayName("비밀키가 없거나 비어 있으면 기동에 실패한다")
     @Test
     fun missingSecretFailsStartup() {
+        // given
         val runner =
             ApplicationContextRunner()
                 .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration::class.java))
                 .withBean(ProductRecommendationMailSubscriptionPort::class.java, { port })
                 .withBean(UnsubscribeTokenService::class.java)
 
+        // when / then
         runner.run { context -> assertNotNull(context.startupFailure) }
         runner
             .withPropertyValues("app.mail.recommendation.unsubscribe-secret=  ")

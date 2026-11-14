@@ -15,11 +15,14 @@ class SurveyQuestionMigrationTest {
     @Test
     @DisplayName("postgres 마이그레이션이 적용되고 survey_question.recommendation_signal 이 생긴다")
     fun postgresMigrationAddsRecommendationSignal() {
+        // given
         PostgreSQLContainer("postgres:17-alpine").use { container ->
             container.start()
 
+            // when
             val applied = migrate(container, "classpath:db/migration/postgres", "ps")
 
+            // then
             assertTrue(applied > 0)
             assertEquals("character varying", columnType(container))
         }
@@ -28,11 +31,14 @@ class SurveyQuestionMigrationTest {
     @Test
     @DisplayName("mysql 마이그레이션이 적용되고 survey_question.recommendation_signal 이 생긴다")
     fun mysqlMigrationAddsRecommendationSignal() {
+        // given
         MySQLContainer("mysql:8.4").use { container ->
             container.start()
 
+            // when
             val applied = migrate(container, "classpath:db/migration/mysql", "ms")
 
+            // then
             assertTrue(applied > 0)
             assertEquals("varchar", columnType(container))
         }
