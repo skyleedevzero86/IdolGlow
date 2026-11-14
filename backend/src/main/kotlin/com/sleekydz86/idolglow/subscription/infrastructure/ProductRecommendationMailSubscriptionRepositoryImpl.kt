@@ -15,6 +15,9 @@ class ProductRecommendationMailSubscriptionRepositoryImpl(
     override fun findByUserId(userId: Long): ProductRecommendationMailSubscription? =
         productRecommendationMailSubscriptionJpaRepository.findByUserId(userId)
 
+    override fun findAllActive(): List<ProductRecommendationMailSubscription> =
+        productRecommendationMailSubscriptionJpaRepository.findAllByActiveTrueOrderByIdAsc()
+
     override fun save(subscription: ProductRecommendationMailSubscription): ProductRecommendationMailSubscription =
         productRecommendationMailSubscriptionJpaRepository.save(subscription)
 }

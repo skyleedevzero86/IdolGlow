@@ -3,9 +3,14 @@ package com.sleekydz86.idolglow.subscription.application
 import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
+import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailBasis
+import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailItem
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import org.springframework.stereotype.Component
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.text.DecimalFormat
 import java.time.LocalDate
 
 @Component
@@ -155,8 +160,119 @@ class SubscriptionEmailComposer(
         return ComposedSubscriptionEmail(subject = subject, plainText = plainText, htmlBody = htmlBody)
     }
 
-    private fun resolveUrl(path: String): String? {
-        val base = appPublicUrlProperties.publicBaseUrl.trim().trimEnd('/')
+    fun composeProductRecommendation(
+        recipient: String,
+        basis: ProductRecommendationMailBasis,
+        items: List<ProductRecommendationMailItem>,
+        unsubscribeUrl: String,
+        surveyFallback: Boolean = false,
+    ): ComposedSubscriptionEmail {
+        val settings = appMailProperties.recommendation
+        val title =
+            when (basis) {
+                ProductRecommendationMailBasis.PERSONALIZED -> "내 취향 추천 상품"
+                ProductRecommendationMailBasis.POPULAR -> "이번 주 인기 상품"
+            }
+        val highlights = items.flatMap { it.highlights }.distinct().take(RECOMMENDATION_HIGHLIGHT_LIMIT)
+        val basisLine =
+            when {
+                basis == ProductRecommendationMailBasis.POPULAR -> "추천 기준: 인기순"
+                highlights.isEmpty() -> "추천 기준: 내 설문 취향"
+                else -> "추천 기준: 내 설문 취향 (${highlights.joinToString(", ")})"
+            }
+        val content =
+            RecommendationMailContent(
+                title = title,
+                recipient = recipient,
+                notices = listOfNotNull(SURVEY_FALLBACK_NOTICE.takeIf { surveyFallback }, basisLine),
+                items = items.take(RECOMMENDATION_ITEM_LIMIT),
+                surveyUrl = resolveUrl("/my-survey", appPublicUrlProperties.frontendBaseUrl),
+                unsubscribeUrl = unsubscribeUrl,
+                senderName = settings.senderName.trim().ifEmpty { appMailProperties.fromName.trim() },
+                senderContact =
+                    settings.senderContact
+                        .trim()
+                        .ifEmpty { appMailProperties.replyTo.trim() }
+                        .ifEmpty { appMailProperties.fromAddress.trim() },
+            )
+        val subject = listOf(settings.subjectPrefix.trim(), title).filter { it.isNotEmpty() }.joinToString(" ")
+        return ComposedSubscriptionEmail(
+            subject = "$ADVERTISING_MARK$subject",
+            plainText = recommendationPlainText(content),
+            htmlBody = recommendationHtml(content),
+        )
+    }
+
+    private fun recommendationPlainText(content: RecommendationMailContent): String =
+        buildString {
+            appendLine("$ADVERTISING_MARK${content.title}")
+            appendLine()
+            content.notices.forEach(::appendLine)
+            content.items.forEachIndexed { index, item ->
+                appendLine()
+                appendLine("${index + 1}. ${item.name}")
+                appendLine("최저가 ${formatPrice(item.minPrice)}")
+                item.reasons.take(RECOMMENDATION_REASON_LIMIT).forEach { appendLine("- $it") }
+                productUrl(item)?.let { appendLine("상세 보기: $it") }
+            }
+            appendLine()
+            appendLine(PRICE_NOTICE)
+            content.surveyUrl?.let { appendLine("설문 수정: $it") }
+            appendLine("수신 거부: ${content.unsubscribeUrl}")
+            appendLine("보내는 곳: ${content.senderName} / 연락처: ${content.senderContact}")
+            appendLine("이 메일은 ${content.recipient} 주소로 광고성 정보 수신에 동의하신 분께 보내 드립니다.")
+        }.trim()
+
+    private fun recommendationHtml(content: RecommendationMailContent): String =
+        buildString {
+            append("<html><body style=\"margin:0;padding:0;background:#f6f1e8;color:#1f1a18;")
+            append("font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;\">")
+            append("<div style=\"max-width:640px;margin:0 auto;padding:32px 20px;\">")
+            append("<div style=\"background:#fffaf4;border-radius:24px;border:1px solid #eadfce;padding:28px;\">")
+            append("<p style=\"margin:0 0 8px;font-size:12px;color:#8f5b43;\">(광고)</p>")
+            append("<h1 style=\"margin:0;font-size:26px;line-height:1.3;\">${escapeHtml(content.title)}</h1>")
+            content.notices.forEach {
+                append("<p style=\"margin:12px 0 0;font-size:14px;color:#544b46;\">${escapeHtml(it)}</p>")
+            }
+            content.items.forEach { append(productCardHtml(it)) }
+            append("<p style=\"margin:24px 0 0;font-size:13px;color:#6b605a;\">${escapeHtml(PRICE_NOTICE)}</p>")
+            content.surveyUrl?.let {
+                append("<p style=\"margin:12px 0 0;font-size:13px;\"><a href=\"${escapeHtml(it)}\" ")
+                append("style=\"color:#c8673d;\">설문 수정하기</a></p>")
+            }
+            append("<hr style=\"margin:24px 0 16px;border:none;border-top:1px solid #eadfce;\" />")
+            append("<p style=\"margin:0;font-size:12px;line-height:1.8;color:#6b605a;\">")
+            append("보내는 곳: ${escapeHtml(content.senderName)} · 연락처: ${escapeHtml(content.senderContact)}<br/>")
+            append("이 메일은 ${escapeHtml(content.recipient)} 주소로 광고성 정보 수신에 동의하신 분께 보내 드립니다.<br/>")
+            append("더 이상 받지 않으려면 <a href=\"${escapeHtml(content.unsubscribeUrl)}\" ")
+            append("style=\"color:#c8673d;\">수신 거부</a>를 눌러 주세요.</p>")
+            append("</div></div></body></html>")
+        }
+
+    private fun productCardHtml(item: ProductRecommendationMailItem): String =
+        buildString {
+            append("<div style=\"margin-top:18px;padding:18px;border-radius:18px;background:#f7efe2;\">")
+            append("<p style=\"margin:0;font-size:17px;font-weight:700;\">${escapeHtml(item.name)}</p>")
+            append("<p style=\"margin:6px 0 0;font-size:14px;color:#2d2623;\">")
+            append("최저가 ${escapeHtml(formatPrice(item.minPrice))}</p>")
+            item.reasons.take(RECOMMENDATION_REASON_LIMIT).forEach {
+                append("<p style=\"margin:6px 0 0;font-size:13px;color:#8f5b43;\">· ${escapeHtml(it)}</p>")
+            }
+            productUrl(item)?.let {
+                append("<p style=\"margin:10px 0 0;\"><a href=\"${escapeHtml(it)}\" ")
+                append("style=\"color:#cb5c33;font-weight:700;text-decoration:none;\">상세 보기</a></p>")
+            }
+            append("</div>")
+        }
+
+    private fun productUrl(item: ProductRecommendationMailItem): String? =
+        resolveUrl("/products/${item.productId}", appPublicUrlProperties.frontendBaseUrl)
+
+    private fun resolveUrl(
+        path: String,
+        baseUrl: String = appPublicUrlProperties.publicBaseUrl,
+    ): String? {
+        val base = baseUrl.trim().trimEnd('/')
         if (base.isBlank()) return null
         return "$base$path"
     }
@@ -172,4 +288,28 @@ class SubscriptionEmailComposer(
             .replace("'", "&#39;")
             .replace("\n", "<br/>")
 
+    private data class RecommendationMailContent(
+        val title: String,
+        val recipient: String,
+        val notices: List<String>,
+        val items: List<ProductRecommendationMailItem>,
+        val surveyUrl: String?,
+        val unsubscribeUrl: String,
+        val senderName: String,
+        val senderContact: String,
+    )
+
+    companion object {
+        private const val ADVERTISING_MARK = "(광고) "
+        private const val RECOMMENDATION_ITEM_LIMIT = 5
+        private const val RECOMMENDATION_REASON_LIMIT = 2
+        private const val RECOMMENDATION_HIGHLIGHT_LIMIT = 3
+        private const val SURVEY_FALLBACK_NOTICE = "설문과 맞는 상품이 없어 인기 상품을 보내 드려요."
+        private const val PRICE_NOTICE = "가격은 발송 시점 기준이며, 예약 가능 여부는 상세 화면에서 확인해 주세요."
+
+        private fun formatPrice(price: BigDecimal): String {
+            val won = DecimalFormat("#,##0").format(price.setScale(0, RoundingMode.HALF_UP))
+            return "${won}원"
+        }
+    }
 }

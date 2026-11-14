@@ -1455,11 +1455,13 @@ COMMENT ON COLUMN subscription_dispatch_recipients.dispatch_id IS '구독 발송
 
 COMMENT ON COLUMN subscription_dispatch_recipients.email IS '수신 이메일';
 
-COMMENT ON COLUMN subscription_dispatch_recipients.status IS '수신자 상태. SENT, FAILED';
+COMMENT ON COLUMN subscription_dispatch_recipients.status IS '수신자 상태. SENT, FAILED, SKIPPED';
 
 COMMENT ON COLUMN subscription_dispatch_recipients.sent_at IS '발송에 성공한 시각';
 
 COMMENT ON COLUMN subscription_dispatch_recipients.error IS '실패 원인. 1000자 이내';
+
+COMMENT ON COLUMN subscription_dispatch_recipients.skip_reason IS '건너뛴 이유. NO_PRODUCTS 보낼 상품 없음';
 
 COMMENT ON TABLE product_recommendation_mail_subscriptions IS '상품 추천 메일 수신 동의. 회원당 1건';
 

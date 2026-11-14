@@ -10,4 +10,11 @@ data class AppMailProperties(
     var replyTo: String = "",
     var newsletterSubjectPrefix: String = "[IdolGlow Newsletter]",
     var webzineSubjectPrefix: String = "[IdolGlow Webzine]",
-)
+    var recommendation: Recommendation = Recommendation(),
+) {
+    data class Recommendation(
+        var subjectPrefix: String = "[IdolGlow]",
+        var senderName: String = "",
+        var senderContact: String = "",
+    )
+}

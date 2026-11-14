@@ -15,7 +15,7 @@ class SmtpOutboundMailAdapter(
 ) : OutboundMailPort {
     override fun send(message: OutboundMailMessage) {
         val mimeMessage = javaMailSender.createMimeMessage()
-        val helper = MimeMessageHelper(mimeMessage, "UTF-8")
+        val helper = MimeMessageHelper(mimeMessage, true, "UTF-8")
 
         helper.setTo(message.to)
         helper.setSubject(message.subject)
@@ -25,6 +25,7 @@ class SmtpOutboundMailAdapter(
             .trim()
             .takeIf { it.isNotEmpty() }
             ?.let(helper::setReplyTo)
+        message.headers.forEach { (name, value) -> mimeMessage.setHeader(name, value) }
 
         javaMailSender.send(mimeMessage)
     }

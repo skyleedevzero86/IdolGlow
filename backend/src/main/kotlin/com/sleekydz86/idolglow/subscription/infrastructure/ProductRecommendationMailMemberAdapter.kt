@@ -18,4 +18,17 @@ class ProductRecommendationMailMemberAdapter(
             ?.takeIf { it.isNotEmpty() }
 
     override fun hasUserSurvey(userId: Long): Boolean = userSurveyRepository.existsByUserId(userId)
+
+    override fun findMailableEmail(userId: Long): String? =
+        userRepository
+            .findById(userId)
+            ?.takeIf { it.isPlatformActive() }
+            ?.email
+            ?.trim()
+            ?.takeIf { it.length <= EMAIL_MAX_LENGTH && EMAIL_PATTERN.matches(it) }
+
+    companion object {
+        private const val EMAIL_MAX_LENGTH = 255
+        private val EMAIL_PATTERN = Regex("""^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$""")
+    }
 }

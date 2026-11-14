@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDis
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchSchedulePort
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -23,6 +24,7 @@ class SubscriptionDispatchScheduler(
     private val webzineIssueRepository: WebzineIssueRepository,
     private val subscriptionDispatchHistoryPort: SubscriptionDispatchHistoryPort,
     private val appMailProperties: AppMailProperties,
+    private val productRecommendationMailDispatcher: ProductRecommendationMailDispatcher,
 ) {
     private val log = LoggerFactory.getLogger(SubscriptionDispatchScheduler::class.java)
     private val lastTriggeredMinutes = ConcurrentHashMap<Long, LocalDateTime>()
@@ -37,17 +39,20 @@ class SubscriptionDispatchScheduler(
             .filterNot { schedule -> lastTriggeredMinutes[schedule.id] == now }
             .forEach { schedule ->
                 lastTriggeredMinutes[schedule.id] = now
-                dispatchLatestContent(schedule.contentType)
+                dispatchLatestContent(schedule)
             }
     }
 
-    private fun dispatchLatestContent(contentType: SubscriptionContentType) {
-        when (contentType) {
+    private fun dispatchLatestContent(schedule: SubscriptionDispatchSchedule) {
+        when (schedule.contentType) {
             SubscriptionContentType.NEWSLETTER ->
                 newsletterRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordNewsletterDispatch)
 
             SubscriptionContentType.WEBZINE_ISSUE ->
                 webzineIssueRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordWebzineIssueDispatch)
+
+            SubscriptionContentType.PRODUCT_RECOMMENDATION ->
+                productRecommendationMailDispatcher.dispatch(schedule.frequencyType)
         }
     }
 
@@ -89,6 +94,15 @@ class SubscriptionDispatchScheduler(
                     history.contentType,
                     history.contentSlug,
                 )
+
+            SubscriptionContentType.PRODUCT_RECOMMENDATION -> {
+                log.info(
+                    "멈춘 구독 발송을 이어서 보냅니다. type={} slug={}",
+                    history.contentType,
+                    history.contentSlug,
+                )
+                productRecommendationMailDispatcher.resume(history.contentSlug)
+            }
         }
     }
 }

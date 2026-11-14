@@ -820,6 +820,13 @@ CREATE INDEX idx_subscription_dispatch_histories_sending
 CREATE INDEX idx_subscription_dispatch_recipients_dispatch
     ON subscription_dispatch_recipients (dispatch_id);
 
+-- 상품 추천 메일에서 보낼 상품이 없어 건너뛴 수신자의 이유를 남긴다. 기존 행은 비어 있다.
+ALTER TABLE subscription_dispatch_recipients
+    ADD COLUMN skip_reason VARCHAR(40) NULL COMMENT '건너뛴 이유. NO_PRODUCTS 보낼 상품 없음';
+
+ALTER TABLE subscription_dispatch_recipients
+    MODIFY COLUMN status VARCHAR(20) NOT NULL COMMENT '수신자 상태. SENT, FAILED, SKIPPED';
+
 CREATE INDEX idx_product_reco_mail_subscriptions_active
     ON product_recommendation_mail_subscriptions (active);
 

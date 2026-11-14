@@ -4,4 +4,6 @@ interface ProductRecommendationMailMemberPort {
     fun findEmail(userId: Long): String?
 
     fun hasUserSurvey(userId: Long): Boolean
+
+    fun findMailableEmail(userId: Long): String?
 }

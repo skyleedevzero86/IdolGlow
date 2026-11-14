@@ -69,7 +69,31 @@ class ProductRecommendationMailSubscription(
         this.preferredBasis = preferredBasis
     }
 
+    fun recordSent(
+        productIds: List<Long>,
+        now: LocalDateTime,
+    ) {
+        lastSentAt = now
+        lastSentProductIds =
+            productIds
+                .distinct()
+                .fold("") { joined, id ->
+                    val next = if (joined.isEmpty()) id.toString() else "$joined$PRODUCT_ID_SEPARATOR$id"
+                    if (next.length <= LAST_SENT_PRODUCT_IDS_MAX_LENGTH) next else joined
+                }.ifEmpty { null }
+    }
+
+    fun lastSentProductIdSet(): Set<Long> =
+        lastSentProductIds
+            ?.split(PRODUCT_ID_SEPARATOR)
+            ?.mapNotNull { it.trim().toLongOrNull() }
+            ?.toSet()
+            .orEmpty()
+
     companion object {
+        private const val PRODUCT_ID_SEPARATOR = ","
+        private const val LAST_SENT_PRODUCT_IDS_MAX_LENGTH = 200
+
         fun create(
             userId: Long,
             consentSource: ProductRecommendationMailConsentSource,

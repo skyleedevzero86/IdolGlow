@@ -7,5 +7,7 @@ interface ProductRecommendationMailSubscriptionPort {
 
     fun findByUserId(userId: Long): ProductRecommendationMailSubscription?
 
+    fun findAllActive(): List<ProductRecommendationMailSubscription>
+
     fun save(subscription: ProductRecommendationMailSubscription): ProductRecommendationMailSubscription
 }

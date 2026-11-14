@@ -6,4 +6,5 @@ enum class SubscriptionContentType(
 ) {
     NEWSLETTER("뉴스레터", SubscriptionAudience.NEWSLETTER),
     WEBZINE_ISSUE("웹진", SubscriptionAudience.WEBZINE_ISSUE),
+    PRODUCT_RECOMMENDATION("상품 추천", SubscriptionAudience.PRODUCT_RECOMMENDATION),
 }

@@ -26,6 +26,7 @@ class EmailSubscriptionRepositoryImpl(
                 emailSubscriptionJpaRepository.findAllByActiveTrueAndSubscribedNewslettersTrueOrderBySubscribedAtDesc()
             SubscriptionAudience.WEBZINE_ISSUE ->
                 emailSubscriptionJpaRepository.findAllByActiveTrueAndSubscribedIssuesTrueOrderBySubscribedAtDesc()
+            SubscriptionAudience.PRODUCT_RECOMMENDATION -> emptyList()
         }.map { it.email }
 
     override fun save(subscription: EmailSubscription): EmailSubscription = emailSubscriptionJpaRepository.save(subscription)
@@ -38,5 +39,6 @@ class EmailSubscriptionRepositoryImpl(
         when (audience) {
             SubscriptionAudience.NEWSLETTER -> emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedNewslettersTrue()
             SubscriptionAudience.WEBZINE_ISSUE -> emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedIssuesTrue()
+            SubscriptionAudience.PRODUCT_RECOMMENDATION -> 0L
         }
 }
