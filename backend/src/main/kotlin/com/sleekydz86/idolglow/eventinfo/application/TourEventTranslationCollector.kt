@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleFestivalPort
+import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationLocales
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -20,7 +21,7 @@ class TourEventTranslationCollector(
         from: LocalDate,
         to: LocalDate,
     ) {
-        LOCALES.forEach { locale ->
+        EventTranslationLocales.TARGETS.forEach { locale ->
             val saved = runCatching { collectLocale(locale, from, to) }
             val error = saved.exceptionOrNull() ?: return@forEach
             log.warn("관광 다국어 수집에 실패했습니다. locale={}", locale, error)
@@ -77,7 +78,6 @@ class TourEventTranslationCollector(
 
     companion object {
         const val TOUR_SOURCE: String = "TOUR_API"
-        private val LOCALES: List<String> = listOf("en", "ja", "zh")
         private val COMPACT_DATE: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE
         private const val MAX_PAGES: Int = 10
         private const val PAGE_SIZE: Int = 100
