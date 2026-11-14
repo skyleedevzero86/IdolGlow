@@ -83,6 +83,10 @@ class ProductRecommendationMailSubscription(
                 }.ifEmpty { null }
     }
 
+    fun recordConsentReminded(now: LocalDateTime) {
+        consentRemindedAt = now
+    }
+
     fun lastSentProductIdSet(): Set<Long> =
         lastSentProductIds
             ?.split(PRODUCT_ID_SEPARATOR)
@@ -93,6 +97,7 @@ class ProductRecommendationMailSubscription(
     companion object {
         private const val PRODUCT_ID_SEPARATOR = ","
         private const val LAST_SENT_PRODUCT_IDS_MAX_LENGTH = 200
+        const val CONSENT_REMINDER_INTERVAL_YEARS = 2L
 
         fun create(
             userId: Long,

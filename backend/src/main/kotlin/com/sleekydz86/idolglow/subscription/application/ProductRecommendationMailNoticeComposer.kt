@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailUnsubscribeNotice
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 @Component
 class ProductRecommendationMailNoticeComposer(
@@ -63,6 +64,67 @@ class ProductRecommendationMailNoticeComposer(
         )
     }
 
+    fun composeConsentReminder(
+        recipient: String,
+        consentedAt: LocalDateTime,
+        unsubscribeUrl: String,
+    ): ComposedSubscriptionEmail {
+        val settings = appMailProperties.recommendation
+        val senderName = settings.senderName.trim().ifEmpty { appMailProperties.fromName.trim() }
+        val senderContact =
+            settings.senderContact
+                .trim()
+                .ifEmpty { appMailProperties.replyTo.trim() }
+                .ifEmpty { appMailProperties.fromAddress.trim() }
+        val subject =
+            listOf(settings.subjectPrefix.trim(), CONSENT_REMINDER_SUBJECT)
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
+        val consentDate = requireNotNull(IdolGlowDateTimes.toDisplay(consentedAt.toLocalDate()))
+        val lines =
+            listOf(
+                "$recipient 주소는 $consentDate 에 상품 추천 메일(광고성 정보) 수신에 동의하셨습니다.",
+                "정보통신망법에 따라 수신 동의일로부터 2년마다 수신 동의 상태를 알려 드립니다.",
+                "계속 받으시려면 따로 하실 일이 없습니다. 지금처럼 상품 추천 메일을 보내 드립니다.",
+                "더 이상 받지 않으려면 아래 수신 거부 링크를 눌러 주세요. 로그인 없이 바로 처리됩니다.",
+            )
+        val plainText =
+            buildString {
+                appendLine(CONSENT_REMINDER_TITLE)
+                appendLine()
+                appendLine("수신 동의일: $consentDate")
+                lines.forEach(::appendLine)
+                appendLine()
+                appendLine("수신 거부: $unsubscribeUrl")
+                appendLine("보내는 곳: $senderName / 연락처: $senderContact")
+            }.trim()
+        val htmlBody =
+            buildString {
+                append("<html><body style=\"margin:0;padding:0;background:#f6f1e8;color:#1f1a18;")
+                append("font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;\">")
+                append("<div style=\"max-width:560px;margin:0 auto;padding:32px 20px;\">")
+                append("<div style=\"background:#fffaf4;border-radius:20px;border:1px solid #eadfce;padding:28px;\">")
+                append("<h1 style=\"margin:0;font-size:22px;line-height:1.4;\">$CONSENT_REMINDER_TITLE</h1>")
+                append("<p style=\"margin:16px 0 0;font-size:14px;color:#544b46;\">")
+                append("수신 동의일 ${escapeHtml(consentDate)}</p>")
+                lines.forEach {
+                    append("<p style=\"margin:10px 0 0;font-size:14px;line-height:1.8;color:#544b46;\">")
+                    append("${escapeHtml(it)}</p>")
+                }
+                append("<p style=\"margin:20px 0 0;\"><a href=\"${escapeHtml(unsubscribeUrl)}\" ")
+                append("style=\"color:#c8673d;\">수신 거부</a></p>")
+                append("<hr style=\"margin:24px 0 16px;border:none;border-top:1px solid #eadfce;\" />")
+                append("<p style=\"margin:0;font-size:12px;line-height:1.8;color:#6b605a;\">")
+                append("보내는 곳: ${escapeHtml(senderName)} · 연락처: ${escapeHtml(senderContact)}</p>")
+                append("</div></div></body></html>")
+            }
+        return ComposedSubscriptionEmail(
+            subject = subject,
+            plainText = plainText,
+            htmlBody = htmlBody,
+        )
+    }
+
     private fun resolveUrl(path: String): String? {
         val base = appPublicUrlProperties.publicBaseUrl.trim().trimEnd('/')
         if (base.isBlank()) return null
@@ -81,5 +143,7 @@ class ProductRecommendationMailNoticeComposer(
         private const val TITLE = "상품 추천 메일 수신 거부가 완료되었습니다."
         private const val DEFAULT_SENDER_NAME = "IdolGlow"
         private const val MY_PAGE_PATH = "/mypage"
+        private const val CONSENT_REMINDER_TITLE = "상품 추천 메일 수신 동의 상태를 알려 드립니다."
+        private const val CONSENT_REMINDER_SUBJECT = "상품 추천 메일 수신 동의 상태 안내"
     }
 }

@@ -496,6 +496,9 @@ private class RecoMailSubscriptionPort : ProductRecommendationMailSubscriptionPo
 
     override fun findAllActive(): List<ProductRecommendationMailSubscription> = byId.values.filter { it.active }
 
+    override fun findAllConsentReminderDue(lastNoticeAtOrBefore: LocalDateTime): List<RecoMailSubscription> =
+        byId.values.filter { it.active && (it.consentRemindedAt ?: it.consentedAt) <= lastNoticeAtOrBefore }
+
     override fun save(subscription: ProductRecommendationMailSubscription): ProductRecommendationMailSubscription {
         byId[subscription.id] = subscription
         return subscription

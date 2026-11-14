@@ -72,6 +72,10 @@ platform:
     jwt:
       secret: defaultSecretKeyForPhase1TestsOnly123456789012345678901234567890123456789012345678901234567890
 
+subscription:
+  recommendation-mail:
+    consent-reminder-cron: "-"
+
 payment:
   mock:
     webhook-secret: test-mock-webhook-secret

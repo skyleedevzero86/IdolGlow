@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.subscription.application.port.out.ProductRecommen
 import com.sleekydz86.idolglow.subscription.domain.ProductRecommendationMailSubscription
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 class ProductRecommendationMailSubscriptionRepositoryImpl(
@@ -17,6 +18,11 @@ class ProductRecommendationMailSubscriptionRepositoryImpl(
 
     override fun findAllActive(): List<ProductRecommendationMailSubscription> =
         productRecommendationMailSubscriptionJpaRepository.findAllByActiveTrueOrderByIdAsc()
+
+    override fun findAllConsentReminderDue(
+        lastNoticeAtOrBefore: LocalDateTime,
+    ): List<ProductRecommendationMailSubscription> =
+        productRecommendationMailSubscriptionJpaRepository.findAllConsentReminderDue(lastNoticeAtOrBefore)
 
     override fun save(subscription: ProductRecommendationMailSubscription): ProductRecommendationMailSubscription =
         productRecommendationMailSubscriptionJpaRepository.save(subscription)
