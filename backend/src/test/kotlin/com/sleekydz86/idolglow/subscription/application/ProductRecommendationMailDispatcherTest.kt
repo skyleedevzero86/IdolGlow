@@ -16,6 +16,7 @@ import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPor
 import com.sleekydz86.idolglow.subscription.application.port.out.ProductRecommendationMailSubscriptionPort
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchHistoryPort
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchRecipientPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.subscription.domain.ProductRecommendationMailConsentSource
 import com.sleekydz86.idolglow.subscription.domain.ProductRecommendationMailPreferredBasis
 import com.sleekydz86.idolglow.subscription.domain.ProductRecommendationMailSubscription
@@ -302,6 +303,38 @@ class ProductRecommendationMailDispatcherTest {
         assertEquals("List-Unsubscribe=One-Click", recommendationMime.getHeader("List-Unsubscribe-Post", null))
         assertNull(newsletterMime.getHeader("List-Unsubscribe"))
         assertNull(newsletterMime.getHeader("List-Unsubscribe-Post"))
+    }
+
+    @DisplayName("추천 메일과 소식지 메일은 종류와 발송 이력 ID를 달고 나간다")
+    @Test
+    fun messagesCarryKindAndDispatchId() {
+        // given
+        member(1L, "a@idolglow.test")
+        subscriptionPort.add(subscription(id = 11L, userId = 1L))
+        givenPopular((1L..8L).map { ranking(it) })
+        val newsletterService =
+            SubscriptionDispatchMailService(
+                appMailProperties = mailProperties,
+                emailSubscriptionPort = newsletterAudience("reader@idolglow.test"),
+                outboundMailPort = mail,
+                subscriptionEmailComposer = composer,
+                subscriptionDispatchTxService = dispatchTxService,
+            )
+
+        // when
+        dispatcher.dispatch(SubscriptionDispatchFrequency.WEEKLY)
+        newsletterService.dispatchNewsletter(newsletterEvent())
+
+        // then
+        val recommendationHistory =
+            historyPort.findByContent(SubscriptionContentType.PRODUCT_RECOMMENDATION, weeklySlug)
+        val newsletterHistory = historyPort.findByContent(SubscriptionContentType.NEWSLETTER, "weekly")
+        val recommendation = mail.messages.single { it.to == "a@idolglow.test" }
+        val newsletter = mail.messages.single { it.to == "reader@idolglow.test" }
+        assertEquals(MailSendKind.PRODUCT_RECOMMENDATION, recommendation.kind)
+        assertEquals(recommendationHistory?.id, recommendation.dispatchId)
+        assertEquals(MailSendKind.NEWSLETTER, newsletter.kind)
+        assertEquals(newsletterHistory?.id, newsletter.dispatchId)
     }
 
     @DisplayName("수신 거부·탈퇴·정지·없는 회원·이메일 형식이 틀린 회원에게는 보내지 않는다")

@@ -81,6 +81,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, *COMMUNITY_PUBLIC_GET).permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
@@ -100,7 +101,7 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers("/payments/toss/billing/renewal-notices/**")
                     .permitAll()
-                    .requestMatchers("/mcp", "/mcp/**", "/sse", "/sse/**")
+                    .requestMatchers(*ADMIN_ONLY)
                     .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated()
@@ -138,6 +139,27 @@ class SecurityConfig(
     companion object {
         private const val UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe"
         private const val ONE_CLICK_UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe/one-click"
+
+        private val COMMUNITY_PUBLIC_GET =
+            arrayOf(
+                "/api/glow-community/posts",
+                "/api/glow-community/posts/*",
+                "/api/glow-community/highlights",
+                "/api/glow-community/keywords",
+                "/api/comments",
+            )
+
+        private val ADMIN_ONLY =
+            arrayOf(
+                "/mcp",
+                "/mcp/**",
+                "/sse",
+                "/sse/**",
+                "/api/admin/glow-community/**",
+                "/admin/glow-community/**",
+                "/admin/subscriptions",
+                "/admin/subscriptions/**",
+            )
 
         private val SWAGGER_WHITE_LIST =
             arrayOf(

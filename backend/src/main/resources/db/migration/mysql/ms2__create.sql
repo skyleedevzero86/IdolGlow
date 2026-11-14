@@ -422,7 +422,13 @@ CREATE TABLE notification_preferences (
             'PAYMENT_FAILED',
             'PAYMENT_EXPIRED',
             'RESERVATION_SLOT_AVAILABLE',
-            'RESERVATION_EXPIRING_SOON'
+            'RESERVATION_EXPIRING_SOON',
+            'COMMENT_ON_MY_POST',
+            'REPLY_TO_MY_COMMENT',
+            'ADMIN_POST_REPORTED',
+            'ADMIN_POST_AUTO_BLINDED',
+            'ADMIN_PAYMENT_COMPLETED',
+            'ADMIN_PAYMENT_ISSUE'
         )
     )
 ) COMMENT='사용자별 알림 타입 수신 ON/OFF';
@@ -1117,6 +1123,28 @@ CREATE TABLE IF NOT EXISTS product_recommendation_mail_subscriptions (
     CONSTRAINT chk_product_reco_mail_subscriptions_source CHECK (consent_source IN ('MY_SURVEY', 'MYPAGE'))
 ) COMMENT='상품 추천 메일 수신 동의. 회원당 1건';
 
+-- 보내는 모든 메일 한 통당 한 행. 본문 속 링크 토큰은 token=*** 로 가려 저장하고 90일이 지나면 지운다.
+CREATE TABLE IF NOT EXISTS mail_send_logs (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '메일 발송 기록 기본키',
+    mail_kind VARCHAR(40) NOT NULL COMMENT '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, WEBZINE, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER',
+    recipient_email VARCHAR(255) NOT NULL COMMENT '수신 이메일 원문. 관리자 검색용이며 API 응답에서는 가림',
+    subject VARCHAR(500) NOT NULL COMMENT '메일 제목. 500자 이내',
+    html_body TEXT NULL COMMENT 'HTML 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음',
+    text_body TEXT NULL COMMENT '텍스트 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음',
+    status VARCHAR(20) NOT NULL COMMENT '발송 결과. SENT, FAILED, SKIPPED',
+    error VARCHAR(500) NULL COMMENT '실패 원인. 500자 이내',
+    dispatch_id BIGINT NULL COMMENT '구독 발송 이력 ID. 예약 발송에 속한 메일만 채움',
+    sent_at DATETIME(6) NULL COMMENT '발송에 성공한 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '기록 시각. 보관 기간 기준',
+    CONSTRAINT fk_mail_send_logs_dispatch
+        FOREIGN KEY (dispatch_id) REFERENCES subscription_dispatch_histories (id) ON DELETE SET NULL,
+    CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'WEBZINE', 'UNSUBSCRIBE_CONFIRM',
+        'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
+    )),
+    CONSTRAINT chk_mail_send_logs_status CHECK (status IN ('SENT', 'FAILED', 'SKIPPED'))
+) COMMENT='메일 발송 기록. 보내는 모든 메일 한 통당 1건. 90일 보관';
+
 -- =============================================================================
 -- 공연 메타 글로벌 식별자
 -- -----
@@ -1225,3 +1253,111 @@ CREATE TABLE IF NOT EXISTS ops_change_request (
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각'
 ) comment='운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';
+
+-- =============================================================================
+-- GLOW 지역사회 게시판, 콘텐츠 댓글, 최근 본 콘텐츠
+-- -----
+-- 목적
+-- - 회원 게시글(토크, 질문, 나의 여행 계획)과 좋아요, 신고, 블라인드
+-- - 모든 콘텐츠 화면이 함께 쓰는 댓글과 5단계까지의 답글
+-- - 회원별 최근 본 콘텐츠
+-- 대상
+-- - 마이에스큐엘 / glow_community_posts, glow_community_likes, glow_community_reports, content_comments, user_content_views
+-- 주의
+-- - 게시글과 댓글은 deleted_at 으로만 지운다
+-- - 공지사항(NOTICE)과 이벤트(EVENT)는 댓글과 최근 본 콘텐츠 대상이 아니다
+-- 연관
+-- - GlowCommunityPostCommandService, ContentCommentService, ContentViewService
+-- =============================================================================
+
+-- 지역사회 게시글. 좋아요, 댓글, 신고 수는 같은 트랜잭션에서 함께 바꾼다.
+CREATE TABLE IF NOT EXISTS glow_community_posts (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '작성 회원 users.id',
+    tag VARCHAR(20) NOT NULL COMMENT '말머리. TALK 토크, QUESTION 질문, TRAVEL 나의 여행 계획',
+    title VARCHAR(150) NOT NULL COMMENT '제목. 150자 이내',
+    content_markdown TEXT NOT NULL COMMENT '마크다운 원문 본문',
+    like_count BIGINT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
+    comment_count BIGINT NOT NULL DEFAULT 0 COMMENT '삭제되지 않은 댓글과 답글 수',
+    report_count BIGINT NOT NULL DEFAULT 0 COMMENT '신고한 회원 수',
+    last_reported_at DATETIME(6) NULL COMMENT '마지막 신고 시각',
+    blinded TINYINT(1) NOT NULL DEFAULT 0 COMMENT '블라인드 여부. 작성자와 관리자만 볼 수 있음',
+    blinded_at DATETIME(6) NULL COMMENT '블라인드 시각',
+    blind_reason VARCHAR(100) NULL COMMENT '블라인드 사유. 자동 또는 관리자 입력',
+    deleted_at DATETIME(6) NULL COMMENT '작성자가 삭제한 시각. 비어 있으면 게시 중',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT fk_glow_community_posts_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_glow_community_posts_tag CHECK (tag IN ('TALK', 'QUESTION', 'TRAVEL')),
+    CONSTRAINT chk_glow_community_posts_counts CHECK (like_count >= 0 AND comment_count >= 0 AND report_count >= 0)
+) COMMENT='GLOW 지역사회 게시글';
+
+-- 게시글 좋아요. 회원은 글마다 한 번만 누른다.
+CREATE TABLE IF NOT EXISTS glow_community_likes (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL COMMENT 'glow_community_posts.id',
+    user_id BIGINT NOT NULL COMMENT '누른 회원 users.id',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_glow_community_likes_post_user UNIQUE (post_id, user_id),
+    CONSTRAINT fk_glow_community_likes_post FOREIGN KEY (post_id) REFERENCES glow_community_posts (id) ON DELETE CASCADE,
+    CONSTRAINT fk_glow_community_likes_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='GLOW 지역사회 게시글 좋아요. 회원당 글마다 1건';
+
+-- 게시글 신고. 회원은 글마다 한 번만 신고하고 서로 다른 3명이면 자동 블라인드한다.
+CREATE TABLE IF NOT EXISTS glow_community_reports (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL COMMENT 'glow_community_posts.id',
+    user_id BIGINT NOT NULL COMMENT '신고 회원 users.id',
+    reason VARCHAR(200) NULL COMMENT '신고 사유. 비워도 됨',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_glow_community_reports_post_user UNIQUE (post_id, user_id),
+    CONSTRAINT fk_glow_community_reports_post FOREIGN KEY (post_id) REFERENCES glow_community_posts (id) ON DELETE CASCADE,
+    CONSTRAINT fk_glow_community_reports_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='GLOW 지역사회 게시글 신고. 회원당 글마다 1건';
+
+-- 콘텐츠 댓글과 답글. 최상위 댓글은 parent_id, root_id 가 비어 있고 depth 1 이다.
+CREATE TABLE IF NOT EXISTS content_comments (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '작성 회원 users.id',
+    target_type VARCHAR(40) NOT NULL COMMENT '대상 유형. NOTICE, EVENT 는 받지 않음',
+    target_key VARCHAR(200) NOT NULL COMMENT '대상 키. 게시글이면 게시글 ID',
+    target_title VARCHAR(300) NOT NULL COMMENT '작성 시점의 대상 제목',
+    target_path VARCHAR(500) NULL COMMENT '대상 화면 경로. / 로 시작하고 /admin 은 받지 않음',
+    content_markdown TEXT NOT NULL COMMENT '마크다운 본문. 5000자 이내, 이미지는 URL 로 참조',
+    parent_id BIGINT NULL COMMENT '부모 댓글 ID. 최상위면 비움',
+    root_id BIGINT NULL COMMENT '최상위 댓글 ID. 최상위면 비움',
+    depth INT NOT NULL DEFAULT 1 COMMENT '깊이. 최상위 1, 최대 5',
+    deleted_at DATETIME(6) NULL COMMENT '삭제 시각. 답글이 있으면 자리만 남김',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT fk_content_comments_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_content_comments_parent FOREIGN KEY (parent_id) REFERENCES content_comments (id),
+    CONSTRAINT fk_content_comments_root FOREIGN KEY (root_id) REFERENCES content_comments (id),
+    CONSTRAINT chk_content_comments_depth CHECK (depth BETWEEN 1 AND 5),
+    CONSTRAINT chk_content_comments_target_type CHECK (target_type IN (
+        'ARTICLE', 'PRODUCT', 'GLOW', 'GLOW_COMMUNITY_POST', 'EVENT_INFO', 'ARCHIVE',
+        'SUBWAY', 'AIRPORT_CROWD', 'EXCHANGE_RATE', 'GLOW_WEATHER', 'GLOW_MAP', 'OTHER'
+    ))
+) COMMENT='콘텐츠 공용 댓글과 답글. 회원의 나의 리뷰로 모아 보여 줌';
+
+-- 최근 본 콘텐츠. 회원과 콘텐츠 조합당 한 행이고 회원당 최근 200개만 남긴다.
+CREATE TABLE IF NOT EXISTS user_content_views (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '회원 users.id',
+    content_type VARCHAR(40) NOT NULL COMMENT '콘텐츠 유형. NOTICE, EVENT 는 받지 않음',
+    content_key VARCHAR(200) NOT NULL COMMENT '콘텐츠 키',
+    title VARCHAR(300) NOT NULL COMMENT '콘텐츠 제목. 비어 오면 경로',
+    path VARCHAR(500) NOT NULL COMMENT '화면 경로. / 로 시작하고 /admin 은 받지 않음',
+    image_url VARCHAR(500) NULL COMMENT '대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로',
+    viewed_at DATETIME(6) NOT NULL COMMENT '마지막으로 본 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_user_content_views_user_content UNIQUE (user_id, content_type, content_key),
+    CONSTRAINT fk_user_content_views_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_user_content_views_content_type CHECK (content_type IN (
+        'ARTICLE', 'PRODUCT', 'GLOW', 'GLOW_COMMUNITY_POST', 'EVENT_INFO', 'ARCHIVE',
+        'SUBWAY', 'AIRPORT_CROWD', 'EXCHANGE_RATE', 'GLOW_WEATHER', 'GLOW_MAP', 'OTHER'
+    ))
+) COMMENT='회원별 최근 본 콘텐츠. 회원당 최근 200건';

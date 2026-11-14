@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispat
 import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
@@ -137,15 +138,16 @@ class SubscriptionDispatchMailService(
         emailSubscriptionPort
             .findActiveEmailsByAudience(audience)
             .filterNot { it in alreadySent }
-            .forEach { recipient -> sendOne(history.id, composed, recipient) }
+            .forEach { recipient -> sendOne(history, composed, recipient) }
         subscriptionDispatchTxService.finish(history.id)
     }
 
     private fun sendOne(
-        dispatchId: Long,
+        history: SubscriptionDispatchHistory,
         email: ComposedSubscriptionEmail,
         recipient: String,
     ) {
+        val dispatchId = history.id
         try {
             outboundMailPort.send(
                 OutboundMailMessage(
@@ -153,6 +155,8 @@ class SubscriptionDispatchMailService(
                     subject = email.subject,
                     plainTextBody = email.plainText,
                     htmlBody = email.htmlBody,
+                    kind = MailSendKind.of(history.contentType),
+                    dispatchId = dispatchId,
                 ),
             )
             subscriptionDispatchTxService.recordOutcome(

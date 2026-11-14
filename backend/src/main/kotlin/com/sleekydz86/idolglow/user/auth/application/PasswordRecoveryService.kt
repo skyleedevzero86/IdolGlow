@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserAccountStatus
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
@@ -159,6 +160,7 @@ class PasswordRecoveryService(
                 subject = subject,
                 plainTextBody = plainTextBody,
                 htmlBody = htmlBody,
+                kind = MailSendKind.AUTH,
             ),
         )
     }

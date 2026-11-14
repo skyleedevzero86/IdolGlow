@@ -2,7 +2,6 @@ package com.sleekydz86.idolglow.subscription.infrastructure
 
 import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
-import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
 import jakarta.mail.internet.InternetAddress
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Component
 class SmtpOutboundMailAdapter(
     private val javaMailSender: JavaMailSender,
     private val appMailProperties: AppMailProperties,
-) : OutboundMailPort {
+) : OutboundMailTransport {
     override fun send(message: OutboundMailMessage) {
         val mimeMessage = javaMailSender.createMimeMessage()
         val helper = MimeMessageHelper(mimeMessage, true, "UTF-8")

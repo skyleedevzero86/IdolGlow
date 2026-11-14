@@ -24,6 +24,7 @@ class CultureInfoApiClient(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val unauthorizedBlockedUntilMillis = AtomicLong(0)
+    private val rateLimitedUntilMillis = AtomicLong(0)
 
     fun listEventsForCalendarDay(
         yyyyMMdd: String,
@@ -273,6 +274,7 @@ class CultureInfoApiClient(
 
     private fun fetchXml(url: String): String? {
         if (isUnauthorizedBlocked()) return null
+        if (rateLimitedUntilMillis.get() > System.currentTimeMillis()) return null
 
         val response = requestRaw(url)
         if (response.statusCode.is2xxSuccessful) return response.body
@@ -284,6 +286,14 @@ class CultureInfoApiClient(
                     "문화시설정보 API 인증 실패. operation={}, status=401. {}분 동안 추가 호출을 생략합니다.",
                     operation,
                     UNAUTHORIZED_COOLDOWN.toMinutes(),
+                )
+            }
+        } else if (response.statusCode.value() == HTTP_TOO_MANY_REQUESTS) {
+            if (markCooldown(rateLimitedUntilMillis, RATE_LIMIT_COOLDOWN)) {
+                log.warn(
+                    "문화시설정보 API 초당 요청 한도 초과. operation={}, status=429. {}초 동안 추가 호출을 생략합니다.",
+                    operation,
+                    RATE_LIMIT_COOLDOWN.toSeconds(),
                 )
             }
         } else {
@@ -397,18 +407,26 @@ class CultureInfoApiClient(
         return true
     }
 
-    private fun markUnauthorizedCooldown(): Boolean {
+    private fun markUnauthorizedCooldown(): Boolean =
+        markCooldown(unauthorizedBlockedUntilMillis, UNAUTHORIZED_COOLDOWN)
+
+    private fun markCooldown(
+        blockedUntilMillis: AtomicLong,
+        cooldown: Duration,
+    ): Boolean {
         val now = System.currentTimeMillis()
-        val blockedUntil = now + UNAUTHORIZED_COOLDOWN.toMillis()
+        val blockedUntil = now + cooldown.toMillis()
         while (true) {
-            val current = unauthorizedBlockedUntilMillis.get()
+            val current = blockedUntilMillis.get()
             if (current > now) return false
-            if (unauthorizedBlockedUntilMillis.compareAndSet(current, blockedUntil)) return true
+            if (blockedUntilMillis.compareAndSet(current, blockedUntil)) return true
         }
     }
 
     companion object {
         private val UNAUTHORIZED_COOLDOWN: Duration = Duration.ofMinutes(5)
+        private val RATE_LIMIT_COOLDOWN: Duration = Duration.ofSeconds(30)
+        private const val HTTP_TOO_MANY_REQUESTS = 429
         private const val MAX_SERVICE_KEY_DECODE_PASSES = 3
         private val PERCENT_ENCODED_REGEX = Regex("%[0-9A-Fa-f]{2}")
         private val SERVICE_TYPES = listOf("A", "B", "C")
