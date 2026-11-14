@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailConsentReminderPlan
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.LoggerFactory
@@ -63,6 +64,7 @@ class ProductRecommendationMailConsentReminderScheduler(
                         subject = composed.subject,
                         plainTextBody = composed.plainText,
                         htmlBody = composed.htmlBody,
+                        kind = MailSendKind.CONSENT_REMINDER,
                     ),
                 )
             }.onFailure { ex ->

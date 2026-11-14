@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailPlan
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchFrequency
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
@@ -129,6 +130,8 @@ class ProductRecommendationMailDispatcher(
                         plainTextBody = composed.plainText,
                         htmlBody = composed.htmlBody,
                         headers = OutboundMailMessage.listUnsubscribeHeaders(oneClickUrl(plan.unsubscribeToken)),
+                        kind = MailSendKind.PRODUCT_RECOMMENDATION,
+                        dispatchId = dispatchId,
                     ),
                 )
             }.onFailure { ex ->

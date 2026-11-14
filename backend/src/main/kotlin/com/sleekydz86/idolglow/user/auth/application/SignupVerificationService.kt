@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificati
 import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.user.auth.domain.SignupVerificationStatus
 import com.sleekydz86.idolglow.user.auth.domain.SignupVerificationToken
 import com.sleekydz86.idolglow.user.auth.domain.SignupVerificationType
@@ -216,6 +217,7 @@ class SignupVerificationService(
                 subject = subject,
                 plainTextBody = plainTextBody,
                 htmlBody = htmlBody,
+                kind = MailSendKind.AUTH,
             ),
         )
     }

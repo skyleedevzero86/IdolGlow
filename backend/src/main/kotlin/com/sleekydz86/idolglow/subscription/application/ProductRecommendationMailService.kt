@@ -10,6 +10,7 @@ import com.sleekydz86.idolglow.subscription.application.port.`in`.ProductRecomme
 import com.sleekydz86.idolglow.subscription.application.port.`in`.ProductRecommendationMailUseCase
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -66,6 +67,7 @@ class ProductRecommendationMailService(
                     subject = composed.subject,
                     plainTextBody = composed.plainText,
                     htmlBody = composed.htmlBody,
+                    kind = MailSendKind.UNSUBSCRIBE_CONFIRM,
                 ),
             )
         }.onFailure { ex ->
