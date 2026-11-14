@@ -4,6 +4,31 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.20.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.19.0...v0.20.0) (2026-11-14)
+
+
+### Features
+
+* GLOW 전체 보기와 홈 트렌드에 실제 글 목록과 공통 좋아요 API를 추가 ([557091f](https://github.com/skyleedevzero86/IdolGlow/commit/557091f96df2f8ff316e530fe4084611cc313f43))
+* GLOW 행사 정보·트렌드·전체 보기를 누구나 보게 하고 공통 좋아요 추가, webzine 이름을 idolglow로 변경 ([#131](https://github.com/skyleedevzero86/IdolGlow/issues/131)) ([6dd5b2c](https://github.com/skyleedevzero86/IdolGlow/commit/6dd5b2c30fbc2249d2dce5612a0415cf061dba6d))
+* 관리자가 발행한 트렌드 호와 기사를 누구나 볼 수 있는 공개 조회 API를 추가 ([64a2a1d](https://github.com/skyleedevzero86/IdolGlow/commit/64a2a1d1d0ec01c4cf95ae8dfaf5ea8ba14b3ca4))
+* 행사 정보 목록과 검색 조건은 로그인 없이 보고 상세만 로그인해야지 상세하게 보임 ([2a3f2f3](https://github.com/skyleedevzero86/IdolGlow/commit/2a3f2f3714c171cd9b0a9fe87f7d70ac38e6a327))
+
+
+### Bug Fixes
+
+* 문화시설정보 API 초당 한도 초과를 줄이고 트렌드 공개 조회 코드를 정리 ([2c5ef42](https://github.com/skyleedevzero86/IdolGlow/commit/2c5ef427d718b261f24947aefb87699df28eef13))
+
+
+### Refactoring
+
+* 이름을 바꾸고 기존 DB·업로드 경로를 옮기는 업그레이드 SQL을 추가 ([f8c2691](https://github.com/skyleedevzero86/IdolGlow/commit/f8c2691762da48ffe80f9b24317115985e0c3a8f))
+
+
+### Build
+
+* Next.js 프론트 컨테이너 실행 스크립트를 추가 ([b178a56](https://github.com/skyleedevzero86/IdolGlow/commit/b178a56477e7e1ee89b5622ad5866b4c9f257a6e))
+
 ## [0.19.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.18.0...v0.19.0) (2026-11-14)
 
 
