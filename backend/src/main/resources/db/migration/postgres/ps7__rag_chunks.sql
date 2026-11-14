@@ -40,7 +40,7 @@ CREATE TABLE rag_chunk_embeddings (
 -- 테이블·컬럼 설명
 COMMENT ON TABLE rag_chunks IS '상품, 옵션, 웹진 문단. 가격과 예약 슬롯은 본문에 없다';
 COMMENT ON COLUMN rag_chunks.id IS '문단 PK';
-COMMENT ON COLUMN rag_chunks.source_type IS '출처 종류. WEBZINE_ARTICLE, WEBZINE_SECTION, PRODUCT, OPTION';
+COMMENT ON COLUMN rag_chunks.source_type IS '출처 종류. IDOLGLOW_ARTICLE, IDOLGLOW_SECTION, PRODUCT, OPTION';
 COMMENT ON COLUMN rag_chunks.source_id IS '출처 테이블의 PK';
 COMMENT ON COLUMN rag_chunks.link_key IS '원문 화면으로 가는 키';
 COMMENT ON COLUMN rag_chunks.content IS '검색 본문';

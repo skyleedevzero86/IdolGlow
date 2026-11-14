@@ -5,6 +5,6 @@ enum class SubscriptionContentType(
     val audience: SubscriptionAudience,
 ) {
     NEWSLETTER("뉴스레터", SubscriptionAudience.NEWSLETTER),
-    WEBZINE_ISSUE("웹진", SubscriptionAudience.WEBZINE_ISSUE),
+    IDOLGLOW_ISSUE("웹진", SubscriptionAudience.IDOLGLOW_ISSUE),
     PRODUCT_RECOMMENDATION("상품 추천", SubscriptionAudience.PRODUCT_RECOMMENDATION),
 }

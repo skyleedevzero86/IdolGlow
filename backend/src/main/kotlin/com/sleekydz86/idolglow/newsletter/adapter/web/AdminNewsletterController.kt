@@ -1,12 +1,12 @@
 package com.sleekydz86.idolglow.newsletter.adapter.web
 
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageUploadUseCase
 import com.sleekydz86.idolglow.newsletter.adapter.web.request.UpsertNewsletterRequest
 import com.sleekydz86.idolglow.newsletter.application.NewsletterAdminUseCase
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterDetailResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterImageUploadResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.AdminNewsletterPageResponse
 import com.sleekydz86.idolglow.newsletter.application.dto.UpsertNewsletterCommand
-import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -33,7 +33,7 @@ import java.net.URI
 @RequestMapping("/admin/newsletters")
 class AdminNewsletterController(
     private val newsletterAdminUseCase: NewsletterAdminUseCase,
-    private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
+    private val idolglowImageUploadUseCase: IdolGlowImageUploadUseCase,
 ) {
     @Operation(summary = "소식지 목록 조회")
     @GetMapping
@@ -82,7 +82,7 @@ class AdminNewsletterController(
         @RequestPart("file") file: MultipartFile,
         @RequestParam(required = false) folder: String?,
     ): ResponseEntity<AdminNewsletterImageUploadResponse> {
-        val upload = webzineImageUploadUseCase.upload(file, folder ?: "newsletters/common")
+        val upload = idolglowImageUploadUseCase.upload(file, folder ?: "newsletters/common")
         return ResponseEntity.ok(
             AdminNewsletterImageUploadResponse(
                 url = upload.url,

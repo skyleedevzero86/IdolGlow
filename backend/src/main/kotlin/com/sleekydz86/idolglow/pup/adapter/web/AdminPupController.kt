@@ -1,10 +1,10 @@
 package com.sleekydz86.idolglow.pup.adapter.web
 
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageUploadUseCase
+import com.sleekydz86.idolglow.idolglowissue.application.dto.AdminIssueImageUploadResponse
 import com.sleekydz86.idolglow.pup.application.PupAdminService
 import com.sleekydz86.idolglow.pup.application.dto.PupAdminPageResponse
 import com.sleekydz86.idolglow.pup.application.dto.UpsertPupRequest
-import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
-import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -31,7 +31,7 @@ import java.net.URI
 @RequestMapping("/admin/pup")
 class AdminPupController(
     private val pupAdminService: PupAdminService,
-    private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
+    private val idolglowImageUploadUseCase: IdolGlowImageUploadUseCase,
 ) {
     @Operation(summary = "팝업 목록 조회")
     @GetMapping
@@ -63,7 +63,7 @@ class AdminPupController(
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
-    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/popups"))
+    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(idolglowImageUploadUseCase.upload(file, "site-content/popups"))
 
     @Operation(summary = "팝업 수정")
     @PutMapping("/{popupId}")

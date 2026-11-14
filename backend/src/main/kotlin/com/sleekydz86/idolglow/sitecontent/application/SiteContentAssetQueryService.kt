@@ -75,7 +75,7 @@ class SiteContentAssetQueryService(
 
     private fun normalizeObjectKey(objectKey: String): String {
         val normalized = objectKey.trim().replace("\\", "/").removePrefix("/")
-        require(normalized.startsWith("webzine/")) { "webzine/ 접두사가 있는 에셋 키만 허용됩니다." }
+        require(normalized.startsWith("idolglow/")) { "idolglow/ 접두사가 있는 에셋 키만 허용됩니다." }
         return normalized
     }
 

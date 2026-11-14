@@ -271,7 +271,7 @@ ALTER TABLE product_review_reports
     ADD COLUMN updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6);
 
 -- 이슈별 기사 목록 조회용
-create index if not exists idx_webzine_articles_issue_id on webzine_articles(issue_id);
+create index if not exists idx_idolglow_articles_issue_id on idolglow_articles(issue_id);
 
 create index if not exists idx_newsletters_published_at on newsletters(published_at);
 
@@ -283,7 +283,7 @@ create index if not exists idx_admin_audit_logs_created_at on admin_audit_logs (
 
 create index if not exists idx_admin_audit_logs_admin_user on admin_audit_logs (admin_user_id);
 
-create index if not exists idx_webzine_articles_issue_id on webzine_articles(issue_id);
+create index if not exists idx_idolglow_articles_issue_id on idolglow_articles(issue_id);
 
 create index if not exists idx_newsletters_published_at on newsletters (published_at);
 
@@ -750,3 +750,227 @@ CREATE INDEX IF NOT EXISTS idx_content_comments_user_created
 
 CREATE INDEX IF NOT EXISTS idx_user_content_views_user_viewed
     ON user_content_views (user_id, viewed_at);
+
+-- =============================================================================
+-- webzine 이름을 idolglow 로 바꾼다
+-- -----
+-- 목적
+-- - 기존 디비의 webzine 테이블, 시퀀스, 인덱스, 제약 이름을 idolglow 로 바꾼다
+-- - 저장된 WEBZINE 코드값과 webzine/ 업로드 경로를 idolglow 로 바꾼다
+-- 대상
+-- - ps
+-- 주의
+-- - 새 데이터베이스는 ps2 가 idolglow 이름으로 만들기 때문에 이름 변경은 건너뛴다
+-- - 이미 반영된 데이터베이스에는 이 묶음만 따로 한 번 실행한다
+-- - MinIO 의 webzine/ 객체도 idolglow/ 로 옮겨야 한다
+-- 연관
+-- - IdolGlowIssue, IdolGlowArticle, MailSendKind, SubscriptionContentType, RagSourceType
+-- =============================================================================
+
+ALTER TABLE IF EXISTS webzine_issues RENAME TO idolglow_issues;
+
+ALTER TABLE IF EXISTS webzine_articles RENAME TO idolglow_articles;
+
+ALTER TABLE IF EXISTS webzine_article_sections RENAME TO idolglow_article_sections;
+
+ALTER TABLE IF EXISTS webzine_article_gallery_images RENAME TO idolglow_article_gallery_images;
+
+ALTER TABLE IF EXISTS webzine_article_tags RENAME TO idolglow_article_tags;
+
+ALTER SEQUENCE IF EXISTS webzine_issues_id_seq RENAME TO idolglow_issues_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_articles_id_seq RENAME TO idolglow_articles_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_article_sections_id_seq RENAME TO idolglow_article_sections_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_article_gallery_images_id_seq RENAME TO idolglow_article_gallery_images_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_article_tags_id_seq RENAME TO idolglow_article_tags_id_seq;
+
+ALTER INDEX IF EXISTS webzine_issues_pkey RENAME TO idolglow_issues_pkey;
+
+ALTER INDEX IF EXISTS webzine_articles_pkey RENAME TO idolglow_articles_pkey;
+
+ALTER INDEX IF EXISTS webzine_article_sections_pkey RENAME TO idolglow_article_sections_pkey;
+
+ALTER INDEX IF EXISTS webzine_article_gallery_images_pkey RENAME TO idolglow_article_gallery_images_pkey;
+
+ALTER INDEX IF EXISTS webzine_article_tags_pkey RENAME TO idolglow_article_tags_pkey;
+
+ALTER INDEX IF EXISTS uk_webzine_issue_slug RENAME TO uk_idolglow_issue_slug;
+
+ALTER INDEX IF EXISTS uk_webzine_issue_volume RENAME TO uk_idolglow_issue_volume;
+
+ALTER INDEX IF EXISTS uk_webzine_article_issue_slug RENAME TO uk_idolglow_article_issue_slug;
+
+ALTER INDEX IF EXISTS uk_webzine_article_section_order RENAME TO uk_idolglow_article_section_order;
+
+ALTER INDEX IF EXISTS uk_webzine_article_gallery_order RENAME TO uk_idolglow_article_gallery_order;
+
+ALTER INDEX IF EXISTS uk_webzine_article_tag_name RENAME TO uk_idolglow_article_tag_name;
+
+ALTER INDEX IF EXISTS idx_webzine_articles_issue_id RENAME TO idx_idolglow_articles_issue_id;
+
+-- 외래 키처럼 인덱스가 없는 제약은 이름에 webzine 이 남은 것만 골라 바꾼다
+DO $$
+DECLARE
+    item record;
+BEGIN
+    FOR item IN
+        SELECT c.conrelid::regclass AS table_name, c.conname
+        FROM pg_constraint c
+        JOIN pg_namespace n ON n.oid = c.connamespace
+        WHERE n.nspname = current_schema()
+          AND c.conname LIKE 'webzine\_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %s RENAME CONSTRAINT %I TO %I',
+            item.table_name,
+            item.conname,
+            'idolglow_' || substr(item.conname, 9)
+        );
+    END LOOP;
+END $$;
+
+ALTER TABLE mail_send_logs DROP CONSTRAINT IF EXISTS chk_mail_send_logs_kind;
+
+UPDATE mail_send_logs SET mail_kind = 'IDOLGLOW' WHERE mail_kind = 'WEBZINE';
+
+ALTER TABLE mail_send_logs
+    ADD CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'IDOLGLOW', 'UNSUBSCRIBE_CONFIRM',
+        'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
+    ));
+
+UPDATE subscription_dispatch_histories SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+UPDATE subscription_dispatch_schedules SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+UPDATE admin_audit_logs
+SET action_code = 'IDOLGLOW_' || substr(action_code, 9)
+WHERE action_code LIKE 'WEBZINE\_%';
+
+UPDATE admin_audit_logs
+SET target_type = 'IDOLGLOW_' || substr(target_type, 9)
+WHERE target_type LIKE 'WEBZINE\_%';
+
+UPDATE admin_audit_logs
+SET detail = replace(detail, 'objectKey=webzine/', 'objectKey=idolglow/')
+WHERE detail LIKE '%objectKey=webzine/%';
+
+UPDATE idolglow_articles
+SET author_email = 'idolglow@idolglow.local'
+WHERE author_email = 'webzine@idolglow.local';
+
+-- 업로드 URL 은 MinIO 공개 주소 뒤나 /uploads/ 뒤에 webzine/ 객체 키가 붙어 있다
+UPDATE idolglow_issues
+SET cover_image_url = replace(cover_image_url, '/webzine/', '/idolglow/')
+WHERE cover_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET hero_image_url = replace(hero_image_url, '/webzine/', '/idolglow/')
+WHERE hero_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET card_image_url = replace(card_image_url, '/webzine/', '/idolglow/')
+WHERE card_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_article_gallery_images
+SET image_url = replace(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE newsletters
+SET image_url = replace(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET thumbnail_image_url = replace(thumbnail_image_url, '/webzine/', '/idolglow/')
+WHERE thumbnail_image_url LIKE '%/webzine/%';
+
+UPDATE user_content_views
+SET image_url = replace(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE tb_banner
+SET banner_image = replace(banner_image, '/webzine/', '/idolglow/')
+WHERE banner_image LIKE '%/webzine/%';
+
+UPDATE tb_main_image
+SET image = replace(image, '/webzine/', '/idolglow/')
+WHERE image LIKE '%/webzine/%';
+
+UPDATE tb_popup_manage
+SET popup_img_path = replace(popup_img_path, '/webzine/', '/idolglow/')
+WHERE popup_img_path LIKE '%/webzine/%';
+
+UPDATE editor_assets
+SET object_key = 'idolglow/' || substr(object_key, 9)
+WHERE object_key LIKE 'webzine/%';
+
+-- 본문은 업로드 파일 이름 규칙 폴더/UUID.확장자 에 맞는 경로만 바꾼다
+UPDATE idolglow_article_sections
+SET body = regexp_replace(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE newsletter_paragraphs
+SET body = regexp_replace(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET markdown = regexp_replace(
+    markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE markdown LIKE '%/webzine/%';
+
+UPDATE glow_community_posts
+SET content_markdown = regexp_replace(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+UPDATE content_comments
+SET content_markdown = regexp_replace(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+-- rag_chunks 는 ps7 에서 만들기 때문에 새 데이터베이스에서는 건너뛴다
+DO $$
+BEGIN
+    IF to_regclass('rag_chunks') IS NOT NULL THEN
+        UPDATE rag_chunks
+        SET source_type = 'IDOLGLOW_' || substr(source_type, 9)
+        WHERE source_type LIKE 'WEBZINE\_%';
+
+        UPDATE rag_chunks
+        SET link_key = 'idolglow/' || substr(link_key, 9)
+        WHERE link_key LIKE 'webzine/%';
+
+        COMMENT ON COLUMN rag_chunks.source_type IS '출처 종류. IDOLGLOW_ARTICLE, IDOLGLOW_SECTION, PRODUCT, OPTION';
+    END IF;
+END $$;
+
+COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+
+COMMENT ON COLUMN subscription_dispatch_histories.content_type IS '콘텐츠 유형. 예: NEWSLETTER, IDOLGLOW_ISSUE';
+
+COMMENT ON COLUMN admin_audit_logs.target_type IS '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';

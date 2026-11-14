@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.subscription.application
 
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowIssueRepository
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
@@ -13,7 +14,6 @@ import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchChannel
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientCounts
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchStatus
-import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -34,7 +34,7 @@ class SubscriptionServiceTest {
     private val subscriptionDispatchRecipientPort = mockk<SubscriptionDispatchRecipientPort>()
     private val subscriptionDispatchSchedulePort = mockk<SubscriptionDispatchSchedulePort>()
     private val newsletterRepository = mockk<NewsletterRepository>()
-    private val webzineIssueRepository = mockk<WebzineIssueRepository>()
+    private val idolglowIssueRepository = mockk<IdolGlowIssueRepository>()
     private val applicationEventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
     private lateinit var service: SubscriptionService
@@ -48,7 +48,7 @@ class SubscriptionServiceTest {
                 subscriptionDispatchRecipientPort = subscriptionDispatchRecipientPort,
                 subscriptionDispatchSchedulePort = subscriptionDispatchSchedulePort,
                 newsletterRepository = newsletterRepository,
-                webzineIssueRepository = webzineIssueRepository,
+                idolglowIssueRepository = idolglowIssueRepository,
                 applicationEventPublisher = applicationEventPublisher,
             )
     }
@@ -165,7 +165,7 @@ class SubscriptionServiceTest {
         every { subscriptionDispatchHistoryPort.count() } returns 2L
         every { subscriptionDispatchSchedulePort.findAllByLatest() } returns emptyList()
         every { newsletterRepository.findAllByLatest() } returns emptyList()
-        every { webzineIssueRepository.findAllByLatest() } returns emptyList()
+        every { idolglowIssueRepository.findAllByLatest() } returns emptyList()
         every { subscriptionDispatchRecipientPort.countByDispatchIds(listOf(11L, 12L)) } returns
             mapOf(11L to SubscriptionDispatchRecipientCounts(sentCount = 3, failedCount = 1, skippedCount = 2))
 

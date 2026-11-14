@@ -48,11 +48,11 @@ class SubscriptionDispatchScheduleTest {
 
         // when
         val newsletters = hours.map { schedule(SubscriptionContentType.NEWSLETTER, it) }
-        val webzines = hours.map { schedule(SubscriptionContentType.WEBZINE_ISSUE, it) }
+        val idolglows = hours.map { schedule(SubscriptionContentType.IDOLGLOW_ISSUE, it) }
 
         // then
         assertEquals(hours, newsletters.map { it.dispatchHour })
-        assertEquals(hours, webzines.map { it.dispatchHour })
+        assertEquals(hours, idolglows.map { it.dispatchHour })
     }
 
     @DisplayName("상품 추천 메일도 24시 범위를 벗어나면 기존 메시지로 거절한다")

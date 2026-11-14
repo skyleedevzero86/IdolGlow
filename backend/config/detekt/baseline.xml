@@ -16,8 +16,8 @@
     <ID>CyclomaticComplexMethod:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
     <ID>CyclomaticComplexMethod:UserSurveyFormService.kt:UserSurveyFormService$fun submitCurrentForm( userId: Long, command: SubmitSurveyResponseCommand, ): SurveySubmissionResponse</ID>
     <ID>FunctionNaming:ProductReviewReportJpaRepository.kt:ProductReviewReportJpaRepository$fun existsByReview_IdAndReporterUserId( reviewId: Long, reporterUserId: Long, ): Boolean</ID>
-    <ID>FunctionNaming:WebzineArticleJpaRepository.kt:WebzineArticleJpaRepository$fun existsByIssue_IdAndSlug( issueId: Long, slug: String, ): Boolean</ID>
-    <ID>FunctionNaming:WebzineArticleJpaRepository.kt:WebzineArticleJpaRepository$fun findByIssue_IdAndSlug( issueId: Long, slug: String, ): WebzineArticle?</ID>
+    <ID>FunctionNaming:IdolGlowArticleJpaRepository.kt:IdolGlowArticleJpaRepository$fun existsByIssue_IdAndSlug( issueId: Long, slug: String, ): Boolean</ID>
+    <ID>FunctionNaming:IdolGlowArticleJpaRepository.kt:IdolGlowArticleJpaRepository$fun findByIssue_IdAndSlug( issueId: Long, slug: String, ): IdolGlowArticle?</ID>
     <ID>FunctionOnlyReturningConstant:MbrdJdbcEditorDocumentRepository.kt:MbrdJdbcEditorDocumentRepository$private fun pgSearchPredicate(): String</ID>
     <ID>FunctionOnlyReturningConstant:ProductGraphQlController.kt:ProductGraphQlController$@QueryMapping fun health(): String</ID>
     <ID>LargeClass:EventInfoController.kt:EventInfoController</ID>
@@ -41,12 +41,12 @@
     <ID>LongMethod:ProductSearchQueryRepository.kt:ProductSearchQueryRepository$private fun filterWhereClause( c: ProductSearchCriteria, params: MutableMap&lt;String, Any&gt;, ): String</ID>
     <ID>LongMethod:SeoulOpenapiSubwaySearchAdapter.kt:SeoulOpenapiSubwaySearchAdapter$override fun searchByStationName(stationName: String): List&lt;SubwayExternalSearchHit&gt;</ID>
     <ID>LongMethod:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$fun composeNewsletter(event: NewsletterDispatchRequestedEvent): ComposedSubscriptionEmail</ID>
-    <ID>LongMethod:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$fun composeWebzineIssue(event: WebzineIssueDispatchRequestedEvent): ComposedSubscriptionEmail</ID>
+    <ID>LongMethod:SubscriptionEmailComposer.kt:SubscriptionEmailComposer$fun composeIdolGlowIssue(event: IdolGlowIssueDispatchRequestedEvent): ComposedSubscriptionEmail</ID>
     <ID>LongMethod:SurveyRecommendationService.kt:SurveyRecommendationService$fun generate( userId: Long, submissionId: Long, useLlm: Boolean, ): SurveyRecommendationResponse</ID>
     <ID>LongMethod:TossPaymentConfirmService.kt:TossPaymentConfirmService$fun confirm( userId: Long, paymentKey: String, orderId: String, amount: BigDecimal, idempotencyKey: String?, traceId: String?, ): Payment</ID>
     <ID>LongMethod:TossWebhookService.kt:TossWebhookService$fun handlePayload( rawBody: String, transmissionId: String? = null, )</ID>
     <ID>LongMethod:UserProfileImageService.kt:UserProfileImageService$fun uploadAndGetPublicUrl( userId: Long, file: MultipartFile, ): String</ID>
-    <ID>LongMethod:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$@Transactional override fun run(args: ApplicationArguments)</ID>
+    <ID>LongMethod:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$@Transactional override fun run(args: ApplicationArguments)</ID>
     <ID>LoopWithTooManyJumpStatements:ExchangeBranchQueryService.kt:ExchangeBranchQueryService$for</ID>
     <ID>LoopWithTooManyJumpStatements:SubwayQueryApplicationService.kt:SubwayQueryApplicationService$for</ID>
     <ID>MagicNumber:AdminAuditService.kt:AdminAuditService$2000</ID>
@@ -419,17 +419,17 @@
     <ID>MagicNumber:UserService.kt:UserService$500</ID>
     <ID>MagicNumber:UserService.kt:UserService$72</ID>
     <ID>MagicNumber:UserService.kt:UserService$8</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$10</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$11</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$12</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$2025</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$2026</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$3</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$97</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$98</ID>
-    <ID>MagicNumber:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$99</ID>
-    <ID>MagicNumber:WebzineAdminService.kt:WebzineAdminService$20</ID>
-    <ID>MagicNumber:WebzineAdminService.kt:WebzineAdminService$6</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$10</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$11</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$12</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$2025</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$2026</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$3</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$97</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$98</ID>
+    <ID>MagicNumber:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$99</ID>
+    <ID>MagicNumber:IdolGlowAdminService.kt:IdolGlowAdminService$20</ID>
+    <ID>MagicNumber:IdolGlowAdminService.kt:IdolGlowAdminService$6</ID>
     <ID>MagicNumber:WindDirection.kt:WindDirection$0.3</ID>
     <ID>MagicNumber:WindDirection.kt:WindDirection$11.25</ID>
     <ID>MagicNumber:WindDirection.kt:WindDirection$110</ID>
@@ -478,7 +478,7 @@
     <ID>MaxLineLength:AdminSurveyFormService.kt:AdminSurveyFormService$fun</ID>
     <ID>MaxLineLength:AdminSurveyFormService.kt:AdminSurveyFormService$require</ID>
     <ID>MaxLineLength:AdminUserController.kt:AdminUserController$)</ID>
-    <ID>MaxLineLength:AdminWebzineIssueController.kt:AdminWebzineIssueController$)</ID>
+    <ID>MaxLineLength:AdminIdolGlowIssueController.kt:AdminIdolGlowIssueController$)</ID>
     <ID>MaxLineLength:ApplicationLayerUiDtoBaselineTest.kt:ApplicationLayerUiDtoBaselineTest$"application 계층의 UI DTO 참조는 기준값을 초과할 수 없습니다 (기준=$BASELINE_UI_DTO_VIOLATION_FILE_COUNT, 실제=${위반목록.size})"</ID>
     <ID>MaxLineLength:ArchitectureSourceScanner.kt:ArchitectureSourceScanner$"""import\s+com\.sleekydz86\.idolglow\.[\w.]*\.(domain\.\w+Repository|infrastructure\.\w*(Jpa)?Repository)\b"""</ID>
     <ID>MaxLineLength:AuthController.kt:AuthController$@CookieValue(value = RefreshTokenCookieSupporter.REFRESH_CSRF_COOKIE, required = false) refreshCsrfToken: String?</ID>
@@ -487,7 +487,7 @@
     <ID>MaxLineLength:AuthenticatedPrincipalResolver.kt:AuthenticatedPrincipalResolver$fun resolveRequired(): AuthenticatedPrincipal</ID>
     <ID>MaxLineLength:CultureInfoApiClient.kt:CultureInfoApiClient$val img = m["thumbnail"]?.ifBlank { null } ?: m["posterimg"]?.ifBlank { null } ?: m["firstimage"]?.ifBlank { null }</ID>
     <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$SubscriptionAudience.NEWSLETTER -&gt; emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedNewslettersTrue()</ID>
-    <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$SubscriptionAudience.WEBZINE_ISSUE -&gt; emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedIssuesTrue()</ID>
+    <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$SubscriptionAudience.IDOLGLOW_ISSUE -&gt; emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedIssuesTrue()</ID>
     <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$override fun findByEmail(email: String): EmailSubscription?</ID>
     <ID>MaxLineLength:EmailSubscriptionRepositoryImpl.kt:EmailSubscriptionRepositoryImpl$override fun save(subscription: EmailSubscription): EmailSubscription</ID>
     <ID>MaxLineLength:EventInfoController.kt:EventInfoController$private</ID>
@@ -585,7 +585,7 @@
     <ID>MaxLineLength:SiteContentController.kt:SiteContentController$override</ID>
     <ID>MaxLineLength:SubscriptionDispatchScheduleSupport.kt:internal</ID>
     <ID>MaxLineLength:SubscriptionDispatchScheduler.kt:SubscriptionDispatchScheduler$newsletterRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordNewsletterDispatch)</ID>
-    <ID>MaxLineLength:SubscriptionDispatchScheduler.kt:SubscriptionDispatchScheduler$webzineIssueRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordWebzineIssueDispatch)</ID>
+    <ID>MaxLineLength:SubscriptionDispatchScheduler.kt:SubscriptionDispatchScheduler$idolglowIssueRepository.findAllByLatest().firstOrNull()?.let(subscriptionDispatchRecorder::recordIdolGlowIssueDispatch)</ID>
     <ID>MaxLineLength:SubscriptionService.kt:SubscriptionService$override</ID>
     <ID>MaxLineLength:SubwayStationSummaryLlmRouter.kt:SubwayStationSummaryLlmRouter$"openai", "gpt" -&gt; openAiSubwayStationSummaryClient.generate(lineId, lineName, stationCd, stationDisplayName)</ID>
     <ID>MaxLineLength:SubwayWebMapper.kt:SubwayWebMapper$fun toLineDto(line: SubwayLine): SubwayLineDto</ID>
@@ -598,21 +598,21 @@
     <ID>MaxLineLength:TourFestivalApiClient.kt:TourFestivalApiClient$log.warn("관광(축제) API HTTP 오류. endpoint={}, status={}, body={}", endpoint, response.statusCode.value(), response.body.take(300))</ID>
     <ID>MaxLineLength:UserSurveyFormService.kt:UserSurveyFormService$fun</ID>
     <ID>MaxLineLength:UserSurveyRepositoryImpl.kt:UserSurveyRepositoryImpl$override fun findByUserId(userId: Long): UserSurvey?</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$body = "정광희 작가에게 파편은 고정관념의 틀을 벗어나기 위한 의도적인 행위의 산물이다.\n\n작품은 파편이 흩어지는 순간 오히려 다른 가능성이 열린다는 감각을 전한다."</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$coverImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$coverImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminDataInitializer.kt:WebzineAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
-    <ID>MaxLineLength:WebzineAdminService.kt:WebzineAdminService$override fun findIssue(issueSlug: String): AdminIssueVolumeResponse</ID>
-    <ID>MaxLineLength:WebzineIssueRepositoryImpl.kt:WebzineIssueRepositoryImpl$override fun findBySlugWithArticles(slug: String): WebzineIssue?</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$body = "정광희 작가에게 파편은 고정관념의 틀을 벗어나기 위한 의도적인 행위의 산물이다.\n\n작품은 파편이 흩어지는 순간 오히려 다른 가능성이 열린다는 감각을 전한다."</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$cardImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=900&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$coverImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$coverImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminDataInitializer.kt:IdolGlowAdminDataInitializer$heroImageUrl = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"</ID>
+    <ID>MaxLineLength:IdolGlowAdminService.kt:IdolGlowAdminService$override fun findIssue(issueSlug: String): AdminIssueVolumeResponse</ID>
+    <ID>MaxLineLength:IdolGlowIssueRepositoryImpl.kt:IdolGlowIssueRepositoryImpl$override fun findBySlugWithArticles(slug: String): IdolGlowIssue?</ID>
     <ID>NestedBlockDepth:PlatformJwtAuthenticationFilter.kt:PlatformJwtAuthenticationFilter$override fun doFilterInternal( request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain, )</ID>
     <ID>ObjectPropertyNaming:ControllerDirectRepositoryBaselineTest.kt:ControllerDirectRepositoryBaselineTest.Companion$private const val 기준_위반_파일_수 = 0</ID>
     <ID>RethrowCaughtException:SignupService.kt:SignupService$throw e</ID>
@@ -732,7 +732,7 @@
     <ID>TooManyFunctions:AdminOperationsController.kt:AdminOperationsController</ID>
     <ID>TooManyFunctions:AdminServerStatusService.kt:AdminServerStatusService</ID>
     <ID>TooManyFunctions:AdminSurveyFormService.kt:AdminSurveyFormService</ID>
-    <ID>TooManyFunctions:AdminWebzineIssueController.kt:AdminWebzineIssueController</ID>
+    <ID>TooManyFunctions:AdminIdolGlowIssueController.kt:AdminIdolGlowIssueController</ID>
     <ID>TooManyFunctions:BnrRepositoryImpl.kt:BnrRepositoryImpl : BnrRepository</ID>
     <ID>TooManyFunctions:CultureInfoApiClient.kt:CultureInfoApiClient</ID>
     <ID>TooManyFunctions:EventInfoController.kt:EventInfoController</ID>
@@ -749,7 +749,7 @@
     <ID>TooManyFunctions:ReservationCommandService.kt:ReservationCommandService</ID>
     <ID>TooManyFunctions:TourFestivalApiClient.kt:TourFestivalApiClient : FestivalEventExternalQueryPort</ID>
     <ID>TooManyFunctions:User.kt:User</ID>
-    <ID>TooManyFunctions:WebzineAdminService.kt:WebzineAdminService : WebzineAdminUseCase</ID>
+    <ID>TooManyFunctions:IdolGlowAdminService.kt:IdolGlowAdminService : IdolGlowAdminUseCase</ID>
     <ID>UnusedParameter:GlowWeatherQueryService.kt:GlowWeatherQueryService$current: CurrentWeatherResponse</ID>
     <ID>VariableNaming:ApplicationLayerUiDtoBaselineTest.kt:ApplicationLayerUiDtoBaselineTest$val 위반목록 = ArchitectureSourceScanner.application계층UiDto위반목록(sourceRoot)</ID>
     <ID>VariableNaming:ControllerDirectRepositoryBaselineTest.kt:ControllerDirectRepositoryBaselineTest$val 위반목록 = ArchitectureSourceScanner.controllerRepository직접참조목록(sourceRoot)</ID>

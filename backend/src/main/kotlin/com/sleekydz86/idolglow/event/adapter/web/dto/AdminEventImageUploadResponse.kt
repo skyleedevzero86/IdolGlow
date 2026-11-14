@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.event.adapter.web.dto
 
-import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
+import com.sleekydz86.idolglow.idolglowissue.application.dto.AdminIssueImageUploadResponse
 
 data class AdminEventImageUploadResponse(
     val url: String,

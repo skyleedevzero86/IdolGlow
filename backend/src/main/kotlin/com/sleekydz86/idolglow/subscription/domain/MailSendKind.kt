@@ -5,7 +5,7 @@ enum class MailSendKind(
 ) {
     PRODUCT_RECOMMENDATION("상품 추천"),
     NEWSLETTER("뉴스레터"),
-    WEBZINE("웹진"),
+    IDOLGLOW("웹진"),
     UNSUBSCRIBE_CONFIRM("수신 거부 확인"),
     CONSENT_REMINDER("수신 동의 안내"),
     AUTH("인증"),
@@ -19,7 +19,7 @@ enum class MailSendKind(
         fun of(contentType: SubscriptionContentType): MailSendKind =
             when (contentType) {
                 SubscriptionContentType.NEWSLETTER -> NEWSLETTER
-                SubscriptionContentType.WEBZINE_ISSUE -> WEBZINE
+                SubscriptionContentType.IDOLGLOW_ISSUE -> IDOLGLOW
                 SubscriptionContentType.PRODUCT_RECOMMENDATION -> PRODUCT_RECOMMENDATION
             }
     }

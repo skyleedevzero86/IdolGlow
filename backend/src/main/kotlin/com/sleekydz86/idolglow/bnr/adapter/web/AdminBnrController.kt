@@ -3,8 +3,8 @@ package com.sleekydz86.idolglow.bnr.adapter.web
 import com.sleekydz86.idolglow.bnr.application.BnrAdminService
 import com.sleekydz86.idolglow.bnr.application.dto.BnrAdminPageResponse
 import com.sleekydz86.idolglow.bnr.application.dto.UpsertBnrRequest
-import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
-import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageUploadUseCase
+import com.sleekydz86.idolglow.idolglowissue.application.dto.AdminIssueImageUploadResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -31,7 +31,7 @@ import java.net.URI
 @RequestMapping("/admin/bnr")
 class AdminBnrController(
     private val bnrAdminService: BnrAdminService,
-    private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
+    private val idolglowImageUploadUseCase: IdolGlowImageUploadUseCase,
 ) {
     @Operation(summary = "배너 목록 조회")
     @GetMapping
@@ -63,7 +63,7 @@ class AdminBnrController(
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
-    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/banners"))
+    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(idolglowImageUploadUseCase.upload(file, "site-content/banners"))
 
     @Operation(summary = "배너 수정")
     @PutMapping("/{bannerId}")

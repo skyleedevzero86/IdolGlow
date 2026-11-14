@@ -80,8 +80,8 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
-                auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
-                auth.requestMatchers(HttpMethod.GET, *COMMUNITY_PUBLIC_GET).permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/uploads/idolglow/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, *PUBLIC_GET).permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
@@ -140,6 +140,53 @@ class SecurityConfig(
         private const val UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe"
         private const val ONE_CLICK_UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe/one-click"
 
+        private val EVENT_INFO_PUBLIC_GET =
+            arrayOf(
+                "/mypage/event-info/festivals",
+                "/api/event-info/festivals",
+                "/mypage/event-info/kopis/performances",
+                "/api/event-info/kopis/performances",
+                "/mypage/event-info/kopis/festivals",
+                "/api/event-info/kopis/festivals",
+                "/mypage/event-info/kopis/area-stats",
+                "/api/event-info/kopis/area-stats",
+                "/mypage/event-info/special-days/holidays",
+                "/api/event-info/special-days/holidays",
+                "/mypage/event-info/special-days/rest-days",
+                "/api/event-info/special-days/rest-days",
+                "/mypage/event-info/special-days/anniversaries",
+                "/api/event-info/special-days/anniversaries",
+                "/mypage/event-info/sjw-perform",
+                "/api/event-info/sjw-perform",
+                "/mypage/event-info/search-keyword",
+                "/api/event-info/search-keyword",
+                "/mypage/event-info/ldong-codes",
+                "/api/event-info/ldong-codes",
+                "/mypage/event-info/lcls-codes",
+                "/api/event-info/lcls-codes",
+                "/mypage/event-info/culture-calendar/areas",
+                "/api/event-info/culture-calendar/areas",
+                "/mypage/event-info/culture-calendar/realm2",
+                "/api/event-info/culture-calendar/realm2",
+                "/mypage/event-info/culture-calendar/area2",
+                "/api/event-info/culture-calendar/area2",
+                "/mypage/event-info/culture-calendar/realm-code-reference",
+                "/api/event-info/culture-calendar/realm-code-reference",
+            )
+
+        private val IDOLGLOW_PUBLIC_GET =
+            arrayOf(
+                "/api/idolglow/issues",
+                "/api/idolglow/issues/**",
+                "/api/idolglow/articles",
+            )
+
+        private val GLOW_FEED_PUBLIC_GET =
+            arrayOf(
+                "/api/glow/feed",
+                "/api/glow/feed/highlights",
+            )
+
         private val COMMUNITY_PUBLIC_GET =
             arrayOf(
                 "/api/glow-community/posts",
@@ -148,6 +195,9 @@ class SecurityConfig(
                 "/api/glow-community/keywords",
                 "/api/comments",
             )
+
+        private val PUBLIC_GET =
+            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(

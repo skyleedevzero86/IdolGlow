@@ -33,6 +33,7 @@ class MailSendLogMigrationTest {
                 assertEquals(EXPECTED_COLUMNS, names(connection, COLUMNS_SQL))
                 assertEquals(EXPECTED_INDEXES, names(connection, INDEXES_SQL))
                 insertLog(connection, "NEWSLETTER", "SENT")
+                insertLog(connection, "IDOLGLOW", "SENT")
                 assertEquals(CHECK_VIOLATION, failedState { insertLog(connection, "UNKNOWN", "SENT") })
                 assertEquals(CHECK_VIOLATION, failedState { insertLog(connection, "NEWSLETTER", "BOUNCED") })
             }

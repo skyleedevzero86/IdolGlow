@@ -5,8 +5,8 @@ import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailBasis
 import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailItem
+import com.sleekydz86.idolglow.subscription.application.event.IdolGlowIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
-import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -88,9 +88,9 @@ class SubscriptionEmailComposer(
         return ComposedSubscriptionEmail(subject = subject, plainText = plainText, htmlBody = htmlBody)
     }
 
-    fun composeWebzineIssue(event: WebzineIssueDispatchRequestedEvent): ComposedSubscriptionEmail {
+    fun composeIdolGlowIssue(event: IdolGlowIssueDispatchRequestedEvent): ComposedSubscriptionEmail {
         val title = "Vol.${event.volume} 웹진이 도착했습니다"
-        val subject = "${appMailProperties.webzineSubjectPrefix.trim()} $title".trim()
+        val subject = "${appMailProperties.idolglowSubjectPrefix.trim()} $title".trim()
         val detailUrl = resolveUrl("/issues/${event.slug}")
         val articleList = event.articleTitles.take(6)
         val plainText =
@@ -117,7 +117,7 @@ class SubscriptionEmailComposer(
                 <div style="max-width:680px;margin:0 auto;padding:32px 20px;">
                   <div style="background:#fffaf4;border-radius:24px;overflow:hidden;border:1px solid #e6d9c9;">
                     <div style="padding:28px;background:linear-gradient(135deg,#3d2b27,#b68b54);color:#fff8f0;">
-                      <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">IdolGlow Webzine</p>
+                      <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">IdolGlow Issue</p>
                       <h1 style="margin:0;font-size:30px;line-height:1.2;">${escapeHtml(title)}</h1>
                       <p style="margin:14px 0 0;font-size:14px;opacity:0.86;">발행일 ${formatDate(event.issueDate)}</p>
                     </div>

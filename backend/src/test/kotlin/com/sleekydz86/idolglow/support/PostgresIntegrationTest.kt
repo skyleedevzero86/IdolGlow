@@ -11,9 +11,13 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 @Suppress("UtilityClassWithPublicConstructor")
 abstract class PostgresIntegrationTest {
     companion object {
+        private const val MAX_CONNECTIONS = 300
+
         @JvmStatic
         val postgres: PostgreSQLContainer =
-            PostgreSQLContainer("postgres:17-alpine").apply { start() }
+            PostgreSQLContainer("postgres:17-alpine")
+                .withCommand("postgres", "-c", "max_connections=$MAX_CONNECTIONS")
+                .apply { start() }
 
         @JvmStatic
         @DynamicPropertySource
@@ -24,6 +28,8 @@ abstract class PostgresIntegrationTest {
             registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
             registry.add("spring.jpa.properties.hibernate.dialect") { "org.hibernate.dialect.PostgreSQLDialect" }
             registry.add("spring.datasource.hikari.maximum-pool-size") { "30" }
+            registry.add("spring.datasource.hikari.minimum-idle") { "2" }
+            registry.add("spring.datasource.hikari.idle-timeout") { "10000" }
             registry.add("spring.datasource.hikari.connection-init-sql") { "SET lock_timeout TO '3s'" }
             registry.add("payment.toss.enabled") { "true" }
             registry.add("payment.toss.use-toss-provider") { "true" }

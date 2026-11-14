@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.mbrd.adapter.web
 
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageUploadUseCase
 import com.sleekydz86.idolglow.mbrd.application.MbrdEditorImageUploadPayload
 import com.sleekydz86.idolglow.mbrd.infrastructure.storage.MbrdMinioEditorImageStorageService
-import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ import java.util.UUID
 @RequestMapping("/api/mbrd/editor/images")
 class MbrdEditorImageController(
     private val minioStorageService: ObjectProvider<MbrdMinioEditorImageStorageService>,
-    private val webzineImageUploadUseCase: ObjectProvider<WebzineImageUploadUseCase>,
+    private val idolglowImageUploadUseCase: ObjectProvider<IdolGlowImageUploadUseCase>,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -52,17 +52,17 @@ class MbrdEditorImageController(
                     ex.message ?: "이미지 업로드 요청이 올바르지 않습니다.",
                 )
             } catch (ex: Exception) {
-                log.warn("mbrd MinIO 업로드 실패, Webzine 스토리지로 재시도합니다.", ex)
-                return uploadViaWebzine(file)
+                log.warn("mbrd MinIO 업로드 실패, IdolGlow 스토리지로 재시도합니다.", ex)
+                return uploadViaIdolGlow(file)
             }
         }
 
-        return uploadViaWebzine(file)
+        return uploadViaIdolGlow(file)
     }
 
-    private fun uploadViaWebzine(file: MultipartFile): MbrdEditorImageUploadPayload {
+    private fun uploadViaIdolGlow(file: MultipartFile): MbrdEditorImageUploadPayload {
         val uploader =
-            webzineImageUploadUseCase.getIfAvailable()
+            idolglowImageUploadUseCase.getIfAvailable()
                 ?: throw ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "이미지 업로드 스토리지를 사용할 수 없습니다.",

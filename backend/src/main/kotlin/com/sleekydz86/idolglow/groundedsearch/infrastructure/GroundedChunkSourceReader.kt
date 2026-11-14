@@ -5,9 +5,9 @@ import com.sleekydz86.idolglow.groundedsearch.domain.GroundedChunkDraft
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedChunkText
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedLinkKey
 import com.sleekydz86.idolglow.groundedsearch.domain.RagSourceType
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowArticle
 import com.sleekydz86.idolglow.productpackage.option.domain.Option
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
-import com.sleekydz86.idolglow.webzine.domain.WebzineArticle
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -41,11 +41,11 @@ class GroundedChunkSourceReader(
 
     private fun articleDrafts(): List<GroundedChunkDraft> = articles().flatMap { article -> draftsOf(article) }
 
-    private fun draftsOf(article: WebzineArticle): List<GroundedChunkDraft> {
+    private fun draftsOf(article: IdolGlowArticle): List<GroundedChunkDraft> {
         val issueSlug = article.issue.slug
         val articleDraft =
             draft(
-                RagSourceType.WEBZINE_ARTICLE,
+                RagSourceType.IDOLGLOW_ARTICLE,
                 article.id,
                 GroundedLinkKey.article(issueSlug, article.slug),
                 GroundedChunkText.fromArticle(article),
@@ -53,7 +53,7 @@ class GroundedChunkSourceReader(
         val sections =
             article.sections.mapNotNull { section ->
                 draft(
-                    RagSourceType.WEBZINE_SECTION,
+                    RagSourceType.IDOLGLOW_SECTION,
                     section.id,
                     GroundedLinkKey.section(issueSlug, article.slug, section.id),
                     GroundedChunkText.fromSection(section),
@@ -80,8 +80,8 @@ class GroundedChunkSourceReader(
     private fun options(): List<Option> =
         entityManager.createQuery("select o from Option o", Option::class.java).resultList
 
-    private fun articles(): List<WebzineArticle> =
+    private fun articles(): List<IdolGlowArticle> =
         entityManager
-            .createQuery("select distinct a from WebzineArticle a join fetch a.issue", WebzineArticle::class.java)
+            .createQuery("select distinct a from IdolGlowArticle a join fetch a.issue", IdolGlowArticle::class.java)
             .resultList
 }

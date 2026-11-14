@@ -47,12 +47,10 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/festivals")
     fun festivals(
-        @LoginUser userId: Long,
         @RequestParam(required = false) date: String?,
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "20") numOfRows: Int,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val yyyyMMdd = normalizeDate(date)
         val tourEvents =
             festivalEventQueryUseCase.listByDate(
@@ -109,14 +107,12 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/performances")
     fun kopisPerformances(
-        @LoginUser userId: Long,
         @RequestParam(required = false) date: String?,
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "20") numOfRows: Int,
         @RequestParam(required = false, defaultValue = "11") signgucode: String,
         @RequestParam(required = false, defaultValue = "02") prfstate: String,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val yyyymmdd = normalizeDate(date)
         return kopisPerformanceApiClient
             .listPerformances(
@@ -146,12 +142,10 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/festivals")
     fun kopisFestivals(
-        @LoginUser userId: Long,
         @RequestParam(required = false) date: String?,
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "20") numOfRows: Int,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val yyyymmdd = normalizeDate(date)
         return kopisPerformanceApiClient
             .listFestivals(
@@ -166,11 +160,9 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/kopis/area-stats")
     fun kopisAreaStats(
-        @LoginUser userId: Long,
         @RequestParam(required = false) stDate: String?,
         @RequestParam(required = false) edDate: String?,
     ): List<KopisAreaStatResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val start = normalizeDate(stDate)
         val end = normalizeDate(edDate ?: stDate)
         require(daysBetween(start, end) <= 31) { "KOPIS 지역통계는 최대 31일까지만 조회할 수 있습니다." }
@@ -195,11 +187,9 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/special-days/holidays")
     fun specialHolidays(
-        @LoginUser userId: Long,
         @RequestParam(required = false) solYear: String?,
         @RequestParam(required = false) solMonth: String?,
     ): List<SpecialDayInfoResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val (year, month) = normalizeYearMonth(solYear, solMonth)
         return spcdeInfoApiClient.getHoliDeInfo(year, month).map(::toSpecialDayResponse)
     }
@@ -208,11 +198,9 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/special-days/rest-days")
     fun specialRestDays(
-        @LoginUser userId: Long,
         @RequestParam(required = false) solYear: String?,
         @RequestParam(required = false) solMonth: String?,
     ): List<SpecialDayInfoResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val (year, month) = normalizeYearMonth(solYear, solMonth)
         return spcdeInfoApiClient.getRestDeInfo(year, month).map(::toSpecialDayResponse)
     }
@@ -221,11 +209,9 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/special-days/anniversaries")
     fun specialAnniversaries(
-        @LoginUser userId: Long,
         @RequestParam(required = false) solYear: String?,
         @RequestParam(required = false) solMonth: String?,
     ): List<SpecialDayInfoResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val (year, month) = normalizeYearMonth(solYear, solMonth)
         return spcdeInfoApiClient.getAnniversaryInfo(year, month).map(::toSpecialDayResponse)
     }
@@ -234,11 +220,9 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/sjw-perform")
     fun sjwList(
-        @LoginUser userId: Long,
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "20") numOfRows: Int,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         return seoulSjwPerformApiClient.list(pageNo, numOfRows).map { event ->
             FestivalEventResponse(
                 contentId = event.contentId,
@@ -347,7 +331,6 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/search-keyword")
     fun searchKeyword(
-        @LoginUser userId: Long,
         @RequestParam(name = "keyword", required = false, defaultValue = "") keyword: String,
         @RequestParam(name = "pageNo", required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(name = "numOfRows", required = false, defaultValue = "20") numOfRows: Int,
@@ -357,7 +340,6 @@ class EventInfoController(
         @RequestParam(name = "lclsSystm2", required = false) lclsSystm2: String?,
         @RequestParam(name = "lclsSystm3", required = false) lclsSystm3: String?,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         return festivalEventQueryUseCase
             .searchKeyword(
                 keyword = keyword,
@@ -397,11 +379,9 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/ldong-codes")
     fun lDongCodes(
-        @LoginUser userId: Long,
         @RequestParam(name = "lDongRegnCd", required = false) lDongRegnCd: String?,
         @RequestParam(name = "lDongListYn", required = false, defaultValue = "N") lDongListYn: String,
     ): List<CodeEntryResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         return festivalEventQueryUseCase.lDongCodes(lDongRegnCd, lDongListYn).map {
             CodeEntryResponse(
                 code = it.code,
@@ -425,13 +405,11 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/lcls-codes")
     fun lclsCodes(
-        @LoginUser userId: Long,
         @RequestParam(name = "lclsSystm1", required = false) lclsSystm1: String?,
         @RequestParam(name = "lclsSystm2", required = false) lclsSystm2: String?,
         @RequestParam(name = "lclsSystm3", required = false) lclsSystm3: String?,
         @RequestParam(name = "lclsSystmListYn", required = false, defaultValue = "N") lclsSystmListYn: String,
     ): List<CodeEntryResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         return festivalEventQueryUseCase
             .lclsCodes(
                 lclsSystm1 = lclsSystm1,
@@ -487,9 +465,7 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/areas")
     fun cultureCalendarAreas(
-        @LoginUser userId: Long,
     ): List<CodeEntryResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         return KOREAN_SIDO_REFERENCE.mapIndexed { idx, name ->
             toCultureCodeEntry(idx + 1, name, name)
         }
@@ -499,7 +475,6 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/realm2")
     fun cultureCalendarRealm2(
-        @LoginUser userId: Long,
         @RequestParam from: String,
         @RequestParam to: String,
         @RequestParam serviceTp: String,
@@ -508,7 +483,6 @@ class EventInfoController(
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "1000") numOfrows: Int,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val fromN = normalizeCultureRangeDate(from)
         val toN = normalizeCultureRangeDate(to)
         require(fromN <= toN) { "from은 to 이하여야 합니다." }
@@ -530,7 +504,6 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/area2")
     fun cultureCalendarArea2(
-        @LoginUser userId: Long,
         @RequestParam from: String,
         @RequestParam to: String,
         @RequestParam serviceTp: String,
@@ -538,7 +511,6 @@ class EventInfoController(
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "1000") numOfrows: Int,
     ): List<FestivalEventResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         val fromN = normalizeCultureRangeDate(from)
         val toN = normalizeCultureRangeDate(to)
         require(fromN <= toN) { "from은 to 이하여야 합니다." }
@@ -559,9 +531,7 @@ class EventInfoController(
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/realm-code-reference")
     fun cultureCalendarRealmCodeReference(
-        @LoginUser userId: Long,
     ): List<CodeEntryResponse> {
-        check(userId > 0L) { "로그인이 필요합니다." }
         return REALM_CODE_REFERENCE.mapIndexed { idx, (code, name) ->
             toCultureCodeEntry(idx + 1, code, name)
         }
