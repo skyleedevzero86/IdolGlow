@@ -796,6 +796,7 @@ CREATE TABLE IF NOT EXISTS survey_question (
     description TEXT NULL,
     question_type VARCHAR(30) NOT NULL,
     required BOOLEAN NOT NULL DEFAULT FALSE,
+    recommendation_signal VARCHAR(20) NULL COMMENT '추천 신호 종류 CONCEPT/IDOL/PLACE/TAG. NULL이면 추천에 쓰지 않음',
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,
     CONSTRAINT fk_survey_question_form

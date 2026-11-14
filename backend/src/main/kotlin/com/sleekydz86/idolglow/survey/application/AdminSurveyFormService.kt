@@ -166,6 +166,7 @@ class AdminSurveyFormService(
                             description = q.description?.trim()?.takeIf { it.isNotBlank() },
                             questionType = q.type,
                             required = q.required,
+                            recommendationSignal = q.recommendationSignal,
                         )
                     question.options.addAll(
                         q.options

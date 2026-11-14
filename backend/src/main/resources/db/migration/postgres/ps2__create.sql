@@ -986,8 +986,10 @@ CREATE TABLE IF NOT EXISTS survey_question (
     description TEXT,
     question_type VARCHAR(30) NOT NULL,
     required BOOLEAN NOT NULL DEFAULT FALSE,
+    recommendation_signal VARCHAR(20),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT chk_survey_question_recommendation_signal CHECK (recommendation_signal IN ('CONCEPT', 'IDOL', 'PLACE', 'TAG')),
     CONSTRAINT fk_survey_question_form
         FOREIGN KEY (survey_form_id)
         REFERENCES survey_form (id)

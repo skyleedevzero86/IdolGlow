@@ -1082,6 +1082,7 @@ COMMENT ON COLUMN survey_question.description IS '문항 부가 설명';
 COMMENT ON COLUMN survey_question.question_type IS '문항 타입 TEXT/SINGLE_CHOICE/MULTIPLE_CHOICE';
 
 COMMENT ON COLUMN survey_question.required IS '필수 응답 여부';
+COMMENT ON COLUMN survey_question.recommendation_signal IS '추천 신호 종류 CONCEPT/IDOL/PLACE/TAG. NULL이면 추천에 쓰지 않음';
 
 COMMENT ON COLUMN survey_question.created_at IS '생성 시각';
 
