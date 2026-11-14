@@ -4,11 +4,14 @@ import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchChannel
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
-interface SubscriptionDispatchHistoryJpaRepository : JpaRepository<SubscriptionDispatchHistory, Long> {
+interface SubscriptionDispatchHistoryJpaRepository :
+    JpaRepository<SubscriptionDispatchHistory, Long>,
+    JpaSpecificationExecutor<SubscriptionDispatchHistory> {
     fun existsByContentTypeAndContentSlugAndDispatchChannel(
         contentType: SubscriptionContentType,
         contentSlug: String,

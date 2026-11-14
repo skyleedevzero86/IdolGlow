@@ -75,6 +75,8 @@ platform:
 subscription:
   recommendation-mail:
     consent-reminder-cron: "-"
+  mail-log:
+    retention-cron: "-"
 
 payment:
   mock:
