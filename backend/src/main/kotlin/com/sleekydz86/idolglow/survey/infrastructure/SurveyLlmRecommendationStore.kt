@@ -27,10 +27,11 @@ class SurveyLlmRecommendationStore(
         submissionId: Long,
         answerHighlights: List<String>,
         attractions: List<TourAttraction>,
+        reasonSummaries: List<String> = emptyList(),
     ): LlmSurveyRecommendation? {
         val ready = results[submissionId]
         if (ready == null && canRequest(submissionId, attractions) && pending.add(submissionId)) {
-            submit(submissionId, answerHighlights, attractions)
+            submit(submissionId, SurveyLlmInput(answerHighlights, attractions, reasonSummaries))
         }
         return ready
     }
@@ -44,11 +45,10 @@ class SurveyLlmRecommendationStore(
 
     private fun submit(
         submissionId: Long,
-        answerHighlights: List<String>,
-        attractions: List<TourAttraction>,
+        input: SurveyLlmInput,
     ) {
         runCatching {
-            executor.execute { generate(submissionId, answerHighlights, attractions) }
+            executor.execute { generate(submissionId, input) }
         }.onFailure {
             pending.remove(submissionId)
             log.warn("설문 추천 LLM 작업을 큐에 넣지 못함 submissionId={} error={}", submissionId, it.message)
@@ -57,11 +57,13 @@ class SurveyLlmRecommendationStore(
 
     private fun generate(
         submissionId: Long,
-        answerHighlights: List<String>,
-        attractions: List<TourAttraction>,
+        input: SurveyLlmInput,
     ) {
         try {
-            val recommendation = runCatching { router.generate(answerHighlights, attractions) }.getOrNull()
+            val recommendation =
+                runCatching {
+                    router.generate(input.answerHighlights, input.attractions, input.reasonSummaries)
+                }.getOrNull()
             if (recommendation == null) {
                 failedAt[submissionId] = clock.instant()
             } else {
@@ -81,6 +83,12 @@ class SurveyLlmRecommendationStore(
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, LlmSurveyRecommendation>?): Boolean =
                 size > MAX_RESULTS
         }
+
+    private data class SurveyLlmInput(
+        val answerHighlights: List<String>,
+        val attractions: List<TourAttraction>,
+        val reasonSummaries: List<String>,
+    )
 
     companion object {
         private const val MAX_RESULTS = 1000

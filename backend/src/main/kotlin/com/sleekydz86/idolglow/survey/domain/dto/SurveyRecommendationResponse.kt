@@ -1,6 +1,6 @@
 package com.sleekydz86.idolglow.survey.domain.dto
 
-import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
+import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
 
 data class SurveyRecommendationResponse(
     val submissionId: Long,
@@ -10,5 +10,6 @@ data class SurveyRecommendationResponse(
     val subtitle: String,
     val narrative: String,
     val attractions: List<SurveyRecommendedAttractionResponse>,
-    val recommendedProducts: List<ProductPagingQueryResponse>,
+    val recommendedProducts: List<ProductRankingResponse>,
+    val usedSignals: List<SurveyUsedSignalResponse> = emptyList(),
 )

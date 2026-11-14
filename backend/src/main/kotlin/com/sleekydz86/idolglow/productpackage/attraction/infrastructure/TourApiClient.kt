@@ -31,7 +31,7 @@ class TourApiClient(
     override fun fetchAreaBasedAttractions(
         baseYm: String,
         areaCode: Int,
-        signguCode: Int,
+        signguCode: Int?,
         size: Int,
     ): List<TourAttraction> {
         val key = TourApiCacheKey(baseYm, areaCode, signguCode, size)
@@ -75,7 +75,7 @@ class TourApiClient(
                     name = name,
                     areaCode = item.areaCd?.toIntOrNull() ?: areaCode,
                     areaName = item.areaNm,
-                    signguCode = item.signguCd?.toIntOrNull() ?: signguCode,
+                    signguCode = item.signguCd?.toIntOrNull() ?: signguCode ?: 0,
                     signguName = item.signguNm,
                     categoryLarge = item.hubCtgryLclsNm,
                     categoryMiddle = item.hubCtgryMclsNm,
@@ -103,7 +103,7 @@ class TourApiClient(
         encodedServiceKey: String,
         baseYm: String,
         areaCode: Int,
-        signguCode: Int,
+        signguCode: Int?,
         requestedSize: Int,
         key: TourApiCacheKey,
     ): RawTourApiResponse {
@@ -150,7 +150,7 @@ class TourApiClient(
         encodedServiceKey: String,
         baseYm: String,
         areaCode: Int,
-        signguCode: Int,
+        signguCode: Int?,
         numOfRows: Int,
     ): RawTourApiResponse =
         try {
@@ -190,7 +190,7 @@ class TourApiClient(
         encodedServiceKey: String,
         baseYm: String,
         areaCode: Int,
-        signguCode: Int,
+        signguCode: Int?,
         numOfRows: Int,
     ): String {
         val encodedMobileOs = UriUtils.encodeQueryParam(props.mobileOs, StandardCharsets.UTF_8)
@@ -202,7 +202,7 @@ class TourApiClient(
             "&MobileApp=$encodedMobileApp" +
             "&baseYm=$baseYm" +
             "&areaCd=$areaCode" +
-            "&signguCd=$signguCode" +
+            signguCode?.let { "&signguCd=$it" }.orEmpty() +
             "&_type=json"
     }
 
@@ -259,7 +259,7 @@ class TourApiClient(
     private data class TourApiCacheKey(
         val baseYm: String,
         val areaCode: Int,
-        val signguCode: Int,
+        val signguCode: Int?,
         val size: Int,
     )
 
