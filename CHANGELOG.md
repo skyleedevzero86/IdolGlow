@@ -4,6 +4,34 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.18.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.17.0...v0.18.0) (2026-11-14)
+
+
+### Features
+
+* **#115:** add personalized recommendation mail workflow ([64b3120](https://github.com/skyleedevzero86/IdolGlow/commit/64b3120bd018013496408a09fe06cbd02bcbe8bb))
+* add GLOW community data APIs ([9e164dd](https://github.com/skyleedevzero86/IdolGlow/commit/9e164ddaf27778370c76da816336ba242cb217b1))
+* add GLOW content sections ([af1d436](https://github.com/skyleedevzero86/IdolGlow/commit/af1d436a505e389566adf22f6bef880b9021990f))
+* **frontend:** restore GLOW data APIs and content sections ([#114](https://github.com/skyleedevzero86/IdolGlow/issues/114)) ([e2d011c](https://github.com/skyleedevzero86/IdolGlow/commit/e2d011c68eb705693ec5ebbe7d1365337bf0a62b))
+* GraphQL 추천 응답에 추천 이유와 문항 추천 신호를 추가한다 ([3ccf7bc](https://github.com/skyleedevzero86/IdolGlow/commit/3ccf7bca109f530f399ca2685b869670cff7efdf))
+* restore GLOW data APIs and content sections ([#114](https://github.com/skyleedevzero86/IdolGlow/issues/114)) ([ad92ba1](https://github.com/skyleedevzero86/IdolGlow/commit/ad92ba187a7883edadca808678a6c60682811b82))
+* 관리자 발송 기록에 발송·실패·건너뜀 건수를 함께 보여 준다 ([dae1d01](https://github.com/skyleedevzero86/IdolGlow/commit/dae1d01b8054eec64215da6b672867c630beac0f))
+* 동의한 회원에게 설문 취향 또는 인기순 추천 상품 메일을 주기마다 한 번씩 보낸다 ([1634587](https://github.com/skyleedevzero86/IdolGlow/commit/1634587466f927f47ac2e5d882bebcf04e5d5419))
+* 상품 추천 메일 구독 테이블과 도메인, 수신 거부 토큰을 추가한다 ([23fb9d0](https://github.com/skyleedevzero86/IdolGlow/commit/23fb9d00116864ea39f57022e137d6b329a146d4))
+* 설문 문항마다 추천에 쓸 신호 종류를 관리자가 지정할 수 있게 한다 ([38a0304](https://github.com/skyleedevzero86/IdolGlow/commit/38a03040d2e44614c32d59068a4a8a8b9bd7b689))
+* 설문지 폼 응답을 추천 신호로 바꿔 회원 추천과 같은 점수로 상품을 고른다 ([31529d0](https://github.com/skyleedevzero86/IdolGlow/commit/31529d05734fdfce03d00e837eafa0c139248271))
+* 추천 메일 수신 동의 2년이 지난 회원에게 동의 상태 안내 메일을 보낸다 ([7e6be0c](https://github.com/skyleedevzero86/IdolGlow/commit/7e6be0cba79b38ea0f31cdfbf4abb60ab7786071))
+* 추천 점수에 컨셉 한글 태그를 맞추고 추천 이유를 함께 돌려준다 ([baad8b2](https://github.com/skyleedevzero86/IdolGlow/commit/baad8b2088bb9763c62911379ac8138248d8a80f))
+* 행사별 언어 번역 누락 현황을 계산해 관리 도구로 보여 준다 ([3134f83](https://github.com/skyleedevzero86/IdolGlow/commit/3134f83d441ec5c113c33e24d018e2ff941f757c))
+* 회원이 상품 추천 메일 수신에 동의하고 로그인 없이 링크로 거부할 수 있게 한다 ([003a2a0](https://github.com/skyleedevzero86/IdolGlow/commit/003a2a0d741b0347442443894d788e0535d0eb54))
+
+
+### Bug Fixes
+
+* mysql 빌링키 해시 컬럼 타입 문법 오류로 마이그레이션이 실패하던 문제수정 ([25f35b8](https://github.com/skyleedevzero86/IdolGlow/commit/25f35b8126f5e4df347c3ff8bd8e23dcd868da87))
+* 설문 추천 신호 커밋에서 빠진 응답 매핑·detekt 기준·점수 테스트를 추가한다 ([fda3437](https://github.com/skyleedevzero86/IdolGlow/commit/fda3437269f70e8cc97ec73677f7396fcf99f46a))
+* 포트번호변경.. ([be52cc2](https://github.com/skyleedevzero86/IdolGlow/commit/be52cc2e95e10ef2930ca22cb3bedc02da52b2fe))
+
 ## [0.17.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.16.0...v0.17.0) (2026-11-12)
 
 
