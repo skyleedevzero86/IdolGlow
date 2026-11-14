@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipient
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientCounts
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientStatus
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchStatus
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -338,4 +339,14 @@ private class InMemorySubscriptionDispatchRecipientPort : SubscriptionDispatchRe
         dispatchId: Long,
         email: String,
     ): SubscriptionDispatchRecipient? = synchronized(monitor) { byKey["$dispatchId|$email"] }
+
+    override fun countByDispatchIds(dispatchIds: Collection<Long>): Map<Long, SubscriptionDispatchRecipientCounts> =
+        synchronized(monitor) {
+            byKey.values
+                .filter { it.dispatchId in dispatchIds }
+                .groupBy { it.dispatchId }
+                .mapValues { (_, rows) ->
+                    rows.fold(SubscriptionDispatchRecipientCounts.EMPTY) { counts, row -> counts.plus(row.status, 1) }
+                }
+        }
 }

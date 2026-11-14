@@ -4,8 +4,15 @@ import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchHistoryPort
+import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchRecipientPort
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchSchedulePort
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchChannel
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientCounts
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchStatus
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +31,7 @@ import java.time.LocalDateTime
 class SubscriptionServiceTest {
     private val emailSubscriptionPort = mockk<EmailSubscriptionPort>()
     private val subscriptionDispatchHistoryPort = mockk<SubscriptionDispatchHistoryPort>()
+    private val subscriptionDispatchRecipientPort = mockk<SubscriptionDispatchRecipientPort>()
     private val subscriptionDispatchSchedulePort = mockk<SubscriptionDispatchSchedulePort>()
     private val newsletterRepository = mockk<NewsletterRepository>()
     private val webzineIssueRepository = mockk<WebzineIssueRepository>()
@@ -37,6 +45,7 @@ class SubscriptionServiceTest {
             SubscriptionService(
                 emailSubscriptionPort = emailSubscriptionPort,
                 subscriptionDispatchHistoryPort = subscriptionDispatchHistoryPort,
+                subscriptionDispatchRecipientPort = subscriptionDispatchRecipientPort,
                 subscriptionDispatchSchedulePort = subscriptionDispatchSchedulePort,
                 newsletterRepository = newsletterRepository,
                 webzineIssueRepository = webzineIssueRepository,
@@ -142,4 +151,53 @@ class SubscriptionServiceTest {
         assertTrue(existing.subscribedIssues)
         assertEquals("WEB_MODAL", existing.subscriptionSource)
     }
+
+    @DisplayName("발송 기록마다 발송·실패·건너뜀 수신자 수를 한 번에 모아 보여 준다")
+    @Test
+    fun overviewShowsRecipientCountsPerDispatch() {
+        // given
+        val partial = history(id = 11L, slug = "partial", recipientCount = 6)
+        val empty = history(id = 12L, slug = "empty", recipientCount = 0)
+        every { emailSubscriptionPort.findAllByLatest() } returns emptyList()
+        every { emailSubscriptionPort.countActive() } returns 0L
+        every { emailSubscriptionPort.countActiveByAudience(any<SubscriptionAudience>()) } returns 0L
+        every { subscriptionDispatchHistoryPort.findAllByLatest() } returns listOf(partial, empty)
+        every { subscriptionDispatchHistoryPort.count() } returns 2L
+        every { subscriptionDispatchSchedulePort.findAllByLatest() } returns emptyList()
+        every { newsletterRepository.findAllByLatest() } returns emptyList()
+        every { webzineIssueRepository.findAllByLatest() } returns emptyList()
+        every { subscriptionDispatchRecipientPort.countByDispatchIds(listOf(11L, 12L)) } returns
+            mapOf(11L to SubscriptionDispatchRecipientCounts(sentCount = 3, failedCount = 1, skippedCount = 2))
+
+        // when
+        val result = service.findOverview(1, 10, 1, 10)
+
+        // then
+        val partialResult = result.dispatches.single { it.id == 11L }
+        assertEquals(6L, partialResult.recipientCount)
+        assertEquals(3L, partialResult.sentCount)
+        assertEquals(1L, partialResult.failedCount)
+        assertEquals(2L, partialResult.skippedCount)
+        val emptyResult = result.dispatches.single { it.id == 12L }
+        assertEquals(0L, emptyResult.sentCount)
+        assertEquals(0L, emptyResult.failedCount)
+        assertEquals(0L, emptyResult.skippedCount)
+        verify(exactly = 1) { subscriptionDispatchRecipientPort.countByDispatchIds(any()) }
+    }
+
+    private fun history(
+        id: Long,
+        slug: String,
+        recipientCount: Long,
+    ): SubscriptionDispatchHistory =
+        SubscriptionDispatchHistory(
+            id = id,
+            contentType = SubscriptionContentType.NEWSLETTER,
+            contentSlug = slug,
+            contentTitle = slug,
+            dispatchChannel = SubscriptionDispatchChannel.EMAIL,
+            dispatchStatus = SubscriptionDispatchStatus.PARTIAL_FAILED,
+            recipientCount = recipientCount,
+            dispatchedAt = LocalDateTime.of(2026, 11, 14, 9, 0),
+        )
 }

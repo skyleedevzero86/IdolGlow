@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.admin.adapter.web.dto
 
 import com.sleekydz86.idolglow.subscription.application.dto.asSubscriptionDateTime
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientCounts
 
 data class AdminSubscriptionDispatchResponse(
     val id: Long,
@@ -15,10 +16,16 @@ data class AdminSubscriptionDispatchResponse(
     val dispatchStatus: String,
     val dispatchStatusLabel: String,
     val recipientCount: Long,
+    val sentCount: Long,
+    val failedCount: Long,
+    val skippedCount: Long,
     val dispatchedAt: String,
 ) {
     companion object {
-        fun from(history: SubscriptionDispatchHistory): AdminSubscriptionDispatchResponse =
+        fun from(
+            history: SubscriptionDispatchHistory,
+            counts: SubscriptionDispatchRecipientCounts = SubscriptionDispatchRecipientCounts.EMPTY,
+        ): AdminSubscriptionDispatchResponse =
             AdminSubscriptionDispatchResponse(
                 id = history.id,
                 contentType = history.contentType.name,
@@ -31,6 +38,9 @@ data class AdminSubscriptionDispatchResponse(
                 dispatchStatus = history.dispatchStatus.name,
                 dispatchStatusLabel = history.dispatchStatus.label,
                 recipientCount = history.recipientCount,
+                sentCount = counts.sentCount,
+                failedCount = counts.failedCount,
+                skippedCount = counts.skippedCount,
                 dispatchedAt = history.dispatchedAt.asSubscriptionDateTime(),
             )
     }

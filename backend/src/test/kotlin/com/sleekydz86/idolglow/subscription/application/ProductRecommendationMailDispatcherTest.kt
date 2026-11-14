@@ -24,6 +24,7 @@ import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchFrequency
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipient
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientCounts
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientStatus
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSkipReason
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchStatus
@@ -584,4 +585,12 @@ private class RecoMailRecipientPort : SubscriptionDispatchRecipientPort {
         dispatchId: Long,
         email: String,
     ): SubscriptionDispatchRecipient? = byKey["$dispatchId|$email"]
+
+    override fun countByDispatchIds(dispatchIds: Collection<Long>): Map<Long, SubscriptionDispatchRecipientCounts> =
+        byKey.values
+            .filter { it.dispatchId in dispatchIds }
+            .groupBy { it.dispatchId }
+            .mapValues { (_, rows) ->
+                rows.fold(SubscriptionDispatchRecipientCounts.EMPTY) { counts, row -> counts.plus(row.status, 1) }
+            }
 }
