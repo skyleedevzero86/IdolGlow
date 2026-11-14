@@ -81,7 +81,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
-                auth.requestMatchers(HttpMethod.GET, *COMMUNITY_PUBLIC_GET, *EVENT_INFO_PUBLIC_GET).permitAll()
+                auth.requestMatchers(HttpMethod.GET, *COMMUNITY_PUBLIC_GET, *EVENT_INFO_PUBLIC_GET, *WEBZINE_PUBLIC_GET).permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
@@ -172,6 +172,12 @@ class SecurityConfig(
                 "/api/event-info/culture-calendar/area2",
                 "/mypage/event-info/culture-calendar/realm-code-reference",
                 "/api/event-info/culture-calendar/realm-code-reference",
+            )
+
+        private val WEBZINE_PUBLIC_GET =
+            arrayOf(
+                "/api/webzine/issues",
+                "/api/webzine/issues/**",
             )
 
         private val COMMUNITY_PUBLIC_GET =

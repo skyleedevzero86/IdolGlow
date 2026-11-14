@@ -13,6 +13,7 @@ import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -49,6 +50,13 @@ class WebzineIssue(
         this.coverImageUrl = coverImageUrl
         this.teaser = teaser
     }
+
+    fun isPublishedOn(today: LocalDate): Boolean = !issueDate.isAfter(today) && articles.isNotEmpty()
+
+    fun articlesByLatest(): List<WebzineArticle> =
+        articles.sortedWith(
+            compareByDescending<WebzineArticle> { it.createdAt ?: LocalDateTime.MIN }.thenByDescending { it.id },
+        )
 
     fun addArticle(article: WebzineArticle) {
         require(article.issue === this) { "같은 호에 속한 기사만 추가할 수 있습니다." }

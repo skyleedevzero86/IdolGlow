@@ -1,7 +1,11 @@
 package com.sleekydz86.idolglow.webzine.domain
 
+import java.time.LocalDate
+
 interface WebzineIssueRepository {
     fun findAllByLatest(): List<WebzineIssue>
+
+    fun findAllPublishedWithArticles(publishedOnOrBefore: LocalDate): List<WebzineIssue>
 
     fun findBySlug(slug: String): WebzineIssue?
 

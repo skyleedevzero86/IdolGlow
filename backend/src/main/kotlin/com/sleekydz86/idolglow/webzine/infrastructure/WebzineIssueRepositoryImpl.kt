@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
 import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 
 @Repository
 class WebzineIssueRepositoryImpl(
@@ -16,6 +17,9 @@ class WebzineIssueRepositoryImpl(
                 Sort.Order.desc("issueDate"),
             ),
         )
+
+    override fun findAllPublishedWithArticles(publishedOnOrBefore: LocalDate): List<WebzineIssue> =
+        webzineIssueJpaRepository.findAllPublishedWithArticles(publishedOnOrBefore)
 
     override fun findBySlug(slug: String): WebzineIssue? = webzineIssueJpaRepository.findBySlug(slug)
 
