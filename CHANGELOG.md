@@ -4,6 +4,41 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.19.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.18.0...v0.19.0) (2026-11-14)
+
+
+### Features
+
+* GLOW 지역사회 게시글·좋아요·신고 도메인과 DTO를 추가 ([39b7057](https://github.com/skyleedevzero86/IdolGlow/commit/39b70573c1481cf68a5cc5774f453529b5a8f028))
+* GLOW 지역사회 게시판·공통 댓글·알림·메일 발송 기록과 관리자 구독관리 검색 추가 ([#118](https://github.com/skyleedevzero86/IdolGlow/issues/118)) ([3f8762c](https://github.com/skyleedevzero86/IdolGlow/commit/3f8762c224d0d3053b4fbbe16ee2d74d1731bef3)), closes [#119](https://github.com/skyleedevzero86/IdolGlow/issues/119)
+* GLOW 지역사회 게시판과 관리자 신고 처리 API를 추가 ([aa3a864](https://github.com/skyleedevzero86/IdolGlow/commit/aa3a864d8f89303b72d6f411683b19a4eac38cd0))
+* GLOW 지역사회 글쓰기·조회·신고·블라인드와 추천 검색어 서비스를 추 ([499998a](https://github.com/skyleedevzero86/IdolGlow/commit/499998a1c20712d7b882b8e7b41fa2e032f7f2b0))
+* GLOW 지역사회 유스케이스와 저장소·반응·작성자·검색어 생성 포트를 추가 ([fa49eb2](https://github.com/skyleedevzero86/IdolGlow/commit/fa49eb2f0b011010101ecc6919a01a82757e5886))
+* GLOW 지역사회 저장소와 추천 검색어 LLM 어댑터를 추가 ([db64f40](https://github.com/skyleedevzero86/IdolGlow/commit/db64f40986d01506353c740b99fc812ffba3dc92))
+* 결제 완료와 확인이 필요한 결제를 관리자 앱 알림 발송 ([5fd4702](https://github.com/skyleedevzero86/IdolGlow/commit/5fd470296a3a0d59244cf781e213f35d47177d67))
+* 공용 콘텐츠 대상 종류와 페이지 응답을 추가하고 댓글·관리자 알림 종류를 등록 ([60ed444](https://github.com/skyleedevzero86/IdolGlow/commit/60ed444d49b708e10c8a2da97d9ce0502fc1a030))
+* 공통 댓글 API와 나의 리뷰 API, 댓글 저장소를 추가 ([0939688](https://github.com/skyleedevzero86/IdolGlow/commit/09396887667b5bed7c7123c45e6f5010906413b1))
+* 관리자 구독 관리에서 구독자·발송 이력·메일 발송 기록을 검색 기능 추가 ([df534cf](https://github.com/skyleedevzero86/IdolGlow/commit/df534cf6546647359ae92c012d2f9832687a7e81))
+* 관리자 전원에게 앱 알림을 보내는 발행·수신 구조를 추가 ([be0725c](https://github.com/skyleedevzero86/IdolGlow/commit/be0725c1bf28eeafd2c3daef52e8613a6adf8535))
+* 댓글·답글 작성과 나의 리뷰, 댓글 이미지 업로드, 댓글 알림 서비스를 추가 ([f7c134e](https://github.com/skyleedevzero86/IdolGlow/commit/f7c134e88249c268d9c2324bbfdb6a7169a687b0))
+* 메일 발송 기록 도메인과 메일 종류, 기록 포트를 추가 ([8fe99a1](https://github.com/skyleedevzero86/IdolGlow/commit/8fe99a1bd73075bb53ce1a230c00618118ab1c7d))
+* 모든 발송 메일을 기록하는 어댑터와 기록 보관 기간 정리를 추가 ([db6d502](https://github.com/skyleedevzero86/IdolGlow/commit/db6d502673ebc8341aba339e1748f7d064215972))
+* 모든 콘텐츠에 다는 공통 댓글 도메인과 포트를 추가 ([e1d10bd](https://github.com/skyleedevzero86/IdolGlow/commit/e1d10bdcf8b4f37b9de1208227feac4632c30877))
+* 지역사회·댓글 공개 조회와 관리자 경로 권한을 정하고 권한 거부 응답을 401/403으로 분리 ([ed538e4](https://github.com/skyleedevzero86/IdolGlow/commit/ed538e40a0eb4a52590dec92971d3ee2d37fc820))
+* 지역사회·댓글·최근 본 콘텐츠·메일 발송 기록 테이블과 새 알림 종류를 스키마에 추가 ([44ae07e](https://github.com/skyleedevzero86/IdolGlow/commit/44ae07e57cd7cd619fec93ad7924171f92d95cdd))
+* 최근 본 콘텐츠를 기록·조회·삭제하는 API를 추가 ([e12c64f](https://github.com/skyleedevzero86/IdolGlow/commit/e12c64f0bbb956c0f4342f3eb6c0d32cacfe2a29))
+* 추천·소식지·인증·결제 메일에 종류와 발송 이력 ID를 달아 발송 ([3c59331](https://github.com/skyleedevzero86/IdolGlow/commit/3c59331f790f4156bc46a428b22ab1994b5875f9))
+
+
+### Bug Fixes
+
+* 문화시설정보 API 초당 한도 초과 시 잠시 호출을 멈춰 요청이 쏟아지지 않게 한다 ([bca24db](https://github.com/skyleedevzero86/IdolGlow/commit/bca24db81b5bc7b8f191b698fa60741f390b4052))
+
+
+### Tests
+
+* GLOW 지역사회와 공통 댓글의 포스트그레스·보안 통합 테스트를 추가 ([8be99b2](https://github.com/skyleedevzero86/IdolGlow/commit/8be99b2c4fcb3252f1e814bd2e4ac9b50ca68e60))
+
 ## [0.18.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.17.0...v0.18.0) (2026-11-14)
 
 
