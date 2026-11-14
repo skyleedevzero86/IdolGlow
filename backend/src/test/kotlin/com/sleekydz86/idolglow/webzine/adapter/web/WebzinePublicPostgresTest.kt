@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -64,8 +65,8 @@ class WebzinePublicPostgresTest : PostgresIntegrationTest() {
     @Test
     fun guestSeesOnlyPublishedIssues() {
         // given
-        val published = seedIssue(baseVolume, LocalDate.of(2001, 3, 1), articleTitles = listOf("$token 첫 기사", "두 번째 기사"))
-        val scheduled = seedIssue(baseVolume + 1, LocalDate.now(IdolGlowDateTimes.ZONE).plusMonths(2), articleTitles = listOf("예약 기사"))
+        val published = seedIssue(baseVolume, LocalDate.of(2001, 3, 1), listOf("$token 첫 기사", "두 번째 기사"))
+        val scheduled = seedIssue(baseVolume + 1, today().plusMonths(2), listOf("예약 기사"))
         val empty = seedIssue(baseVolume + 2, LocalDate.of(2001, 4, 1), articleTitles = emptyList())
 
         // when
@@ -103,10 +104,10 @@ class WebzinePublicPostgresTest : PostgresIntegrationTest() {
         val third = seedIssue(baseVolume + 2, LocalDate.of(2002, 2, 1), articleTitles = listOf("이듬해 기사"))
 
         // when
-        val firstPage = mockMvc.perform(get("/api/webzine/issues").param("keyword", token).param("size", "2"))
-        val secondPage = mockMvc.perform(get("/api/webzine/issues").param("keyword", token).param("size", "2").param("page", "1"))
-        val byYearMonth = mockMvc.perform(get("/api/webzine/issues").param("keyword", token).param("year", "2001").param("month", "2"))
-        val byVolume = mockMvc.perform(get("/api/webzine/issues").param("keyword", token).param("volume", first.volume.toString()))
+        val firstPage = mockMvc.perform(issues().param("size", "2"))
+        val secondPage = mockMvc.perform(issues().param("size", "2").param("page", "1"))
+        val byYearMonth = mockMvc.perform(issues().param("year", "2001").param("month", "2"))
+        val byVolume = mockMvc.perform(issues().param("volume", first.volume.toString()))
 
         // then
         firstPage
@@ -121,8 +122,12 @@ class WebzinePublicPostgresTest : PostgresIntegrationTest() {
             .andExpect(jsonPath("$.items.length()").value(1))
             .andExpect(jsonPath("$.items[0].volume").value(first.volume))
             .andExpect(jsonPath("$.hasNext").value(false))
-        byYearMonth.andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.items[0].volume").value(second.volume))
-        byVolume.andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.items[0].slug").value(first.slug))
+        byYearMonth
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.items[0].volume").value(second.volume))
+        byVolume
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.items[0].slug").value(first.slug))
     }
 
     @DisplayName("발행된 호와 기사 상세는 비회원도 볼 수 있고 관리자 전용 정보는 내려주지 않는다")
@@ -158,7 +163,7 @@ class WebzinePublicPostgresTest : PostgresIntegrationTest() {
     @Test
     fun unpublishedReturnsNotFound() {
         // given
-        val scheduled = seedIssue(baseVolume, LocalDate.now(IdolGlowDateTimes.ZONE).plusMonths(1), articleTitles = listOf("예약 기사"))
+        val scheduled = seedIssue(baseVolume, today().plusMonths(1), listOf("예약 기사"))
         val empty = seedIssue(baseVolume + 1, LocalDate.of(2001, 6, 1), articleTitles = emptyList())
         val published = seedIssue(baseVolume + 2, LocalDate.of(2001, 7, 1), articleTitles = listOf("공개 기사"))
         val paths =
@@ -199,6 +204,10 @@ class WebzinePublicPostgresTest : PostgresIntegrationTest() {
             webzineIssueRepository.save(issue)
         }!!
     }
+
+    private fun today(): LocalDate = LocalDate.now(IdolGlowDateTimes.ZONE)
+
+    private fun issues(): MockHttpServletRequestBuilder = get("/api/webzine/issues").param("keyword", token)
 
     private fun draft(title: String): WebzineArticleDraft =
         WebzineArticleDraft(

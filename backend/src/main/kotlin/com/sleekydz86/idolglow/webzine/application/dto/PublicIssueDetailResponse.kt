@@ -25,7 +25,10 @@ data class PublicIssueDetailResponse(
                 coverImageUrl = issue.coverImageUrl,
                 teaser = issue.teaser,
                 articleCount = articles.size,
-                articles = articles.mapIndexed { index, article -> PublicIssueArticleCardResponse.from(article, index) },
+                articles =
+                    articles.mapIndexed { index, article ->
+                        PublicIssueArticleCardResponse.from(article, index)
+                    },
             )
         }
     }

@@ -81,7 +81,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
-                auth.requestMatchers(HttpMethod.GET, *COMMUNITY_PUBLIC_GET, *EVENT_INFO_PUBLIC_GET, *WEBZINE_PUBLIC_GET).permitAll()
+                auth.requestMatchers(HttpMethod.GET, *PUBLIC_GET).permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
@@ -188,6 +188,8 @@ class SecurityConfig(
                 "/api/glow-community/keywords",
                 "/api/comments",
             )
+
+        private val PUBLIC_GET = COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + WEBZINE_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(
