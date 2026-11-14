@@ -178,6 +178,13 @@ class SecurityConfig(
             arrayOf(
                 "/api/webzine/issues",
                 "/api/webzine/issues/**",
+                "/api/webzine/articles",
+            )
+
+        private val GLOW_FEED_PUBLIC_GET =
+            arrayOf(
+                "/api/glow/feed",
+                "/api/glow/feed/highlights",
             )
 
         private val COMMUNITY_PUBLIC_GET =
@@ -189,7 +196,8 @@ class SecurityConfig(
                 "/api/comments",
             )
 
-        private val PUBLIC_GET = COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + WEBZINE_PUBLIC_GET
+        private val PUBLIC_GET =
+            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + WEBZINE_PUBLIC_GET + GLOW_FEED_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(

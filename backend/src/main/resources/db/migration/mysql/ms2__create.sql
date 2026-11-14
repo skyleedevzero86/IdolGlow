@@ -1361,3 +1361,33 @@ CREATE TABLE IF NOT EXISTS user_content_views (
         'SUBWAY', 'AIRPORT_CROWD', 'EXCHANGE_RATE', 'GLOW_WEATHER', 'GLOW_MAP', 'OTHER'
     ))
 ) COMMENT='회원별 최근 본 콘텐츠. 회원당 최근 200건';
+
+-- =============================================================================
+-- 콘텐츠 공용 좋아요
+-- -----
+-- 목적
+-- - 트렌드 기사, 행사, 상품 리뷰, 댓글에 회원별 좋아요 한 번
+-- 대상
+-- - 마이에스큐엘 / content_likes
+-- 주의
+-- - 지역사회 게시글 좋아요는 glow_community_likes 를 그대로 쓴다
+-- - target_key 는 최근 본 콘텐츠와 같은 키다. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID
+-- 연관
+-- - ContentLikeService, GlowFeedQueryService, WebzineArticleRankingService
+-- =============================================================================
+
+-- 콘텐츠 좋아요. 회원과 콘텐츠 조합당 한 행.
+CREATE TABLE IF NOT EXISTS content_likes (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '누른 회원 users.id',
+    target_type VARCHAR(40) NOT NULL COMMENT '대상 유형. ARTICLE, EVENT_INFO, PRODUCT_REVIEW, CONTENT_COMMENT',
+    target_key VARCHAR(200) NOT NULL COMMENT '대상 키. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID, 그 밖은 ID',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_content_likes_user_target UNIQUE (user_id, target_type, target_key),
+    CONSTRAINT fk_content_likes_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_content_likes_target_type CHECK (target_type IN (
+        'ARTICLE', 'EVENT_INFO', 'PRODUCT_REVIEW', 'CONTENT_COMMENT', 'GLOW_COMMUNITY_POST'
+    )),
+    INDEX idx_content_likes_target (target_type, target_key)
+) COMMENT='콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';

@@ -1662,3 +1662,15 @@ COMMENT ON COLUMN user_content_views.path IS '화면 경로. / 로 시작하고 
 COMMENT ON COLUMN user_content_views.image_url IS '대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로';
 
 COMMENT ON COLUMN user_content_views.viewed_at IS '마지막으로 본 시각';
+
+COMMENT ON TABLE content_likes IS '콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';
+
+COMMENT ON COLUMN content_likes.user_id IS '누른 회원 users.id';
+
+COMMENT ON COLUMN content_likes.target_type IS '대상 유형. ARTICLE, EVENT_INFO, PRODUCT_REVIEW, CONTENT_COMMENT';
+
+COMMENT ON COLUMN content_likes.target_key IS '대상 키. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID, 그 밖은 ID';
+
+COMMENT ON COLUMN content_likes.created_at IS '생성 시각';
+
+COMMENT ON COLUMN content_likes.updated_at IS '수정 시각';
