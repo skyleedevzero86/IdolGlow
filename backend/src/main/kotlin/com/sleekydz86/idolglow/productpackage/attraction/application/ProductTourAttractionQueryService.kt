@@ -39,8 +39,8 @@ class ProductTourAttractionQueryService(
 
         val normalizedCategory = category?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
 
-        val attractions =
-            fetchAttractionsSafely(
+        val (usedBaseYm, attractions) =
+            fetchWithPreviousMonthFallback(
                 baseYm = resolvedBaseYm,
                 areaCode = resolvedAreaCode,
                 signguCode = resolvedSignguCode,
@@ -70,7 +70,8 @@ class ProductTourAttractionQueryService(
             district = district,
             areaCode = resolvedAreaCode,
             signguCode = resolvedSignguCode,
-            baseYm = resolvedBaseYm,
+            baseYm = usedBaseYm,
+            requestedBaseYm = resolvedBaseYm,
             attractions =
                 scored.map { scoredAttraction ->
                     val attraction = scoredAttraction.attraction
@@ -85,10 +86,26 @@ class ProductTourAttractionQueryService(
                         mapX = attraction.mapX,
                         mapY = attraction.mapY,
                         score = scoredAttraction.score,
-                        reason = defaultReason(attraction, district, resolvedBaseYm),
+                        reason = defaultReason(attraction, district, usedBaseYm),
                     )
                 },
         )
+    }
+
+    private fun fetchWithPreviousMonthFallback(
+        baseYm: String,
+        areaCode: Int,
+        signguCode: Int,
+    ): Pair<String, List<TourAttraction>> {
+        val requested = YearMonth.parse(baseYm, BASE_YM_FORMAT)
+        for (monthsBack in 0..MAX_FALLBACK_MONTHS) {
+            val candidate = requested.minusMonths(monthsBack.toLong()).format(BASE_YM_FORMAT)
+            val attractions = fetchAttractionsSafely(baseYm = candidate, areaCode = areaCode, signguCode = signguCode)
+            if (attractions.isNotEmpty()) {
+                return candidate to attractions
+            }
+        }
+        return baseYm to emptyList()
     }
 
     private fun fetchAttractionsSafely(
@@ -122,7 +139,7 @@ class ProductTourAttractionQueryService(
     private fun resolveBaseYm(baseYm: String?): String {
         val resolved =
             baseYm?.trim()?.takeIf { it.isNotEmpty() }
-                ?: YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMM"))
+                ?: YearMonth.now(ZoneId.of("Asia/Seoul")).minusMonths(1).format(BASE_YM_FORMAT)
         if (!BASE_YM_PATTERN.matches(resolved)) {
             throw CustomException(TourAttractionExceptionType.INVALID_BASE_YM)
         }
@@ -150,6 +167,8 @@ class ProductTourAttractionQueryService(
 
     companion object {
         private val BASE_YM_PATTERN = Regex("^\\d{6}$")
+        private val BASE_YM_FORMAT = DateTimeFormatter.ofPattern("yyyyMM")
+        private const val MAX_FALLBACK_MONTHS = 2
         private val EXTERNAL_TOUR_API_FAILURES =
             setOf(
                 TourAttractionExceptionType.TOUR_API_KEY_MISSING,

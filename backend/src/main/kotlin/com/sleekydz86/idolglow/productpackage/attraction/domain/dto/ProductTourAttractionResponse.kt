@@ -17,6 +17,8 @@ data class ProductTourAttractionResponse(
     val baseYm: String,
     @field:Schema(description = "추천 관광지 목록")
     val attractions: List<ProductTourAttractionItemResponse>,
+    @field:Schema(description = "요청한 기준연월(YYYYMM). 자료가 없어 이전 달로 대체되면 baseYm 과 다르다", example = "202504")
+    val requestedBaseYm: String = baseYm,
 )
 
 data class ProductTourAttractionItemResponse(

@@ -16,6 +16,7 @@ import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDi
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
 import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchHistoryPort
+import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchRecipientPort
 import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDispatchSchedulePort
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
@@ -35,6 +36,7 @@ import java.time.LocalTime
 class SubscriptionService(
     private val emailSubscriptionPort: EmailSubscriptionPort,
     private val subscriptionDispatchHistoryPort: SubscriptionDispatchHistoryPort,
+    private val subscriptionDispatchRecipientPort: SubscriptionDispatchRecipientPort,
     private val subscriptionDispatchSchedulePort: SubscriptionDispatchSchedulePort,
     private val newsletterRepository: NewsletterRepository,
     private val webzineIssueRepository: WebzineIssueRepository,
@@ -108,6 +110,8 @@ class SubscriptionService(
             subscriberTotalPages = subscriberSlice.totalPages,
             subscriberHasNext = subscriberSlice.hasNext,
             dispatches = dispatchSlice.items,
+            dispatchRecipientCounts =
+                subscriptionDispatchRecipientPort.countByDispatchIds(dispatchSlice.items.map { it.id }),
             dispatchPage = resolvedDispatchPage,
             dispatchSize = resolvedDispatchSize,
             dispatchTotalElements = allDispatches.size.toLong(),

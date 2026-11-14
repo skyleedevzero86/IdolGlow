@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.survey.domain.dto
 
+import com.sleekydz86.idolglow.survey.domain.RecommendationSignalType
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 
 data class SurveyQuestionResponse(
@@ -10,4 +11,5 @@ data class SurveyQuestionResponse(
     val type: SurveyQuestionType,
     val required: Boolean,
     val options: List<String>,
+    val recommendationSignal: RecommendationSignalType? = null,
 )

@@ -51,8 +51,14 @@ app:
   security:
     allowed-origins: http://localhost:3000
   public-base-url: http://localhost:8080
+  frontend-base-url: http://localhost:3000
   mail:
     enabled: false
+    recommendation:
+      unsubscribe-secret: test-recommendation-unsubscribe-secret
+      subject-prefix: "[IdolGlow]"
+      sender-name: IdolGlow
+      sender-contact: help@idolglow.test
   storage:
     minio:
       enabled: false
@@ -65,6 +71,10 @@ platform:
     enabled: false
     jwt:
       secret: defaultSecretKeyForPhase1TestsOnly123456789012345678901234567890123456789012345678901234567890
+
+subscription:
+  recommendation-mail:
+    consent-reminder-cron: "-"
 
 payment:
   mock:

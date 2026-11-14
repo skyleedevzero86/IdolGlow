@@ -84,6 +84,8 @@ class SecurityConfig(
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
+                auth.requestMatchers(HttpMethod.GET, UNSUBSCRIBE_PATH).permitAll()
+                auth.requestMatchers(HttpMethod.POST, UNSUBSCRIBE_PATH, ONE_CLICK_UNSUBSCRIBE_PATH).permitAll()
                 val permitList = PERMIT_LIST.toMutableList()
                 if (testLoginEnabled) {
                     permitList.add("/auth/test/**")
@@ -134,6 +136,9 @@ class SecurityConfig(
     }
 
     companion object {
+        private const val UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe"
+        private const val ONE_CLICK_UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe/one-click"
+
         private val SWAGGER_WHITE_LIST =
             arrayOf(
                 "/swagger-ui/**",

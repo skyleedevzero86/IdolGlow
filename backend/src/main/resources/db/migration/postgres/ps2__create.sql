@@ -986,8 +986,10 @@ CREATE TABLE IF NOT EXISTS survey_question (
     description TEXT,
     question_type VARCHAR(30) NOT NULL,
     required BOOLEAN NOT NULL DEFAULT FALSE,
+    recommendation_signal VARCHAR(20),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT chk_survey_question_recommendation_signal CHECK (recommendation_signal IN ('CONCEPT', 'IDOL', 'PLACE', 'TAG')),
     CONSTRAINT fk_survey_question_form
         FOREIGN KEY (survey_form_id)
         REFERENCES survey_form (id)
@@ -1284,6 +1286,28 @@ CREATE TABLE IF NOT EXISTS subscription_dispatch_recipients (
     constraint uk_subscription_dispatch_recipient unique (dispatch_id, email),
     constraint fk_subscription_dispatch_recipient_history
         foreign key (dispatch_id) references subscription_dispatch_histories (id)
+);
+
+-- 회원 한 명당 한 행. 광고성 상품 추천 메일 수신 동의와 수신 거부 상태를 남긴다.
+CREATE TABLE IF NOT EXISTS product_recommendation_mail_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    active BOOLEAN NOT NULL,
+    preferred_basis VARCHAR(20) NOT NULL DEFAULT 'AUTO',
+    consented_at TIMESTAMP(6) NOT NULL,
+    consent_source VARCHAR(20) NOT NULL,
+    token_version INT NOT NULL DEFAULT 1,
+    unsubscribed_at TIMESTAMP(6),
+    last_sent_at TIMESTAMP(6),
+    last_sent_product_ids VARCHAR(200),
+    consent_reminded_at TIMESTAMP(6),
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    CONSTRAINT uk_product_reco_mail_subscriptions_user UNIQUE (user_id),
+    CONSTRAINT fk_product_reco_mail_subscriptions_user
+        FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_product_reco_mail_subscriptions_basis CHECK (preferred_basis IN ('AUTO', 'POPULAR')),
+    CONSTRAINT chk_product_reco_mail_subscriptions_source CHECK (consent_source IN ('MY_SURVEY', 'MYPAGE'))
 );
 
 -- =============================================================================

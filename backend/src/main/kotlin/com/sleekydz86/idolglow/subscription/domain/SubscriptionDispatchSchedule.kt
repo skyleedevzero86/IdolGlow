@@ -47,7 +47,7 @@ class SubscriptionDispatchSchedule(
         dispatchMinute: Int,
         active: Boolean,
     ) {
-        validate(frequencyType, dayOfWeek, dispatchHour, dispatchMinute)
+        validate(contentType, frequencyType, dayOfWeek, dispatchHour, dispatchMinute)
         this.frequencyType = frequencyType
         this.dayOfWeek = dayOfWeek
         this.dispatchHour = dispatchHour
@@ -74,7 +74,7 @@ class SubscriptionDispatchSchedule(
             dispatchMinute: Int,
             active: Boolean,
         ): SubscriptionDispatchSchedule {
-            validate(frequencyType, dayOfWeek, dispatchHour, dispatchMinute)
+            validate(contentType, frequencyType, dayOfWeek, dispatchHour, dispatchMinute)
 
             return SubscriptionDispatchSchedule(
                 contentType = contentType,
@@ -86,7 +86,10 @@ class SubscriptionDispatchSchedule(
             )
         }
 
+        val ADVERTISING_DISPATCH_HOURS: IntRange = 8..20
+
         private fun validate(
+            contentType: SubscriptionContentType,
             frequencyType: SubscriptionDispatchFrequency,
             dayOfWeek: DayOfWeek?,
             dispatchHour: Int,
@@ -94,6 +97,12 @@ class SubscriptionDispatchSchedule(
         ) {
             require(dispatchHour in 0..23) { "발송 시간(hour)은 0~23 범위여야 합니다." }
             require(dispatchMinute in 0..59) { "발송 시간(minute)은 0~59 범위여야 합니다." }
+            require(
+                contentType != SubscriptionContentType.PRODUCT_RECOMMENDATION ||
+                    dispatchHour in ADVERTISING_DISPATCH_HOURS,
+            ) {
+                "상품 추천 메일은 8시부터 20시 사이에만 발송할 수 있습니다."
+            }
             require(frequencyType != SubscriptionDispatchFrequency.WEEKLY || dayOfWeek != null) {
                 "주간 발송은 요일 선택이 필요합니다."
             }

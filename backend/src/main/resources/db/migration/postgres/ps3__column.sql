@@ -663,6 +663,13 @@ CREATE INDEX IF NOT EXISTS idx_subscription_dispatch_histories_sending
 CREATE INDEX IF NOT EXISTS idx_subscription_dispatch_recipients_dispatch
     ON subscription_dispatch_recipients (dispatch_id);
 
+-- 상품 추천 메일에서 보낼 상품이 없어 건너뛴 수신자의 이유를 남긴다. 기존 행은 비어 있다.
+ALTER TABLE subscription_dispatch_recipients
+    ADD COLUMN IF NOT EXISTS skip_reason VARCHAR(40);
+
+CREATE INDEX IF NOT EXISTS idx_product_reco_mail_subscriptions_active
+    ON product_recommendation_mail_subscriptions (active);
+
 CREATE INDEX IF NOT EXISTS idx_event_master_normalized_title
     ON event_master (normalized_title);
 

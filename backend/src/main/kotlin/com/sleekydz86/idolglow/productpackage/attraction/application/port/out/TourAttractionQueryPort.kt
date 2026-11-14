@@ -6,7 +6,7 @@ interface TourAttractionQueryPort {
     fun fetchAreaBasedAttractions(
         baseYm: String,
         areaCode: Int,
-        signguCode: Int,
+        signguCode: Int?,
         size: Int,
     ): List<TourAttraction>
 }

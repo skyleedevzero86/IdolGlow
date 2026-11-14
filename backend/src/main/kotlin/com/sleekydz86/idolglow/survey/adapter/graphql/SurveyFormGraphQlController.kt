@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.survey.adapter.web.request.SurveyAnswerRequest
 import com.sleekydz86.idolglow.survey.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.survey.application.AdminSurveyFormService
 import com.sleekydz86.idolglow.survey.application.UserSurveyFormService
+import com.sleekydz86.idolglow.survey.domain.RecommendationSignalType
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
@@ -64,6 +65,7 @@ class SurveyFormGraphQlController(
                                 type = it.type,
                                 required = it.required,
                                 options = it.options,
+                                recommendationSignal = it.recommendationSignal,
                             )
                         },
                 ).toCommand(),
@@ -111,6 +113,7 @@ data class UpsertAdminSurveyQuestionGraphQlInput(
     val type: SurveyQuestionType,
     val required: Boolean = false,
     val options: List<String> = emptyList(),
+    val recommendationSignal: RecommendationSignalType? = null,
 )
 
 data class SubmitSurveyFormGraphQlInput(
@@ -159,6 +162,7 @@ data class SurveyFormGraphQlResponse(
                             type = it.type,
                             required = it.required,
                             options = it.options,
+                            recommendationSignal = it.recommendationSignal,
                         )
                     },
             )
@@ -173,6 +177,7 @@ data class SurveyQuestionGraphQlResponse(
     val type: SurveyQuestionType,
     val required: Boolean,
     val options: List<String>,
+    val recommendationSignal: RecommendationSignalType?,
 )
 
 data class SurveySubmissionGraphQlResponse(

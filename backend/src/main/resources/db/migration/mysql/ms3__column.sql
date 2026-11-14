@@ -404,6 +404,7 @@ ALTER TABLE survey_question
     MODIFY COLUMN description TEXT NULL COMMENT '문항 부가 설명',
     MODIFY COLUMN question_type VARCHAR(30) NOT NULL COMMENT '문항 타입 TEXT/SINGLE_CHOICE/MULTIPLE_CHOICE',
     MODIFY COLUMN required BOOLEAN NOT NULL DEFAULT FALSE COMMENT '필수 응답 여부',
+    MODIFY COLUMN recommendation_signal VARCHAR(20) NULL COMMENT '추천 신호 종류 CONCEPT/IDOL/PLACE/TAG. NULL이면 추천에 쓰지 않음',
     MODIFY COLUMN created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
     MODIFY COLUMN updated_at DATETIME(6) NOT NULL COMMENT '수정 시각';
 
@@ -543,7 +544,7 @@ ALTER TABLE toss_billing_methods
 SET @add_hash := (
     SELECT IF(
         COUNT(*) = 0,
-        'ALTER TABLE toss_billing_methods ADD COLUMN billing_key_hash VARCHAR 64 NULL COMMENT ''빌링키 평문 해시. 암호문이 매번 달라도 동일 키 중복 등록 방지''',
+        'ALTER TABLE toss_billing_methods ADD COLUMN billing_key_hash VARCHAR(64) NULL COMMENT ''빌링키 평문 해시. 암호문이 매번 달라도 동일 키 중복 등록 방지''',
         'SELECT 1'
     )
     FROM information_schema.columns
@@ -818,6 +819,16 @@ CREATE INDEX idx_subscription_dispatch_histories_sending
 
 CREATE INDEX idx_subscription_dispatch_recipients_dispatch
     ON subscription_dispatch_recipients (dispatch_id);
+
+-- 상품 추천 메일에서 보낼 상품이 없어 건너뛴 수신자의 이유를 남긴다. 기존 행은 비어 있다.
+ALTER TABLE subscription_dispatch_recipients
+    ADD COLUMN skip_reason VARCHAR(40) NULL COMMENT '건너뛴 이유. NO_PRODUCTS 보낼 상품 없음';
+
+ALTER TABLE subscription_dispatch_recipients
+    MODIFY COLUMN status VARCHAR(20) NOT NULL COMMENT '수신자 상태. SENT, FAILED, SKIPPED';
+
+CREATE INDEX idx_product_reco_mail_subscriptions_active
+    ON product_recommendation_mail_subscriptions (active);
 
 CREATE INDEX idx_event_master_normalized_title
     ON event_master (normalized_title);

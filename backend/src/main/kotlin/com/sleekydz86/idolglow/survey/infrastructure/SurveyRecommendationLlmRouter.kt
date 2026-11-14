@@ -18,18 +18,20 @@ class SurveyRecommendationLlmRouter(
     fun generate(
         answerHighlights: List<String>,
         attractions: List<TourAttraction>,
+        reasonSummaries: List<String> = emptyList(),
     ): LlmSurveyRecommendation? {
         val result =
             llmGateway.complete(
                 LlmRequest(
                     feature = FEATURE,
                     systemPrompt = SurveyLlmPrompts.system,
-                    userPrompt = SurveyLlmPrompts.userJson(objectMapper, answerHighlights, attractions),
+                    userPrompt =
+                        SurveyLlmPrompts.userJson(objectMapper, answerHighlights, attractions, reasonSummaries),
                     maxOutputTokens = MAX_OUTPUT_TOKENS,
                     temperature = TEMPERATURE,
                 ),
             ) ?: return null
-        val source = (answerHighlights + attractions.map { it.name }).joinToString(" ").lowercase()
+        val source = (answerHighlights + attractions.map { it.name } + reasonSummaries).joinToString(" ").lowercase()
         val codes = attractions.map { it.attractionCode }.toSet()
         return validator.parse(result.text)
             ?.let { it.copy(attractionReasons = it.attractionReasons.filterKeys(codes::contains)) }

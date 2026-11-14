@@ -53,6 +53,9 @@ fun SubscriptionDispatchResult.toWebResponse(): AdminSubscriptionDispatchRespons
         dispatchStatus = dispatchStatus,
         dispatchStatusLabel = dispatchStatusLabel,
         recipientCount = recipientCount,
+        sentCount = sentCount,
+        failedCount = failedCount,
+        skippedCount = skippedCount,
         dispatchedAt = dispatchedAt,
     )
 

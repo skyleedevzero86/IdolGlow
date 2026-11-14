@@ -686,7 +686,7 @@
     <ID>ReturnCount:SubscriptionDispatchSchedule.kt:SubscriptionDispatchSchedule$fun shouldTriggerAt(now: LocalDateTime): Boolean</ID>
     <ID>ReturnCount:TossPaymentConfirmService.kt:TossPaymentConfirmService$fun confirm( userId: Long, paymentKey: String, orderId: String, amount: BigDecimal, idempotencyKey: String?, traceId: String?, ): Payment</ID>
     <ID>ReturnCount:TossWebhookService.kt:TossWebhookService$fun handlePayload( rawBody: String, transmissionId: String? = null, )</ID>
-    <ID>ReturnCount:TourApiClient.kt:TourApiClient$override fun fetchAreaBasedAttractions( baseYm: String, areaCode: Int, signguCode: Int, size: Int, ): List&lt;TourAttraction&gt;</ID>
+    <ID>ReturnCount:TourApiClient.kt:TourApiClient$override fun fetchAreaBasedAttractions( baseYm: String, areaCode: Int, signguCode: Int?, size: Int, ): List&lt;TourAttraction&gt;</ID>
     <ID>ReturnCount:TourFestivalApiClient.kt:FestivalItem$fun toDomain(): FestivalEvent?</ID>
     <ID>ReturnCount:TourFestivalApiClient.kt:TourFestivalApiClient$private fun extractItemNodes(itemsNode: JsonNode): List&lt;JsonNode&gt;</ID>
     <ID>ReturnCount:TourFestivalApiClient.kt:TourFestivalApiClient$private inline fun &lt;reified T&gt; fetchList( endpoint: String, encodedServiceKey: String, params: Map&lt;String, String&gt;, ): List&lt;T&gt;</ID>

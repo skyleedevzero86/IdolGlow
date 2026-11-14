@@ -4,12 +4,10 @@ import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
 import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
 import com.sleekydz86.idolglow.productpackage.discovery.infrastructure.ProductDiscoveryQueryRepository
 import com.sleekydz86.idolglow.user.user.domain.UserSurveyRepository
-import com.sleekydz86.idolglow.user.user.domain.vo.ConceptType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 
 @Transactional(readOnly = true)
 @Service
@@ -28,116 +26,107 @@ class ProductDiscoveryService(
     fun findRecommendedProducts(
         userId: Long,
         size: Int,
+    ): List<ProductRankingResponse> = findRecommendedProducts(signalsOf(userId), size)
+
+    fun signalsOf(userId: Long): RecommendationSignals =
+        RecommendationSignals.fromUserSurvey(
+            survey = userSurveyRepository.findByUserId(userId),
+            behaviorTags = productDiscoveryQueryRepository.findPreferredTags(userId, PREFERRED_TAG_LIMIT).toSet(),
+        )
+
+    fun findRecommendedProducts(
+        signals: RecommendationSignals,
+        size: Int,
     ): List<ProductRankingResponse> {
-        val survey = userSurveyRepository.findByUserId(userId)
-        val behaviorTags = productDiscoveryQueryRepository.findPreferredTags(userId, PREFERRED_TAG_LIMIT)
-        val behaviorTagSet = behaviorTags.toSet()
-
-        val conceptTag = survey?.takeUnless { it.concept == ConceptType.ETC }?.concept?.name
-        val signalTags = (behaviorTags + listOfNotNull(conceptTag)).distinct()
-
-        if (survey == null && behaviorTags.isEmpty()) {
-            return findPopularProducts(size)
+        val candidateIds = if (signals.isEmpty()) emptyList() else findCandidateIds(signals, size)
+        if (candidateIds.isEmpty()) {
+            return findPopularProducts(size).map { it.copy(fallback = RecommendationFallback.POPULAR) }
         }
+        return rank(signals, candidateIds, size)
+    }
 
-        val placeKeywords =
-            survey
-                ?.places
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() }
-                ?.distinct()
-                .orEmpty()
-        val visitStart = survey?.visitStartDate
-        val visitEnd = survey?.visitEndDate
-        val now = LocalDateTime.now(ZoneOffset.UTC)
-
-        var candidateIds =
+    private fun findCandidateIds(
+        signals: RecommendationSignals,
+        size: Int,
+    ): List<Long> {
+        val signalTags = signals.candidateTags()
+        val candidateIds =
             productDiscoveryQueryRepository.findPersonalizedCandidateProductIds(
                 signalTags = signalTags,
-                visitStart = visitStart,
-                visitEnd = visitEnd,
-                placeKeywords = placeKeywords,
-                now = now,
+                visitStart = signals.visitStart,
+                visitEnd = signals.visitEnd,
+                placeKeywords = signals.placeKeywords,
+                now = LocalDateTime.now(ZoneOffset.UTC),
                 limit = CANDIDATE_LIMIT,
             )
-
-        if (candidateIds.isEmpty() && signalTags.isNotEmpty()) {
-            candidateIds = productDiscoveryQueryRepository.findRecommendedProductIds(signalTags, size * 10)
+        if (candidateIds.isNotEmpty() || signalTags.isEmpty()) {
+            return candidateIds
         }
-        if (candidateIds.isEmpty()) {
-            return findPopularProducts(size)
-        }
+        return productDiscoveryQueryRepository.findRecommendedProductIds(signalTags, size * FALLBACK_TAG_MULTIPLIER)
+    }
 
-        val tripDayCount =
-            if (visitStart != null && visitEnd != null) {
-                ChronoUnit.DAYS.between(visitStart, visitEnd).toInt() + 1
-            } else {
-                0
-            }
-
-        val availableDaysByProduct =
-            if (survey != null && visitStart != null && visitEnd != null && tripDayCount > 0) {
-                productDiscoveryQueryRepository.countAvailableTripDaysByProduct(
-                    productIds = candidateIds,
-                    visitStart = visitStart,
-                    visitEnd = visitEnd,
-                    now = now,
-                )
-            } else {
-                emptyMap()
-            }
-
-        val products = productDiscoveryQueryRepository.findProductsByIds(candidateIds)
-        val productById = products.associateBy { it.id }
+    private fun rank(
+        signals: RecommendationSignals,
+        candidateIds: List<Long>,
+        size: Int,
+    ): List<ProductRankingResponse> {
+        val availableDaysByProduct = availableTripDays(signals, candidateIds)
+        val productById = productDiscoveryQueryRepository.findProductsByIds(candidateIds).associateBy { it.id }
         val tagNamesByProductId = productDiscoveryQueryRepository.findTagNamesByProductIds(candidateIds)
         val wishCounts = productDiscoveryQueryRepository.findWishCounts(candidateIds)
         val reviewMetrics = productDiscoveryQueryRepository.findReviewMetrics(candidateIds)
 
         val ranked =
             candidateIds
-                .mapNotNull { pid ->
-                    val product = productById[pid] ?: return@mapNotNull null
-                    val tags = tagNamesByProductId[pid].orEmpty()
-                    val tagSet = tags.toSet()
-                    val metric = reviewMetrics[pid]
-                    val score =
+                .mapNotNull { productId ->
+                    val product = productById[productId] ?: return@mapNotNull null
+                    val tagNames = tagNamesByProductId[productId].orEmpty()
+                    val metric = reviewMetrics[productId]
+                    val wishCount = wishCounts[productId] ?: 0L
+                    val averageRating = metric?.averageRating ?: 0.0
+                    val reviewCount = metric?.reviewCount ?: 0L
+                    val scored =
                         PersonalizedRecommendationScorer.score(
-                            survey = survey,
-                            behaviorTags = behaviorTagSet,
-                            conceptTag = conceptTag,
-                            placeKeywords = placeKeywords,
-                            productTags = tagSet,
+                            signals = signals,
+                            productTags = tagNames.toSet(),
                             product = product,
-                            availableTripDays = availableDaysByProduct[pid] ?: 0,
-                            tripDayCount = tripDayCount,
-                            wishCount = wishCounts[pid] ?: 0L,
-                            averageRating = metric?.averageRating ?: 0.0,
-                            reviewCount = metric?.reviewCount ?: 0L,
+                            metrics =
+                                RecommendationProductMetrics(
+                                    availableTripDays = availableDaysByProduct[productId] ?: 0,
+                                    wishCount = wishCount,
+                                    averageRating = averageRating,
+                                    reviewCount = reviewCount,
+                                ),
                         )
-                    pid to score
-                }.sortedByDescending { it.second }
+                    scored.score to
+                        ProductRankingResponse.from(
+                            product = product,
+                            tagNames = tagNames,
+                            wishCount = wishCount,
+                            averageRating = averageRating,
+                            reviewCount = reviewCount,
+                            matchedTags = PersonalizedRecommendationScorer.matchedPreferenceTags(tagNames, signals),
+                            reasons = scored.reasons,
+                        )
+                }.sortedByDescending { it.first }
 
-        val topIds = ranked.map { it.first }.take(size)
+        return withThumbnails(ranked.take(size).map { it.second })
+    }
 
-        return withThumbnails(
-            topIds.mapNotNull { productId ->
-                val product = productById[productId] ?: return@mapNotNull null
-                val tagNames = tagNamesByProductId[productId].orEmpty()
-                val metric = reviewMetrics[productId]
-                ProductRankingResponse.from(
-                    product = product,
-                    tagNames = tagNames,
-                    wishCount = wishCounts[productId] ?: 0L,
-                    averageRating = metric?.averageRating ?: 0.0,
-                    reviewCount = metric?.reviewCount ?: 0L,
-                    matchedTags =
-                        PersonalizedRecommendationScorer.matchedPreferenceTags(
-                            productTags = tagNames,
-                            behaviorTags = behaviorTagSet,
-                            conceptTag = conceptTag,
-                        ),
-                )
-            },
+    private fun availableTripDays(
+        signals: RecommendationSignals,
+        candidateIds: List<Long>,
+    ): Map<Long, Int> {
+        val visitStart = signals.visitStart
+        val visitEnd = signals.visitEnd
+        if (visitStart == null || visitEnd == null || signals.tripDayCount() <= 0) {
+            return emptyMap()
+        }
+        return productDiscoveryQueryRepository.countAvailableTripDaysByProduct(
+            productIds = candidateIds,
+            visitStart = visitStart,
+            visitEnd = visitEnd,
+            now = LocalDateTime.now(ZoneOffset.UTC),
         )
     }
 
@@ -183,5 +172,6 @@ class ProductDiscoveryService(
     companion object {
         private const val PREFERRED_TAG_LIMIT = 5
         private const val CANDIDATE_LIMIT = 250
+        private const val FALLBACK_TAG_MULTIPLIER = 10
     }
 }
