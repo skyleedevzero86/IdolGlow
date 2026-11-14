@@ -544,7 +544,7 @@ ALTER TABLE toss_billing_methods
 SET @add_hash := (
     SELECT IF(
         COUNT(*) = 0,
-        'ALTER TABLE toss_billing_methods ADD COLUMN billing_key_hash VARCHAR 64 NULL COMMENT ''빌링키 평문 해시. 암호문이 매번 달라도 동일 키 중복 등록 방지''',
+        'ALTER TABLE toss_billing_methods ADD COLUMN billing_key_hash VARCHAR(64) NULL COMMENT ''빌링키 평문 해시. 암호문이 매번 달라도 동일 키 중복 등록 방지''',
         'SELECT 1'
     )
     FROM information_schema.columns
