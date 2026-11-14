@@ -29,7 +29,10 @@ class ProductRecommendationMailServiceTest {
             productRecommendationMailNoticeComposer =
                 ProductRecommendationMailNoticeComposer(
                     mailProperties,
-                    AppPublicUrlProperties("https://idolglow.test"),
+                    AppPublicUrlProperties(
+                        publicBaseUrl = "https://api.idolglow.test",
+                        frontendBaseUrl = "https://idolglow.test",
+                    ),
                 ),
             outboundMailPort = outboundMailPort,
             appMailProperties = mailProperties,
