@@ -1487,6 +1487,34 @@ COMMENT ON COLUMN product_recommendation_mail_subscriptions.consent_reminded_at 
 
 COMMENT ON INDEX idx_product_reco_mail_subscriptions_active IS '수신 중인 추천 메일 구독 조회용';
 
+COMMENT ON TABLE mail_send_logs IS '메일 발송 기록. 보내는 모든 메일 한 통당 1건. 90일 보관';
+
+COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, WEBZINE, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+
+COMMENT ON COLUMN mail_send_logs.recipient_email IS '수신 이메일 원문. 관리자 검색용이며 API 응답에서는 가림';
+
+COMMENT ON COLUMN mail_send_logs.subject IS '메일 제목. 500자 이내';
+
+COMMENT ON COLUMN mail_send_logs.html_body IS 'HTML 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음';
+
+COMMENT ON COLUMN mail_send_logs.text_body IS '텍스트 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음';
+
+COMMENT ON COLUMN mail_send_logs.status IS '발송 결과. SENT, FAILED, SKIPPED';
+
+COMMENT ON COLUMN mail_send_logs.error IS '실패 원인. 500자 이내';
+
+COMMENT ON COLUMN mail_send_logs.dispatch_id IS '구독 발송 이력 ID. 예약 발송에 속한 메일만 채움';
+
+COMMENT ON COLUMN mail_send_logs.sent_at IS '발송에 성공한 시각';
+
+COMMENT ON COLUMN mail_send_logs.created_at IS '기록 시각. 보관 기간 기준';
+
+COMMENT ON INDEX idx_mail_send_logs_created IS '기간 조회와 보관 기간 정리용';
+
+COMMENT ON INDEX idx_mail_send_logs_kind_created IS '종류별 최근 기록 조회용';
+
+COMMENT ON INDEX idx_mail_send_logs_dispatch IS '발송 이력별 대표 메일 조회용';
+
 COMMENT ON TABLE event_master IS '공연 대표 식별자. 공급처가 달라도 같은 공연은 한 행';
 
 COMMENT ON COLUMN event_master.global_id IS '글로벌 공연 ID. UUID';
@@ -1568,3 +1596,69 @@ COMMENT ON COLUMN ops_change_request.before_snapshot IS '적용 직전 상태. �
 COMMENT ON COLUMN ops_change_request.approved_by IS '승인자 사용자 ID';
 
 COMMENT ON COLUMN ops_change_request.applied_at IS '적용 시각';
+
+COMMENT ON TABLE glow_community_posts IS 'GLOW 지역사회 게시글';
+
+COMMENT ON COLUMN glow_community_posts.user_id IS '작성 회원 users.id';
+
+COMMENT ON COLUMN glow_community_posts.tag IS '말머리. TALK 토크, QUESTION 질문, TRAVEL 나의 여행 계획';
+
+COMMENT ON COLUMN glow_community_posts.title IS '제목. 150자 이내';
+
+COMMENT ON COLUMN glow_community_posts.content_markdown IS '마크다운 원문 본문';
+
+COMMENT ON COLUMN glow_community_posts.like_count IS '좋아요 수';
+
+COMMENT ON COLUMN glow_community_posts.comment_count IS '삭제되지 않은 댓글과 답글 수';
+
+COMMENT ON COLUMN glow_community_posts.report_count IS '신고한 회원 수';
+
+COMMENT ON COLUMN glow_community_posts.last_reported_at IS '마지막 신고 시각';
+
+COMMENT ON COLUMN glow_community_posts.blinded IS '블라인드 여부. 작성자와 관리자만 볼 수 있음';
+
+COMMENT ON COLUMN glow_community_posts.blinded_at IS '블라인드 시각';
+
+COMMENT ON COLUMN glow_community_posts.blind_reason IS '블라인드 사유. 자동 또는 관리자 입력';
+
+COMMENT ON COLUMN glow_community_posts.deleted_at IS '작성자가 삭제한 시각. 비어 있으면 게시 중';
+
+COMMENT ON TABLE glow_community_likes IS 'GLOW 지역사회 게시글 좋아요. 회원당 글마다 1건';
+
+COMMENT ON TABLE glow_community_reports IS 'GLOW 지역사회 게시글 신고. 회원당 글마다 1건';
+
+COMMENT ON COLUMN glow_community_reports.reason IS '신고 사유. 비워도 됨';
+
+COMMENT ON TABLE content_comments IS '콘텐츠 공용 댓글과 답글. 회원의 나의 리뷰로 모아 보여 줌';
+
+COMMENT ON COLUMN content_comments.target_type IS '대상 유형. NOTICE, EVENT 는 받지 않음';
+
+COMMENT ON COLUMN content_comments.target_key IS '대상 키. 게시글이면 게시글 ID';
+
+COMMENT ON COLUMN content_comments.target_title IS '작성 시점의 대상 제목';
+
+COMMENT ON COLUMN content_comments.target_path IS '대상 화면 경로. / 로 시작하고 /admin 은 받지 않음';
+
+COMMENT ON COLUMN content_comments.content_markdown IS '마크다운 본문. 5000자 이내, 이미지는 URL 로 참조';
+
+COMMENT ON COLUMN content_comments.parent_id IS '부모 댓글 ID. 최상위면 비움';
+
+COMMENT ON COLUMN content_comments.root_id IS '최상위 댓글 ID. 최상위면 비움';
+
+COMMENT ON COLUMN content_comments.depth IS '깊이. 최상위 1, 최대 5';
+
+COMMENT ON COLUMN content_comments.deleted_at IS '삭제 시각. 답글이 있으면 자리만 남김';
+
+COMMENT ON TABLE user_content_views IS '회원별 최근 본 콘텐츠. 회원당 최근 200건';
+
+COMMENT ON COLUMN user_content_views.content_type IS '콘텐츠 유형. NOTICE, EVENT 는 받지 않음';
+
+COMMENT ON COLUMN user_content_views.content_key IS '콘텐츠 키';
+
+COMMENT ON COLUMN user_content_views.title IS '콘텐츠 제목. 비어 오면 경로';
+
+COMMENT ON COLUMN user_content_views.path IS '화면 경로. / 로 시작하고 /admin 은 받지 않음';
+
+COMMENT ON COLUMN user_content_views.image_url IS '대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로';
+
+COMMENT ON COLUMN user_content_views.viewed_at IS '마지막으로 본 시각';

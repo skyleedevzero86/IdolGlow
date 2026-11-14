@@ -241,7 +241,13 @@ ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
         'PAYMENT_FAILED',
         'PAYMENT_EXPIRED',
         'RESERVATION_SLOT_AVAILABLE',
-        'RESERVATION_EXPIRING_SOON'
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE'
     )
 );
 
@@ -830,6 +836,15 @@ ALTER TABLE subscription_dispatch_recipients
 CREATE INDEX idx_product_reco_mail_subscriptions_active
     ON product_recommendation_mail_subscriptions (active);
 
+CREATE INDEX idx_mail_send_logs_created
+    ON mail_send_logs (created_at);
+
+CREATE INDEX idx_mail_send_logs_kind_created
+    ON mail_send_logs (mail_kind, created_at);
+
+CREATE INDEX idx_mail_send_logs_dispatch
+    ON mail_send_logs (dispatch_id);
+
 CREATE INDEX idx_event_master_normalized_title
     ON event_master (normalized_title);
 
@@ -859,3 +874,41 @@ ALTER TABLE users MODIFY COLUMN role VARCHAR(255) NOT NULL COMMENT '권한 역�
 
 CREATE INDEX idx_ops_change_request_status
     ON ops_change_request (status);
+
+-- =============================================================================
+-- GLOW 지역사회, 콘텐츠 댓글, 최근 본 콘텐츠 조회 인덱스
+-- -----
+-- 목적
+-- - 최신순, 내 글, 신고순 목록과 대상별 댓글, 나의 리뷰, 최근 본 콘텐츠 조회
+-- 대상
+-- - 마이에스큐엘 / glow_community_posts, glow_community_likes, content_comments, user_content_views
+-- 연관
+-- - GlowCommunityPostJpaRepository, ContentCommentJpaRepository, UserContentViewJpaRepository
+-- =============================================================================
+
+CREATE INDEX idx_glow_community_posts_created
+    ON glow_community_posts (created_at, id);
+
+CREATE INDEX idx_glow_community_posts_user_created
+    ON glow_community_posts (user_id, created_at);
+
+CREATE INDEX idx_glow_community_posts_tag_created
+    ON glow_community_posts (tag, created_at);
+
+CREATE INDEX idx_glow_community_posts_last_reported
+    ON glow_community_posts (last_reported_at);
+
+CREATE INDEX idx_glow_community_likes_user
+    ON glow_community_likes (user_id);
+
+CREATE INDEX idx_content_comments_target_created
+    ON content_comments (target_type, target_key, created_at);
+
+CREATE INDEX idx_content_comments_root
+    ON content_comments (root_id);
+
+CREATE INDEX idx_content_comments_user_created
+    ON content_comments (user_id, created_at);
+
+CREATE INDEX idx_user_content_views_user_viewed
+    ON user_content_views (user_id, viewed_at);
