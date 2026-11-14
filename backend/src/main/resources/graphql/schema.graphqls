@@ -178,6 +178,27 @@ type ProductRanking {
     averageRating: String!
     reviewCount: Int!
     matchedTags: [String!]!
+    thumbnailUrl: String
+    reasons: [RecommendationReason!]!
+    fallback: RecommendationFallback
+}
+
+type RecommendationReason {
+    code: RecommendationReasonCode!
+    label: String!
+}
+
+enum RecommendationReasonCode {
+    CONCEPT_MATCH
+    BEHAVIOR_TAG
+    PLACE_MATCH
+    IDOL_MATCH
+    SCHEDULE_FIT
+    EXTRA_TAG
+}
+
+enum RecommendationFallback {
+    POPULAR
 }
 
 type ProductTourAttractionResult {
@@ -652,6 +673,14 @@ type SurveyQuestion {
     type: SurveyQuestionType!
     required: Boolean!
     options: [String!]!
+    recommendationSignal: RecommendationSignalType
+}
+
+enum RecommendationSignalType {
+    CONCEPT
+    IDOL
+    PLACE
+    TAG
 }
 
 type SurveySubmission {
@@ -801,6 +830,7 @@ input UpsertAdminSurveyQuestionInput {
     type: SurveyQuestionType!
     required: Boolean = false
     options: [String!]! = []
+    recommendationSignal: RecommendationSignalType
 }
 
 input SubmitSurveyFormInput {
