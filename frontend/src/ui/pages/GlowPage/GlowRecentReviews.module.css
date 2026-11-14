@@ -1,0 +1,52 @@
+.recentReviews { min-width: 0; }
+.sectionTitle { margin: 0 0 16px; color: #171717; font-size: 22px; font-weight: 800; letter-spacing: -.04em; }
+.photoGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.photoButton { display: block; aspect-ratio: 1.6 / 1; padding: 0; overflow: hidden; border: 0; border-radius: 4px; background: #e8e8e8; cursor: zoom-in; }
+.photoButton img { width: 100%; height: 100%; object-fit: cover; transition: transform 260ms ease; }
+.photoButton:hover img, .photoButton:focus-visible img { transform: scale(1.05); }
+.photoButton:focus-visible { outline: 2px solid #173cff; outline-offset: 2px; }
+.promoBanner { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: center; margin: 56px 0 48px; padding: 10px; border: 2px solid #c9d2ff; border-radius: 9px; background: #fff; box-shadow: 0 5px 20px rgba(22,32,54,.045); transition: border-color 160ms ease, box-shadow 160ms ease; }
+.promoBanner:hover, .promoBanner:focus-visible { border-color: #173cff; box-shadow: 0 16px 34px rgba(22,32,54,.12); }
+.promoImages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.promoImages img { width: 100%; aspect-ratio: 1.7 / 1; object-fit: cover; border-radius: 4px; }
+.promoText { display: grid; gap: 8px; }
+.promoText strong { color: #173cff; font-size: 20px; font-weight: 800; letter-spacing: -.04em; }
+.promoText span { color: #9a9a9a; font-size: 16px; }
+.reviewGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.reviewCard { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e2e2; border-radius: 9px; background: #fff; }
+.placeRow { display: grid; grid-template-columns: minmax(0, 1fr) 60px; gap: 16px; align-items: start; padding: 16px 14px 18px; border-bottom: 1px solid #ececec; }
+.placeRow img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+.placeText { min-width: 0; }
+.region { margin: 0 0 6px; color: #8a8a8a; font-size: 11px; }
+.placeText h3 { overflow: hidden; margin: 0 0 8px; color: #222; font-size: 13px; font-weight: 600; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
+.placeRow:hover h3, .placeRow:focus-visible h3 { color: #173cff; }
+.placeRating { display: flex; align-items: center; gap: 3px; margin: 0; color: #173cff; font-size: 11px; font-weight: 700; }
+.placeRating svg { width: 12px; height: 12px; }
+.placeRating span { color: #8a8a8a; font-weight: 400; }
+.reviewBody { display: flex; flex: 1; flex-direction: column; padding: 20px 14px 16px; }
+.ratingRow { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ratingRow strong { color: #171717; font-size: 14px; font-weight: 600; }
+.stars { display: inline-flex; gap: 1px; }
+.stars svg { width: 15px; height: 15px; }
+.starOn { color: #173cff; }
+.starOff { color: #d6d6d6; }
+.content { margin: 0; color: #333; font-size: 13px; line-height: 1.7; letter-spacing: -.02em; }
+.content { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.reviewer { display: flex; gap: 10px; margin: auto 0 0; padding-top: 22px; color: #8a8a8a; font-size: 11px; }
+.reviewer span::after { margin-left: 10px; color: #d0d0d0; content: '·'; }
+.empty { padding: 40px 0; color: #666; text-align: center; }
+.photoViewer { position: relative; width: min(960px, 100%); margin: 6vh 0 0; padding: 12px 12px 14px; border-radius: 6px; background: #fff; box-shadow: 0 18px 50px rgba(15,23,42,.26); }
+.photoViewer img { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #111; }
+.photoViewer figcaption { margin-top: 10px; color: #555; font-size: 13px; font-weight: 700; }
+.viewerClose { position: absolute; top: -14px; right: -14px; display: grid; width: 36px; height: 36px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: #fff; font-size: 24px; line-height: 1; background: #171717; }
+.viewerClose:hover, .viewerClose:focus-visible { background: #173cff; }
+
+@media (max-width: 1080px) {
+  .photoGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .photoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .promoBanner { grid-template-columns: 1fr; gap: 14px; }
+  .reviewGrid { grid-template-columns: 1fr; }
+}
