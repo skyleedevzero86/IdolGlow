@@ -589,7 +589,7 @@ comment on column email_subscriptions.updated_at is '마지막 수정 시각';
 
 comment on table subscription_dispatch_histories is '콘텐츠 발송 이력 테이블';
 
-comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형 코드. NEWSLETTER, WEBZINE 등 서비스에서 정의한 값.';
+comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형 코드. NEWSLETTER, IDOLGLOW 등 서비스에서 정의한 값.';
 
 comment on column subscription_dispatch_histories.content_slug is '콘텐츠 고유 slug/키';
 
@@ -619,7 +619,7 @@ comment on column admin_audit_logs.admin_user_id is '행위를 수행한 관리�
 
 comment on column admin_audit_logs.action_code is '행위 코드. 예: RESERVATION_CANCEL, ISSUE_CREATE';
 
-comment on column admin_audit_logs.target_type is '대상 도메인 유형. 예: RESERVATION, WEBZINE_ISSUE';
+comment on column admin_audit_logs.target_type is '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
 
 comment on column admin_audit_logs.target_id is '대상 엔티티 식별자';
 
@@ -631,75 +631,75 @@ comment on index idx_admin_audit_logs_created_at is '최신 감사 로그 목록
 
 comment on index idx_admin_audit_logs_admin_user is '관리자별 감사 로그 조회 최적화';
 
-comment on table webzine_issues is '웹진 호 메타데이터';
+comment on table idolglow_issues is '웹진 호 메타데이터';
 
-comment on column webzine_issues.slug is '호 공개 slug';
+comment on column idolglow_issues.slug is '호 공개 slug';
 
-comment on column webzine_issues.volume is '발행 호수';
+comment on column idolglow_issues.volume is '발행 호수';
 
-comment on column webzine_issues.issue_date is '발행일';
+comment on column idolglow_issues.issue_date is '발행일';
 
-comment on column webzine_issues.cover_image_url is '호 표지 이미지 URL';
+comment on column idolglow_issues.cover_image_url is '호 표지 이미지 URL';
 
-comment on column webzine_issues.teaser is '호 소개 문구';
+comment on column idolglow_issues.teaser is '호 소개 문구';
 
-comment on table webzine_articles is '웹진 기사 메타데이터';
+comment on table idolglow_articles is '웹진 기사 메타데이터';
 
-comment on column webzine_articles.issue_id is '소속 웹진 호 FK';
+comment on column idolglow_articles.issue_id is '소속 웹진 호 FK';
 
-comment on column webzine_articles.slug is '기사 공개 slug';
+comment on column idolglow_articles.slug is '기사 공개 slug';
 
-comment on column webzine_articles.title is '기사 제목';
+comment on column idolglow_articles.title is '기사 제목';
 
-comment on column webzine_articles.kicker is '카테고리성 보조 제목';
+comment on column idolglow_articles.kicker is '카테고리성 보조 제목';
 
-comment on column webzine_articles.summary is '목록/공유용 요약';
+comment on column idolglow_articles.summary is '목록/공유용 요약';
 
-comment on column webzine_articles.hero_image_url is '상세 상단 대표 이미지 URL';
+comment on column idolglow_articles.hero_image_url is '상세 상단 대표 이미지 URL';
 
-comment on column webzine_articles.card_image_url is '카드 목록용 이미지 URL';
+comment on column idolglow_articles.card_image_url is '카드 목록용 이미지 URL';
 
-comment on column webzine_articles.category is '기사 분류';
+comment on column idolglow_articles.category is '기사 분류';
 
-comment on column webzine_articles.format_label is '아티클 형식 라벨';
+comment on column idolglow_articles.format_label is '아티클 형식 라벨';
 
-comment on column webzine_articles.author_name is '작성자명';
+comment on column idolglow_articles.author_name is '작성자명';
 
-comment on column webzine_articles.author_email is '작성자 연락 이메일';
+comment on column idolglow_articles.author_email is '작성자 연락 이메일';
 
-comment on column webzine_articles.credit_line is '크레딧 라인';
+comment on column idolglow_articles.credit_line is '크레딧 라인';
 
-comment on column webzine_articles.highlight_quote is '강조 인용문';
+comment on column idolglow_articles.highlight_quote is '강조 인용문';
 
-comment on index idx_webzine_articles_issue_id is '호별 기사 목록 조회 최적화';
+comment on index idx_idolglow_articles_issue_id is '호별 기사 목록 조회 최적화';
 
-comment on table webzine_article_sections is '웹진 기사 본문 섹션';
+comment on table idolglow_article_sections is '웹진 기사 본문 섹션';
 
-comment on column webzine_article_sections.article_id is '소속 기사 FK';
+comment on column idolglow_article_sections.article_id is '소속 기사 FK';
 
-comment on column webzine_article_sections.display_order is '본문 표시 순서';
+comment on column idolglow_article_sections.display_order is '본문 표시 순서';
 
-comment on column webzine_article_sections.heading is '섹션 제목';
+comment on column idolglow_article_sections.heading is '섹션 제목';
 
-comment on column webzine_article_sections.body is '본문 내용';
+comment on column idolglow_article_sections.body is '본문 내용';
 
-comment on column webzine_article_sections.note is '보충 메모 또는 각주';
+comment on column idolglow_article_sections.note is '보충 메모 또는 각주';
 
-comment on table webzine_article_gallery_images is '웹진 기사 상세 갤러리 이미지';
+comment on table idolglow_article_gallery_images is '웹진 기사 상세 갤러리 이미지';
 
-comment on column webzine_article_gallery_images.article_id is '소속 기사 FK';
+comment on column idolglow_article_gallery_images.article_id is '소속 기사 FK';
 
-comment on column webzine_article_gallery_images.display_order is '갤러리 이미지 표시 순서';
+comment on column idolglow_article_gallery_images.display_order is '갤러리 이미지 표시 순서';
 
-comment on column webzine_article_gallery_images.image_url is '갤러리 이미지 URL';
+comment on column idolglow_article_gallery_images.image_url is '갤러리 이미지 URL';
 
-comment on table webzine_article_tags is '웹진 기사 태그';
+comment on table idolglow_article_tags is '웹진 기사 태그';
 
-comment on column webzine_article_tags.article_id is '소속 기사 FK';
+comment on column idolglow_article_tags.article_id is '소속 기사 FK';
 
-comment on column webzine_article_tags.display_order is '태그 표시 순서';
+comment on column idolglow_article_tags.display_order is '태그 표시 순서';
 
-comment on column webzine_article_tags.tag_name is '태그 문자열';
+comment on column idolglow_article_tags.tag_name is '태그 문자열';
 
 comment on table newsletters is '소식지 마스터';
 
@@ -751,7 +751,7 @@ comment on column email_subscriptions.active is '활성 구독 여부';
 
 comment on table subscription_dispatch_histories is '구독 콘텐츠 발송 이력';
 
-comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형. 예: NEWSLETTER, WEBZINE_ISSUE';
+comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형. 예: NEWSLETTER, IDOLGLOW_ISSUE';
 
 comment on column subscription_dispatch_histories.content_slug is '발송된 콘텐츠 slug';
 
@@ -1489,7 +1489,7 @@ COMMENT ON INDEX idx_product_reco_mail_subscriptions_active IS '수신 중인 �
 
 COMMENT ON TABLE mail_send_logs IS '메일 발송 기록. 보내는 모든 메일 한 통당 1건. 90일 보관';
 
-COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, WEBZINE, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
 
 COMMENT ON COLUMN mail_send_logs.recipient_email IS '수신 이메일 원문. 관리자 검색용이며 API 응답에서는 가림';
 
@@ -1662,3 +1662,15 @@ COMMENT ON COLUMN user_content_views.path IS '화면 경로. / 로 시작하고 
 COMMENT ON COLUMN user_content_views.image_url IS '대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로';
 
 COMMENT ON COLUMN user_content_views.viewed_at IS '마지막으로 본 시각';
+
+COMMENT ON TABLE content_likes IS '콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';
+
+COMMENT ON COLUMN content_likes.user_id IS '누른 회원 users.id';
+
+COMMENT ON COLUMN content_likes.target_type IS '대상 유형. ARTICLE, EVENT_INFO, PRODUCT_REVIEW, CONTENT_COMMENT';
+
+COMMENT ON COLUMN content_likes.target_key IS '대상 키. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID, 그 밖은 ID';
+
+COMMENT ON COLUMN content_likes.created_at IS '생성 시각';
+
+COMMENT ON COLUMN content_likes.updated_at IS '수정 시각';

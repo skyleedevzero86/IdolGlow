@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.subscription.application
 
 import com.sleekydz86.idolglow.global.config.AppMailProperties
+import com.sleekydz86.idolglow.subscription.application.event.IdolGlowIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
-import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
@@ -45,11 +45,11 @@ class SubscriptionDispatchMailService(
         }
     }
 
-    fun dispatchWebzineIssue(event: WebzineIssueDispatchRequestedEvent) {
+    fun dispatchIdolGlowIssue(event: IdolGlowIssueDispatchRequestedEvent) {
         dispatchIfNeeded(
             draft =
                 SubscriptionDispatchHistory.record(
-                    contentType = SubscriptionContentType.WEBZINE_ISSUE,
+                    contentType = SubscriptionContentType.IDOLGLOW_ISSUE,
                     contentSlug = event.slug,
                     contentTitle = "Vol.${event.volume} 웹진",
                     contentSummary = event.teaser,
@@ -58,9 +58,9 @@ class SubscriptionDispatchMailService(
                     dispatchedAt = LocalDateTime.now(),
                     dispatchStatus = SubscriptionDispatchStatus.SENDING,
                 ),
-            audience = SubscriptionAudience.WEBZINE_ISSUE,
+            audience = SubscriptionAudience.IDOLGLOW_ISSUE,
         ) {
-            subscriptionEmailComposer.composeWebzineIssue(event)
+            subscriptionEmailComposer.composeIdolGlowIssue(event)
         }
     }
 

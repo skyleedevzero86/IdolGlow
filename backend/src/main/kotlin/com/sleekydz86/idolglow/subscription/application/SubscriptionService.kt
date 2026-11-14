@@ -1,5 +1,8 @@
 package com.sleekydz86.idolglow.subscription.application
 
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowIssue
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowIssueRepository
 import com.sleekydz86.idolglow.newsletter.domain.Newsletter
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
@@ -9,8 +12,8 @@ import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionRegistra
 import com.sleekydz86.idolglow.subscription.application.dto.SubscriptionScheduleResult
 import com.sleekydz86.idolglow.subscription.application.dto.UpsertSubscriptionDispatchScheduleCommand
 import com.sleekydz86.idolglow.subscription.application.dto.toRegistrationResponse
+import com.sleekydz86.idolglow.subscription.application.event.IdolGlowIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
-import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionAdminUseCase
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionPublicUseCase
@@ -21,9 +24,6 @@ import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDis
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
-import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
-import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
-import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -39,7 +39,7 @@ class SubscriptionService(
     private val subscriptionDispatchRecipientPort: SubscriptionDispatchRecipientPort,
     private val subscriptionDispatchSchedulePort: SubscriptionDispatchSchedulePort,
     private val newsletterRepository: NewsletterRepository,
-    private val webzineIssueRepository: WebzineIssueRepository,
+    private val idolglowIssueRepository: IdolGlowIssueRepository,
     private val applicationEventPublisher: ApplicationEventPublisher,
 ) : SubscriptionPublicUseCase,
     SubscriptionAdminUseCase,
@@ -101,7 +101,7 @@ class SubscriptionService(
         return SubscriptionOverviewResult.create(
             totalActive = emailSubscriptionPort.countActive(),
             newsletterSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.NEWSLETTER),
-            issueSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.WEBZINE_ISSUE),
+            issueSubscriberCount = emailSubscriptionPort.countActiveByAudience(SubscriptionAudience.IDOLGLOW_ISSUE),
             totalDispatches = subscriptionDispatchHistoryPort.count(),
             subscribers = subscriberSlice.items,
             subscriberPage = resolvedSubscriberPage,
@@ -170,10 +170,10 @@ class SubscriptionService(
     }
 
     @Transactional
-    override fun recordWebzineIssueDispatch(issue: WebzineIssue) {
-        val loadedIssue = webzineIssueRepository.findBySlugWithArticles(issue.slug) ?: return
+    override fun recordIdolGlowIssueDispatch(issue: IdolGlowIssue) {
+        val loadedIssue = idolglowIssueRepository.findBySlugWithArticles(issue.slug) ?: return
         applicationEventPublisher.publishEvent(
-            WebzineIssueDispatchRequestedEvent(
+            IdolGlowIssueDispatchRequestedEvent(
                 slug = loadedIssue.slug,
                 volume = loadedIssue.volume,
                 issueDate = loadedIssue.issueDate,
@@ -203,10 +203,10 @@ class SubscriptionService(
                 )
             }
 
-            webzineIssueRepository.findAllByLatest().firstOrNull()?.let { issue ->
+            idolglowIssueRepository.findAllByLatest().firstOrNull()?.let { issue ->
                 add(
                     SubscriptionLatestContentResult(
-                        contentType = "WEBZINE_ISSUE",
+                        contentType = "IDOLGLOW_ISSUE",
                         contentTypeLabel = "호별보기",
                         title = "Vol.${issue.volume} 호별보기",
                         slug = issue.slug,

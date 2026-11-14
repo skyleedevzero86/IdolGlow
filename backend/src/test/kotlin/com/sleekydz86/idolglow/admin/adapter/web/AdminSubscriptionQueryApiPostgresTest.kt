@@ -132,11 +132,11 @@ class AdminSubscriptionQueryApiPostgresTest : PostgresIntegrationTest() {
                     .param("size", "1")
                     .with(asAdmin),
             )
-        val webzineOnly =
+        val idolglowOnly =
             mockMvc.perform(
                 get("/admin/subscriptions/email-subscribers")
                     .param("keyword", key)
-                    .param("audience", "WEBZINE_ISSUE")
+                    .param("audience", "IDOLGLOW_ISSUE")
                     .with(asAdmin),
             )
         val inactive =
@@ -157,9 +157,9 @@ class AdminSubscriptionQueryApiPostgresTest : PostgresIntegrationTest() {
             .andExpect(jsonPath("$.hasNext").value(true))
             .andExpect(jsonPath("$.items[0].email").value("ab***@idolglow.test"))
             .andExpect(jsonPath("$.items[0].newsletter").value(true))
-            .andExpect(jsonPath("$.items[0].webzineIssue").value(true))
+            .andExpect(jsonPath("$.items[0].idolglowIssue").value(true))
             .andExpect(jsonPath("$.items[0].statusLabel").value("구독 중"))
-        webzineOnly.andExpect(jsonPath("$.totalElements").value(2))
+        idolglowOnly.andExpect(jsonPath("$.totalElements").value(2))
         inactive.andExpect(jsonPath("$.totalElements").value(0))
     }
 
@@ -224,7 +224,7 @@ class AdminSubscriptionQueryApiPostgresTest : PostgresIntegrationTest() {
             SubscriptionDispatchStatus.SENT,
             january.plusMonths(1),
         )
-        saveHistory("$key-web", SubscriptionContentType.WEBZINE_ISSUE, SubscriptionDispatchStatus.SENT, january)
+        saveHistory("$key-web", SubscriptionContentType.IDOLGLOW_ISSUE, SubscriptionDispatchStatus.SENT, january)
         saveRecipient(partial.id, "sent@idolglow.test", sent = true)
         saveRecipient(partial.id, "fail@idolglow.test", sent = false)
 

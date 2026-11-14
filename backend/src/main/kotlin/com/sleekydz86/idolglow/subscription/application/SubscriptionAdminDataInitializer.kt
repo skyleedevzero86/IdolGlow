@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.subscription.application
 
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowIssueRepository
 import com.sleekydz86.idolglow.newsletter.domain.NewsletterRepository
 import com.sleekydz86.idolglow.subscription.application.dto.RegisterSubscriptionCommand
 import com.sleekydz86.idolglow.subscription.application.port.`in`.SubscriptionDispatchRecorder
@@ -10,7 +11,6 @@ import com.sleekydz86.idolglow.subscription.application.port.out.SubscriptionDis
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchFrequency
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
-import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
 import java.time.DayOfWeek
 
 @Profile("local", "dev")
-@DependsOn("newsletterAdminDataInitializer", "webzineAdminDataInitializer")
+@DependsOn("newsletterAdminDataInitializer", "idolGlowAdminDataInitializer")
 @Component
 class SubscriptionAdminDataInitializer(
     private val subscriptionPublicUseCase: SubscriptionPublicUseCase,
@@ -28,7 +28,7 @@ class SubscriptionAdminDataInitializer(
     private val emailSubscriptionPort: EmailSubscriptionPort,
     private val subscriptionDispatchHistoryPort: SubscriptionDispatchHistoryPort,
     private val newsletterRepository: NewsletterRepository,
-    private val webzineIssueRepository: WebzineIssueRepository,
+    private val idolglowIssueRepository: IdolGlowIssueRepository,
     private val subscriptionDispatchSchedulePort: SubscriptionDispatchSchedulePort,
 ) : ApplicationRunner {
     private val log = LoggerFactory.getLogger(SubscriptionAdminDataInitializer::class.java)
@@ -44,10 +44,10 @@ class SubscriptionAdminDataInitializer(
                 .take(2)
                 .forEach(subscriptionDispatchRecorder::recordNewsletterDispatch)
 
-            webzineIssueRepository
+            idolglowIssueRepository
                 .findAllByLatest()
                 .take(2)
-                .forEach(subscriptionDispatchRecorder::recordWebzineIssueDispatch)
+                .forEach(subscriptionDispatchRecorder::recordIdolGlowIssueDispatch)
         }
 
         seedProductRecommendationSchedule()

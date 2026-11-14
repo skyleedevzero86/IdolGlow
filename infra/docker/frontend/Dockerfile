@@ -1,9 +1,6 @@
 # syntax=docker/dockerfile:1
-# docker-compose 에서 repo 루트(context: ..) 기준으로 빌드합니다.
-# FRONTEND_DIR: docs/acc-webzine (Vite) 또는 frontend (Next.js)
-# target: static (기본) | next
 
-ARG FRONTEND_DIR=docs/acc-webzine
+ARG FRONTEND_DIR=frontend
 
 FROM node:22-bookworm-slim AS builder
 
@@ -23,7 +20,6 @@ RUN if [ -d dist ] && [ -f dist/index.html ]; then \
       pnpm build; \
     fi
 
-# --- Vite / 정적 SPA (docs/acc-webzine) ---
 FROM nginx:1.27-alpine AS static
 
 COPY infra/docker/frontend/nginx.static.conf /etc/nginx/conf.d/default.conf
@@ -34,7 +30,6 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:80/ >/dev/null || exit 1
 
-# --- Next.js (frontend/) ---
 FROM node:22-bookworm-slim AS next-deps
 
 WORKDIR /app

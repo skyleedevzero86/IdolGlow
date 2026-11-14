@@ -14,6 +14,7 @@ import java.io.StringReader
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -25,6 +26,9 @@ class CultureInfoApiClient(
     private val log = LoggerFactory.getLogger(javaClass)
     private val unauthorizedBlockedUntilMillis = AtomicLong(0)
     private val rateLimitedUntilMillis = AtomicLong(0)
+    private val calendarDayCache = ConcurrentHashMap<String, CachedCalendarDay>()
+    private val pacingLock = Any()
+    private var lastRequestAtMillis = 0L
 
     fun listEventsForCalendarDay(
         yyyyMMdd: String,
@@ -32,6 +36,32 @@ class CultureInfoApiClient(
         numOfRows: Int,
         maxRealm2PerServiceTp: Int = 1000,
         maxArea2PerServiceTp: Int = 1000,
+    ): List<FestivalEvent> {
+        val cacheKey = "$yyyyMMdd:$pageNo:$numOfRows:$maxRealm2PerServiceTp:$maxArea2PerServiceTp"
+        val now = System.currentTimeMillis()
+        calendarDayCache[cacheKey]?.takeIf { now - it.cachedAtMillis < CALENDAR_DAY_CACHE_TTL.toMillis() }?.let {
+            return it.events
+        }
+        val rateLimitBefore = rateLimitedUntilMillis.get()
+        val events =
+            fetchEventsForCalendarDay(yyyyMMdd, pageNo, numOfRows, maxRealm2PerServiceTp, maxArea2PerServiceTp)
+        if (rateLimitedUntilMillis.get() == rateLimitBefore) {
+            if (calendarDayCache.size >= CALENDAR_DAY_CACHE_MAX_ENTRIES) {
+                calendarDayCache.entries
+                    .minByOrNull { it.value.cachedAtMillis }
+                    ?.let { calendarDayCache.remove(it.key) }
+            }
+            calendarDayCache[cacheKey] = CachedCalendarDay(events, System.currentTimeMillis())
+        }
+        return events
+    }
+
+    private fun fetchEventsForCalendarDay(
+        yyyyMMdd: String,
+        pageNo: Int,
+        numOfRows: Int,
+        maxRealm2PerServiceTp: Int,
+        maxArea2PerServiceTp: Int,
     ): List<FestivalEvent> {
         val key = resolveEncodedServiceKey(properties.serviceKey)
         if (key.isEmpty()) return emptyList()
@@ -307,8 +337,17 @@ class CultureInfoApiClient(
         return null
     }
 
+    private fun awaitPacing() {
+        synchronized(pacingLock) {
+            val waitMillis = lastRequestAtMillis + MIN_REQUEST_INTERVAL.toMillis() - System.currentTimeMillis()
+            if (waitMillis > 0) Thread.sleep(waitMillis)
+            lastRequestAtMillis = System.currentTimeMillis()
+        }
+    }
+
     private fun requestRaw(url: String): RawCultureResponse =
         runCatching {
+            awaitPacing()
             webClient
                 .get()
                 .uri(URI.create(url))
@@ -427,6 +466,9 @@ class CultureInfoApiClient(
         private val UNAUTHORIZED_COOLDOWN: Duration = Duration.ofMinutes(5)
         private val RATE_LIMIT_COOLDOWN: Duration = Duration.ofSeconds(30)
         private const val HTTP_TOO_MANY_REQUESTS = 429
+        private val CALENDAR_DAY_CACHE_TTL: Duration = Duration.ofMinutes(10)
+        private const val CALENDAR_DAY_CACHE_MAX_ENTRIES = 200
+        private val MIN_REQUEST_INTERVAL: Duration = Duration.ofMillis(70)
         private const val MAX_SERVICE_KEY_DECODE_PASSES = 3
         private val PERCENT_ENCODED_REGEX = Regex("%[0-9A-Fa-f]{2}")
         private val SERVICE_TYPES = listOf("A", "B", "C")
@@ -452,4 +494,9 @@ class CultureInfoApiClient(
 private data class RawCultureResponse(
     val statusCode: HttpStatusCode,
     val body: String,
+)
+
+private data class CachedCalendarDay(
+    val events: List<FestivalEvent>,
+    val cachedAtMillis: Long,
 )

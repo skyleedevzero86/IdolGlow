@@ -134,7 +134,7 @@ services:
       MINIO_BUCKET: idolglow
       MINIO_PUBLIC_BASE_URL: http://localhost:9000/idolglow
       MINIO_PUBLIC_READ_PROFILE_OBJECTS: "true"
-      MINIO_PUBLIC_READ_WEBZINE_OBJECTS: "true"
+      MINIO_PUBLIC_READ_IDOLGLOW_OBJECTS: "true"
       APP_PUBLIC_BASE_URL: http://localhost:9090
       APP_VERSION: ${APP_VERSION:-unknown}
       MOCK_PAYMENT_WEBHOOK_SECRET: "${MOCK_PAYMENT_WEBHOOK_SECRET:?infra/.env에 MOCK_PAYMENT_WEBHOOK_SECRET를 설정하세요}"
@@ -167,7 +167,7 @@ services:
     build:
       context: ..
       dockerfile: infra/docker/frontend/Dockerfile
-      target: ${FRONTEND_TARGET:-static}
+      target: ${FRONTEND_TARGET:-next}
       args:
         FRONTEND_DIR: ${FRONTEND_DIR:-frontend}
     container_name: idolglow-frontend

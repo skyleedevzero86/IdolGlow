@@ -1,10 +1,10 @@
 package com.sleekydz86.idolglow.mim.adapter.web
 
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageUploadUseCase
+import com.sleekydz86.idolglow.idolglowissue.application.dto.AdminIssueImageUploadResponse
 import com.sleekydz86.idolglow.mim.application.MimAdminService
 import com.sleekydz86.idolglow.mim.application.dto.MimAdminPageResponse
 import com.sleekydz86.idolglow.mim.application.dto.UpsertMimRequest
-import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
-import com.sleekydz86.idolglow.webzine.application.dto.AdminIssueImageUploadResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -31,7 +31,7 @@ import java.net.URI
 @RequestMapping("/admin/mim")
 class AdminMimController(
     private val mimAdminService: MimAdminService,
-    private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
+    private val idolglowImageUploadUseCase: IdolGlowImageUploadUseCase,
 ) {
     @Operation(summary = "메인 이미지 목록 조회")
     @GetMapping
@@ -63,7 +63,8 @@ class AdminMimController(
     @PostMapping("/uploads/images", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile,
-    ): ResponseEntity<AdminIssueImageUploadResponse> = ResponseEntity.ok(webzineImageUploadUseCase.upload(file, "site-content/main-slides"))
+    ): ResponseEntity<AdminIssueImageUploadResponse> =
+        ResponseEntity.ok(idolglowImageUploadUseCase.upload(file, "site-content/main-slides"))
 
     @Operation(summary = "메인 이미지 수정")
     @PutMapping("/{imageId}")

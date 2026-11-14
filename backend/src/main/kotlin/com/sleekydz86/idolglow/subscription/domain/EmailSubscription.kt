@@ -58,7 +58,7 @@ class EmailSubscription(
     fun subscribedTargets(): List<SubscriptionAudience> =
         buildList {
             if (subscribedNewsletters) add(SubscriptionAudience.NEWSLETTER)
-            if (subscribedIssues) add(SubscriptionAudience.WEBZINE_ISSUE)
+            if (subscribedIssues) add(SubscriptionAudience.IDOLGLOW_ISSUE)
         }
 
     companion object {

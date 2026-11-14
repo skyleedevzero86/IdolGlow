@@ -95,14 +95,14 @@ class ContentViewPostgresTest : PostgresIntegrationTest() {
         recordImage(me, ContentTargetType.ARTICLE, "img", "https://cdn.example.com/a.jpg")
 
         // when
-        val updated = recordImage(me, ContentTargetType.ARTICLE, "img", "/uploads/webzine/b.png")
+        val updated = recordImage(me, ContentTargetType.ARTICLE, "img", "/uploads/idolglow/b.png")
         val unsafe = recordImage(me, ContentTargetType.PRODUCT, "js", "javascript:alert(1)")
         val page = contentViewUseCase.findMine(me.id, OffsetPageRequest.of(0, 20))
 
         // then
-        assertEquals("/uploads/webzine/b.png", updated.imageUrl)
+        assertEquals("/uploads/idolglow/b.png", updated.imageUrl)
         assertEquals(null, unsafe.imageUrl)
-        assertEquals(listOf(null, "/uploads/webzine/b.png"), page.items.map { it.imageUrl })
+        assertEquals(listOf(null, "/uploads/idolglow/b.png"), page.items.map { it.imageUrl })
     }
 
     @DisplayName("회원당 최근 200개만 남기고 오래된 기록부터 지운다")

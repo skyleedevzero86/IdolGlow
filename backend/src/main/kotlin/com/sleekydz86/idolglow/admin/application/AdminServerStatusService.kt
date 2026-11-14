@@ -274,7 +274,7 @@ class AdminServerStatusService(
                         "bucket" to minioStorageProperties.bucket,
                         "publicBaseUrl" to minioStorageProperties.publicBaseUrl.ifBlank { "-" },
                         "publicReadProfileObjects" to minioStorageProperties.publicReadProfileObjects.toString(),
-                        "publicReadWebzineObjects" to minioStorageProperties.publicReadWebzineObjects.toString(),
+                        "publicReadIdolGlowObjects" to minioStorageProperties.publicReadIdolGlowObjects.toString(),
                     ),
             )
         }.getOrElse { error ->
