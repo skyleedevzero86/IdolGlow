@@ -2,8 +2,11 @@ package com.sleekydz86.idolglow.subscription.infrastructure
 
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 
-interface EmailSubscriptionJpaRepository : JpaRepository<EmailSubscription, Long> {
+interface EmailSubscriptionJpaRepository :
+    JpaRepository<EmailSubscription, Long>,
+    JpaSpecificationExecutor<EmailSubscription> {
     fun findByEmail(email: String): EmailSubscription?
 
     fun findAllByActiveTrueAndSubscribedNewslettersTrueOrderBySubscribedAtDesc(): List<EmailSubscription>
