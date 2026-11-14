@@ -12,6 +12,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.time.LocalDate
+import com.sleekydz86.idolglow.subscription.application.ProductRecommendationMailLayout as Layout
 
 @Component
 class SubscriptionEmailComposer(
@@ -223,46 +224,49 @@ class SubscriptionEmailComposer(
             appendLine("이 메일은 ${content.recipient} 주소로 광고성 정보 수신에 동의하신 분께 보내 드립니다.")
         }.trim()
 
-    private fun recommendationHtml(content: RecommendationMailContent): String =
-        buildString {
-            append("<html><body style=\"margin:0;padding:0;background:#f6f1e8;color:#1f1a18;")
-            append("font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;\">")
-            append("<div style=\"max-width:640px;margin:0 auto;padding:32px 20px;\">")
-            append("<div style=\"background:#fffaf4;border-radius:24px;border:1px solid #eadfce;padding:28px;\">")
-            append("<p style=\"margin:0 0 8px;font-size:12px;color:#8f5b43;\">(광고)</p>")
-            append("<h1 style=\"margin:0;font-size:26px;line-height:1.3;\">${escapeHtml(content.title)}</h1>")
-            content.notices.forEach {
-                append("<p style=\"margin:12px 0 0;font-size:14px;color:#544b46;\">${escapeHtml(it)}</p>")
+    private fun recommendationHtml(content: RecommendationMailContent): String {
+        val body =
+            buildString {
+                append("<p style=\"margin:0 0 8px;font-size:12px;font-weight:700;color:${Layout.ACCENT};\">(광고)</p>")
+                append(Layout.heading(escapeHtml(content.title)))
+                append(Layout.highlight(content.notices.map(::escapeHtml)))
+                content.items.forEach { append(productCardHtml(it)) }
+                append("<p style=\"margin:24px 0 0;font-size:13px;line-height:1.7;color:${Layout.SUBTLE};\">")
+                append("${escapeHtml(PRICE_NOTICE)}</p>")
+                content.surveyUrl?.let {
+                    append("<p style=\"margin:10px 0 0;font-size:13px;\">")
+                    append("${Layout.link(escapeHtml(it), "설문 수정하기")}</p>")
+                }
             }
-            content.items.forEach { append(productCardHtml(it)) }
-            append("<p style=\"margin:24px 0 0;font-size:13px;color:#6b605a;\">${escapeHtml(PRICE_NOTICE)}</p>")
-            content.surveyUrl?.let {
-                append("<p style=\"margin:12px 0 0;font-size:13px;\"><a href=\"${escapeHtml(it)}\" ")
-                append("style=\"color:#c8673d;\">설문 수정하기</a></p>")
-            }
-            append("<hr style=\"margin:24px 0 16px;border:none;border-top:1px solid #eadfce;\" />")
-            append("<p style=\"margin:0;font-size:12px;line-height:1.8;color:#6b605a;\">")
-            append("보내는 곳: ${escapeHtml(content.senderName)} · 연락처: ${escapeHtml(content.senderContact)}<br/>")
-            append("이 메일은 ${escapeHtml(content.recipient)} 주소로 광고성 정보 수신에 동의하신 분께 보내 드립니다.<br/>")
-            append("더 이상 받지 않으려면 <a href=\"${escapeHtml(content.unsubscribeUrl)}\" ")
-            append("style=\"color:#c8673d;\">수신 거부</a>를 눌러 주세요.</p>")
-            append("</div></div></body></html>")
-        }
+        val footer =
+            Layout.footnote(
+                "보내는 곳: ${escapeHtml(content.senderName)} · 연락처: ${escapeHtml(content.senderContact)}<br/>" +
+                    "이 메일은 ${escapeHtml(content.recipient)} 주소로 광고성 정보 수신에 동의하신 분께 보내 드립니다.<br/>" +
+                    "더 이상 받지 않으려면 ${Layout.link(escapeHtml(content.unsubscribeUrl), "수신 거부")}를 눌러 주세요.",
+            )
+        return Layout.document(body = body, footer = footer)
+    }
 
     private fun productCardHtml(item: ProductRecommendationMailItem): String =
         buildString {
-            append("<div style=\"margin-top:18px;padding:18px;border-radius:18px;background:#f7efe2;\">")
-            append("<p style=\"margin:0;font-size:17px;font-weight:700;\">${escapeHtml(item.name)}</p>")
-            append("<p style=\"margin:6px 0 0;font-size:14px;color:#2d2623;\">")
-            append("최저가 ${escapeHtml(formatPrice(item.minPrice))}</p>")
-            item.reasons.take(RECOMMENDATION_REASON_LIMIT).forEach {
-                append("<p style=\"margin:6px 0 0;font-size:13px;color:#8f5b43;\">· ${escapeHtml(it)}</p>")
+            append("<table ${Layout.TABLE_ATTRS} width=\"100%\" style=\"margin:16px 0 0;border-collapse:collapse;")
+            append("border:1px solid ${Layout.FRAME};border-top:2px solid ${Layout.INK};\"><tr>")
+            append("<td style=\"padding:16px 18px;background:#ffffff;\">")
+            append("<p style=\"margin:0;font-size:17px;font-weight:700;line-height:1.45;color:${Layout.INK};\">")
+            append("${escapeHtml(item.name)}</p>")
+            append("<p style=\"margin:6px 0 0;font-size:14px;color:${Layout.BODY};\">")
+            append("최저가 <strong style=\"color:${Layout.INK};\">${escapeHtml(formatPrice(item.minPrice))}</strong></p>")
+            val reasons = item.reasons.take(RECOMMENDATION_REASON_LIMIT)
+            if (reasons.isNotEmpty()) {
+                append("<div style=\"margin:12px 0 0;padding:2px 0 2px 10px;border-left:3px solid ${Layout.ACCENT};\">")
+                reasons.forEach {
+                    append("<p style=\"margin:2px 0;font-size:13px;line-height:1.6;color:${Layout.BODY};\">")
+                    append("· ${escapeHtml(it)}</p>")
+                }
+                append("</div>")
             }
-            productUrl(item)?.let {
-                append("<p style=\"margin:10px 0 0;\"><a href=\"${escapeHtml(it)}\" ")
-                append("style=\"color:#cb5c33;font-weight:700;text-decoration:none;\">상세 보기</a></p>")
-            }
-            append("</div>")
+            productUrl(item)?.let { append(Layout.button(escapeHtml(it), "상세 보기", marginTop = 14)) }
+            append("</td></tr></table>")
         }
 
     private fun productUrl(item: ProductRecommendationMailItem): String? =

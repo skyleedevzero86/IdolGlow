@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.subscription.application.dto.ProductRecommendationMailUnsubscribeNotice
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
+import com.sleekydz86.idolglow.subscription.application.ProductRecommendationMailLayout as Layout
 
 @Component
 class ProductRecommendationMailNoticeComposer(
@@ -34,29 +35,16 @@ class ProductRecommendationMailNoticeComposer(
                     appendLine("마이페이지: $myPageUrl")
                 }
             }.trim()
-        val linesHtml =
-            lines.joinToString("") {
-                "<p style=\"margin:10px 0 0;font-size:14px;line-height:1.8;color:#544b46;\">${escapeHtml(it)}</p>"
-            }
-        val linkHtml =
-            myPageUrl
-                ?.let {
-                    "<p style=\"margin:20px 0 0;\"><a href=\"${escapeHtml(it)}\" style=\"color:#c8673d;\">" +
-                        "마이페이지로 이동</a></p>"
-                }.orEmpty()
         val htmlBody =
-            buildString {
-                append("<html><body style=\"margin:0;padding:0;background:#f6f1e8;color:#1f1a18;")
-                append("font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;\">")
-                append("<div style=\"max-width:560px;margin:0 auto;padding:32px 20px;\">")
-                append("<div style=\"background:#fffaf4;border-radius:20px;border:1px solid #eadfce;padding:28px;\">")
-                append("<h1 style=\"margin:0;font-size:22px;line-height:1.4;\">$TITLE</h1>")
-                append("<p style=\"margin:16px 0 0;font-size:14px;color:#544b46;\">")
-                append("처리 일시 ${escapeHtml(processedAt)}</p>")
-                append(linesHtml)
-                append(linkHtml)
-                append("</div></div></body></html>")
-            }
+            Layout.document(
+                body =
+                    buildString {
+                        append(Layout.heading(TITLE))
+                        append(Layout.highlight(listOf("처리 일시 ${escapeHtml(processedAt)}")))
+                        lines.forEach { append(Layout.paragraph(escapeHtml(it))) }
+                        myPageUrl?.let { append(Layout.button(escapeHtml(it), "마이페이지로 이동")) }
+                    },
+            )
         return ComposedSubscriptionEmail(
             subject = subject,
             plainText = plainText,
@@ -99,25 +87,16 @@ class ProductRecommendationMailNoticeComposer(
                 appendLine("보내는 곳: $senderName / 연락처: $senderContact")
             }.trim()
         val htmlBody =
-            buildString {
-                append("<html><body style=\"margin:0;padding:0;background:#f6f1e8;color:#1f1a18;")
-                append("font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;\">")
-                append("<div style=\"max-width:560px;margin:0 auto;padding:32px 20px;\">")
-                append("<div style=\"background:#fffaf4;border-radius:20px;border:1px solid #eadfce;padding:28px;\">")
-                append("<h1 style=\"margin:0;font-size:22px;line-height:1.4;\">$CONSENT_REMINDER_TITLE</h1>")
-                append("<p style=\"margin:16px 0 0;font-size:14px;color:#544b46;\">")
-                append("수신 동의일 ${escapeHtml(consentDate)}</p>")
-                lines.forEach {
-                    append("<p style=\"margin:10px 0 0;font-size:14px;line-height:1.8;color:#544b46;\">")
-                    append("${escapeHtml(it)}</p>")
-                }
-                append("<p style=\"margin:20px 0 0;\"><a href=\"${escapeHtml(unsubscribeUrl)}\" ")
-                append("style=\"color:#c8673d;\">수신 거부</a></p>")
-                append("<hr style=\"margin:24px 0 16px;border:none;border-top:1px solid #eadfce;\" />")
-                append("<p style=\"margin:0;font-size:12px;line-height:1.8;color:#6b605a;\">")
-                append("보내는 곳: ${escapeHtml(senderName)} · 연락처: ${escapeHtml(senderContact)}</p>")
-                append("</div></div></body></html>")
-            }
+            Layout.document(
+                body =
+                    buildString {
+                        append(Layout.heading(CONSENT_REMINDER_TITLE))
+                        append(Layout.highlight(listOf("수신 동의일 ${escapeHtml(consentDate)}")))
+                        lines.forEach { append(Layout.paragraph(escapeHtml(it))) }
+                        append(Layout.button(escapeHtml(unsubscribeUrl), "수신 거부"))
+                    },
+                footer = Layout.footnote("보내는 곳: ${escapeHtml(senderName)} · 연락처: ${escapeHtml(senderContact)}"),
+            )
         return ComposedSubscriptionEmail(
             subject = subject,
             plainText = plainText,

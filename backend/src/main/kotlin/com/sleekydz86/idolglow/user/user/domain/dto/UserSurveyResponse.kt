@@ -33,7 +33,7 @@ data class UserSurveyResponse(
                 visitEndDate = userSurvey.visitEndDate,
                 visitStartTime = userSurvey.visitStartTime,
                 visitEndTime = userSurvey.visitEndTime,
-                places = userSurvey.places,
+                places = userSurvey.places.toList(),
             )
     }
 }
