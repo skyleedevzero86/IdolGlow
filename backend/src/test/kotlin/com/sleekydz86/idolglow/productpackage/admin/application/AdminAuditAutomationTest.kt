@@ -11,13 +11,13 @@ class AdminAuditAutomationTest {
     @DisplayName("가장 많은 작업이 승인이면 그다음 작업을 자동화 후보로 고른다")
     fun skipsApprovalWhenChoosingAutomationTarget() {
         // given
-        val actions = listOf("OPS_CHANGE_APPROVE", "WEBZINE_ARTICLE_UPDATE", "BILLING_CHARGE")
+        val actions = listOf("OPS_CHANGE_APPROVE", "IDOLGLOW_ARTICLE_UPDATE", "BILLING_CHARGE")
 
         // when
         val choice = AdminAuditAutomation.choose(actions)
 
         // then
-        assertEquals("WEBZINE_ARTICLE_UPDATE", choice.actionCode)
+        assertEquals("IDOLGLOW_ARTICLE_UPDATE", choice.actionCode)
         assertEquals("가장 많이 반복되고 조회와 요약으로 줄일 수 있어 자동화 후보로 둔다.", choice.reason)
     }
 

@@ -6,7 +6,7 @@ import com.sleekydz86.idolglow.event.adapter.web.dto.AdminEventPageResponse
 import com.sleekydz86.idolglow.event.adapter.web.dto.toWebResponse
 import com.sleekydz86.idolglow.event.adapter.web.request.UpsertAdminEventRequest
 import com.sleekydz86.idolglow.event.application.AdminEventService
-import com.sleekydz86.idolglow.webzine.application.WebzineImageUploadUseCase
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageUploadUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -32,7 +32,7 @@ import java.net.URI
 @RequestMapping("/admin/events", "/api/admin/events")
 class AdminEventController(
     private val adminEventService: AdminEventService,
-    private val webzineImageUploadUseCase: WebzineImageUploadUseCase,
+    private val idolglowImageUploadUseCase: IdolGlowImageUploadUseCase,
 ) {
     @Operation(summary = "이벤트 목록 조회")
     @GetMapping
@@ -75,7 +75,7 @@ class AdminEventController(
     fun uploadEventImage(
         @RequestPart("file") file: MultipartFile,
     ): ResponseEntity<AdminEventImageUploadResponse> {
-        val uploaded = webzineImageUploadUseCase.upload(file, "site-content/events")
+        val uploaded = idolglowImageUploadUseCase.upload(file, "site-content/events")
         return ResponseEntity.ok(AdminEventImageUploadResponse.from(uploaded))
     }
 }

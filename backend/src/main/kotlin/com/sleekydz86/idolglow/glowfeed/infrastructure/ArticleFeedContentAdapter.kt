@@ -27,7 +27,7 @@ class ArticleFeedContentAdapter(
                     GlowFeedContent(
                         title = rs.getString("title"),
                         imageUrl = rs.getString("card_image_url")?.takeIf(String::isNotBlank),
-                        path = GlowFeedPaths.webzineArticle(rs.getString("issue_slug"), rs.getString("slug")),
+                        path = GlowFeedPaths.idolglowArticle(rs.getString("issue_slug"), rs.getString("slug")),
                         volume = rs.getInt("volume"),
                         meta = rs.getString("author_name"),
                         tags = tags[id].orEmpty(),
@@ -38,9 +38,9 @@ class ArticleFeedContentAdapter(
     companion object {
         private const val ARTICLE_SQL =
             "SELECT a.id, a.slug, a.title, a.card_image_url, a.author_name, i.slug AS issue_slug, i.volume " +
-                "FROM webzine_articles a JOIN webzine_issues i ON i.id = a.issue_id WHERE a.id IN (:ids)"
+                "FROM idolglow_articles a JOIN idolglow_issues i ON i.id = a.issue_id WHERE a.id IN (:ids)"
         private const val TAG_SQL =
-            "SELECT article_id, tag_name FROM webzine_article_tags WHERE article_id IN (:ids) " +
+            "SELECT article_id, tag_name FROM idolglow_article_tags WHERE article_id IN (:ids) " +
                 "ORDER BY article_id, display_order"
     }
 }

@@ -8,6 +8,12 @@ import com.sleekydz86.idolglow.global.support.ContentTargetType
 import com.sleekydz86.idolglow.glowcommunity.domain.GlowCommunityPost
 import com.sleekydz86.idolglow.glowcommunity.domain.GlowCommunityTag
 import com.sleekydz86.idolglow.glowcommunity.infrastructure.GlowCommunityPostJpaRepository
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowArticle
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowArticleDraft
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowArticleSectionDraft
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowIssue
+import com.sleekydz86.idolglow.idolglowissue.domain.IdolGlowIssueRepository
+import com.sleekydz86.idolglow.idolglowissue.domain.IssueCategory
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductJpaRepository
 import com.sleekydz86.idolglow.review.domain.ProductReview
@@ -15,12 +21,6 @@ import com.sleekydz86.idolglow.review.infrastructure.ProductReviewJpaRepository
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.vo.Nickname
 import com.sleekydz86.idolglow.user.user.infrastructure.UserJpaRepository
-import com.sleekydz86.idolglow.webzine.domain.IssueCategory
-import com.sleekydz86.idolglow.webzine.domain.WebzineArticle
-import com.sleekydz86.idolglow.webzine.domain.WebzineArticleDraft
-import com.sleekydz86.idolglow.webzine.domain.WebzineArticleSectionDraft
-import com.sleekydz86.idolglow.webzine.domain.WebzineIssue
-import com.sleekydz86.idolglow.webzine.domain.WebzineIssueRepository
 import org.springframework.context.ApplicationContext
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.support.TransactionTemplate
@@ -37,7 +37,7 @@ class GlowFeedFixture(
 
     private val jdbc: JdbcTemplate by lazy { context.getBean(JdbcTemplate::class.java) }
     private val transactions: TransactionTemplate by lazy { context.getBean(TransactionTemplate::class.java) }
-    private val issues: WebzineIssueRepository by lazy { context.getBean(WebzineIssueRepository::class.java) }
+    private val issues: IdolGlowIssueRepository by lazy { context.getBean(IdolGlowIssueRepository::class.java) }
     private val cleanups = mutableListOf<Pair<String, Long>>()
     private val userIds = mutableListOf<Long>()
     private val issueSlugs = mutableListOf<String>()
@@ -62,8 +62,8 @@ class GlowFeedFixture(
         issueSlugs += issueSlug
         val article =
             transactions.execute {
-                val issue = WebzineIssue.create(issueSlug, volume, issueDate, "https://example.com/cover.jpg", "소개")
-                issue.addArticle(WebzineArticle.create(issue, "$issueSlug-a", draft(title)))
+                val issue = IdolGlowIssue.create(issueSlug, volume, issueDate, "https://example.com/cover.jpg", "소개")
+                issue.addArticle(IdolGlowArticle.create(issue, "$issueSlug-a", draft(title)))
                 issues.save(issue).articles.first()
             }!!
         return FeedArticle(article.id, issueSlug, "$issueSlug-a", volume)
@@ -205,8 +205,8 @@ class GlowFeedFixture(
                 .replace("-", "")
                 .take(SUFFIX_LENGTH)
 
-        private fun draft(title: String): WebzineArticleDraft =
-            WebzineArticleDraft(
+        private fun draft(title: String): IdolGlowArticleDraft =
+            IdolGlowArticleDraft(
                 title = title,
                 kicker = "부제",
                 summary = "요약",
@@ -218,7 +218,7 @@ class GlowFeedFixture(
                 authorEmail = "writer@example.com",
                 creditLine = "크레딧",
                 highlightQuote = null,
-                sections = listOf(WebzineArticleSectionDraft(heading = "소제목", body = "본문", note = null)),
+                sections = listOf(IdolGlowArticleSectionDraft(heading = "소제목", body = "본문", note = null)),
                 galleryImageUrls = emptyList(),
                 tags = listOf("트렌드"),
             )

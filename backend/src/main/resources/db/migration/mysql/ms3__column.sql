@@ -269,7 +269,7 @@ ALTER TABLE product_review_reports
         COMMENT '레코드 마지막 수정 시각 감사·낙관적 락 등 공통 엔티티 필드';
 
 -- 이슈별 기사 목록 조회
-create index idx_webzine_articles_issue_id on webzine_articles(issue_id);
+create index idx_idolglow_articles_issue_id on idolglow_articles(issue_id);
 
 create index idx_newsletters_published_at on newsletters(published_at);
 
@@ -912,3 +912,383 @@ CREATE INDEX idx_content_comments_user_created
 
 CREATE INDEX idx_user_content_views_user_viewed
     ON user_content_views (user_id, viewed_at);
+
+-- =============================================================================
+-- webzine 이름을 idolglow 로 바꾼다
+-- -----
+-- 목적
+-- - 기존 디비의 webzine 테이블, 인덱스, 외래 키 이름을 idolglow 로 바꾼다
+-- - 저장된 WEBZINE 코드값과 webzine/ 업로드 경로를 idolglow 로 바꾼다
+-- 대상
+-- - ms
+-- 주의
+-- - 새 데이터베이스는 ms2 가 idolglow 이름으로 만들기 때문에 이름 변경은 건너뛴다
+-- - 이미 반영된 데이터베이스에는 이 묶음만 따로 한 번 실행한다
+-- - 마이에스큐엘은 RENAME TABLE IF EXISTS 가 없어서 information_schema 로 확인한 뒤 실행한다
+-- - MinIO 의 webzine/ 객체도 idolglow/ 로 옮겨야 한다
+-- 연관
+-- - IdolGlowIssue, IdolGlowArticle, MailSendKind, SubscriptionContentType, RagSourceType
+-- =============================================================================
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_issues TO idolglow_issues',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_issues'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_articles TO idolglow_articles',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_articles'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_article_sections TO idolglow_article_sections',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_article_sections'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_article_gallery_images TO idolglow_article_gallery_images',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_article_gallery_images'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_article_tags TO idolglow_article_tags',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_article_tags'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_issues RENAME INDEX uk_webzine_issue_slug TO uk_idolglow_issue_slug, RENAME INDEX uk_webzine_issue_volume TO uk_idolglow_issue_volume',
+        'SELECT 1'
+    )
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_issues'
+      AND index_name = 'uk_webzine_issue_slug'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+-- 외래 키는 이름만 바꿀 수 없어서 지우고 같은 정의로 다시 만든다
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_articles RENAME INDEX uk_webzine_article_issue_slug TO uk_idolglow_article_issue_slug, RENAME INDEX idx_webzine_articles_issue_id TO idx_idolglow_articles_issue_id, DROP FOREIGN KEY fk_webzine_articles_issue, ADD CONSTRAINT fk_idolglow_articles_issue FOREIGN KEY (issue_id) REFERENCES idolglow_issues (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_articles'
+      AND constraint_name = 'fk_webzine_articles_issue'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_article_sections RENAME INDEX uk_webzine_article_section_order TO uk_idolglow_article_section_order, DROP FOREIGN KEY fk_webzine_article_sections_article, ADD CONSTRAINT fk_idolglow_article_sections_article FOREIGN KEY (article_id) REFERENCES idolglow_articles (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_article_sections'
+      AND constraint_name = 'fk_webzine_article_sections_article'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_article_gallery_images RENAME INDEX uk_webzine_article_gallery_order TO uk_idolglow_article_gallery_order, DROP FOREIGN KEY fk_webzine_article_gallery_article, ADD CONSTRAINT fk_idolglow_article_gallery_article FOREIGN KEY (article_id) REFERENCES idolglow_articles (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_article_gallery_images'
+      AND constraint_name = 'fk_webzine_article_gallery_article'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_article_tags RENAME INDEX uk_webzine_article_tag_name TO uk_idolglow_article_tag_name, DROP FOREIGN KEY fk_webzine_article_tags_article, ADD CONSTRAINT fk_idolglow_article_tags_article FOREIGN KEY (article_id) REFERENCES idolglow_articles (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_article_tags'
+      AND constraint_name = 'fk_webzine_article_tags_article'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+ALTER TABLE idolglow_articles
+    MODIFY COLUMN issue_id BIGINT NOT NULL COMMENT 'FK → idolglow_issues.id';
+
+ALTER TABLE idolglow_article_sections
+    MODIFY COLUMN article_id BIGINT NOT NULL COMMENT 'FK → idolglow_articles.id';
+
+ALTER TABLE idolglow_article_gallery_images
+    MODIFY COLUMN article_id BIGINT NOT NULL COMMENT 'FK → idolglow_articles.id';
+
+ALTER TABLE idolglow_article_tags
+    MODIFY COLUMN article_id BIGINT NOT NULL COMMENT 'FK → idolglow_articles.id';
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE mail_send_logs DROP CHECK chk_mail_send_logs_kind',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'mail_send_logs'
+      AND constraint_name = 'chk_mail_send_logs_kind'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+UPDATE mail_send_logs SET mail_kind = 'IDOLGLOW' WHERE mail_kind = 'WEBZINE';
+
+ALTER TABLE mail_send_logs
+    MODIFY COLUMN mail_kind VARCHAR(40) NOT NULL
+        COMMENT '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+
+ALTER TABLE mail_send_logs
+    ADD CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'IDOLGLOW', 'UNSUBSCRIBE_CONFIRM',
+        'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
+    ));
+
+UPDATE subscription_dispatch_histories SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+ALTER TABLE subscription_dispatch_histories
+    MODIFY COLUMN content_type VARCHAR(40) NOT NULL
+        COMMENT '콘텐츠 유형 코드. NEWSLETTER, IDOLGLOW 등 서비스에서 정의한 값.';
+
+UPDATE subscription_dispatch_schedules SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+UPDATE admin_audit_logs
+SET action_code = CONCAT('IDOLGLOW_', SUBSTRING(action_code, 9))
+WHERE LEFT(action_code, 8) = 'WEBZINE_';
+
+UPDATE admin_audit_logs
+SET target_type = CONCAT('IDOLGLOW_', SUBSTRING(target_type, 9))
+WHERE LEFT(target_type, 8) = 'WEBZINE_';
+
+UPDATE admin_audit_logs
+SET detail = REPLACE(detail, 'objectKey=webzine/', 'objectKey=idolglow/')
+WHERE detail LIKE '%objectKey=webzine/%';
+
+UPDATE idolglow_articles
+SET author_email = 'idolglow@idolglow.local'
+WHERE author_email = 'webzine@idolglow.local';
+
+-- 업로드 URL 은 MinIO 공개 주소 뒤나 /uploads/ 뒤에 webzine/ 객체 키가 붙어 있다
+UPDATE idolglow_issues
+SET cover_image_url = REPLACE(cover_image_url, '/webzine/', '/idolglow/')
+WHERE cover_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET hero_image_url = REPLACE(hero_image_url, '/webzine/', '/idolglow/')
+WHERE hero_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET card_image_url = REPLACE(card_image_url, '/webzine/', '/idolglow/')
+WHERE card_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_article_gallery_images
+SET image_url = REPLACE(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE newsletters
+SET image_url = REPLACE(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET thumbnail_image_url = REPLACE(thumbnail_image_url, '/webzine/', '/idolglow/')
+WHERE thumbnail_image_url LIKE '%/webzine/%';
+
+UPDATE user_content_views
+SET image_url = REPLACE(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE tb_banner
+SET banner_image = REPLACE(banner_image, '/webzine/', '/idolglow/')
+WHERE banner_image LIKE '%/webzine/%';
+
+UPDATE tb_main_image
+SET image = REPLACE(image, '/webzine/', '/idolglow/')
+WHERE image LIKE '%/webzine/%';
+
+UPDATE tb_popup_manage
+SET popup_img_path = REPLACE(popup_img_path, '/webzine/', '/idolglow/')
+WHERE popup_img_path LIKE '%/webzine/%';
+
+UPDATE editor_assets
+SET object_key = CONCAT('idolglow/', SUBSTRING(object_key, 9))
+WHERE LEFT(object_key, 8) = 'webzine/';
+
+-- 본문은 업로드 파일 이름 규칙 폴더/UUID.확장자 에 맞는 경로만 바꾼다
+UPDATE idolglow_article_sections
+SET body = REGEXP_REPLACE(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE newsletter_paragraphs
+SET body = REGEXP_REPLACE(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET markdown = REGEXP_REPLACE(
+    markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE markdown LIKE '%/webzine/%';
+
+UPDATE glow_community_posts
+SET content_markdown = REGEXP_REPLACE(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+UPDATE content_comments
+SET content_markdown = REGEXP_REPLACE(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+-- rag_chunks 는 ms7 에서 만들기 때문에 새 데이터베이스에서는 건너뛴다
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'UPDATE rag_chunks SET source_type = CONCAT(''IDOLGLOW_'', SUBSTRING(source_type, 9)), link_key = IF(LEFT(link_key, 8) = ''webzine/'', CONCAT(''idolglow/'', SUBSTRING(link_key, 9)), link_key) WHERE LEFT(source_type, 8) = ''WEBZINE_''',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'rag_chunks'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE rag_chunks MODIFY COLUMN source_type VARCHAR(32) NOT NULL COMMENT ''출처 종류. IDOLGLOW_ARTICLE, IDOLGLOW_SECTION, PRODUCT, OPTION''',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'rag_chunks'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;

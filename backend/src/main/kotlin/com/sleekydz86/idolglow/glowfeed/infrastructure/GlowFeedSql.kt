@@ -11,7 +11,7 @@ internal object GlowFeedSql {
         "SELECT 'ARTICLE' AS kind, a.id AS ref_id, a.created_at AS sort_at, 'ARTICLE' AS like_type, " +
             "CONCAT(i.slug, '/', a.slug) AS like_key, 'ARTICLE' AS view_type, " +
             "CONCAT(i.slug, '/', a.slug) AS view_key, 0 AS base_likes " +
-            "FROM webzine_articles a JOIN webzine_issues i ON i.id = a.issue_id " +
+            "FROM idolglow_articles a JOIN idolglow_issues i ON i.id = a.issue_id " +
             "WHERE i.issue_date <= :today"
 
     private const val EVENT =

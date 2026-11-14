@@ -4,9 +4,9 @@ import com.sleekydz86.idolglow.comment.application.dto.CommentImageFile
 import com.sleekydz86.idolglow.comment.application.port.out.CommentImageStoragePort
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.comment.ContentCommentExceptionType
+import com.sleekydz86.idolglow.idolglowissue.application.IdolGlowImageStoragePort
+import com.sleekydz86.idolglow.idolglowissue.application.StoreIdolGlowImageCommand
 import com.sleekydz86.idolglow.mbrd.infrastructure.storage.MbrdMinioEditorImageStorageService
-import com.sleekydz86.idolglow.webzine.application.StoreWebzineImageCommand
-import com.sleekydz86.idolglow.webzine.application.WebzineImageStoragePort
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Component
@@ -18,7 +18,7 @@ import java.io.InputStream
 @Component
 class CommentImageStorageAdapter(
     private val editorImageStorage: ObjectProvider<MbrdMinioEditorImageStorageService>,
-    private val webzineImageStoragePort: ObjectProvider<WebzineImageStoragePort>,
+    private val idolglowImageStoragePort: ObjectProvider<IdolGlowImageStoragePort>,
 ) : CommentImageStoragePort {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -30,11 +30,11 @@ class CommentImageStorageAdapter(
             uploaded.getOrNull()?.let { return it }
         }
         val fallback =
-            webzineImageStoragePort.getIfAvailable()
+            idolglowImageStoragePort.getIfAvailable()
                 ?: throw CustomException(ContentCommentExceptionType.IMAGE_STORAGE_UNAVAILABLE)
         return fallback
             .store(
-                StoreWebzineImageCommand(
+                StoreIdolGlowImageCommand(
                     bytes = image.bytes,
                     originalFilename = image.originalFilename,
                     contentType = image.contentType,

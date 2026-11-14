@@ -41,7 +41,7 @@ object SubscriptionAdminSpecifications {
                 predicates +=
                     when (audience) {
                         SubscriptionAudience.NEWSLETTER -> cb.isTrue(root.get("subscribedNewsletters"))
-                        SubscriptionAudience.WEBZINE_ISSUE -> cb.isTrue(root.get("subscribedIssues"))
+                        SubscriptionAudience.IDOLGLOW_ISSUE -> cb.isTrue(root.get("subscribedIssues"))
                         SubscriptionAudience.PRODUCT_RECOMMENDATION -> cb.disjunction()
                     }
             }

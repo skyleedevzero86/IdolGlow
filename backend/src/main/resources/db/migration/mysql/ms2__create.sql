@@ -451,7 +451,7 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
 -- PK: BIGINT AUTO_INCREMENT. FK는 별도 CONSTRAINT로 선언 순서: 자식 테이블 정의 후.
 -- updated_at: ON UPDATE CURRENT_TIMESTAMP — DB에서 갱신 시각 자동 반영 앱과 이중 갱신 시 정책 통일 권장.
 -- 웹진 호
-create table if not exists webzine_issues (
+create table if not exists idolglow_issues (
     id bigint not null auto_increment primary key comment '이슈 PK',
     slug varchar(80) not null comment '공개 URL용 슬러그',
     volume int not null comment '권호 정수, 전역 유일',
@@ -460,14 +460,14 @@ create table if not exists webzine_issues (
     teaser varchar(1000) not null comment '목록/공유용 티저',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_issue_slug unique (slug),
-    constraint uk_webzine_issue_volume unique (volume)
+    constraint uk_idolglow_issue_slug unique (slug),
+    constraint uk_idolglow_issue_volume unique (volume)
 ) comment='웹진 이슈 호 메타';
 
 -- 기사
-create table if not exists webzine_articles (
+create table if not exists idolglow_articles (
     id bigint not null auto_increment primary key comment '기사 PK',
-    issue_id bigint not null comment 'FK → webzine_issues.id',
+    issue_id bigint not null comment 'FK → idolglow_issues.id',
     slug varchar(150) not null comment '이슈 내 기사 URL 슬러그',
     title varchar(200) not null comment '제목',
     kicker varchar(200) not null comment '상단 키커/톤',
@@ -482,46 +482,46 @@ create table if not exists webzine_articles (
     highlight_quote varchar(500) comment '강조 인용 옵션',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_issue_slug unique (issue_id, slug),
-    constraint fk_webzine_articles_issue foreign key (issue_id) references webzine_issues(id) on delete cascade
+    constraint uk_idolglow_article_issue_slug unique (issue_id, slug),
+    constraint fk_idolglow_articles_issue foreign key (issue_id) references idolglow_issues(id) on delete cascade
 ) comment='웹진 기사 본문 메타';
 
 -- 본문 섹션
-create table if not exists webzine_article_sections (
+create table if not exists idolglow_article_sections (
     id bigint not null auto_increment primary key comment '섹션 PK',
-    article_id bigint not null comment 'FK → webzine_articles.id',
+    article_id bigint not null comment 'FK → idolglow_articles.id',
     display_order int not null comment '렌더 순서',
     heading varchar(200) comment '소제목 옵션',
     body text not null comment '본문 표현 형식은 앱 규약',
     note varchar(1000) comment '각주·편집자 주 옵션',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_section_order unique (article_id, display_order),
-    constraint fk_webzine_article_sections_article foreign key (article_id) references webzine_articles(id) on delete cascade
+    constraint uk_idolglow_article_section_order unique (article_id, display_order),
+    constraint fk_idolglow_article_sections_article foreign key (article_id) references idolglow_articles(id) on delete cascade
 ) comment='기사 본문 블록 섹션';
 
 -- 갤러리 이미지
-create table if not exists webzine_article_gallery_images (
+create table if not exists idolglow_article_gallery_images (
     id bigint not null auto_increment primary key comment '갤러리 행 PK',
-    article_id bigint not null comment 'FK → webzine_articles.id',
+    article_id bigint not null comment 'FK → idolglow_articles.id',
     display_order int not null comment '갤러리 내 순서',
     image_url varchar(500) not null comment '이미지 URL',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_gallery_order unique (article_id, display_order),
-    constraint fk_webzine_article_gallery_article foreign key (article_id) references webzine_articles(id) on delete cascade
+    constraint uk_idolglow_article_gallery_order unique (article_id, display_order),
+    constraint fk_idolglow_article_gallery_article foreign key (article_id) references idolglow_articles(id) on delete cascade
 ) comment='기사 갤러리 이미지 순서';
 
 -- 태그
-create table if not exists webzine_article_tags (
+create table if not exists idolglow_article_tags (
     id bigint not null auto_increment primary key comment '태그 행 PK',
-    article_id bigint not null comment 'FK → webzine_articles.id',
+    article_id bigint not null comment 'FK → idolglow_articles.id',
     display_order int not null comment '표시 순서',
     tag_name varchar(80) not null comment '태그 문자열',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_tag_name unique (article_id, tag_name),
-    constraint fk_webzine_article_tags_article foreign key (article_id) references webzine_articles(id) on delete cascade
+    constraint uk_idolglow_article_tag_name unique (article_id, tag_name),
+    constraint fk_idolglow_article_tags_article foreign key (article_id) references idolglow_articles(id) on delete cascade
 ) comment='기사 태그';
 
 -- Newsletter admin domain tables for MySQL
@@ -581,7 +581,7 @@ create table if not exists email_subscriptions (
 
 create table if not exists subscription_dispatch_histories (
     id bigint auto_increment primary key,
-    content_type varchar(40) not null comment '콘텐츠 유형 코드. NEWSLETTER, WEBZINE 등 서비스에서 정의한 값.',
+    content_type varchar(40) not null comment '콘텐츠 유형 코드. NEWSLETTER, IDOLGLOW 등 서비스에서 정의한 값.',
     content_slug varchar(160) not null comment '콘텐츠 고유 slug/키',
     content_title varchar(255) not null comment '발송 당시 제목 스냅샷',
     content_summary varchar(1000) comment '발송 당시 요약 스냅샷',
@@ -1126,7 +1126,7 @@ CREATE TABLE IF NOT EXISTS product_recommendation_mail_subscriptions (
 -- 보내는 모든 메일 한 통당 한 행. 본문 속 링크 토큰은 token=*** 로 가려 저장하고 90일이 지나면 지운다.
 CREATE TABLE IF NOT EXISTS mail_send_logs (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '메일 발송 기록 기본키',
-    mail_kind VARCHAR(40) NOT NULL COMMENT '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, WEBZINE, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER',
+    mail_kind VARCHAR(40) NOT NULL COMMENT '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER',
     recipient_email VARCHAR(255) NOT NULL COMMENT '수신 이메일 원문. 관리자 검색용이며 API 응답에서는 가림',
     subject VARCHAR(500) NOT NULL COMMENT '메일 제목. 500자 이내',
     html_body TEXT NULL COMMENT 'HTML 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음',
@@ -1139,7 +1139,7 @@ CREATE TABLE IF NOT EXISTS mail_send_logs (
     CONSTRAINT fk_mail_send_logs_dispatch
         FOREIGN KEY (dispatch_id) REFERENCES subscription_dispatch_histories (id) ON DELETE SET NULL,
     CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
-        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'WEBZINE', 'UNSUBSCRIBE_CONFIRM',
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'IDOLGLOW', 'UNSUBSCRIBE_CONFIRM',
         'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
     )),
     CONSTRAINT chk_mail_send_logs_status CHECK (status IN ('SENT', 'FAILED', 'SKIPPED'))
@@ -1373,7 +1373,7 @@ CREATE TABLE IF NOT EXISTS user_content_views (
 -- - 지역사회 게시글 좋아요는 glow_community_likes 를 그대로 쓴다
 -- - target_key 는 최근 본 콘텐츠와 같은 키다. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID
 -- 연관
--- - ContentLikeService, GlowFeedQueryService, WebzineArticleRankingService
+-- - ContentLikeService, GlowFeedQueryService, IdolGlowArticleRankingService
 -- =============================================================================
 
 -- 콘텐츠 좋아요. 회원과 콘텐츠 조합당 한 행.

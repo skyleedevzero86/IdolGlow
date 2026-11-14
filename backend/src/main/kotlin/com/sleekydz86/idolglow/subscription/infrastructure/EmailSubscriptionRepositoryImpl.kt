@@ -24,7 +24,7 @@ class EmailSubscriptionRepositoryImpl(
         when (audience) {
             SubscriptionAudience.NEWSLETTER ->
                 emailSubscriptionJpaRepository.findAllByActiveTrueAndSubscribedNewslettersTrueOrderBySubscribedAtDesc()
-            SubscriptionAudience.WEBZINE_ISSUE ->
+            SubscriptionAudience.IDOLGLOW_ISSUE ->
                 emailSubscriptionJpaRepository.findAllByActiveTrueAndSubscribedIssuesTrueOrderBySubscribedAtDesc()
             SubscriptionAudience.PRODUCT_RECOMMENDATION -> emptyList()
         }.map { it.email }
@@ -38,7 +38,7 @@ class EmailSubscriptionRepositoryImpl(
     override fun countActiveByAudience(audience: SubscriptionAudience): Long =
         when (audience) {
             SubscriptionAudience.NEWSLETTER -> emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedNewslettersTrue()
-            SubscriptionAudience.WEBZINE_ISSUE -> emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedIssuesTrue()
+            SubscriptionAudience.IDOLGLOW_ISSUE -> emailSubscriptionJpaRepository.countByActiveTrueAndSubscribedIssuesTrue()
             SubscriptionAudience.PRODUCT_RECOMMENDATION -> 0L
         }
 }

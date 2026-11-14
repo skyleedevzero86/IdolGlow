@@ -23,7 +23,7 @@ interface SiteContentApi {
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     fun readAsset(
-        @Parameter(description = "객체 키(스토리지 경로)", example = "webzine/site-content/popups/sample.png")
+        @Parameter(description = "객체 키(스토리지 경로)", example = "idolglow/site-content/popups/sample.png")
         objectKey: String,
     ): ResponseEntity<ByteArrayResource>
 }

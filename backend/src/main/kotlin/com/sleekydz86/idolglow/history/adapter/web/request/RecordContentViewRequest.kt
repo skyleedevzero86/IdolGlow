@@ -22,7 +22,7 @@ data class RecordContentViewRequest(
     val path: String,
     @field:Schema(
         description = "대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로만 저장하고 그 밖의 값은 무시합니다.",
-        example = "/uploads/webzine/cover.jpg",
+        example = "/uploads/idolglow/cover.jpg",
     )
     val imageUrl: String? = null,
 )

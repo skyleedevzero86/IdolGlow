@@ -1,0 +1,171 @@
+package com.sleekydz86.idolglow.idolglowissue.domain
+
+import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
+import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
+
+@Entity
+@Table(
+    name = "idolglow_articles",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_idolglow_article_issue_slug", columnNames = ["issue_id", "slug"]),
+    ],
+)
+class IdolGlowArticle(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0L,
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "issue_id", nullable = false)
+    val issue: IdolGlowIssue,
+    @Column(nullable = false, length = 150)
+    var slug: String,
+    @Column(nullable = false, length = 200)
+    var title: String,
+    @Column(nullable = false, length = 200)
+    var kicker: String,
+    @Column(nullable = false, columnDefinition = "TEXT")
+    var summary: String,
+    @Column(name = "hero_image_url", nullable = false, length = 500)
+    var heroImageUrl: String,
+    @Column(name = "card_image_url", nullable = false, length = 500)
+    var cardImageUrl: String,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    var category: IssueCategory,
+    @Column(name = "format_label", nullable = false, length = 60)
+    var formatLabel: String,
+    @Column(name = "author_name", nullable = false, length = 120)
+    var authorName: String,
+    @Column(name = "author_email", nullable = false, length = 255)
+    var authorEmail: String,
+    @Column(name = "credit_line", nullable = false, length = 255)
+    var creditLine: String,
+    @Column(name = "highlight_quote", length = 500)
+    var highlightQuote: String? = null,
+    @OrderBy("displayOrder ASC")
+    @OneToMany(mappedBy = "article", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    val sections: MutableList<IdolGlowArticleSection> = mutableListOf(),
+    @OrderBy("displayOrder ASC")
+    @OneToMany(mappedBy = "article", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    val galleryImages: MutableList<IdolGlowArticleGalleryImage> = mutableListOf(),
+    @OrderBy("displayOrder ASC")
+    @OneToMany(mappedBy = "article", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    val tags: MutableList<IdolGlowArticleTag> = mutableListOf(),
+) : BaseEntity() {
+    fun update(
+        slug: String,
+        draft: IdolGlowArticleDraft,
+    ) {
+        this.slug = slug.trim()
+        this.title = draft.title.trim()
+        this.kicker = draft.kicker.trim()
+        this.summary = draft.summary.trim()
+        this.heroImageUrl = draft.heroImageUrl.trim()
+        this.cardImageUrl = draft.cardImageUrl.trim()
+        this.category = draft.category
+        this.formatLabel = draft.formatLabel.trim()
+        this.authorName = draft.authorName.trim()
+        this.authorEmail = draft.authorEmail.trim()
+        this.creditLine = draft.creditLine.trim()
+        this.highlightQuote = draft.highlightQuote?.trim()?.takeIf { it.isNotEmpty() }
+
+        replaceSections(draft.sections)
+        replaceGalleryImages(draft.galleryImageUrls)
+        replaceTags(draft.tags)
+    }
+
+    private fun replaceSections(sectionDrafts: List<IdolGlowArticleSectionDraft>) {
+        sections.clear()
+        sectionDrafts.forEachIndexed { index, section ->
+            sections +=
+                IdolGlowArticleSection(
+                    article = this,
+                    displayOrder = index,
+                    heading = section.heading?.trim()?.takeIf { it.isNotEmpty() },
+                    body = section.body.trim(),
+                    note = section.note?.trim()?.takeIf { it.isNotEmpty() },
+                )
+        }
+    }
+
+    private fun replaceGalleryImages(imageUrls: List<String>) {
+        galleryImages.clear()
+        imageUrls.forEachIndexed { index, imageUrl ->
+            galleryImages +=
+                IdolGlowArticleGalleryImage(
+                    article = this,
+                    displayOrder = index,
+                    imageUrl = imageUrl.trim(),
+                )
+        }
+    }
+
+    private fun replaceTags(tagNames: List<String>) {
+        tags.clear()
+        tagNames.forEachIndexed { index, tag ->
+            tags +=
+                IdolGlowArticleTag(
+                    article = this,
+                    displayOrder = index,
+                    tagName = tag.trim(),
+                )
+        }
+    }
+
+    companion object {
+        fun create(
+            issue: IdolGlowIssue,
+            slug: String,
+            draft: IdolGlowArticleDraft,
+        ): IdolGlowArticle {
+            validateDraft(draft)
+
+            return IdolGlowArticle(
+                issue = issue,
+                slug = slug.trim(),
+                title = draft.title.trim(),
+                kicker = draft.kicker.trim(),
+                summary = draft.summary.trim(),
+                heroImageUrl = draft.heroImageUrl.trim(),
+                cardImageUrl = draft.cardImageUrl.trim(),
+                category = draft.category,
+                formatLabel = draft.formatLabel.trim(),
+                authorName = draft.authorName.trim(),
+                authorEmail = draft.authorEmail.trim(),
+                creditLine = draft.creditLine.trim(),
+                highlightQuote = draft.highlightQuote?.trim()?.takeIf { it.isNotEmpty() },
+            ).apply {
+                replaceSections(draft.sections)
+                replaceGalleryImages(draft.galleryImageUrls)
+                replaceTags(draft.tags)
+            }
+        }
+
+        private fun validateDraft(draft: IdolGlowArticleDraft) {
+            require(draft.title.isNotBlank()) { "기사 제목은 비어 있을 수 없습니다." }
+            require(draft.kicker.isNotBlank()) { "부제는 비어 있을 수 없습니다." }
+            require(draft.summary.isNotBlank()) { "요약은 비어 있을 수 없습니다." }
+            require(draft.heroImageUrl.isNotBlank()) { "대표 이미지는 비어 있을 수 없습니다." }
+            require(draft.cardImageUrl.isNotBlank()) { "카드 이미지는 비어 있을 수 없습니다." }
+            require(draft.formatLabel.isNotBlank()) { "형식 라벨은 비어 있을 수 없습니다." }
+            require(draft.authorName.isNotBlank()) { "작성자명은 비어 있을 수 없습니다." }
+            require(draft.authorEmail.isNotBlank()) { "작성자 이메일은 비어 있을 수 없습니다." }
+            require(draft.creditLine.isNotBlank()) { "크레딧은 비어 있을 수 없습니다." }
+            require(draft.sections.isNotEmpty()) { "본문 섹션은 최소 1개 이상이어야 합니다." }
+        }
+    }
+}

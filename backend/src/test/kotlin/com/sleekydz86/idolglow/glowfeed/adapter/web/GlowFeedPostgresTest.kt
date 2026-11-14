@@ -67,7 +67,7 @@ class GlowFeedPostgresTest : PostgresIntegrationTest() {
         val blinded = fixture.post(author, blinded = true)
         val visible =
             listOf(
-                Triple("webzine_articles", article.id, "ARTICLE-${article.id}"),
+                Triple("idolglow_articles", article.id, "ARTICLE-${article.id}"),
                 Triple("event_source_ref", event.id, "EVENT-${event.id}"),
                 Triple("product_reviews", review.id, "PRODUCT_REVIEW-${review.id}"),
                 Triple("content_comments", comment.id, "COMMENT-${comment.id}"),
@@ -75,7 +75,7 @@ class GlowFeedPostgresTest : PostgresIntegrationTest() {
             )
         val hidden =
             listOf(
-                Triple("webzine_articles", scheduled.id, "ARTICLE-${scheduled.id}"),
+                Triple("idolglow_articles", scheduled.id, "ARTICLE-${scheduled.id}"),
                 Triple("event_source_ref", ended.id, "EVENT-${ended.id}"),
                 Triple("product_reviews", hiddenReview.id, "PRODUCT_REVIEW-${hiddenReview.id}"),
                 Triple("content_comments", deletedComment.id, "COMMENT-${deletedComment.id}"),
@@ -118,8 +118,8 @@ class GlowFeedPostgresTest : PostgresIntegrationTest() {
         val review = fixture.review(author, hidden = false)
         val comment = fixture.comment(author, review.product.id.toString(), deleted = false)
         val post = fixture.post(author, blinded = false)
-        fixture.createdAt("webzine_articles", olderArticle.id, LATEST_BASE)
-        fixture.createdAt("webzine_articles", newerArticle.id, LATEST_BASE.plusMinutes(1))
+        fixture.createdAt("idolglow_articles", olderArticle.id, LATEST_BASE)
+        fixture.createdAt("idolglow_articles", newerArticle.id, LATEST_BASE.plusMinutes(1))
         fixture.createdAt("event_source_ref", event.id, LATEST_BASE)
         fixture.createdAt("product_reviews", review.id, LATEST_BASE)
         fixture.createdAt("content_comments", comment.id, LATEST_BASE.plusMinutes(1))

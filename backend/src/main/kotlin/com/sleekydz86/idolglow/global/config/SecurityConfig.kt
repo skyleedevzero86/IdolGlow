@@ -80,7 +80,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
-                auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/uploads/idolglow/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, *PUBLIC_GET).permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
@@ -174,11 +174,11 @@ class SecurityConfig(
                 "/api/event-info/culture-calendar/realm-code-reference",
             )
 
-        private val WEBZINE_PUBLIC_GET =
+        private val IDOLGLOW_PUBLIC_GET =
             arrayOf(
-                "/api/webzine/issues",
-                "/api/webzine/issues/**",
-                "/api/webzine/articles",
+                "/api/idolglow/issues",
+                "/api/idolglow/issues/**",
+                "/api/idolglow/articles",
             )
 
         private val GLOW_FEED_PUBLIC_GET =
@@ -197,7 +197,7 @@ class SecurityConfig(
             )
 
         private val PUBLIC_GET =
-            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + WEBZINE_PUBLIC_GET + GLOW_FEED_PUBLIC_GET
+            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(

@@ -11,7 +11,7 @@ internal object GlowFeedPaths {
     private val SAFE_IMAGE = Regex("^(https?://|/)[^\\s\"'<>]*$")
     private val PUBLIC_COMMENT_PATHS = setOf("GLOW" to "/glow", "ARCHIVE" to "/archive").toMap()
 
-    fun webzineArticle(
+    fun idolglowArticle(
         issueSlug: String,
         articleSlug: String,
     ): String = "/glow?tab=trend&issue=${encode(issueSlug)}&article=${encode(articleSlug)}"
@@ -62,7 +62,7 @@ internal object GlowFeedPaths {
     private fun articleFromKey(key: String): String? {
         val issueSlug = key.substringBefore('/', "")
         val articleSlug = key.substringAfter('/', "")
-        return if (issueSlug.isEmpty() || articleSlug.isEmpty()) null else webzineArticle(issueSlug, articleSlug)
+        return if (issueSlug.isEmpty() || articleSlug.isEmpty()) null else idolglowArticle(issueSlug, articleSlug)
     }
 
     private fun eventFromKey(key: String): String? {

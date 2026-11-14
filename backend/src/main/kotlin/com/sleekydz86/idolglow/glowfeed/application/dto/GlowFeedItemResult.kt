@@ -14,7 +14,7 @@ data class GlowFeedItemResult(
     val kind: String,
     @field:Schema(description = "제목", example = "성수 팝업 트렌드")
     val title: String,
-    @field:Schema(description = "대표 이미지. 없으면 null", example = "/uploads/webzine/card.jpg")
+    @field:Schema(description = "대표 이미지. 없으면 null", example = "/uploads/idolglow/card.jpg")
     val imageUrl: String?,
     @field:Schema(description = "상세 화면 경로", example = "/glow?tab=trend&issue=vol-3&article=seongsu")
     val path: String,

@@ -54,7 +54,7 @@ class LikeTargetAdapter(
 
     companion object {
         private const val PUBLISHED_ARTICLE_SQL =
-            "SELECT COUNT(*) FROM webzine_articles a JOIN webzine_issues i ON i.id = a.issue_id " +
+            "SELECT COUNT(*) FROM idolglow_articles a JOIN idolglow_issues i ON i.id = a.issue_id " +
                 "WHERE i.slug = :issueSlug AND a.slug = :articleSlug AND i.issue_date <= :today"
         private const val EVENT_SQL =
             "SELECT COUNT(*) FROM event_source_ref WHERE source = :source AND source_id = :sourceId"
