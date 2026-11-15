@@ -1674,3 +1674,55 @@ COMMENT ON COLUMN content_likes.target_key IS '대상 키. 트렌드 기사는 �
 COMMENT ON COLUMN content_likes.created_at IS '생성 시각';
 
 COMMENT ON COLUMN content_likes.updated_at IS '수정 시각';
+
+COMMENT ON TABLE content_translation IS '콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
+
+COMMENT ON COLUMN content_translation.content_type IS '콘텐츠 유형. NOTICE, EVENT, PRODUCT, ARTICLE, GLOW_COMMUNITY_POST, CONTENT_COMMENT';
+
+COMMENT ON COLUMN content_translation.content_key IS '콘텐츠 키. 공지·이벤트는 문서 UUID, 트렌드 기사는 호슬러그/기사슬러그, 그 밖은 ID';
+
+COMMENT ON COLUMN content_translation.locale IS '번역 언어. en, ja, zh';
+
+COMMENT ON COLUMN content_translation.source_hash IS '번역할 때 쓴 원문 해시. 원문이 바뀌면 다시 번역';
+
+COMMENT ON COLUMN content_translation.status IS '번역 상태. PENDING, VISIBLE, REVIEW, FAILED, SKIPPED';
+
+COMMENT ON COLUMN content_translation.priority IS '처리 우선순위. 사용자가 보는 중이면 높다';
+
+COMMENT ON COLUMN content_translation.fields_json IS '번역된 항목 JSON';
+
+COMMENT ON COLUMN content_translation.origin IS '번역 출처. MACHINE, MANUAL';
+
+COMMENT ON COLUMN content_translation.model IS '번역에 쓴 AI 공급자';
+
+COMMENT ON COLUMN content_translation.prompt_version IS '번역 지시문 버전';
+
+COMMENT ON COLUMN content_translation.check_notes IS '검사에서 걸린 규칙 목록';
+
+COMMENT ON COLUMN content_translation.attempts IS '실패한 번역 시도 수';
+
+COMMENT ON COLUMN content_translation.next_attempt_at IS '다음 재시도 시각';
+
+COMMENT ON COLUMN content_translation.report_count IS '번역 오류 신고 수';
+
+COMMENT ON COLUMN content_translation.translated_at IS '번역한 시각';
+
+COMMENT ON COLUMN content_translation.reviewed_by IS '승인하거나 고친 관리자 users.id';
+
+COMMENT ON COLUMN content_translation.reviewed_at IS '승인하거나 고친 시각';
+
+COMMENT ON TABLE translation_glossary_term IS '번역 용어집. 고유명사를 정해진 대로 번역한다';
+
+COMMENT ON COLUMN translation_glossary_term.source_term IS '원문 용어';
+
+COMMENT ON COLUMN translation_glossary_term.locale IS '적용 언어. KEEP 은 *';
+
+COMMENT ON COLUMN translation_glossary_term.target_term IS '고정 번역어. KEEP 이면 비움';
+
+COMMENT ON COLUMN translation_glossary_term.mode IS '용어 방식. FIXED, KEEP';
+
+COMMENT ON TABLE translation_report IS '번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
+
+COMMENT ON COLUMN translation_report.translation_id IS '신고한 번역 content_translation.id';
+
+COMMENT ON COLUMN translation_report.user_id IS '신고한 회원 users.id';

@@ -1,0 +1,12 @@
+{"id":"price-en","locale":"en","fields":{"name":"서울 야경 투어","description":"남산타워와 한강을 도는 2시간 코스입니다. 가격은 1인 55,000원입니다."},"mustContain":["55,000"]}
+{"id":"price-ja","locale":"ja","fields":{"name":"서울 야경 투어","description":"남산타워와 한강을 도는 2시간 코스입니다. 가격은 1인 55,000원입니다."},"mustContain":["55,000"]}
+{"id":"price-zh","locale":"zh","fields":{"name":"서울 야경 투어","description":"남산타워와 한강을 도는 2시간 코스입니다. 가격은 1인 55,000원입니다."},"mustContain":["55,000"]}
+{"id":"time-en","locale":"en","fields":{"title":"12월 공연 예매 일정 안내","body":"예매는 2026년 11월 20일 19:30에 시작합니다. 문의: 02-1234-5678"},"mustContain":["2026","19:30","1234","5678"]}
+{"id":"time-ja","locale":"ja","fields":{"title":"12월 공연 예매 일정 안내","body":"예매는 2026년 11월 20일 19:30에 시작합니다. 문의: 02-1234-5678"},"mustContain":["2026","19:30","1234","5678"]}
+{"id":"link-en","locale":"en","fields":{"title":"이벤트 참여 방법","body":"자세한 내용은 [공지사항](https://idolglow.test/notices/1) 을 확인해 주세요.\n\n![포스터](/uploads/idolglow/poster.png)"},"mustContain":["(https://idolglow.test/notices/1)","![","](/uploads/idolglow/poster.png)"]}
+{"id":"link-zh","locale":"zh","fields":{"title":"이벤트 참여 방법","body":"자세한 내용은 [공지사항](https://idolglow.test/notices/1) 을 확인해 주세요."},"mustContain":["(https://idolglow.test/notices/1)"]}
+{"id":"glossary-en","locale":"en","glossary":[{"source":"세종문화회관","target":"Sejong Center for the Performing Arts"},{"keep":"IdolGlow"}],"fields":{"title":"IdolGlow 단독 공연","summary":"세종문화회관 대극장에서 열리는 IdolGlow 회원 전용 공연입니다."},"mustContain":["Sejong Center for the Performing Arts","IdolGlow"]}
+{"id":"glossary-ja","locale":"ja","glossary":[{"source":"세종문화회관","target":"世宗文化会館"},{"keep":"IdolGlow"}],"fields":{"title":"IdolGlow 단독 공연","summary":"세종문화회관 대극장에서 열리는 IdolGlow 회원 전용 공연입니다."},"mustContain":["世宗文化会館","IdolGlow"]}
+{"id":"post-en","locale":"en","fields":{"title":"서울 야경 명소 추천해요","content":"어제 낙산공원 성곽길 다녀왔는데 사람도 적고 야경이 정말 예뻤어요. 지하철 4호선 혜화역 2번 출구에서 걸어서 15분 정도예요."},"mustContain":["4","2","15"]}
+{"id":"post-ja","locale":"ja","fields":{"title":"서울 야경 명소 추천해요","content":"어제 낙산공원 성곽길 다녀왔는데 사람도 적고 야경이 정말 예뻤어요. 지하철 4호선 혜화역 2번 출구에서 걸어서 15분 정도예요."},"mustContain":["4","2","15"]}
+{"id":"comment-zh","locale":"zh","fields":{"content":"저도 지난주에 갔는데 입장료가 3,000원이라 부담 없었어요!"},"mustContain":["3,000"]}

@@ -980,3 +980,6 @@ UPDATE event_source_ref
 SET global_id = NULL
 WHERE match_status = 'CANDIDATE'
   AND global_id IS NOT NULL;
+
+-- 콘텐츠 번역 처리 대기열 조회
+CREATE INDEX IF NOT EXISTS idx_content_translation_due ON content_translation (status, next_attempt_at);

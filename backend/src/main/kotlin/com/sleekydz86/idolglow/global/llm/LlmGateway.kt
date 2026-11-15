@@ -27,14 +27,19 @@ class LlmGateway(
     private val externalCalls = AtomicInteger(0)
     private val counterDate = AtomicReference<LocalDate?>(null)
 
-    fun complete(request: LlmRequest): LlmResult? {
-        val chain = props.chains[request.feature] ?: props.chains[DEFAULT_CHAIN] ?: listOf("local")
-        return chain
-            .mapNotNull { byName[it] }
-            .filter { it.isConfigured() && (!it.external || allowExternal()) }
+    fun isAvailable(feature: String): Boolean = usableProviders(feature).isNotEmpty()
+
+    fun complete(request: LlmRequest): LlmResult? =
+        usableProviders(request.feature)
             .firstNotNullOfOrNull { provider ->
                 call(provider, request)?.also { if (provider.external) externalCalls.incrementAndGet() }
             }
+
+    private fun usableProviders(feature: String): List<LlmProvider> {
+        val chain = props.chains[feature] ?: props.chains[DEFAULT_CHAIN] ?: listOf("local")
+        return chain
+            .mapNotNull { byName[it] }
+            .filter { it.isConfigured() && (!it.external || allowExternal()) }
     }
 
     private fun call(

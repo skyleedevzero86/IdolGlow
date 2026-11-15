@@ -1391,3 +1391,71 @@ CREATE TABLE IF NOT EXISTS content_likes (
     )),
     INDEX idx_content_likes_target (target_type, target_key)
 ) COMMENT='콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';
+
+-- =============================================================================
+-- 콘텐츠 번역
+-- -----
+-- 목적
+-- - 공지·이벤트·상품·기사·지역사회 게시글·댓글을 화면 언어(en, ja, zh)로 번역해 보관한다
+-- - AI 번역은 기계 검사와 검수를 거친 것만 화면에 보인다
+-- 대상
+-- - 마이에스큐엘 / content_translation, translation_glossary_term, translation_report
+-- 주의
+-- - AI가 꺼져 있으면 번역은 PENDING 으로 쌓이고, 켜면 밀린 것부터 처리한다
+-- - 원문이 바뀌면 source_hash 가 달라져 다시 PENDING 이 된다
+-- 연관
+-- - TranslationWorkerService, TranslationQueryService, TranslationAdminService
+-- =============================================================================
+
+-- 콘텐츠 한 건의 언어별 번역. 콘텐츠·언어 조합당 한 행.
+CREATE TABLE IF NOT EXISTS content_translation (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    content_type VARCHAR(40) NOT NULL COMMENT '콘텐츠 유형. NOTICE, EVENT, PRODUCT, ARTICLE, GLOW_COMMUNITY_POST, CONTENT_COMMENT',
+    content_key VARCHAR(120) NOT NULL COMMENT '콘텐츠 키. 공지·이벤트는 문서 UUID, 트렌드 기사는 호슬러그/기사슬러그, 그 밖은 ID',
+    locale VARCHAR(8) NOT NULL COMMENT '번역 언어. en, ja, zh',
+    source_hash VARCHAR(64) NOT NULL COMMENT '번역할 때 쓴 원문 해시. 원문이 바뀌면 다시 번역',
+    status VARCHAR(20) NOT NULL COMMENT '번역 상태. PENDING, VISIBLE, REVIEW, FAILED, SKIPPED',
+    priority INT NOT NULL DEFAULT 0 COMMENT '처리 우선순위. 사용자가 보는 중이면 높다',
+    fields_json TEXT NULL COMMENT '번역된 항목 JSON',
+    origin VARCHAR(20) NULL COMMENT '번역 출처. MACHINE, MANUAL',
+    model VARCHAR(80) NULL COMMENT '번역에 쓴 AI 공급자',
+    prompt_version VARCHAR(20) NULL COMMENT '번역 지시문 버전',
+    check_notes VARCHAR(1000) NULL COMMENT '검사에서 걸린 규칙 목록',
+    attempts INT NOT NULL DEFAULT 0 COMMENT '실패한 번역 시도 수',
+    next_attempt_at DATETIME(6) NULL COMMENT '다음 재시도 시각',
+    report_count INT NOT NULL DEFAULT 0 COMMENT '번역 오류 신고 수',
+    translated_at DATETIME(6) NULL COMMENT '번역한 시각',
+    reviewed_by BIGINT NULL COMMENT '승인하거나 고친 관리자 users.id',
+    reviewed_at DATETIME(6) NULL COMMENT '승인하거나 고친 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_content_translation_target UNIQUE (content_type, content_key, locale),
+    CONSTRAINT chk_content_translation_status CHECK (status IN ('PENDING', 'VISIBLE', 'REVIEW', 'FAILED', 'SKIPPED')),
+    CONSTRAINT chk_content_translation_locale CHECK (locale IN ('en', 'ja', 'zh')),
+    INDEX idx_content_translation_due (status, next_attempt_at)
+) COMMENT='콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
+
+-- 번역 용어집. 고정 번역어(FIXED)와 번역 금지어(KEEP).
+CREATE TABLE IF NOT EXISTS translation_glossary_term (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    source_term VARCHAR(100) NOT NULL COMMENT '원문 용어',
+    locale VARCHAR(8) NOT NULL COMMENT '적용 언어. KEEP 은 *',
+    target_term VARCHAR(200) NULL COMMENT '고정 번역어. KEEP 이면 비움',
+    mode VARCHAR(10) NOT NULL COMMENT '용어 방식. FIXED, KEEP',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_translation_glossary_term UNIQUE (source_term, locale),
+    CONSTRAINT chk_translation_glossary_term_mode CHECK (mode IN ('FIXED', 'KEEP'))
+) COMMENT='번역 용어집. 고유명사를 정해진 대로 번역한다';
+
+-- 번역 오류 신고. 회원당 번역마다 한 번.
+CREATE TABLE IF NOT EXISTS translation_report (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    translation_id BIGINT NOT NULL COMMENT '신고한 번역 content_translation.id',
+    user_id BIGINT NOT NULL COMMENT '신고한 회원 users.id',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_translation_report_user UNIQUE (translation_id, user_id),
+    CONSTRAINT fk_translation_report_translation FOREIGN KEY (translation_id) REFERENCES content_translation (id),
+    CONSTRAINT fk_translation_report_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
