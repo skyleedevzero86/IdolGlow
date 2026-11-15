@@ -53,7 +53,7 @@ class EventLocalizedTextService(
     }
 
     private fun translationsFor(refs: Collection<EventSourceRef>): Map<String, List<EventTranslation>> {
-        val globalIds = refs.mapNotNull { it.globalId }.distinct()
+        val globalIds = refs.mapNotNull { it.confirmedGlobalId() }.distinct()
         if (globalIds.isEmpty()) return emptyMap()
         return eventTranslationPort.findByGlobalIdIn(globalIds).groupBy { it.globalId }
     }
@@ -65,7 +65,7 @@ class EventLocalizedTextService(
         translations: Map<String, List<EventTranslation>>,
     ): EventLocalizedText {
         val fallback = EventLocalizedText(item.title, item.synopsis, EventLocale.KOREAN)
-        val globalId = refs[item.source to item.sourceId]?.globalId
+        val globalId = refs[item.source to item.sourceId]?.confirmedGlobalId()
         val picked = globalId?.let { EventTranslationFallback.pick(requested, translations[it].orEmpty()) }
         return picked?.let { EventLocalizedText(it.title, it.synopsis, it.locale) } ?: fallback
     }

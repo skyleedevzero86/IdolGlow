@@ -1292,3 +1292,9 @@ PREPARE idolglow_stmt FROM @idolglow_sql;
 EXECUTE idolglow_stmt;
 
 DEALLOCATE PREPARE idolglow_stmt;
+
+-- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+UPDATE event_source_ref
+SET global_id = NULL
+WHERE match_status = 'CANDIDATE'
+  AND global_id IS NOT NULL;

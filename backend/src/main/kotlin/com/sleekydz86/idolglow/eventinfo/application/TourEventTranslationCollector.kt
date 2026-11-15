@@ -70,7 +70,7 @@ class TourEventTranslationCollector(
         event: FestivalEvent,
     ): Boolean {
         val title = event.title.trim()
-        val globalId = eventSourceRefPort.findBySourceAndSourceId(TOUR_SOURCE, event.contentId)?.globalId
+        val globalId = eventSourceRefPort.findBySourceAndSourceId(TOUR_SOURCE, event.contentId)?.confirmedGlobalId()
         if (title.isEmpty() || globalId == null) return false
         eventTranslationTxService.upsertProvider(globalId, locale, title, event.synopsis)
         return true

@@ -1180,7 +1180,7 @@ CREATE TABLE IF NOT EXISTS event_source_ref (
     id bigint auto_increment primary key,
     source varchar(80) not null comment '공급처 코드. KOPIS_PBLPRFR, SEOUL_SJW_PERFORM 등',
     source_id varchar(80) not null comment '공급처 공연 ID',
-    global_id varchar(36) null comment '매칭된 글로벌 공연 ID. CONFLICT면 비움',
+    global_id varchar(36) null comment '확정(CONFIRMED)된 글로벌 공연 ID. CANDIDATE·CONFLICT는 사람이 승인하기 전까지 비움',
     match_status varchar(20) not null comment '매칭 상태. CONFIRMED, CANDIDATE, CONFLICT',
     match_score int not null comment '매칭 점수. 100이면 제목·기간·장소 일치',
     matched_at datetime(6) null comment '마지막으로 매칭한 시각',

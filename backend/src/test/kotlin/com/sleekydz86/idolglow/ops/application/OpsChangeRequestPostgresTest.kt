@@ -1,12 +1,16 @@
 package com.sleekydz86.idolglow.ops.application
 
+import com.sleekydz86.idolglow.eventinfo.application.EventLocalizedTextService
 import com.sleekydz86.idolglow.eventinfo.application.EventMatchMergeHandler
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedPerformance
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
+import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
+import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.ops.domain.OpsActorKind
 import com.sleekydz86.idolglow.ops.domain.OpsChangeStatus
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
@@ -35,6 +39,12 @@ class OpsChangeRequestPostgresTest : PostgresIntegrationTest() {
 
     @Autowired
     private lateinit var eventSourceRefPort: EventSourceRefPort
+
+    @Autowired
+    private lateinit var eventTranslationPort: EventTranslationPort
+
+    @Autowired
+    private lateinit var eventLocalizedTextService: EventLocalizedTextService
 
     @Autowired
     private lateinit var userJpaRepository: UserJpaRepository
@@ -129,6 +139,39 @@ class OpsChangeRequestPostgresTest : PostgresIntegrationTest() {
         )
     }
 
+    @Test
+    fun candidateServesMasterTranslationOnlyWhileApproved() {
+        // given
+        val operator = user(UserRole.OPERATOR)
+        val approver = user(UserRole.APPROVER)
+        val ref = conflictRef(EventMatchStatus.CANDIDATE)
+        eventTranslationPort.save(EventTranslation.provider(ref.globalId, "en", "The Nutcracker", "Ballet"))
+        val requestId = requestMerge(operator, ref)
+
+        // when
+        val beforeApply = shownInEnglish(ref)
+        authenticate(approver)
+        opsChangeCommandService.approve(requestId)
+        authenticate(operator)
+        opsChangeCommandService.apply(requestId)
+        val afterApply = shownInEnglish(ref)
+        opsChangeCommandService.revert(requestId)
+        val afterRevert = shownInEnglish(ref)
+
+        // then
+        assertEquals("호두까기 인형", beforeApply)
+        assertEquals("The Nutcracker", afterApply)
+        assertEquals("호두까기 인형", afterRevert)
+        assertNull(reloaded(ref).globalId)
+        assertEquals(EventMatchStatus.CANDIDATE, reloaded(ref).matchStatus)
+    }
+
+    private fun shownInEnglish(ref: ConflictRef): String =
+        eventLocalizedTextService
+            .resolve(listOf(EventTextLookup(ref.source, ref.sourceId, "호두까기 인형", null)), "en")
+            .single()
+            .title
+
     private fun requestMerge(
         actor: User,
         ref: ConflictRef,
@@ -146,7 +189,7 @@ class OpsChangeRequestPostgresTest : PostgresIntegrationTest() {
             ).id
     }
 
-    private fun conflictRef(): ConflictRef {
+    private fun conflictRef(status: EventMatchStatus = EventMatchStatus.CONFLICT): ConflictRef {
         val token = UUID.randomUUID().toString().take(8)
         val master =
             eventMasterPort.save(
@@ -167,7 +210,7 @@ class OpsChangeRequestPostgresTest : PostgresIntegrationTest() {
                 source = "KOPIS_PBLPRFR",
                 sourceId = "PF-$token",
                 globalId = null,
-                matchStatus = EventMatchStatus.CONFLICT,
+                matchStatus = status,
                 matchScore = 0,
                 rawHash = "hash",
                 title = "호두까기 인형",

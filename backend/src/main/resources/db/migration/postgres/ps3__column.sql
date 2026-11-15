@@ -974,3 +974,9 @@ COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDA
 COMMENT ON COLUMN subscription_dispatch_histories.content_type IS '콘텐츠 유형. 예: NEWSLETTER, IDOLGLOW_ISSUE';
 
 COMMENT ON COLUMN admin_audit_logs.target_type IS '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
+
+-- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+UPDATE event_source_ref
+SET global_id = NULL
+WHERE match_status = 'CANDIDATE'
+  AND global_id IS NOT NULL;

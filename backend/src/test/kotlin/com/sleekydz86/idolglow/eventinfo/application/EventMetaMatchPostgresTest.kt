@@ -3,15 +3,20 @@ package com.sleekydz86.idolglow.eventinfo.application
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventCollectLogPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceSourceBatchPort
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedPerformance
 import com.sleekydz86.idolglow.eventinfo.domain.EventCollectStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
+import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
+import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventCollectLogJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventSourceRefJpaRepository
+import com.sleekydz86.idolglow.eventinfo.infrastructure.EventTranslationJpaRepository
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -41,8 +46,24 @@ class EventMetaMatchPostgresTest : PostgresIntegrationTest() {
     @Autowired
     private lateinit var eventCollectLogJpaRepository: EventCollectLogJpaRepository
 
+    @Autowired
+    private lateinit var eventTranslationJpaRepository: EventTranslationJpaRepository
+
+    @Autowired
+    private lateinit var eventTranslationPort: EventTranslationPort
+
+    @Autowired
+    private lateinit var eventLocalizedTextService: EventLocalizedTextService
+
+    @Autowired
+    private lateinit var eventMatchConflictAdvisor: EventMatchConflictAdvisor
+
+    @Autowired
+    private lateinit var eventMatchReviewMetrics: EventMatchReviewMetrics
+
     @BeforeEach
     fun clean() {
+        eventTranslationJpaRepository.deleteAllInBatch()
         eventSourceRefJpaRepository.deleteAllInBatch()
         eventCollectLogJpaRepository.deleteAllInBatch()
         eventMasterJpaRepository.deleteAllInBatch()
@@ -66,6 +87,7 @@ class EventMetaMatchPostgresTest : PostgresIntegrationTest() {
         val nutcracker =
             eventSourceRefPort.findAll().single { it.sourceId == "SJW-NUT" }
         assertEquals(EventMatchStatus.CANDIDATE, nutcracker.matchStatus)
+        assertNull(nutcracker.globalId)
         val spanning = eventSourceRefPort.findAll().single { it.sourceId == "CULTURE-NUT-SPAN" }
         assertEquals(EventMatchStatus.CONFLICT, spanning.matchStatus)
         assertNull(spanning.globalId)
@@ -189,6 +211,66 @@ class EventMetaMatchPostgresTest : PostgresIntegrationTest() {
         assertEquals(2, logs.count { it.status == EventCollectStatus.SUCCESS })
     }
 
+    @Test
+    fun venueOnlyDifferenceWaitsForReviewWithoutServingMasterTranslation() {
+        // given
+        val service =
+            collectService(
+                FixedPerformanceSource("KOPIS_PBLPRFR", listOf(nutcrackerAt("PF-NUT-ART", "예술의전당"))),
+                FixedPerformanceSource(
+                    "SEOUL_SJW_PERFORM",
+                    listOf(nutcrackerAt("SJW-NUT", "국립극장", source = "SEOUL_SJW_PERFORM")),
+                ),
+            )
+
+        // when
+        service.collect(FROM, TO)
+        val master = eventSourceRefPort.findBySourceAndSourceId("KOPIS_PBLPRFR", "PF-NUT-ART")
+        val masterGlobalId = requireNotNull(master?.globalId)
+        eventTranslationPort.save(EventTranslation.provider(masterGlobalId, "en", "The Nutcracker", "Ballet"))
+        val candidate = eventSourceRefPort.findBySourceAndSourceId("SEOUL_SJW_PERFORM", "SJW-NUT")
+        val shown =
+            eventLocalizedTextService
+                .resolve(listOf(EventTextLookup("SEOUL_SJW_PERFORM", "SJW-NUT", "호두까기 인형", "국립극장 공연")), "en")
+                .single()
+        val suggestion = eventMatchConflictAdvisor.suggestions().single()
+        eventMatchReviewMetrics.refresh()
+
+        // then
+        assertEquals(EventMatchStatus.CANDIDATE, candidate?.matchStatus)
+        assertNull(candidate?.globalId)
+        assertEquals(1L, eventMasterPort.count())
+        assertEquals("호두까기 인형", shown.title)
+        assertEquals("ko", shown.locale)
+        assertEquals("SEOUL_SJW_PERFORM|SJW-NUT", suggestion.target)
+        assertEquals(masterGlobalId, suggestion.globalId)
+        assertFalse(suggestion.sameShow)
+        assertEquals(1L, eventMatchReviewMetrics.pending(EventMatchStatus.CANDIDATE))
+        assertEquals(0L, eventMatchReviewMetrics.pending(EventMatchStatus.CONFLICT))
+    }
+
+    @Test
+    fun confirmedLinkSurvivesVenueRenameAtSameSource() {
+        // given
+        collectService(
+            FixedPerformanceSource("KOPIS_PBLPRFR", listOf(nutcrackerAt("PF-NUT-ART", "예술의전당"))),
+        ).collect(FROM, TO)
+        val before = requireNotNull(eventSourceRefPort.findBySourceAndSourceId("KOPIS_PBLPRFR", "PF-NUT-ART"))
+
+        // when
+        collectService(
+            FixedPerformanceSource("KOPIS_PBLPRFR", listOf(nutcrackerAt("PF-NUT-ART", "예술의전당 오페라극장"))),
+        ).collect(FROM, TO)
+        val after = requireNotNull(eventSourceRefPort.findBySourceAndSourceId("KOPIS_PBLPRFR", "PF-NUT-ART"))
+        val master = requireNotNull(eventMasterPort.findByGlobalId(requireNotNull(after.globalId)))
+
+        // then
+        assertEquals(before.globalId, after.globalId)
+        assertEquals(EventMatchStatus.CONFIRMED, after.matchStatus)
+        assertEquals(1L, eventMasterPort.count())
+        assertEquals("예술의전당 오페라극장", master.venue)
+    }
+
     private fun collectService(vararg ports: PerformanceSourceBatchPort): EventMetaCollectService =
         EventMetaCollectService(
             sources = ports.toList(),
@@ -254,6 +336,20 @@ class EventMetaMatchPostgresTest : PostgresIntegrationTest() {
                 start = LocalDate.of(2026, 1, 5),
                 end = LocalDate.of(2026, 2, 5),
             ),
+        )
+
+    private fun nutcrackerAt(
+        sourceId: String,
+        venue: String,
+        source: String = "KOPIS_PBLPRFR",
+    ): CollectedPerformance =
+        performance(
+            source = source,
+            sourceId = sourceId,
+            title = "호두까기 인형",
+            venue = venue,
+            start = LocalDate.of(2026, 12, 1),
+            end = LocalDate.of(2026, 12, 20),
         )
 
     private fun performance(

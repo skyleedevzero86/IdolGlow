@@ -139,6 +139,37 @@ class EventTranslationFallbackTest {
     }
 
     @Test
+    fun staleCandidateLinkIsNeitherServedNorFilled() {
+        // given
+        val translations = InMemoryEventTranslationPort()
+        translations.save(EventTranslation.provider("g-1", "en", "English title", "English synopsis"))
+        val refs = InMemoryEventSourceRefPort()
+        refs.save(staleCandidate("TOUR_API", "C1", "g-1"))
+        refs.save(staleCandidate("TOUR_API", "99", "g-1"))
+        val masters = InMemoryEventMasterPort()
+        masters.save(master("g-1", "한국어 제목"))
+        val service = EventLocalizedTextService(translations, refs, masters)
+        val collector =
+            TourEventTranslationCollector(
+                tourLocaleFestivalPort = FakeTourLocaleFestivalPort(mapOf("ja" to listOf(festival("99", "후보 공연")))),
+                eventSourceRefPort = refs,
+                eventTranslationTxService = EventTranslationTxService(translations),
+            )
+
+        // when
+        val resolved =
+            service
+                .resolve(listOf(EventTextLookup("TOUR_API", "C1", "후보 공연", "후보 소개")), "en")
+                .single()
+        collector.collect(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
+
+        // then
+        assertEquals("후보 공연", resolved.title)
+        assertEquals("ko", resolved.locale)
+        assertNull(translations.findByGlobalIdAndLocale("g-1", "ja"))
+    }
+
+    @Test
     fun queryLangOverridesAcceptLanguage() {
         assertEquals("ja", EventLocale.requested("ja-JP", "en-US,en;q=0.9"))
         assertEquals("en", EventLocale.requested(null, "en-US,en;q=0.9"))
@@ -239,6 +270,21 @@ private fun sourceRef(
                 EventMatchStatus.CONFIRMED
             },
         matchScore = 0,
+        rawHash = "hash",
+        title = sourceId,
+    )
+
+private fun staleCandidate(
+    source: String,
+    sourceId: String,
+    globalId: String,
+): EventSourceRef =
+    EventSourceRef(
+        source = source,
+        sourceId = sourceId,
+        globalId = globalId,
+        matchStatus = EventMatchStatus.CANDIDATE,
+        matchScore = 60,
         rawHash = "hash",
         title = sourceId,
     )

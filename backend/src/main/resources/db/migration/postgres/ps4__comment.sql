@@ -1539,7 +1539,7 @@ COMMENT ON COLUMN event_source_ref.source IS '공급처 코드. KOPIS_PBLPRFR, S
 
 COMMENT ON COLUMN event_source_ref.source_id IS '공급처 공연 ID';
 
-COMMENT ON COLUMN event_source_ref.global_id IS '매칭된 글로벌 공연 ID. CONFLICT면 비움';
+COMMENT ON COLUMN event_source_ref.global_id IS '확정(CONFIRMED)된 글로벌 공연 ID. CANDIDATE·CONFLICT는 사람이 승인하기 전까지 비움';
 
 COMMENT ON COLUMN event_source_ref.match_status IS '매칭 상태. CONFIRMED, CANDIDATE, CONFLICT';
 

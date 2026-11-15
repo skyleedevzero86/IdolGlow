@@ -17,8 +17,7 @@ object EventPerformanceMatcher {
             confirmed.size == 1 ->
                 EventMatchDecision.Attach(confirmed[0].first.globalId, EventMatchStatus.CONFIRMED, CONFIRMED_SCORE)
             confirmed.size > 1 -> EventMatchDecision.Hold(EventMatchStatus.CONFLICT, CONFIRMED_SCORE)
-            scored.size == 1 ->
-                EventMatchDecision.Attach(scored[0].first.globalId, EventMatchStatus.CANDIDATE, scored[0].second)
+            scored.size == 1 -> EventMatchDecision.Hold(EventMatchStatus.CANDIDATE, scored[0].second)
             scored.size > 1 -> EventMatchDecision.Hold(EventMatchStatus.CONFLICT, scored.maxOf { (_, value) -> value })
             else -> EventMatchDecision.Fresh
         }
