@@ -4,6 +4,15 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.20.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.20.0...v0.20.1) (2026-11-15)
+
+
+### CI
+
+* Jenkins 백엔드 테스트 메모리 부족을 막고 알림 주소가 로그에 찍히지 않게 처리 ([d7914c5](https://github.com/skyleedevzero86/IdolGlow/commit/d7914c54c252172c54f8d8b70f3f7683f16d139e))
+* Jenkins 백엔드 테스트 메모리 부족을 막고 프론트 빌드를 기본으로 처리 ([#124](https://github.com/skyleedevzero86/IdolGlow/issues/124)) ([215c2d3](https://github.com/skyleedevzero86/IdolGlow/commit/215c2d3b9773548e6f4c86bfe013db6d3679b946))
+* 루트 frontend 작업이 끝날 때까지 Jenkins 프론트 빌드를 기본으로 건너 ([75b7480](https://github.com/skyleedevzero86/IdolGlow/commit/75b748021f81f1586183dc4b0c9299eb8f7b3820))
+
 ## [0.20.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.19.0...v0.20.0) (2026-11-14)
 
 
