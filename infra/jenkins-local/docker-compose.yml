@@ -7,6 +7,7 @@ services:
         JENKINS_BASE_IMAGE: ${JENKINS_BASE_IMAGE:-jenkins/jenkins:jdk21}
     container_name: idolglow-jenkins
     restart: unless-stopped
+    profiles: ["jenkins"]
     ports:
       - "7077:8080"
       - "57077:50000"
@@ -58,4 +59,6 @@ services:
 
 volumes:
   jenkins_home:
+    name: jenkins-local_jenkins_home
   gradle_cache:
+    name: jenkins-local_gradle_cache

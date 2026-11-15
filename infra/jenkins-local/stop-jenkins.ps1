@@ -1,4 +1,4 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $scriptDir
+Set-Location (Split-Path -Parent $scriptDir)
 
-docker compose down
+docker compose --profile jenkins stop jenkins
