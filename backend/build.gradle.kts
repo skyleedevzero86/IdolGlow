@@ -131,9 +131,10 @@ kapt {
 }
 
 tasks.withType<Test>().configureEach {
-    maxHeapSize = "2g"
+    maxHeapSize = providers.gradleProperty("testMaxHeap").getOrElse("2g")
     maxParallelForks = 1
     jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED")
+    systemProperty("spring.test.context.cache.maxSize", "4")
     useJUnitPlatform {
         when (name) {
             "test" -> excludeTags("eval", "llm-eval")
