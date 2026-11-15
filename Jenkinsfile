@@ -974,8 +974,8 @@ booleanParam(
         )
         booleanParam(
             name: 'RUN_FRONTEND_BUILD',
-            defaultValue: true,
-            description: '배포 전 프론트엔드 빌드를 실행합니다.'
+            defaultValue: false,
+            description: '배포 전 프론트엔드 빌드를 실행합니다. 루트 frontend 가 아직 작업 중이라 기본은 건너뜁니다.'
         )
         booleanParam(
             name: 'RUN_HEALTH_CHECK',
