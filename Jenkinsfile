@@ -419,8 +419,8 @@ def withTelegramCredentials(Closure body) {
         def token = ''
         def chat = ''
         if (isUnix()) {
-            token = sh(script: 'printf %s "${TELEGRAM_BOT_TOKEN}"', returnStdout: true).trim()
-            chat = sh(script: 'printf %s "${TELEGRAM_CHAT_ID}"', returnStdout: true).trim()
+            token = sh(script: 'set +x; printf %s "${TELEGRAM_BOT_TOKEN}"', returnStdout: true).trim()
+            chat = sh(script: 'set +x; printf %s "${TELEGRAM_CHAT_ID}"', returnStdout: true).trim()
         } else {
             token = bat(script: '@echo %TELEGRAM_BOT_TOKEN%', returnStdout: true).trim()
             chat = bat(script: '@echo %TELEGRAM_CHAT_ID%', returnStdout: true).trim()
@@ -528,7 +528,7 @@ def withDiscordWebhook(Closure body) {
         }
     } catch (Exception credentialError) {
         echo "Discord Credentials 미사용: ${credentialError.message}"
-        def fromEnv = sh(script: 'printf %s "${DISCORD_WEBHOOK_URL}"', returnStdout: true).trim()
+        def fromEnv = sh(script: 'set +x; printf %s "${DISCORD_WEBHOOK_URL}"', returnStdout: true).trim()
         if (!fromEnv) {
             echo 'Discord 설정이 없어 전송을 건너뜁니다. DISCORD_WEBHOOK_URL 또는 discord-webhook-url Credentials를 확인하세요.'
             return
@@ -654,6 +654,20 @@ def markPipelineFailed(String stageName) {
 
 def backendGradleFlags() {
     return '--build-cache --console=plain --stacktrace --info --profile --no-parallel'
+}
+
+def backendTestMemoryFlags() {
+    return '-PtestMaxHeap=1536m'
+}
+
+def releaseBackendBuildMemory() {
+    if (!isUnix()) {
+        return
+    }
+    dir('backend') {
+        sh './gradlew --stop || true'
+        sh 'pkill -f KotlinCompileDaemon || true'
+    }
 }
 
 def resolveBackendBootJarGoals() {
@@ -960,8 +974,8 @@ booleanParam(
         )
         booleanParam(
             name: 'RUN_FRONTEND_BUILD',
-            defaultValue: true,
-            description: '배포 전 프론트엔드 빌드를 실행합니다.'
+            defaultValue: false,
+            description: '배포 전 프론트엔드 빌드를 실행합니다. 루트 frontend 가 아직 작업 중이라 기본은 건너뜁니다.'
         )
         booleanParam(
             name: 'RUN_HEALTH_CHECK',
@@ -1106,7 +1120,9 @@ booleanParam(
             }
             steps {
                 script {
-                    runBackendGradle('백엔드 테스트', 'test', 20)
+                    runBackendGradle('백엔드 테스트 컴파일', 'testClasses', 20)
+                    releaseBackendBuildMemory()
+                    runBackendGradle('백엔드 테스트', "test ${backendTestMemoryFlags()}", 40)
                 }
             }
         }
