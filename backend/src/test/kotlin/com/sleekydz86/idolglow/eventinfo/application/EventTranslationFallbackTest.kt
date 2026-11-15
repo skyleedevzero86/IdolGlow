@@ -170,6 +170,37 @@ class EventTranslationFallbackTest {
     }
 
     @Test
+    fun koreanRequestKeepsOriginalEvenWhenOnlyForeignTranslationsExist() {
+        // given
+        val translations = InMemoryEventTranslationPort()
+        translations.save(EventTranslation.provider("g-1", "en", "English title", "English synopsis"))
+        translations.save(EventTranslation.provider("g-1", "ja", "日本語タイトル", "日本語の紹介"))
+        val refs = InMemoryEventSourceRefPort()
+        refs.save(sourceRef("TOUR_API", "C1", "g-1"))
+        val masters = InMemoryEventMasterPort()
+        masters.save(master("g-1", "한국어 대표 제목"))
+        val service = EventLocalizedTextService(translations, refs, masters)
+
+        // when
+        val resolved =
+            service
+                .resolve(listOf(EventTextLookup("TOUR_API", "C1", "한국어 원본 제목", "한국어 원본 소개")), "ko")
+                .single()
+        val graph = service.title("g-1", "ko")
+        val graphDefault = service.title("g-1", null)
+
+        // then
+        assertEquals(listOf("ko"), EventLocale.order("ko"))
+        assertEquals(listOf("ja", "en", "ko"), EventLocale.order("ja"))
+        assertEquals("한국어 원본 제목", resolved.title)
+        assertEquals("한국어 원본 소개", resolved.synopsis)
+        assertEquals("ko", resolved.locale)
+        assertEquals("한국어 대표 제목", graph?.title)
+        assertEquals("ko", graph?.locale)
+        assertEquals("한국어 대표 제목", graphDefault?.title)
+    }
+
+    @Test
     fun queryLangOverridesAcceptLanguage() {
         assertEquals("ja", EventLocale.requested("ja-JP", "en-US,en;q=0.9"))
         assertEquals("en", EventLocale.requested(null, "en-US,en;q=0.9"))
