@@ -40,26 +40,8 @@
 
 ### 1. IdolGlow 아키텍처
 
-```mermaid
-graph TD
-    Web[React 프론트엔드<br/>Vite · React Router]
-    Adapter[Adapter Layer<br/>REST · GraphQL · MCP]
-    App[Application Layer<br/>유스케이스 · 트랜잭션 · 스케줄러]
-    Domain[Domain Layer<br/>엔티티 · 상태 전이 규칙]
-    Infra[Infrastructure Layer<br/>JPA · 외부 API · LLM 게이트웨이]
-    DB[(PostgreSQL / MySQL)]
-    Store[(MinIO)]
-    API[(토스 · 공공 API)]
-    LLM[(로컬 LLM · 선택적 외부 LLM)]
-    Web --> Adapter
-    Adapter --> App
-    App --> Domain
-    App --> Infra
-    Infra --> DB
-    Infra --> Store
-    Infra --> API
-    Infra --> LLM
-```
+<img width="1523" height="821" alt="image" src="https://github.com/user-attachments/assets/f0bd42b8-4fea-4068-bb07-98de87386667" />
+<br/><br/>
 
 - **Adapter**: 명령·운영 REST, 조회·화면 조합 GraphQL, 관리자 AI 에이전트 MCP 도구
 - **Application**: 유스케이스, 트랜잭션 경계, ShedLock 스케줄러 이용
