@@ -16,6 +16,7 @@ import com.sleekydz86.idolglow.translation.application.port.out.JudgeRequest
 import com.sleekydz86.idolglow.translation.application.port.out.TranslationEnginePort
 import com.sleekydz86.idolglow.translation.domain.ContentTranslation
 import com.sleekydz86.idolglow.translation.domain.TranslationContentType
+import com.sleekydz86.idolglow.translation.domain.TranslationLocales
 import com.sleekydz86.idolglow.translation.domain.TranslationProtector
 import com.sleekydz86.idolglow.translation.domain.TranslationStatus
 import com.sleekydz86.idolglow.translation.infrastructure.ContentTranslationJpaRepository
@@ -91,6 +92,7 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
         translationRepository.deleteAllInBatch()
         glossaryRepository.deleteAllInBatch()
         engine.available = true
+        engine.translator = null
         engine.answers.clear()
         engine.judgeScore = 5
     }
@@ -291,6 +293,46 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
     }
 
     @Test
+    fun sourceEditedWhileTranslatingDropsStaleResult() {
+        // given
+        val post = post("서울 야경 명소 추천", "남산타워 전망대가 제일 좋았어요")
+        var firstLocale = ""
+        engine.translator = { request ->
+            if (firstLocale.isEmpty()) {
+                firstLocale = request.locale
+                post.edit(GlowCommunityTag.TALK, "서울 야경 명소 추천", "낙산공원 성곽길이 더 좋았어요")
+                postRepository.saveAndFlush(post)
+                scanService.scan()
+            }
+            request.fields["content"]?.let { content ->
+                val edited = content.contains("낙산공원")
+                (if (edited) EDITED_POST_TRANSLATIONS else ORIGINAL_POST_TRANSLATIONS).getValue(request.locale)
+            }
+        }
+        lookup("en", TranslationContentType.GLOW_COMMUNITY_POST, post.id.toString())
+        val worker = worker()
+
+        // when
+        val firstRun = worker.runOnce()
+        val raced = row(TranslationContentType.GLOW_COMMUNITY_POST, post.id.toString(), firstLocale)
+        advance(Duration.ofMinutes(1))
+        worker.runOnce()
+        val shown =
+            TranslationLocales.TARGETS.associateWith { locale ->
+                lookup(locale, TranslationContentType.GLOW_COMMUNITY_POST, post.id.toString())
+            }
+
+        // then
+        assertEquals(1, firstRun.outcomes[TranslationTxService.OUTCOME_STALE])
+        assertEquals(TranslationStatus.PENDING, raced.status)
+        shown.forEach { (locale, result) ->
+            assertEquals(LookupStatus.TRANSLATED, result.status)
+            assertEquals(locale, result.resolvedLocale)
+            assertEquals(EDITED_POST_TRANSLATIONS.getValue(locale)["content"], result.fields["content"])
+        }
+    }
+
+    @Test
     fun linksSurviveTranslation() {
         // given
         val post = post("공연 후기", "예매는 [여기](https://idolglow.test/book) 에서 했어요")
@@ -384,6 +426,19 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
         )
 
     companion object {
+        private const val NIGHT_VIEW_TITLE = "Seoul night view picks"
+        private val ORIGINAL_POST_TRANSLATIONS =
+            mapOf(
+                "en" to mapOf("title" to NIGHT_VIEW_TITLE, "content" to "The Namsan Tower observatory was the best"),
+                "ja" to mapOf("title" to "ソウル夜景スポットのおすすめ", "content" to "南山タワー展望台が一番よかったです"),
+                "zh" to mapOf("title" to "首尔夜景推荐", "content" to "南山塔观景台最好"),
+            )
+        private val EDITED_POST_TRANSLATIONS =
+            mapOf(
+                "en" to mapOf("title" to NIGHT_VIEW_TITLE, "content" to "The Naksan Park fortress trail was better"),
+                "ja" to mapOf("title" to "ソウル夜景スポットのおすすめ", "content" to "駱山公園の城郭道のほうがよかったです"),
+                "zh" to mapOf("title" to "首尔夜景推荐", "content" to "骆山公园城墙路更好"),
+            )
         private const val ENGLISH_DESCRIPTION = "Namsan Tower 2-hour course, price 55,000 KRW"
         private val PRODUCT_TRANSLATIONS =
             mapOf(
