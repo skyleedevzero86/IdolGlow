@@ -31,7 +31,8 @@ object EventPerformanceMatcher {
         if (!sameTitle || !periodsOverlap(item, master)) {
             return 0
         }
-        return if (venuesMatch(item.venue, master.venue)) CONFIRMED_SCORE else CANDIDATE_SCORE
+        val confirmed = venuesMatch(item.venue, master.venue) && regionsAgree(item.title, master.title)
+        return if (confirmed) CONFIRMED_SCORE else CANDIDATE_SCORE
     }
 
     private fun periodsOverlap(
@@ -59,8 +60,38 @@ object EventPerformanceMatcher {
     ): Boolean {
         val normalizedLeft = EventTitleNormalizer.normalize(left.orEmpty())
         val normalizedRight = EventTitleNormalizer.normalize(right.orEmpty())
-        return normalizedLeft.isNotEmpty() && normalizedLeft == normalizedRight
+        if (normalizedLeft.isEmpty() || normalizedRight.isEmpty()) {
+            return false
+        }
+        return normalizedLeft == normalizedRight || containsLongEnoughVenue(normalizedLeft, normalizedRight)
     }
+
+    private fun containsLongEnoughVenue(
+        left: String,
+        right: String,
+    ): Boolean {
+        val (shorter, longer) = if (left.length <= right.length) left to right else right to left
+        return shorter.length >= MIN_CONTAINED_VENUE_LENGTH && longer.contains(shorter)
+    }
+
+    private fun regionsAgree(
+        left: String,
+        right: String,
+    ): Boolean {
+        val leftTags = bracketTags(left)
+        val rightTags = bracketTags(right)
+        return leftTags.isEmpty() || rightTags.isEmpty() || leftTags.any { it in rightTags }
+    }
+
+    private fun bracketTags(title: String): Set<String> =
+        BRACKET_TAG
+            .findAll(title)
+            .map { match -> match.groupValues[1].trim() }
+            .filter { tag -> tag.isNotEmpty() }
+            .toSet()
+
+    private const val MIN_CONTAINED_VENUE_LENGTH: Int = 4
+    private val BRACKET_TAG = Regex("""\[([^]]+)]""")
 }
 
 sealed class EventMatchDecision {
