@@ -223,6 +223,7 @@ class SecurityConfig(
             arrayOf(
                 "/platform/auth/**",
                 "/auth/login/**",
+                "/auth/password/login",
                 "/auth/signup",
                 "/auth/signup/check-email",
                 "/auth/signup/check-nickname",

@@ -52,7 +52,24 @@ class CultureInfoPerformanceBatchAdapterTest {
         assertTrue(batch.incompleteReason.orEmpty().contains("3일 중 1일"))
     }
 
-    @DisplayName("모든 날짜가 빠지면 예외로 알린다")
+    @DisplayName("모든 날짜에 빠진 호출이 있어도 받은 공연이 있으면 저장하고 누락 사유를 남긴다")
+    @Test
+    fun keepsItemsWhenEveryDayPartlyIncomplete() {
+
+        // given
+        하루_결과("20261119", complete = false, "1")
+        하루_결과("20261120", complete = false, "2")
+        하루_결과("20261121", complete = false)
+
+        // when
+        val batch = adapter.fetchBatch(from, to)
+
+        // then
+        assertEquals(2, batch.items.size)
+        assertTrue(batch.incompleteReason.orEmpty().contains("3일 중 3일"))
+    }
+
+    @DisplayName("모든 날짜가 빠지고 받은 공연도 없으면 예외로 알린다")
     @Test
     fun throwsWhenEveryDayIncomplete() {
 

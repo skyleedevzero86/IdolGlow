@@ -106,14 +106,14 @@ class CultureInfoPerformanceBatchAdapter(
                 )
             }
         val incompleteDays = loaded.count { !it.complete }
-        check(targetDays.isEmpty() || incompleteDays < targetDays.size) {
-            "문화정보 API 호출이 모든 날짜에서 실패했습니다. days=${targetDays.size}"
-        }
         val items =
             loaded
                 .flatMap { it.events }
                 .map { event -> event.toCollected(event.source.ifBlank { source }) }
                 .distinctBy { item -> item.source to item.sourceId }
+        check(items.isNotEmpty() || targetDays.isEmpty() || incompleteDays < targetDays.size) {
+            "문화정보 API 호출이 모든 날짜에서 실패해 받은 공연이 없습니다. days=${targetDays.size}"
+        }
         return CollectedBatch(items, incompleteReason(incompleteDays, targetDays.size))
     }
 

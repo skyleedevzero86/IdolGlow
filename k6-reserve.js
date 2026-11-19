@@ -7,6 +7,7 @@ const serverError = new Counter('reserve_server_error');
 
 const PRODUCT_ID = __ENV.PRODUCT_ID || '2';
 const SLOT_ID = __ENV.SLOT_ID || '30';
+const BASE_URL = __ENV.BASE_URL || 'http://59.24.204.101:8080';
 
 export const options = {
   scenarios: {
@@ -22,15 +23,29 @@ export const options = {
   },
 };
 
-export default function () {
+export function setup() {
+  if (!__ENV.EMAIL || !__ENV.PASSWORD) {
+    if (!__ENV.TOKEN) throw new Error('EMAIL·PASSWORD 또는 TOKEN 환경 변수가 필요합니다.');
+    return { token: __ENV.TOKEN };
+  }
   const res = http.post(
-    `http://59.24.204.101:8080/products/${PRODUCT_ID}/reservations`,
+    `${BASE_URL}/auth/password/login`,
+    JSON.stringify({ email: __ENV.EMAIL, password: __ENV.PASSWORD }),
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  if (res.status !== 200) throw new Error(`로그인 실패 status=${res.status}`);
+  return { token: res.json('accessToken') };
+}
+
+export default function (data) {
+  const res = http.post(
+    `${BASE_URL}/products/${PRODUCT_ID}/reservations`,
     //JSON.stringify({ reservationSlotId: Number(SLOT_ID) }),
     JSON.stringify({ reservationSlotId: Number(SLOT_ID), totalPrice: Number(__ENV.PRICE || 59000) }),
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${__ENV.TOKEN}`,
+        Authorization: `Bearer ${data.token}`,
       },
     }
   );
