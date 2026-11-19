@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 import com.sleekydz86.idolglow.global.config.CultureInfoApiProperties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -98,6 +99,62 @@ class CultureInfoApiClientTest {
         // then
         assertEquals(1, result.size)
         assertServiceKey가_한_번만_인코딩됨(capturedUri.get(), "abc+def/ghi==")
+    }
+
+    @DisplayName("하루치 호출이 모두 성공하면 완전한 결과로 표시한다")
+    @Test
+    fun marksCalendarDayCompleteWhenAllCallsSucceed() {
+
+        // given
+        val client = 요청Uri를_캡처하는_클라이언트(AtomicReference(), serviceKey = "abc")
+
+        // when
+        val result = client.listEventsForCalendarDayWithCompleteness("20260616", pageNo = 1, numOfRows = 3)
+
+        // then
+        assertTrue(result.complete)
+        assertTrue(result.events.isNotEmpty())
+    }
+
+    @DisplayName("요청 한도 초과로 호출이 빠지면 불완전한 결과로 표시한다")
+    @Test
+    fun marksCalendarDayIncompleteWhenRateLimited() {
+
+        // given
+        val client = 상태코드만_돌려주는_클라이언트(HttpStatus.TOO_MANY_REQUESTS)
+
+        // when
+        val result = client.listEventsForCalendarDayWithCompleteness("20260616", pageNo = 1, numOfRows = 3)
+
+        // then
+        assertFalse(result.complete)
+        assertTrue(result.events.isEmpty())
+    }
+
+    @DisplayName("서비스키가 비어 있으면 불완전한 결과로 표시한다")
+    @Test
+    fun marksCalendarDayIncompleteWhenServiceKeyIsBlank() {
+
+        // given
+        val client = 요청Uri를_캡처하는_클라이언트(AtomicReference(), serviceKey = "")
+
+        // when
+        val result = client.listEventsForCalendarDayWithCompleteness("20260616", pageNo = 1, numOfRows = 3)
+
+        // then
+        assertFalse(result.complete)
+    }
+
+    private fun 상태코드만_돌려주는_클라이언트(status: HttpStatus): CultureInfoApiClient {
+        val webClient =
+            WebClient
+                .builder()
+                .exchangeFunction { Mono.just(ClientResponse.create(status).body("").build()) }
+                .build()
+        return CultureInfoApiClient(
+            webClient = webClient,
+            properties = CultureInfoApiProperties(serviceKey = "abc"),
+        )
     }
 
     private fun assertServiceKey가_한_번만_인코딩됨(

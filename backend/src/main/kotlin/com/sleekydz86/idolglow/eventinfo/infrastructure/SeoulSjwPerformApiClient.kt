@@ -36,19 +36,38 @@ class SeoulSjwPerformApiClient(
         if (!seoulSjwApiProperties.enabled) return emptyList()
         val key = seoulSjwApiProperties.apiKey.trim()
         if (key.isEmpty()) return emptyList()
-        val start = ((pageNo.coerceAtLeast(1) - 1) * numOfRows.coerceIn(1, 1000)) + 1
-        val end = start + numOfRows.coerceIn(1, 1000) - 1
-        val path = "/$key/json/SJWPerform/$start/$end"
-        val response = fetchSjwEnvelope(path) ?: return emptyList()
-        val resultCode = response.sjwPerform?.result?.code
-        if (resultCode != null && resultCode != "INFO-000" && resultCode != "INFO-200") {
-            log.warn("SJWPerform 제공기관 오류. code={}, message={}", resultCode, response.sjwPerform?.result?.message)
+        val response = fetchSjwEnvelope(listPath(key, pageNo, numOfRows)) ?: return emptyList()
+        val result = response.resultOrNull()
+        if (result?.code != null && result.code !in LIST_OK_CODES) {
+            log.warn("SJWPerform 제공기관 오류. code={}, message={}", result.code, result.message)
             return emptyList()
         }
-        return response.sjwPerform
-            ?.rows
-            .orEmpty()
-            .mapNotNull { it.toDomain() }
+        return response.toEvents()
+    }
+
+    fun listForBatch(
+        pageNo: Int,
+        numOfRows: Int,
+    ): List<FestivalEvent> {
+        if (!seoulSjwApiProperties.enabled) return emptyList()
+        val key = seoulSjwApiProperties.apiKey.trim()
+        check(key.isNotEmpty()) { "세종문화회관 API 인증키가 비어 있습니다." }
+        val response = parseEnvelope(requestBody(listPath(key, pageNo, numOfRows)))
+        val result = response.resultOrNull()
+        check(result?.code == null || result.code in LIST_OK_CODES) {
+            "세종문화회관 API 오류 응답. code=${result?.code}, message=${result?.message}"
+        }
+        return response.toEvents()
+    }
+
+    private fun listPath(
+        key: String,
+        pageNo: Int,
+        numOfRows: Int,
+    ): String {
+        val size = numOfRows.coerceIn(1, 1000)
+        val start = ((pageNo.coerceAtLeast(1) - 1) * size) + 1
+        return "/$key/json/SJWPerform/$start/${start + size - 1}"
     }
 
     fun detail(performIdx: String): FestivalEvent? {
@@ -57,7 +76,7 @@ class SeoulSjwPerformApiClient(
         if (key.isEmpty()) return null
         val path = "/$key/json/SJWPerform/1/1/$performIdx"
         val response = fetchSjwEnvelope(path) ?: return null
-        val resultCode = response.sjwPerform?.result?.code
+        val resultCode = response.resultOrNull()?.code
         if (resultCode != null && resultCode != "INFO-000") {
             return null
         }
@@ -86,145 +105,155 @@ class SeoulSjwPerformApiClient(
     private fun parseDate(value: String): LocalDate? = runCatching { LocalDate.parse(value, DateTimeFormatter.BASIC_ISO_DATE) }.getOrNull()
 
     private fun fetchSjwEnvelope(path: String): SjwEnvelope? {
-        val base = seoulSjwApiProperties.baseUrl.trimEnd('/')
-        val uri = "$base$path"
-        val timeout = Duration.ofSeconds(seoulSjwApiProperties.timeoutSeconds.coerceIn(1, 30))
         val raw =
-            runCatching {
-                sjwWebClient
-                    .get()
-                    .uri(uri)
-                    .retrieve()
-                    .bodyToMono(String::class.java)
-                    .timeout(timeout)
-                    .block(timeout.plusSeconds(1))
-            }.getOrElse {
+            runCatching { requestBody(path) }.getOrElse {
                 val failure = failureMessage(it)
                 if (isTimeoutFailure(it)) {
-                    log.info("SJWPerform 호출 시간 초과. timeout={}s, cause={}", timeout.seconds, failure)
+                    log.info("SJWPerform 호출 시간 초과. timeout={}s, cause={}", requestTimeout().seconds, failure)
                 } else {
                     log.warn("SJWPerform 호출 실패: {}", failure)
                 }
                 return null
-            } ?: return null
-        val trimmed = raw.trim()
-        return when {
-            trimmed.startsWith("<") -> parseSjwXmlEnvelope(trimmed)
-            else ->
-                runCatching {
-                    objectMapper.readValue(trimmed, SjwEnvelope::class.java)
-                }.getOrElse {
-                    log.warn("SJWPerform JSON 파싱 실패: {}", it.message)
-                    null
-                }
-        }
-    }
-
-    private fun isTimeoutFailure(error: Throwable): Boolean =
-        generateSequence(error) { it.cause }
-            .any { cause ->
-                cause is java.util.concurrent.TimeoutException ||
-                    cause::class.simpleName?.contains("Timeout", ignoreCase = true) == true
             }
-
-    private fun failureMessage(error: Throwable): String {
-        val root = generateSequence(error) { it.cause }.last()
-        val type = root::class.simpleName ?: root.javaClass.simpleName
-        val message = root.message?.trim()?.takeIf { it.isNotEmpty() }
-        return if (message == null) type else "$type: $message"
-    }
-
-    private fun parseSjwXmlEnvelope(xml: String): SjwEnvelope? =
-        runCatching {
-            val factory = DocumentBuilderFactory.newInstance()
-            factory.isNamespaceAware = false
-            val doc = factory.newDocumentBuilder().parse(InputSource(StringReader(xml)))
-            val performEl =
-                doc.getElementsByTagName("SJWPerform").item(0) as? Element
-                    ?: doc.documentElement
-                    ?: return null
-            val resultEl = firstChildElement(performEl, "RESULT")
-            val result =
-                resultEl?.let { el ->
-                    SjwResult(
-                        code = childText(el, "CODE"),
-                        message = childText(el, "MESSAGE"),
-                    )
-                }
-            val rows = mutableListOf<SjwRow>()
-            val rowNodes = performEl.getElementsByTagName("row")
-            for (i in 0 until rowNodes.length) {
-                val rowEl = rowNodes.item(i) as? Element ?: continue
-                rows.add(sjwRowFromXmlElement(rowEl))
-            }
-            SjwEnvelope(SjwBody(result = result, rows = rows))
-        }.getOrElse {
-            log.warn("SJWPerform XML 파싱 실패: {}", it.message)
+        return runCatching { parseEnvelope(raw) }.getOrElse {
+            log.warn("SJWPerform 응답 파싱 실패: {}", it.message)
             null
         }
-
-    private fun firstChildElement(
-        parent: Element,
-        tag: String,
-    ): Element? {
-        for (i in 0 until parent.childNodes.length) {
-            val n = parent.childNodes.item(i)
-            if (n is Element && n.tagName.equals(tag, ignoreCase = true)) return n
-        }
-        return null
     }
 
-    private fun childText(
-        parent: Element,
-        tag: String,
-    ): String? {
-        val el = firstChildElement(parent, tag) ?: return null
-        return el.textContent?.trim()?.takeIf { it.isNotEmpty() }
+    private fun requestBody(path: String): String {
+        val uri = seoulSjwApiProperties.baseUrl.trimEnd('/') + path
+        val timeout = requestTimeout()
+        return sjwWebClient
+            .get()
+            .uri(uri)
+            .retrieve()
+            .bodyToMono(String::class.java)
+            .timeout(timeout)
+            .block(timeout.plusSeconds(1))
+            ?: error("세종문화회관 API 응답 본문이 비어 있습니다.")
     }
 
-    private fun sjwRowFromXmlElement(row: Element): SjwRow {
-        val map = linkedMapOf<String, String>()
-        for (i in 0 until row.childNodes.length) {
-            val n = row.childNodes.item(i)
-            if (n is Element) {
-                val t = n.textContent?.trim().orEmpty()
-                if (t.isNotEmpty()) map[n.tagName.uppercase()] = t
-            }
-        }
+    private fun requestTimeout(): Duration = Duration.ofSeconds(seoulSjwApiProperties.timeoutSeconds.coerceIn(1, 30))
 
-        fun t(vararg keys: String): String? {
-            for (k in keys) {
-                map.entries
-                    .firstOrNull { it.key.equals(k, ignoreCase = true) }
-                    ?.value
-                    ?.let { return it }
-            }
-            return null
-        }
-        return SjwRow(
-            performIdx = t("PERFORM_IDX"),
-            title = t("TITLE"),
-            startDate = t("START_DATE"),
-            endDate = t("END_DATE"),
-            placeList = t("PLACE_LIST"),
-            fileUrl = t("FILE_URL"),
-            infoUrl = t("INFO_URL"),
-            genreName = t("GENRE_NAME"),
-            synopsis = t("SYNOPSIS"),
-            inquiryPhone = t("INQUIRY_PHONE"),
-        )
+    private fun parseEnvelope(raw: String): SjwEnvelope {
+        val trimmed = raw.trim()
+        if (trimmed.startsWith("<")) return parseSjwXmlEnvelope(trimmed)
+        return objectMapper.readValue(trimmed, SjwEnvelope::class.java)
     }
 
     companion object {
         private const val MAX_RESPONSE_BYTES: Int = 4 * 1024 * 1024
+        private val LIST_OK_CODES: Set<String> = setOf("INFO-000", "INFO-200")
     }
+}
+
+private fun isTimeoutFailure(error: Throwable): Boolean =
+    generateSequence(error) { it.cause }
+        .any { cause ->
+            cause is java.util.concurrent.TimeoutException ||
+                cause::class.simpleName?.contains("Timeout", ignoreCase = true) == true
+        }
+
+private fun failureMessage(error: Throwable): String {
+    val root = generateSequence(error) { it.cause }.last()
+    val type = root::class.simpleName ?: root.javaClass.simpleName
+    val message = root.message?.trim()?.takeIf { it.isNotEmpty() }
+    return if (message == null) type else "$type: $message"
+}
+
+private fun parseSjwXmlEnvelope(xml: String): SjwEnvelope {
+    val factory = DocumentBuilderFactory.newInstance()
+    factory.isNamespaceAware = false
+    val doc = factory.newDocumentBuilder().parse(InputSource(StringReader(xml)))
+    val root = doc.documentElement
+    val performEl = doc.getElementsByTagName("SJWPerform").item(0) as? Element ?: root
+    val resultEl =
+        firstChildElement(performEl, "RESULT")
+            ?: root.takeIf { it.tagName.equals("RESULT", ignoreCase = true) }
+    val result =
+        resultEl?.let { el ->
+            SjwResult(
+                code = childText(el, "CODE"),
+                message = childText(el, "MESSAGE"),
+            )
+        }
+    val rows = mutableListOf<SjwRow>()
+    val rowNodes = performEl.getElementsByTagName("row")
+    for (i in 0 until rowNodes.length) {
+        val rowEl = rowNodes.item(i) as? Element ?: continue
+        rows.add(sjwRowFromXmlElement(rowEl))
+    }
+    return SjwEnvelope(SjwBody(result = result, rows = rows))
+}
+
+private fun firstChildElement(
+    parent: Element,
+    tag: String,
+): Element? {
+    for (i in 0 until parent.childNodes.length) {
+        val n = parent.childNodes.item(i)
+        if (n is Element && n.tagName.equals(tag, ignoreCase = true)) return n
+    }
+    return null
+}
+
+private fun childText(
+    parent: Element,
+    tag: String,
+): String? {
+    val el = firstChildElement(parent, tag) ?: return null
+    return el.textContent?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+private fun sjwRowFromXmlElement(row: Element): SjwRow {
+    val map = linkedMapOf<String, String>()
+    for (i in 0 until row.childNodes.length) {
+        val n = row.childNodes.item(i)
+        if (n is Element) {
+            val t = n.textContent?.trim().orEmpty()
+            if (t.isNotEmpty()) map[n.tagName.uppercase()] = t
+        }
+    }
+
+    fun t(vararg keys: String): String? {
+        for (k in keys) {
+            map.entries
+                .firstOrNull { it.key.equals(k, ignoreCase = true) }
+                ?.value
+                ?.let { return it }
+        }
+        return null
+    }
+    return SjwRow(
+        performIdx = t("PERFORM_IDX"),
+        title = t("TITLE"),
+        startDate = t("START_DATE"),
+        endDate = t("END_DATE"),
+        placeList = t("PLACE_LIST"),
+        fileUrl = t("FILE_URL"),
+        infoUrl = t("INFO_URL"),
+        genreName = t("GENRE_NAME"),
+        synopsis = t("SYNOPSIS"),
+        inquiryPhone = t("INQUIRY_PHONE"),
+    )
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class SjwEnvelope(
     @JsonProperty("SJWPerform")
     val sjwPerform: SjwBody? = null,
-)
+    @JsonProperty("RESULT")
+    val result: SjwResult? = null,
+) {
+    fun resultOrNull(): SjwResult? = sjwPerform?.result ?: result
+
+    fun toEvents(): List<FestivalEvent> =
+        sjwPerform
+            ?.rows
+            .orEmpty()
+            .mapNotNull { it.toDomain() }
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class SjwBody(

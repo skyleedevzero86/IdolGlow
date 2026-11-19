@@ -1201,7 +1201,7 @@ CREATE TABLE IF NOT EXISTS event_source_ref (
 CREATE TABLE IF NOT EXISTS event_collect_log (
     id bigint auto_increment primary key,
     source varchar(80) not null comment '공급처 코드',
-    status varchar(20) not null comment '수집 상태. SUCCESS, FAILED',
+    status varchar(20) not null comment '수집 상태. SUCCESS(정상), PARTIAL(일부 호출 실패로 일부만 수집), FAILED(실패)',
     item_count int not null comment '이번 수집에서 저장을 시도한 건수',
     error_message varchar(1000) null comment '실패 원인. 1000자 이내',
     collected_at datetime(6) not null comment '수집 시각',

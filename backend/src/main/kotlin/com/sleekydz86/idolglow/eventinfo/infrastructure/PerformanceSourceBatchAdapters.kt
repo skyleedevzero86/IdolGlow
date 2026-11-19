@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceSourceBatchPort
+import com.sleekydz86.idolglow.eventinfo.domain.CollectedBatch
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedPerformance
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import org.springframework.stereotype.Component
@@ -70,7 +71,7 @@ class SeoulSjwPerformanceBatchAdapter(
         to: LocalDate,
     ): List<CollectedPerformance> =
         collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            seoulSjwPerformApiClient.list(pageNo = page, numOfRows = PAGE_SIZE)
+            seoulSjwPerformApiClient.listForBatch(pageNo = page, numOfRows = PAGE_SIZE)
         }.filter { event -> event.overlaps(from, to) }
             .map { event -> event.toCollected(source) }
 
@@ -89,13 +90,40 @@ class CultureInfoPerformanceBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        days(from, to)
-            .flatMap { day ->
-                cultureInfoApiClient.listEventsForCalendarDay(day.basic(), pageNo = 1, numOfRows = PAGE_SIZE)
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch {
+        val targetDays = days(from, to)
+        val loaded =
+            targetDays.map { day ->
+                cultureInfoApiClient.listEventsForCalendarDayWithCompleteness(
+                    day.basic(),
+                    pageNo = 1,
+                    numOfRows = PAGE_SIZE,
+                )
             }
-            .map { event -> event.toCollected(event.source.ifBlank { source }) }
-            .distinctBy { item -> item.source to item.sourceId }
+        val incompleteDays = loaded.count { !it.complete }
+        check(targetDays.isEmpty() || incompleteDays < targetDays.size) {
+            "문화정보 API 호출이 모든 날짜에서 실패했습니다. days=${targetDays.size}"
+        }
+        val items =
+            loaded
+                .flatMap { it.events }
+                .map { event -> event.toCollected(event.source.ifBlank { source }) }
+                .distinctBy { item -> item.source to item.sourceId }
+        return CollectedBatch(items, incompleteReason(incompleteDays, targetDays.size))
+    }
+
+    private fun incompleteReason(
+        incompleteDays: Int,
+        totalDays: Int,
+    ): String? {
+        if (incompleteDays == 0) return null
+        return "API 호출 실패(요청 한도 초과 등)로 ${totalDays}일 중 ${incompleteDays}일의 공연이 일부 또는 전부 빠졌습니다."
+    }
 
     companion object {
         private const val PAGE_SIZE: Int = 100

@@ -1553,7 +1553,7 @@ COMMENT ON COLUMN event_source_ref.raw_payload IS '공급처에서 받은 원본
 
 COMMENT ON TABLE event_collect_log IS '공연 공급처 수집 결과';
 
-COMMENT ON COLUMN event_collect_log.status IS '수집 상태. SUCCESS, FAILED';
+COMMENT ON COLUMN event_collect_log.status IS '수집 상태. SUCCESS(정상), PARTIAL(일부 호출 실패로 일부만 수집), FAILED(실패)';
 
 COMMENT ON COLUMN event_collect_log.item_count IS '이번 수집에서 저장을 시도한 건수';
 

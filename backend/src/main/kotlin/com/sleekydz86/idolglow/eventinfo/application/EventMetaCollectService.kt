@@ -48,8 +48,15 @@ class EventMetaCollectService(
         from: LocalDate,
         to: LocalDate,
     ) {
-        val items = source.fetch(from, to).distinctBy { it.sourceId }
+        val batch = source.fetchBatch(from, to)
+        val items = batch.items.distinctBy { it.sourceId }
         items.forEach(eventMetaTxService::upsert)
-        eventMetaTxService.recordRun(source.source, EventCollectStatus.SUCCESS, items.size, null)
+        val reason = batch.incompleteReason
+        if (reason == null) {
+            eventMetaTxService.recordRun(source.source, EventCollectStatus.SUCCESS, items.size, null)
+            return
+        }
+        log.warn("공연 공급처 일부만 수집했습니다. source={} itemCount={} reason={}", source.source, items.size, reason)
+        eventMetaTxService.recordRun(source.source, EventCollectStatus.PARTIAL, items.size, reason)
     }
 }
