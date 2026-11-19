@@ -23,6 +23,11 @@ class SeoulSjwPerformApiClient(
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private val sjwWebClient: WebClient =
+        webClient
+            .mutate()
+            .codecs { it.defaultCodecs().maxInMemorySize(MAX_RESPONSE_BYTES) }
+            .build()
 
     fun list(
         pageNo: Int,
@@ -86,7 +91,7 @@ class SeoulSjwPerformApiClient(
         val timeout = Duration.ofSeconds(seoulSjwApiProperties.timeoutSeconds.coerceIn(1, 30))
         val raw =
             runCatching {
-                webClient
+                sjwWebClient
                     .get()
                     .uri(uri)
                     .retrieve()
@@ -208,6 +213,10 @@ class SeoulSjwPerformApiClient(
             synopsis = t("SYNOPSIS"),
             inquiryPhone = t("INQUIRY_PHONE"),
         )
+    }
+
+    companion object {
+        private const val MAX_RESPONSE_BYTES: Int = 4 * 1024 * 1024
     }
 }
 
