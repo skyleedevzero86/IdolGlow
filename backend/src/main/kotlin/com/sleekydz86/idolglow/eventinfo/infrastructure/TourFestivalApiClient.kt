@@ -27,6 +27,7 @@ class TourFestivalApiClient(
 ) : FestivalEventExternalQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
     private val requestedServiceLocale = ThreadLocal<String>()
+    private val failedCallsOnThread = ThreadLocal<Int>()
 
     override fun searchFestival(
         eventStartDate: String,
@@ -37,6 +38,7 @@ class TourFestivalApiClient(
         val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
         if (encodedKey.isEmpty()) {
             log.warn("한국관광공사(TourKor) API 서비스키가 비어 있습니다.")
+            markFailedCall()
             return emptyList()
         }
         return fetchList<FestivalItem>(
@@ -61,12 +63,21 @@ class TourFestivalApiClient(
         numOfRows: Int,
     ): List<FestivalEvent> {
         val previous = requestedServiceLocale.get()
+        val previousFailures = failedCallsOnThread.get()
         requestedServiceLocale.set(EventLocale.normalize(locale))
+        failedCallsOnThread.set(0)
         try {
-            return searchFestival(eventStartDate, eventEndDate, pageNo, numOfRows)
+            val events = searchFestival(eventStartDate, eventEndDate, pageNo, numOfRows)
+            check(failedCallsOnThread.get() == 0) { "관광 다국어 API 호출이 실패했습니다. locale=$locale pageNo=$pageNo" }
+            return events
         } finally {
             if (previous == null) requestedServiceLocale.remove() else requestedServiceLocale.set(previous)
+            if (previousFailures == null) failedCallsOnThread.remove() else failedCallsOnThread.set(previousFailures)
         }
+    }
+
+    private fun markFailedCall() {
+        failedCallsOnThread.get()?.let { failedCallsOnThread.set(it + 1) }
     }
 
     override fun detailCommon(contentId: String): FestivalCommonDetail? {
@@ -235,10 +246,12 @@ class TourFestivalApiClient(
         val response = requestRaw(endpoint, encodedServiceKey, params)
         if (!response.statusCode.is2xxSuccessful) {
             log.warn("관광(축제) API HTTP 오류. endpoint={}, status={}, body={}", endpoint, response.statusCode.value(), response.body.take(300))
+            markFailedCall()
             return emptyList()
         }
         if (response.body.contains("<OpenAPI_ServiceResponse>", ignoreCase = true)) {
             log.warn("관광(축제) API XML 오류 응답. endpoint={}, body={}", endpoint, response.body.take(300))
+            markFailedCall()
             return emptyList()
         }
         val root =
@@ -246,6 +259,7 @@ class TourFestivalApiClient(
                 objectMapper.readTree(response.body)
             }.getOrElse { e ->
                 log.warn("관광(축제) API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
+                markFailedCall()
                 return emptyList()
             }
         val responseNode = root.path("response")
@@ -258,6 +272,7 @@ class TourFestivalApiClient(
                 resultCode,
                 headerNode.path("resultMsg").asText(""),
             )
+            markFailedCall()
             return emptyList()
         }
         return extractItemNodes(responseNode.path("body").path("items")).mapNotNull {
@@ -293,8 +308,8 @@ class TourFestivalApiClient(
                 }.block()
                 ?: RawFestivalResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
-            log.warn("관광 축제 API 호출 실패: {}", e.message)
-            RawFestivalResponse(HttpStatusCode.valueOf(502), e.message ?: "")
+            log.warn("관광 축제 API 호출 실패. endpoint={}, error={}", endpoint, e.javaClass.simpleName)
+            RawFestivalResponse(HttpStatusCode.valueOf(502), "")
         }
     }
 
