@@ -227,8 +227,8 @@ class CultureInfoApiClient(
         }
         val item = parseItems(xml).firstOrNull() ?: return null
         val m = item.toFieldMap()
-        val title = m["title"].orEmpty().ifBlank { return null }
-        val place = m["place"].orEmpty()
+        val title = EventSourceText.decodeOrNull(m["title"]) ?: return null
+        val place = EventSourceText.decode(m["place"].orEmpty())
         val area = m["area"].orEmpty()
         val sigungu = m["sigungu"].orEmpty()
         val address = listOf(area, sigungu, place).filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }
@@ -285,8 +285,8 @@ class CultureInfoApiClient(
     ): FestivalEvent? {
         val m = el.toFieldMap()
         val seq = m["seq"]?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val title = m["title"]?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val place = m["place"].orEmpty()
+        val title = EventSourceText.decodeOrNull(m["title"]) ?: return null
+        val place = EventSourceText.decode(m["place"].orEmpty())
         val area = m["area"].orEmpty()
         val sigungu = m["sigungu"].orEmpty()
         val address = listOf(area, sigungu, place).filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }

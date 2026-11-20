@@ -227,8 +227,8 @@ private fun FestivalEvent.toCollected(sourceName: String): CollectedPerformance 
     CollectedPerformance(
         source = sourceName,
         sourceId = contentId,
-        title = title,
-        venue = address,
+        title = EventSourceText.decode(title),
+        venue = EventSourceText.decodeOrNull(address),
         startDate = eventStartDate.toEventDate(),
         endDate = eventEndDate.toEventDate(),
         rawPayload =

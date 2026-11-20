@@ -296,11 +296,11 @@ private data class SjwRow(
 ) {
     fun toDomain(): FestivalEvent? {
         val id = performIdx?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val t = title?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val t = EventSourceText.decodeOrNull(title) ?: return null
         return FestivalEvent(
             contentId = id,
             title = t,
-            address = placeList?.trim()?.takeIf { it.isNotEmpty() },
+            address = EventSourceText.decodeOrNull(placeList),
             eventStartDate = startDate?.trim()?.takeIf { it.isNotEmpty() },
             eventEndDate = endDate?.trim()?.takeIf { it.isNotEmpty() },
             thumbnailImageUrl = fileUrl?.trim()?.takeIf { it.isNotEmpty() },

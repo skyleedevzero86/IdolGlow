@@ -989,3 +989,18 @@ CREATE INDEX IF NOT EXISTS idx_event_master_updated_global ON event_master (upda
 
 -- 파트너별 최근 호출 조회
 CREATE INDEX IF NOT EXISTS idx_partner_call_log_partner_called ON partner_call_log (partner_id, called_at);
+
+-- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
+UPDATE event_master
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    updated_at = current_timestamp
+WHERE title ~ '&([a-zA-Z]+|#[0-9]+);'
+   OR venue ~ '&([a-zA-Z]+|#[0-9]+);';
+
+UPDATE event_source_ref
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&')
+WHERE title ~ '&([a-zA-Z]+|#[0-9]+);'
+   OR venue ~ '&([a-zA-Z]+|#[0-9]+);';
