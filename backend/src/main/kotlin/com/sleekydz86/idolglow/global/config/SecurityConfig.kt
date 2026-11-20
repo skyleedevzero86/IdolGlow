@@ -235,6 +235,7 @@ class SecurityConfig(
                 "/login/**",
                 "/auth/callback",
                 "/payments/mock/webhook",
+                "/partner/v1/**",
                 "/graphql",
                 "/graphiql",
                 "/graphiql/**",

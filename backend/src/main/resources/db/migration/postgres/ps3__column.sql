@@ -983,3 +983,9 @@ WHERE match_status = 'CANDIDATE'
 
 -- 콘텐츠 번역 처리 대기열 조회
 CREATE INDEX IF NOT EXISTS idx_content_translation_due ON content_translation (status, next_attempt_at);
+
+-- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+CREATE INDEX IF NOT EXISTS idx_event_master_updated_global ON event_master (updated_at, global_id);
+
+-- 파트너별 최근 호출 조회
+CREATE INDEX IF NOT EXISTS idx_partner_call_log_partner_called ON partner_call_log (partner_id, called_at);

@@ -1169,7 +1169,8 @@ CREATE TABLE IF NOT EXISTS event_master (
     end_date date null comment '대표 종료일',
     venue varchar(255) null comment '대표 장소',
     normalized_venue varchar(255) null comment '매칭용 장소',
-    status varchar(20) not null comment '대표 상태. ACTIVE',
+    status varchar(20) not null comment '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)',
+    merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
     constraint uk_event_master_global_id unique (global_id)
@@ -1241,7 +1242,7 @@ CREATE TABLE IF NOT EXISTS event_translation (
 -- 운영 변경 한 건. 적용 시점에 이전 상태를 남기고 되돌리기에서 복구한다.
 CREATE TABLE IF NOT EXISTS ops_change_request (
     id bigint auto_increment primary key,
-    type varchar(80) not null comment '변경 종류. EVENT_MATCH_MERGE 등',
+    type varchar(80) not null comment '변경 종류. EVENT_MATCH_MERGE(원본을 글로벌 공연에 연결), EVENT_MASTER_MERGE(글로벌 공연끼리 병합) 등',
     target varchar(255) not null comment '변경 대상. 공연 병합은 공급처|공급처ID',
     payload text not null comment '요청 내용. JSON',
     requested_by varchar(80) not null comment '요청자. 사용자 ID 또는 에이전트 이름',
@@ -1459,3 +1460,44 @@ CREATE TABLE IF NOT EXISTS translation_report (
     CONSTRAINT fk_translation_report_translation FOREIGN KEY (translation_id) REFERENCES content_translation (id),
     CONSTRAINT fk_translation_report_user FOREIGN KEY (user_id) REFERENCES users (id)
 ) COMMENT='번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
+
+-- =============================================================================
+-- 대외 파트너 메타 API
+-- -----
+-- 목적
+-- - 여행사·숙소 같은 파트너가 키로 공연 메타 변경분을 가져간다
+-- 대상
+-- - 마이에스큐엘 / partner_client, partner_call_log
+-- 주의
+-- - 키 원문은 저장하지 않는다. SHA-256 해시만 남기고 원문은 발급 응답에서 한 번만 보여 준다
+-- - 호출 제한은 서버 메모리에서 센다. 서버가 여러 대면 대수만큼 느슨해진다
+-- 연관
+-- - PartnerAccessService, PartnerEventFeedService, PartnerAdminService
+-- =============================================================================
+
+-- 파트너 한 곳. 키, 계약 언어, 분당 호출 한도를 가진다.
+CREATE TABLE IF NOT EXISTS partner_client (
+    id bigint auto_increment primary key,
+    name varchar(100) not null comment '파트너 이름',
+    key_hash varchar(64) not null comment '파트너 키 SHA-256 해시. 원문은 저장하지 않음',
+    locales varchar(100) not null comment '계약 언어. 쉼표로 구분, 예: en,ja',
+    rate_limit_per_minute int not null comment '분당 호출 한도',
+    enabled boolean not null comment '사용 여부. false면 403',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_partner_client_key_hash unique (key_hash)
+) comment='대외 파트너. 키로 공연 메타 API를 호출한다';
+
+-- 파트너 호출 한 건. 누가 언제 무엇을 몇 건 받았는지 남긴다.
+CREATE TABLE IF NOT EXISTS partner_call_log (
+    id bigint auto_increment primary key,
+    partner_id bigint not null comment '호출한 파트너 ID',
+    path varchar(200) not null comment '호출 경로',
+    status int not null comment '응답 상태 코드. 200, 400, 403, 429 등',
+    item_count int not null comment '응답에 담은 공연 수',
+    called_at datetime(6) not null comment '호출 시각',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint fk_partner_call_log_partner
+        foreign key (partner_id) references partner_client (id)
+) comment='파트너 호출 기록';

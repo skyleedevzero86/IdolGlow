@@ -11,6 +11,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
@@ -41,7 +42,28 @@ class EventMaster(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: EventMasterStatus,
+    @Column(name = "merged_into", length = 36)
+    var mergedInto: String? = null,
 ) : BaseEntity() {
+    fun mergeInto(target: EventMaster) {
+        require(target.globalId != globalId) { "같은 글로벌 공연끼리는 병합할 수 없습니다. globalId=$globalId" }
+        check(status == EventMasterStatus.ACTIVE) { "이미 병합된 글로벌 공연입니다. globalId=$globalId" }
+        check(target.status == EventMasterStatus.ACTIVE) {
+            "병합 대상이 이미 병합된 글로벌 공연입니다. globalId=${target.globalId}"
+        }
+        status = EventMasterStatus.MERGED
+        mergedInto = target.globalId
+    }
+
+    fun markTranslationChanged(changedAt: LocalDateTime) {
+        updatedAt = changedAt
+    }
+
+    fun restoreActive() {
+        status = EventMasterStatus.ACTIVE
+        mergedInto = null
+    }
+
     fun refresh(item: CollectedPerformance) {
         val normalized = EventTitleNormalizer.normalize(item.title)
         require(normalized.isNotEmpty()) { "공연 제목을 정규화하면 비어 있습니다. title=${item.title}" }

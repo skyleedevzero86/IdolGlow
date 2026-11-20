@@ -1298,3 +1298,11 @@ UPDATE event_source_ref
 SET global_id = NULL
 WHERE match_status = 'CANDIDATE'
   AND global_id IS NOT NULL;
+
+-- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+CREATE INDEX idx_event_master_updated_global
+    ON event_master (updated_at, global_id);
+
+-- 파트너별 최근 호출 조회
+CREATE INDEX idx_partner_call_log_partner_called
+    ON partner_call_log (partner_id, called_at);

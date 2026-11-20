@@ -2,7 +2,10 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
+import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 class EventMasterRepositoryImpl(
@@ -12,8 +15,16 @@ class EventMasterRepositoryImpl(
 
     override fun findByGlobalId(globalId: String): EventMaster? = eventMasterJpaRepository.findByGlobalId(globalId)
 
-    override fun findByNormalizedTitle(normalizedTitle: String): List<EventMaster> =
-        eventMasterJpaRepository.findByNormalizedTitle(normalizedTitle)
+    override fun findActiveByNormalizedTitle(normalizedTitle: String): List<EventMaster> =
+        eventMasterJpaRepository.findByNormalizedTitleAndStatus(normalizedTitle, EventMasterStatus.ACTIVE)
+
+    override fun findChangedAfter(
+        updatedAt: LocalDateTime,
+        globalId: String,
+        until: LocalDateTime,
+        limit: Int,
+    ): List<EventMaster> =
+        eventMasterJpaRepository.findChangedAfter(updatedAt, globalId, until, PageRequest.of(0, limit))
 
     override fun count(): Long = eventMasterJpaRepository.count()
 }

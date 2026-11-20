@@ -1531,7 +1531,9 @@ COMMENT ON COLUMN event_master.venue IS '대표 장소';
 
 COMMENT ON COLUMN event_master.normalized_venue IS '매칭용 장소';
 
-COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE';
+COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)';
+
+COMMENT ON COLUMN event_master.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움';
 
 COMMENT ON TABLE event_source_ref IS '공급처 공연 원본과 글로벌 식별자 매칭';
 
@@ -1579,7 +1581,7 @@ COMMENT ON COLUMN users.role IS '권한 역할. USER 일반, ADMIN 관리자, OP
 
 COMMENT ON TABLE ops_change_request IS '운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';
 
-COMMENT ON COLUMN ops_change_request.type IS '변경 종류. EVENT_MATCH_MERGE 등';
+COMMENT ON COLUMN ops_change_request.type IS '변경 종류. EVENT_MATCH_MERGE(원본을 글로벌 공연에 연결), EVENT_MASTER_MERGE(글로벌 공연끼리 병합) 등';
 
 COMMENT ON COLUMN ops_change_request.target IS '변경 대상. 공연 병합은 공급처|공급처ID';
 
@@ -1726,3 +1728,31 @@ COMMENT ON TABLE translation_report IS '번역 오류 신고. 쌓이면 번역�
 COMMENT ON COLUMN translation_report.translation_id IS '신고한 번역 content_translation.id';
 
 COMMENT ON COLUMN translation_report.user_id IS '신고한 회원 users.id';
+
+COMMENT ON TABLE partner_client IS '대외 파트너. 키로 공연 메타 API를 호출한다';
+
+COMMENT ON COLUMN partner_client.name IS '파트너 이름';
+
+COMMENT ON COLUMN partner_client.key_hash IS '파트너 키 SHA-256 해시. 원문은 저장하지 않음';
+
+COMMENT ON COLUMN partner_client.locales IS '계약 언어. 쉼표로 구분, 예: en,ja';
+
+COMMENT ON COLUMN partner_client.rate_limit_per_minute IS '분당 호출 한도';
+
+COMMENT ON COLUMN partner_client.enabled IS '사용 여부. false면 403';
+
+COMMENT ON TABLE partner_call_log IS '파트너 호출 기록';
+
+COMMENT ON COLUMN partner_call_log.partner_id IS '호출한 파트너 ID';
+
+COMMENT ON COLUMN partner_call_log.path IS '호출 경로';
+
+COMMENT ON COLUMN partner_call_log.status IS '응답 상태 코드. 200, 400, 403, 429 등';
+
+COMMENT ON COLUMN partner_call_log.item_count IS '응답에 담은 공연 수';
+
+COMMENT ON COLUMN partner_call_log.called_at IS '호출 시각';
+
+COMMENT ON INDEX idx_event_master_updated_global IS '파트너 변경분 피드 커서 조회용';
+
+COMMENT ON INDEX idx_partner_call_log_partner_called IS '파트너별 최근 호출 조회용';

@@ -34,7 +34,7 @@ class EventMetaTxService(
             return
         }
         val owned = soleConfirmedGlobalId(existing)
-        val others = eventMasterPort.findByNormalizedTitle(normalizedTitle).filterNot { it.globalId == owned }
+        val others = eventMasterPort.findActiveByNormalizedTitle(normalizedTitle).filterNot { it.globalId == owned }
         val decision = EventPerformanceMatcher.decide(item, others)
         val resolved = resolve(item, owned, decision)
         val ref = existing ?: EventSourceRef.create(item.source, item.sourceId)

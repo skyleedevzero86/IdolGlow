@@ -37,7 +37,7 @@ class EventMatchConflictAdvisor(
         val side = EventSourceComparison.side(ref)
         val peers =
             eventMasterPort
-                .findByNormalizedTitle(EventTitleNormalizer.normalize(ref.title))
+                .findActiveByNormalizedTitle(EventTitleNormalizer.normalize(ref.title))
                 .map { master -> master to EventSourceComparison.of(side, EventSourceComparison.side(master)) }
                 .filter { (_, facts) -> facts.sameNormalizedTitle && facts.periodsOverlap }
         return peers.firstOrNull { (_, facts) -> facts.sameVenue } ?: peers.firstOrNull()

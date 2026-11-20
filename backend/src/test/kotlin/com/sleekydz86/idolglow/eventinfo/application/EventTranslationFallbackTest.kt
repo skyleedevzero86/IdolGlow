@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class EventTranslationFallbackTest {
     @Test
@@ -71,7 +72,7 @@ class EventTranslationFallbackTest {
     @Test
     fun providerTranslationChangeReplacesStoredText() {
         val translations = InMemoryEventTranslationPort()
-        val tx = EventTranslationTxService(translations)
+        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort())
 
         tx.upsertProvider("g-1", "en", "Old title", "old synopsis")
         tx.upsertProvider("g-1", "en", "New title", "new synopsis")
@@ -95,7 +96,7 @@ class EventTranslationFallbackTest {
                 origin = EventTranslationOrigin.MANUAL,
             ),
         )
-        val tx = EventTranslationTxService(translations)
+        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort())
 
         tx.upsertProvider("g-1", "en", "Provider title", "provider synopsis")
         val saved = translations.findByGlobalIdAndLocale("g-1", "en")
@@ -126,7 +127,7 @@ class EventTranslationFallbackTest {
             TourEventTranslationCollector(
                 tourLocaleFestivalPort = tour,
                 eventSourceRefPort = refs,
-                eventTranslationTxService = EventTranslationTxService(translations),
+                eventTranslationTxService = EventTranslationTxService(translations, InMemoryEventMasterPort()),
             )
 
         collector.collect(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
@@ -153,7 +154,7 @@ class EventTranslationFallbackTest {
             TourEventTranslationCollector(
                 tourLocaleFestivalPort = FakeTourLocaleFestivalPort(mapOf("ja" to listOf(festival("99", "후보 공연")))),
                 eventSourceRefPort = refs,
-                eventTranslationTxService = EventTranslationTxService(translations),
+                eventTranslationTxService = EventTranslationTxService(translations, InMemoryEventMasterPort()),
             )
 
         // when
@@ -249,6 +250,8 @@ private class InMemoryEventSourceRefPort : EventSourceRefPort {
 
     override fun countByGlobalId(globalId: String): Long = rows.count { it.globalId == globalId }.toLong()
 
+    override fun findByGlobalId(globalId: String): List<EventSourceRef> = rows.filter { it.globalId == globalId }
+
     override fun countByMatchStatus(status: EventMatchStatus): Long = rows.count { it.matchStatus == status }.toLong()
 
     override fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef> =
@@ -267,7 +270,14 @@ private class InMemoryEventMasterPort : EventMasterPort {
 
     override fun findByGlobalId(globalId: String): EventMaster? = rows[globalId]
 
-    override fun findByNormalizedTitle(normalizedTitle: String): List<EventMaster> =
+    override fun findChangedAfter(
+        updatedAt: LocalDateTime,
+        globalId: String,
+        until: LocalDateTime,
+        limit: Int,
+    ): List<EventMaster> = emptyList()
+
+    override fun findActiveByNormalizedTitle(normalizedTitle: String): List<EventMaster> =
         rows.values.filter { it.normalizedTitle == normalizedTitle }
 
     override fun count(): Long = rows.size.toLong()
