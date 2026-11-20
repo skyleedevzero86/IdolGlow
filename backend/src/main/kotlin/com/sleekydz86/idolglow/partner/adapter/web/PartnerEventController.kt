@@ -58,7 +58,7 @@ class PartnerEventController(
         return ResponseEntity
             .status(HttpStatus.TOO_MANY_REQUESTS)
             .header(HttpHeaders.RETRY_AFTER, exception.retryAfterSeconds.toString())
-            .body(ExceptionResponse(type.name, type.errorCode, type.message))
+            .body(ExceptionResponse(type::class.simpleName ?: type.errorCode, type.errorCode, type.message))
     }
 
     companion object {

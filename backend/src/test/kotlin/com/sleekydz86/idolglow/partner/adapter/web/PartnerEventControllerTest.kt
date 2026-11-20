@@ -94,6 +94,7 @@ class PartnerEventControllerTest {
             .andExpect(status().isTooManyRequests)
             .andExpect(header().exists("Retry-After"))
             .andExpect(jsonPath("$.errorCode").value("PARTNER_RATE_LIMITED"))
+            .andExpect(jsonPath("$.name").value("PartnerExceptionType"))
         assertEquals(listOf(200, 429), callLogs.map { it.status })
     }
 
