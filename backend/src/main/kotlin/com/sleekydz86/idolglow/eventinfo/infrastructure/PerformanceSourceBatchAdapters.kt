@@ -147,19 +147,26 @@ class TourFestivalBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            tourFestivalApiClient.searchFestival(
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch =
+        collectPagesUntilFailure(source, MAX_PAGES, PAGE_SIZE) { page ->
+            tourFestivalApiClient.searchFestivalInLocale(
+                locale = KOREAN_LOCALE,
                 eventStartDate = from.basic(),
                 eventEndDate = to.basic(),
                 pageNo = page,
                 numOfRows = PAGE_SIZE,
             )
-        }.map { event -> event.toCollected(source) }
+        }
 
     companion object {
         private const val MAX_PAGES: Int = 10
         private const val PAGE_SIZE: Int = 100
+        private const val KOREAN_LOCALE: String = "ko"
     }
 }
 
