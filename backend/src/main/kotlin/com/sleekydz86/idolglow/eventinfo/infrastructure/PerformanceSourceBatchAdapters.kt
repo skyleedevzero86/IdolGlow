@@ -17,17 +17,20 @@ class KopisPerformanceBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            kopisPerformanceApiClient.listPerformances(
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch =
+        collectPagesUntilFailure(source, MAX_PAGES, PAGE_SIZE) { page ->
+            kopisPerformanceApiClient.listPerformancesForBatch(
                 stDate = from.basic(),
                 edDate = to.basic(),
                 page = page,
                 rows = PAGE_SIZE,
-                signguCode = null,
-                prfState = null,
             )
-        }.map { event -> event.toCollected(source) }
+        }
 
     companion object {
         private const val MAX_PAGES: Int = 30
@@ -44,15 +47,20 @@ class KopisFestivalBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            kopisPerformanceApiClient.listFestivals(
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch =
+        collectPagesUntilFailure(source, MAX_PAGES, PAGE_SIZE) { page ->
+            kopisPerformanceApiClient.listFestivalsForBatch(
                 stDate = from.basic(),
                 edDate = to.basic(),
                 page = page,
                 rows = PAGE_SIZE,
             )
-        }.map { event -> event.toCollected(source) }
+        }
 
     companion object {
         private const val MAX_PAGES: Int = 30
@@ -170,6 +178,29 @@ private fun <T> collectPages(
         page += 1
     }
     return all
+}
+
+private fun collectPagesUntilFailure(
+    sourceName: String,
+    maxPages: Int,
+    pageSize: Int,
+    load: (page: Int) -> List<FestivalEvent>,
+): CollectedBatch {
+    val all = mutableListOf<FestivalEvent>()
+    var page = 1
+    var more = true
+    var failure: Throwable? = null
+    while (page <= maxPages && more && failure == null) {
+        val loaded = runCatching { load(page) }
+        failure = loaded.exceptionOrNull()
+        val rows = loaded.getOrDefault(emptyList())
+        all += rows
+        more = rows.size >= pageSize
+        page += 1
+    }
+    if (failure != null && all.isEmpty()) throw failure
+    val reason = failure?.let { "${page - 1}쪽 호출이 실패해 그 뒤 공연이 빠졌습니다. ${it.message}" }
+    return CollectedBatch(all.map { event -> event.toCollected(sourceName) }, reason)
 }
 
 private fun days(
