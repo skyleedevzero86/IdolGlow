@@ -85,6 +85,23 @@ class CultureInfoPerformanceBatchAdapterTest {
         assertTrue(error.message.orEmpty().contains("모든 날짜에서 실패"))
     }
 
+    @DisplayName("공연 기간이 없는 캘린더 항목은 매칭 기준이 없어 수집에서 뺀다")
+    @Test
+    fun skipsItemsWithoutPeriod() {
+        // given
+        하루_결과("20261119", complete = true, "1")
+        every { client.listEventsForCalendarDayWithCompleteness("20261120", 1, any()) } returns
+            CalendarDayEvents(listOf(공연("2", "20261120").copy(eventStartDate = null, eventEndDate = null)), true)
+        하루_결과("20261121", complete = true, "3")
+
+        // when
+        val batch = adapter.fetchBatch(from, to)
+
+        // then
+        assertEquals(listOf("1", "3"), batch.items.map { it.sourceId })
+        assertNull(batch.incompleteReason)
+    }
+
     private fun 하루_결과(
         day: String,
         complete: Boolean,

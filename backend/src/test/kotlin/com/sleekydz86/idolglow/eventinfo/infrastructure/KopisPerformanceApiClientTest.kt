@@ -73,6 +73,40 @@ class KopisPerformanceApiClientTest {
         assertEquals("20261120", result.first().eventStartDate)
     }
 
+    @DisplayName("200이어도 returncode 오류 본문이면 0건이 아니라 실패로 알린다")
+    @Test
+    fun batchThrowsOnReturnCodeError() {
+        // given
+        응답을_돌려주는_서버(오류_응답("02", "SERVICE KEY IS NOT REGISTERED ERROR"))
+        val client = 클라이언트(KEY)
+
+        // when
+        val error =
+            assertThrows<IllegalStateException> {
+                client.listPerformancesForBatch("20261120", "20261220", page = 1, rows = 100)
+            }
+
+        // then
+        assertEquals(
+            "KOPIS 오류 응답. path=pblprfr returncode=02 errmsg=SERVICE KEY IS NOT REGISTERED ERROR",
+            error.message,
+        )
+    }
+
+    @DisplayName("returncode 04(데이터 없음)는 실패가 아니라 0건이다")
+    @Test
+    fun batchTreatsNoDataAsEmpty() {
+        // given
+        응답을_돌려주는_서버(오류_응답("04", "NODATA ERROR"))
+        val client = 클라이언트(KEY)
+
+        // when
+        val result = client.listFestivalsForBatch("20261120", "20261220", page = 1, rows = 100)
+
+        // then
+        assertTrue(result.isEmpty())
+    }
+
     @DisplayName("화면용 조회는 400 응답이어도 빈 목록을 돌려준다")
     @Test
     fun screenListReturnsEmptyOnBadRequest() {
@@ -118,6 +152,11 @@ class KopisPerformanceApiClientTest {
             }
         return "<dbs>$rows</dbs>"
     }
+
+    private fun 오류_응답(
+        code: String,
+        message: String,
+    ): String = "<dbs><db><returncode>$code</returncode><errmsg>$message</errmsg></db></dbs>"
 
     companion object {
         private const val KEY: String = "secret-kopis-key"

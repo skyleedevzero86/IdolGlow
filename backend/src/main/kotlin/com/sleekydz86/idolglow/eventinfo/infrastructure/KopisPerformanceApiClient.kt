@@ -159,7 +159,11 @@ class KopisPerformanceApiClient(
     ): List<Element> {
         val key = kopisApiProperties.serviceKey.trim()
         check(key.isNotEmpty()) { "KOPIS API 인증키가 비어 있습니다." }
-        return parseXmlRows(requestXml(path, query + ("service" to key)), "db")
+        val rows = parseXmlRows(requestXml(path, query + ("service" to key)), "db")
+        val error = rows.firstOrNull { it.text("returncode") != null } ?: return rows
+        val code = error.text("returncode")
+        check(code == NO_DATA_CODE) { "KOPIS 오류 응답. path=$path returncode=$code errmsg=${error.text("errmsg")}" }
+        return emptyList()
     }
 
     private fun callEndpoint(
@@ -205,6 +209,7 @@ class KopisPerformanceApiClient(
 }
 
 private const val MAX_LIST_ROWS: Int = 100
+private const val NO_DATA_CODE: String = "04"
 private const val COMPACT_DATE_LENGTH: Int = 8
 
 private fun periodQuery(

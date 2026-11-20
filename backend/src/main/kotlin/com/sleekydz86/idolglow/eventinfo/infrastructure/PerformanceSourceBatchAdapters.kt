@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceSourceB
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedBatch
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedPerformance
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -93,6 +94,7 @@ class SeoulSjwPerformanceBatchAdapter(
 class CultureInfoPerformanceBatchAdapter(
     private val cultureInfoApiClient: CultureInfoApiClient,
 ) : PerformanceSourceBatchPort {
+    private val log = LoggerFactory.getLogger(javaClass)
     override val source: String = "CULTURE_INFO"
 
     override fun fetch(
@@ -122,7 +124,11 @@ class CultureInfoPerformanceBatchAdapter(
         check(items.isNotEmpty() || targetDays.isEmpty() || incompleteDays < targetDays.size) {
             "문화정보 API 호출이 모든 날짜에서 실패해 받은 공연이 없습니다. days=${targetDays.size}"
         }
-        return CollectedBatch(items, incompleteReason(incompleteDays, targetDays.size))
+        val dated = items.filter { it.startDate != null }
+        if (dated.size < items.size) {
+            log.info("문화정보 공연 기간이 없는 항목은 수집에서 뺍니다. skipped={} kept={}", items.size - dated.size, dated.size)
+        }
+        return CollectedBatch(dated, incompleteReason(incompleteDays, targetDays.size))
     }
 
     private fun incompleteReason(
