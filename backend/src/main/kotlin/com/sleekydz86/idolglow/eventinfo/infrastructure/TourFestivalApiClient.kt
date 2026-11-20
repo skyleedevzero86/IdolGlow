@@ -356,7 +356,7 @@ class TourFestivalApiClient(
 
     companion object {
         private const val KOREAN_SERVICE = "KorService2"
-        private val SERVICE_SUFFIX =Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
+        private val SERVICE_SUFFIX = Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
     }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
