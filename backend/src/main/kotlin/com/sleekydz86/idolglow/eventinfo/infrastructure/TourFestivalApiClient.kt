@@ -324,11 +324,11 @@ class TourFestivalApiClient(
                 "en" -> "EngService2"
                 "ja" -> "JpnService2"
                 "zh" -> "ChsService2"
-                else -> "KorService2"
+                else -> KOREAN_SERVICE
             }
         val korean = koreanServiceBaseUrl()
         val localized = SERVICE_SUFFIX.replace(korean, "/$service")
-        if (localized == korean) {
+        if (localized == korean && service != KOREAN_SERVICE) {
             log.warn("관광 다국어 주소로 바꾸지 못했습니다. locale={}", locale)
         }
         return localized
@@ -340,7 +340,8 @@ class TourFestivalApiClient(
             .replace("/EngService2", "/KorService2")
 
     companion object {
-        private val SERVICE_SUFFIX = Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
+        private const val KOREAN_SERVICE = "KorService2"
+        private val SERVICE_SUFFIX =Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
     }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {
