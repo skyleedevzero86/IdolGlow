@@ -1057,3 +1057,29 @@ ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
 
 -- 소비자 처리 결과를 남겨 버린 이벤트 건수를 SQL로 집계한다
 ALTER TABLE consumed_event ADD COLUMN IF NOT EXISTS result varchar(20);
+
+-- =============================================================================
+-- 서비스를 멈추지 않고 수집 시각 칸 바꾸기 1단계: 새 칸 추가
+-- -----
+-- 목적
+-- - 지금 수집 시각 칸 collected_at에는 몇 시인지만 있고 어느 나라 시간인지는 없다
+-- - 그래서 2026-11-19에 서버를 띄운 방법에 따라 시각이 9시간씩 다르게 저장됐다
+-- - 어느 나라 시간인지까지 함께 저장하는 새 칸 collected_at_tz를 옆에 만들고, 옛 칸은 그대로 둔다
+-- 대상
+-- - 포스트그레스 / event_collect_log 표
+-- 주의
+-- - 빈 칸으로 추가하면 표에 있는 기존 기록을 하나도 다시 쓰지 않아서, 기록이 많아도 바로 끝난다
+-- - 칸을 추가하는 아주 짧은 순간에는 다른 작업이 이 표를 쓰지 못하게 막아야 한다
+-- - 다른 작업이 이 표를 오래 붙잡고 있으면 그 뒤의 조회까지 줄줄이 기다리게 되므로, 5초를 기다려도 차례가 안 오면 포기하고 나중에 다시 실행한다
+-- - 지금 돌고 있는 서버는 이 새 칸을 몰라도 아무 문제 없이 그대로 동작한다
+-- - 서버가 새 칸에도 시각을 적기 시작하는 것은 2단계다
+-- 연관
+-- - EventCollectLog, ZeroDowntimeExpandMigrationTest
+-- =============================================================================
+-- 무중단 전환 1단계 시작
+SET lock_timeout = '5s';
+
+ALTER TABLE event_collect_log ADD COLUMN IF NOT EXISTS collected_at_tz timestamptz(6);
+
+RESET lock_timeout;
+-- 무중단 전환 1단계 끝
