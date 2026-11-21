@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.eventinfo.application
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMetaDeadLetterJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMetaProjectionJpaRepository
@@ -12,6 +13,10 @@ import com.sleekydz86.idolglow.notification.infrastructure.NotificationJpaReposi
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.infrastructure.UserJpaRepository
+import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -24,11 +29,13 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.kafka.KafkaContainer
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
@@ -54,6 +61,8 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
 
     @Autowired private lateinit var eventMetaDeadLetterJpaRepository: EventMetaDeadLetterJpaRepository
 
+    @Autowired private lateinit var objectMapper: ObjectMapper
+
     @Autowired private lateinit var transactionTemplate: TransactionTemplate
 
     @Autowired private lateinit var jdbcTemplate: JdbcTemplate
@@ -66,6 +75,7 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         jdbcTemplate.update("delete from event_outbox")
         jdbcTemplate.update("delete from event_interest")
         jdbcTemplate.update("delete from event_meta_dead_letter")
+        jdbcTemplate.execute("drop table if exists shedlock")
         jdbcTemplate.update("delete from notifications where type = 'EVENT_INTEREST_CHANGED'")
     }
 
@@ -149,6 +159,83 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         assertTrue(reprocessedAgain.isFailure)
         assertEquals(emptyList<EventMetaDeadLetterView>(), eventMetaDeadLetterService.list(pendingOnly = true))
     }
+
+    @DisplayName("T7 다른 인스턴스가 중계 잠금을 잡고 있으면 이번 중계는 건너뛰고, 잠금이 풀리면 보낸다")
+    @Test
+    fun skipsWhileAnotherInstanceHoldsLock() {
+        // given
+        jdbcTemplate.execute(SHEDLOCK_DDL)
+        val globalIds = (1..EVENT_COUNT).map { 공연_변경() }
+        jdbcTemplate.update(
+            "insert into shedlock (name, lock_until, locked_at, locked_by) " +
+                "values (?, timezone('utc', current_timestamp) + interval '1 minute', " +
+                "timezone('utc', current_timestamp), ?)",
+            RELAY_LOCK,
+            "other-instance",
+        )
+
+        // when
+        eventOutboxRelay.relayScheduled()
+        val unsentWhileLocked = 안_보낸_건수(globalIds)
+        jdbcTemplate.update(
+            "update shedlock set lock_until = timezone('utc', current_timestamp) where name = ?",
+            RELAY_LOCK,
+        )
+        eventOutboxRelay.relayScheduled()
+
+        // then
+        assertEquals(EVENT_COUNT, unsentWhileLocked)
+        assertEquals(0, 안_보낸_건수(globalIds))
+        assertEquals(EVENT_COUNT, 발행된_이벤트_ID(globalIds.toSet()).size)
+    }
+
+    @DisplayName("T7 중계 두 개가 동시에 돌아도 하나만 실행돼 이벤트마다 Kafka에 한 번씩만 발행된다")
+    @Test
+    fun concurrentRelaysPublishEachEventOnce() {
+        // given
+        jdbcTemplate.execute(SHEDLOCK_DDL)
+        val globalIds = (1..CONCURRENT_EVENT_COUNT).map { 공연_변경() }.toSet()
+        val barrier = CyclicBarrier(2)
+
+        // when
+        val relays =
+            (1..2).map {
+                thread {
+                    barrier.await()
+                    eventOutboxRelay.relayScheduled()
+                }
+            }
+        relays.forEach { it.join() }
+        val published = 발행된_이벤트_ID(globalIds)
+
+        // then
+        assertEquals(0, 안_보낸_건수(globalIds.toList()))
+        assertEquals(CONCURRENT_EVENT_COUNT, published.size)
+        assertEquals(published.size, published.toSet().size)
+    }
+
+    private fun 발행된_이벤트_ID(globalIds: Set<String>): List<String> =
+        KafkaConsumer<String, String>(
+            mapOf(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
+                ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ),
+        ).use { consumer ->
+            val partitions = consumer.partitionsFor(TOPIC).map { TopicPartition(it.topic(), it.partition()) }
+            consumer.assign(partitions)
+            consumer.seekToBeginning(partitions)
+            val end = consumer.endOffsets(partitions)
+            val eventIds = mutableListOf<String>()
+            while (partitions.any { consumer.position(it) < end.getValue(it) }) {
+                consumer
+                    .poll(Duration.ofMillis(POLL_MILLIS))
+                    .filter { it.key() in globalIds }
+                    .forEach { eventIds += objectMapper.readValue(it.value(), EventMetaMessage::class.java).eventId }
+            }
+            eventIds
+        }
 
     private fun 읽기_모델을_잠근_채로(
         globalId: String,
@@ -272,6 +359,12 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
     companion object {
         private const val EVENT_COUNT: Int = 5
         private const val CONSUMER_COUNT: Int = 2
+        private const val CONCURRENT_EVENT_COUNT: Int = 30
+        private const val TOPIC: String = "event-meta.changed.test"
+        private const val RELAY_LOCK: String = "eventOutboxRelay"
+        private const val SHEDLOCK_DDL: String =
+            "create table if not exists shedlock (name varchar(64) not null primary key, " +
+                "lock_until timestamp(6) not null, locked_at timestamp(6) not null, locked_by varchar(255) not null)"
         private const val POLL_MILLIS: Long = 500
         private val WAIT: Duration = Duration.ofSeconds(60)
         private var paused: Boolean = false
@@ -288,10 +381,12 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
             registry.add("spring.kafka.producer.properties.request.timeout.ms") { "2000" }
             registry.add("spring.kafka.producer.properties.delivery.timeout.ms") { "3000" }
             registry.add("app.event-meta.stream.enabled") { "true" }
-            registry.add("app.event-meta.stream.topic") { "event-meta.changed.test" }
+            registry.add("app.event-meta.stream.topic") { TOPIC }
             registry.add("app.event-meta.stream.send-timeout-seconds") { "4" }
             registry.add("app.event-meta.stream.dead-letter-topic") { "event-meta.changed.test-dlt" }
             registry.add("app.event-meta.stream.retry-interval-ms") { "500" }
+            registry.add("app.event-meta.stream.relay-interval-ms") { "3600000" }
+            registry.add("spring.jpa.hibernate.ddl-auto") { "create" }
         }
     }
 }
