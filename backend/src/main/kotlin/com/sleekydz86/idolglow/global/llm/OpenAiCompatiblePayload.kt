@@ -25,16 +25,26 @@ object OpenAiCompatiblePayload {
             )
         }
 
-    fun firstMessageContent(
+    fun parseCompletion(
         objectMapper: ObjectMapper,
         raw: String,
-    ): String? =
-        objectMapper
-            .readTree(raw)
-            .path("choices")
-            .path(0)
-            .path("message")
-            .path("content")
-            .asText("")
-            .takeIf { it.isNotBlank() }
+    ): LlmCompletion? {
+        val root = objectMapper.readTree(raw)
+        val text =
+            root
+                .path("choices")
+                .path(0)
+                .path("message")
+                .path("content")
+                .asText("")
+                .takeIf { it.isNotBlank() }
+                ?: return null
+        val usage = root.path("usage")
+        return LlmCompletion(
+            text = text,
+            model = root.path("model").asText("").ifBlank { null },
+            inputTokens = usage.path("prompt_tokens").takeIf { it.isNumber }?.asInt(),
+            outputTokens = usage.path("completion_tokens").takeIf { it.isNumber }?.asInt(),
+        )
+    }
 }

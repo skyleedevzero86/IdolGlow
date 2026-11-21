@@ -27,6 +27,7 @@ class LlmTranslationEngine(
                     jsonOutput = true,
                     maxOutputTokens = outputBudget(request.fields),
                     temperature = TRANSLATE_TEMPERATURE,
+                    promptVersion = TranslationPrompt.VERSION,
                 ),
             ) ?: return null
         return EngineResponse(TranslationPrompt.parseFields(result.text, objectMapper), result.provider)
@@ -43,6 +44,7 @@ class LlmTranslationEngine(
                     jsonOutput = true,
                     maxOutputTokens = JUDGE_TOKENS,
                     temperature = 0.0,
+                    promptVersion = TranslationPrompt.VERSION,
                 ),
             ) ?: return null
         return TranslationPrompt.parseScore(result.text, objectMapper)

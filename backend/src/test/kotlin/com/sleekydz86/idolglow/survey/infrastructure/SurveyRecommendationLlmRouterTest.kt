@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.survey.infrastructure
 
+import com.sleekydz86.idolglow.global.llm.DisabledLlmCallTracer
+import com.sleekydz86.idolglow.global.llm.LlmCompletion
 import com.sleekydz86.idolglow.global.llm.LlmGateway
 import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
 import com.sleekydz86.idolglow.global.llm.LlmInputMasker
@@ -26,9 +28,9 @@ class SurveyRecommendationLlmRouterTest {
 
         override fun isConfigured(): Boolean = true
 
-        override fun complete(request: LlmRequest): String? {
+        override fun complete(request: LlmRequest): LlmCompletion? {
             requests += request
-            return answer
+            return answer?.let { LlmCompletion(it) }
         }
     }
 
@@ -55,6 +57,7 @@ class SurveyRecommendationLlmRouterTest {
                 CircuitBreakerRegistry.ofDefaults(),
                 SimpleMeterRegistry(),
                 LlmInputMasker(),
+                DisabledLlmCallTracer,
             )
         return SurveyRecommendationLlmRouter(gateway, objectMapper)
     }

@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.subway.infrastructure.enrichment
 
+import com.sleekydz86.idolglow.global.llm.DisabledLlmCallTracer
+import com.sleekydz86.idolglow.global.llm.LlmCompletion
 import com.sleekydz86.idolglow.global.llm.LlmGateway
 import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
 import com.sleekydz86.idolglow.global.llm.LlmInputMasker
@@ -30,9 +32,9 @@ class SubwayStationSummaryLlmRouterTest {
 
         override fun isConfigured(): Boolean = true
 
-        override fun complete(request: LlmRequest): String? {
+        override fun complete(request: LlmRequest): LlmCompletion? {
             requests += request
-            return queue.removeFirstOrNull()
+            return queue.removeFirstOrNull()?.let { LlmCompletion(it) }
         }
     }
 
@@ -63,7 +65,14 @@ class SubwayStationSummaryLlmRouterTest {
     ): SubwayStationSummaryLlmRouter {
         val props = LlmGatewayProperties(externalEnabled = externalEnabled, chains = mapOf("subway" to listOf("local")))
         val gateway =
-            LlmGateway(providers, props, CircuitBreakerRegistry.ofDefaults(), SimpleMeterRegistry(), LlmInputMasker())
+            LlmGateway(
+                providers,
+                props,
+                CircuitBreakerRegistry.ofDefaults(),
+                SimpleMeterRegistry(),
+                LlmInputMasker(),
+                DisabledLlmCallTracer,
+            )
         val assembler =
             SubwayStationFactsAssembler(
                 lineCatalogPort = { lines },
