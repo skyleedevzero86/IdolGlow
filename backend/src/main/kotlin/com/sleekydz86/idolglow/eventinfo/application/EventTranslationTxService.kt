@@ -1,16 +1,22 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class EventTranslationTxService(
     private val eventTranslationPort: EventTranslationPort,
+    private val eventMasterPort: EventMasterPort,
+    private val eventMetaOutboxRecorder: EventMetaOutboxRecorder,
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun upsertProvider(
@@ -27,6 +33,14 @@ class EventTranslationTxService(
         val row = existing ?: EventTranslation.provider(globalId, normalizedLocale, normalizedTitle, normalizedSynopsis)
         existing?.replaceProviderText(normalizedTitle, normalizedSynopsis)
         eventTranslationPort.save(row)
+        eventMasterPort.findByGlobalId(globalId)?.let { master ->
+            master.markTranslationChanged(LocalDateTime.now())
+            eventMetaOutboxRecorder.record(
+                master,
+                EventMetaChangeType.TRANSLATION_CHANGED,
+                setOf(EventMetaSnapshot.FIELD_TRANSLATION),
+            )
+        }
     }
 
     private fun blocked(

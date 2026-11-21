@@ -94,3 +94,9 @@ logging:
   level:
     root: WARN
     com.sleekydz86.idolglow: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus

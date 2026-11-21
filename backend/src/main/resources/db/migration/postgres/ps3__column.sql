@@ -974,3 +974,86 @@ COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDA
 COMMENT ON COLUMN subscription_dispatch_histories.content_type IS '콘텐츠 유형. 예: NEWSLETTER, IDOLGLOW_ISSUE';
 
 COMMENT ON COLUMN admin_audit_logs.target_type IS '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
+
+-- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+UPDATE event_source_ref
+SET global_id = NULL
+WHERE match_status = 'CANDIDATE'
+  AND global_id IS NOT NULL;
+
+-- 콘텐츠 번역 처리 대기열 조회
+CREATE INDEX IF NOT EXISTS idx_content_translation_due ON content_translation (status, next_attempt_at);
+
+-- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+CREATE INDEX IF NOT EXISTS idx_event_master_updated_global ON event_master (updated_at, global_id);
+
+-- 파트너별 최근 호출 조회
+CREATE INDEX IF NOT EXISTS idx_partner_call_log_partner_called ON partner_call_log (partner_id, called_at);
+
+-- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
+UPDATE event_master
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    updated_at = current_timestamp
+WHERE title ~ '&([a-zA-Z]+|#[0-9]+);'
+   OR venue ~ '&([a-zA-Z]+|#[0-9]+);';
+
+UPDATE event_source_ref
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&')
+WHERE title ~ '&([a-zA-Z]+|#[0-9]+);'
+   OR venue ~ '&([a-zA-Z]+|#[0-9]+);';
+
+-- 중계가 아직 안 보낸 outbox 행을 순서대로 읽고, 보낸 지 오래된 행을 정리한다
+CREATE INDEX IF NOT EXISTS idx_event_outbox_unsent ON event_outbox (sent_at, id);
+
+-- 공연이 바뀌면 관심 등록한 사용자를 찾는다
+CREATE INDEX IF NOT EXISTS idx_event_interest_global ON event_interest (global_id);
+
+-- 아직 다시 처리하지 않은 실패 메시지를 최근 순으로 본다
+CREATE INDEX IF NOT EXISTS idx_event_meta_dead_letter_pending ON event_meta_dead_letter (reprocessed_at, id);
+
+-- 관심 공연 변경 알림 타입 추가
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CONSTRAINT IF EXISTS chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED'
+    )
+);
+
+-- 소비자 처리 결과를 남겨 버린 이벤트 건수를 SQL로 집계한다
+ALTER TABLE consumed_event ADD COLUMN IF NOT EXISTS result varchar(20);

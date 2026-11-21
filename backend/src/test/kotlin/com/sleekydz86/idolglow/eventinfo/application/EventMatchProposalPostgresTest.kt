@@ -128,7 +128,7 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
                     CollectedPerformance("TOUR_API", "anchor-$id", title, venue, start, end, SECRET),
                 ),
             )
-        save("anchor-$id", master.globalId, EventMatchStatus.CANDIDATE, title, venue, start, end)
+        save("anchor-$id", master.globalId, EventMatchStatus.CONFIRMED, title, venue, start, end)
         return master
     }
 
@@ -157,7 +157,12 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
                 sourceId = sourceId,
                 globalId = globalId,
                 matchStatus = status,
-                matchScore = EventPerformanceMatcher.CANDIDATE_SCORE,
+                matchScore =
+                    if (status == EventMatchStatus.CONFIRMED) {
+                        EventPerformanceMatcher.CONFIRMED_SCORE
+                    } else {
+                        EventPerformanceMatcher.CANDIDATE_SCORE
+                    },
                 rawHash = "hash",
                 rawPayload = SECRET,
                 title = title,

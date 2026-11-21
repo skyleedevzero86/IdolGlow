@@ -1531,7 +1531,11 @@ COMMENT ON COLUMN event_master.venue IS '대표 장소';
 
 COMMENT ON COLUMN event_master.normalized_venue IS '매칭용 장소';
 
-COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE';
+COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)';
+
+COMMENT ON COLUMN event_master.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움';
+
+COMMENT ON COLUMN event_master.meta_version IS '메타 버전. 생성·수정·병합·번역 변경마다 1 증가, 소비자가 순서 역전을 버리는 기준';
 
 COMMENT ON TABLE event_source_ref IS '공급처 공연 원본과 글로벌 식별자 매칭';
 
@@ -1539,7 +1543,7 @@ COMMENT ON COLUMN event_source_ref.source IS '공급처 코드. KOPIS_PBLPRFR, S
 
 COMMENT ON COLUMN event_source_ref.source_id IS '공급처 공연 ID';
 
-COMMENT ON COLUMN event_source_ref.global_id IS '매칭된 글로벌 공연 ID. CONFLICT면 비움';
+COMMENT ON COLUMN event_source_ref.global_id IS '확정(CONFIRMED)된 글로벌 공연 ID. CANDIDATE·CONFLICT는 사람이 승인하기 전까지 비움';
 
 COMMENT ON COLUMN event_source_ref.match_status IS '매칭 상태. CONFIRMED, CANDIDATE, CONFLICT';
 
@@ -1553,7 +1557,7 @@ COMMENT ON COLUMN event_source_ref.raw_payload IS '공급처에서 받은 원본
 
 COMMENT ON TABLE event_collect_log IS '공연 공급처 수집 결과';
 
-COMMENT ON COLUMN event_collect_log.status IS '수집 상태. SUCCESS, FAILED';
+COMMENT ON COLUMN event_collect_log.status IS '수집 상태. SUCCESS(정상), PARTIAL(일부 호출 실패로 일부만 수집), FAILED(실패)';
 
 COMMENT ON COLUMN event_collect_log.item_count IS '이번 수집에서 저장을 시도한 건수';
 
@@ -1579,7 +1583,7 @@ COMMENT ON COLUMN users.role IS '권한 역할. USER 일반, ADMIN 관리자, OP
 
 COMMENT ON TABLE ops_change_request IS '운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';
 
-COMMENT ON COLUMN ops_change_request.type IS '변경 종류. EVENT_MATCH_MERGE 등';
+COMMENT ON COLUMN ops_change_request.type IS '변경 종류. EVENT_MATCH_MERGE(원본을 글로벌 공연에 연결), EVENT_MASTER_MERGE(글로벌 공연끼리 병합) 등';
 
 COMMENT ON COLUMN ops_change_request.target IS '변경 대상. 공연 병합은 공급처|공급처ID';
 
@@ -1674,3 +1678,143 @@ COMMENT ON COLUMN content_likes.target_key IS '대상 키. 트렌드 기사는 �
 COMMENT ON COLUMN content_likes.created_at IS '생성 시각';
 
 COMMENT ON COLUMN content_likes.updated_at IS '수정 시각';
+
+COMMENT ON TABLE content_translation IS '콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
+
+COMMENT ON COLUMN content_translation.content_type IS '콘텐츠 유형. NOTICE, EVENT, PRODUCT, ARTICLE, GLOW_COMMUNITY_POST, CONTENT_COMMENT';
+
+COMMENT ON COLUMN content_translation.content_key IS '콘텐츠 키. 공지·이벤트는 문서 UUID, 트렌드 기사는 호슬러그/기사슬러그, 그 밖은 ID';
+
+COMMENT ON COLUMN content_translation.locale IS '번역 언어. en, ja, zh';
+
+COMMENT ON COLUMN content_translation.source_hash IS '번역할 때 쓴 원문 해시. 원문이 바뀌면 다시 번역';
+
+COMMENT ON COLUMN content_translation.status IS '번역 상태. PENDING, VISIBLE, REVIEW, FAILED, SKIPPED';
+
+COMMENT ON COLUMN content_translation.priority IS '처리 우선순위. 사용자가 보는 중이면 높다';
+
+COMMENT ON COLUMN content_translation.fields_json IS '번역된 항목 JSON';
+
+COMMENT ON COLUMN content_translation.origin IS '번역 출처. MACHINE, MANUAL';
+
+COMMENT ON COLUMN content_translation.model IS '번역에 쓴 AI 공급자';
+
+COMMENT ON COLUMN content_translation.prompt_version IS '번역 지시문 버전';
+
+COMMENT ON COLUMN content_translation.check_notes IS '검사에서 걸린 규칙 목록';
+
+COMMENT ON COLUMN content_translation.attempts IS '실패한 번역 시도 수';
+
+COMMENT ON COLUMN content_translation.next_attempt_at IS '다음 재시도 시각';
+
+COMMENT ON COLUMN content_translation.report_count IS '번역 오류 신고 수';
+
+COMMENT ON COLUMN content_translation.translated_at IS '번역한 시각';
+
+COMMENT ON COLUMN content_translation.reviewed_by IS '승인하거나 고친 관리자 users.id';
+
+COMMENT ON COLUMN content_translation.reviewed_at IS '승인하거나 고친 시각';
+
+COMMENT ON TABLE translation_glossary_term IS '번역 용어집. 고유명사를 정해진 대로 번역한다';
+
+COMMENT ON COLUMN translation_glossary_term.source_term IS '원문 용어';
+
+COMMENT ON COLUMN translation_glossary_term.locale IS '적용 언어. KEEP 은 *';
+
+COMMENT ON COLUMN translation_glossary_term.target_term IS '고정 번역어. KEEP 이면 비움';
+
+COMMENT ON COLUMN translation_glossary_term.mode IS '용어 방식. FIXED, KEEP';
+
+COMMENT ON TABLE translation_report IS '번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
+
+COMMENT ON COLUMN translation_report.translation_id IS '신고한 번역 content_translation.id';
+
+COMMENT ON COLUMN translation_report.user_id IS '신고한 회원 users.id';
+
+COMMENT ON TABLE partner_client IS '대외 파트너. 키로 공연 메타 API를 호출한다';
+
+COMMENT ON COLUMN partner_client.name IS '파트너 이름';
+
+COMMENT ON COLUMN partner_client.key_hash IS '파트너 키 SHA-256 해시. 원문은 저장하지 않음';
+
+COMMENT ON COLUMN partner_client.locales IS '계약 언어. 쉼표로 구분, 예: en,ja';
+
+COMMENT ON COLUMN partner_client.rate_limit_per_minute IS '분당 호출 한도';
+
+COMMENT ON COLUMN partner_client.enabled IS '사용 여부. false면 403';
+
+COMMENT ON TABLE partner_call_log IS '파트너 호출 기록';
+
+COMMENT ON COLUMN partner_call_log.partner_id IS '호출한 파트너 ID';
+
+COMMENT ON COLUMN partner_call_log.path IS '호출 경로';
+
+COMMENT ON COLUMN partner_call_log.status IS '응답 상태 코드. 200, 400, 403, 429 등';
+
+COMMENT ON COLUMN partner_call_log.item_count IS '응답에 담은 공연 수';
+
+COMMENT ON COLUMN partner_call_log.called_at IS '호출 시각';
+
+COMMENT ON INDEX idx_event_master_updated_global IS '파트너 변경분 피드 커서 조회용';
+
+COMMENT ON INDEX idx_partner_call_log_partner_called IS '파트너별 최근 호출 조회용';
+
+COMMENT ON TABLE event_outbox IS '보낼 공연 메타 변경 이벤트. 공연을 바꾼 트랜잭션에서 같이 저장';
+
+COMMENT ON COLUMN event_outbox.event_id IS '이벤트 ID. UUID, 소비자 중복 판정 기준';
+
+COMMENT ON COLUMN event_outbox.aggregate_id IS '글로벌 공연 ID. Kafka 메시지 키';
+
+COMMENT ON COLUMN event_outbox.event_type IS '변경 종류. CREATED, UPDATED, MERGED, RESTORED, TRANSLATION_CHANGED';
+
+COMMENT ON COLUMN event_outbox.meta_version IS '이 변경 뒤의 공연 메타 버전';
+
+COMMENT ON COLUMN event_outbox.payload IS '보낼 메시지 JSON. 바뀐 필드와 공연 스냅샷 포함';
+
+COMMENT ON COLUMN event_outbox.schema_version IS '메시지 형식 버전';
+
+COMMENT ON COLUMN event_outbox.sent_at IS 'Kafka로 보낸 시각. 비어 있으면 아직 안 보냄';
+
+COMMENT ON TABLE consumed_event IS '소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
+
+COMMENT ON COLUMN consumed_event.consumer_name IS '소비자 이름. event-meta-projection, event-meta-interest-alert';
+
+COMMENT ON COLUMN consumed_event.event_id IS '처리한 이벤트 ID';
+
+COMMENT ON COLUMN consumed_event.processed_at IS '처리 시각';
+
+COMMENT ON COLUMN consumed_event.result IS '처리 결과. APPLIED 반영, STALE 옛 버전이라 버림, IGNORED 알림 대상 아님';
+
+COMMENT ON TABLE event_meta_projection IS '검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
+
+COMMENT ON COLUMN event_meta_projection.meta_version IS '반영한 메타 버전. 이보다 낮은 이벤트는 버림';
+
+COMMENT ON COLUMN event_meta_projection.status IS '공연 상태. ACTIVE, MERGED';
+
+COMMENT ON COLUMN event_meta_projection.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID';
+
+COMMENT ON TABLE event_interest IS '사용자가 관심 등록한 공연';
+
+COMMENT ON COLUMN event_interest.user_id IS '사용자 ID';
+
+COMMENT ON COLUMN event_interest.global_id IS '관심 등록한 글로벌 공연 ID';
+
+COMMENT ON INDEX idx_event_outbox_unsent IS '안 보낸 행 순서 조회와 보낸 행 정리용';
+
+COMMENT ON INDEX idx_event_interest_global IS '공연별 관심 사용자 조회용';
+
+COMMENT ON TABLE event_meta_dead_letter IS 'Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';
+
+COMMENT ON COLUMN event_meta_dead_letter.consumer_name IS '실패한 소비자 이름. event-meta-projection, event-meta-interest-alert';
+
+COMMENT ON COLUMN event_meta_dead_letter.event_id IS '이벤트 ID. 메시지를 읽지 못하면 unreadable-파티션-오프셋';
+
+COMMENT ON COLUMN event_meta_dead_letter.payload IS '실패한 메시지 JSON 원문';
+
+COMMENT ON COLUMN event_meta_dead_letter.error_type IS '마지막 실패 예외 종류';
+
+COMMENT ON COLUMN event_meta_dead_letter.failed_at IS '실패 목록에 남긴 시각';
+
+COMMENT ON COLUMN event_meta_dead_letter.reprocessed_at IS '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함';
+
+COMMENT ON INDEX idx_event_meta_dead_letter_pending IS '다시 처리하지 않은 실패 메시지 조회용';

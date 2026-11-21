@@ -57,7 +57,7 @@ class SurveyLlmEvalLiveTest {
         case: SurveyEvalCase,
     ): SurveyEvalSampleResult {
         var response: Result<String?> = Result.success(null)
-        val latency = measureTimeMillis { response = runCatching { provider.complete(request(case)) } }
+        val latency = measureTimeMillis { response = runCatching { provider.complete(request(case))?.text } }
         val score =
             response.fold(
                 onSuccess = { text -> text?.let { scorer.score(it, case) } ?: failed("응답 없음") },

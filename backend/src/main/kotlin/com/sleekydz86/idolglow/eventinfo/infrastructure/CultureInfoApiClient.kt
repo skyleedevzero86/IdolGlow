@@ -29,6 +29,17 @@ class CultureInfoApiClient(
     private val calendarDayCache = ConcurrentHashMap<String, CachedCalendarDay>()
     private val pacingLock = Any()
     private var lastRequestAtMillis = 0L
+    private val failedCallsOnThread: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
+
+    fun listEventsForCalendarDayWithCompleteness(
+        yyyyMMdd: String,
+        pageNo: Int,
+        numOfRows: Int,
+    ): CalendarDayEvents {
+        val failedBefore = failedCallsOnThread.get()
+        val events = listEventsForCalendarDay(yyyyMMdd, pageNo, numOfRows)
+        return CalendarDayEvents(events, complete = failedCallsOnThread.get() == failedBefore)
+    }
 
     fun listEventsForCalendarDay(
         yyyyMMdd: String,
@@ -42,10 +53,10 @@ class CultureInfoApiClient(
         calendarDayCache[cacheKey]?.takeIf { now - it.cachedAtMillis < CALENDAR_DAY_CACHE_TTL.toMillis() }?.let {
             return it.events
         }
-        val rateLimitBefore = rateLimitedUntilMillis.get()
+        val failedBefore = failedCallsOnThread.get()
         val events =
             fetchEventsForCalendarDay(yyyyMMdd, pageNo, numOfRows, maxRealm2PerServiceTp, maxArea2PerServiceTp)
-        if (rateLimitedUntilMillis.get() == rateLimitBefore) {
+        if (failedCallsOnThread.get() == failedBefore) {
             if (calendarDayCache.size >= CALENDAR_DAY_CACHE_MAX_ENTRIES) {
                 calendarDayCache.entries
                     .minByOrNull { it.value.cachedAtMillis }
@@ -64,8 +75,11 @@ class CultureInfoApiClient(
         maxArea2PerServiceTp: Int,
     ): List<FestivalEvent> {
         val key = resolveEncodedServiceKey(properties.serviceKey)
-        if (key.isEmpty()) return emptyList()
-        val perTp = (numOfRows / SERVICE_TYPES.size).coerceAtLeast(1).coerceAtMost(1000)
+        if (key.isEmpty()) {
+            markFailedCall()
+            return emptyList()
+        }
+        val perTp =(numOfRows / SERVICE_TYPES.size).coerceAtLeast(1).coerceAtMost(1000)
         val dateParam = properties.livelihoodDateParam.trim().ifBlank { "stdDate" }
         val base =
             SERVICE_TYPES.flatMap { tp ->
@@ -112,7 +126,7 @@ class CultureInfoApiClient(
                 "PageNo" to pageNo.coerceAtLeast(1).toString(),
                 "numOfrows" to numOfrows.coerceIn(1, 1000).toString(),
             )
-        val xml = fetchXml(buildCultureUrl("area2", key, params)) ?: return emptyList()
+        val xml = loadXml(buildCultureUrl("area2", key, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 area2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
             return emptyList()
@@ -136,7 +150,7 @@ class CultureInfoApiClient(
                     "PageNo" to "1",
                     "numOfrows" to rows.toString(),
                 )
-            val xml = fetchXml(buildCultureUrl("area2", encodedKey, params)) ?: return@flatMap emptyList()
+            val xml = loadXml(buildCultureUrl("area2", encodedKey, params)) ?: return@flatMap emptyList()
             if (!isResultOk(xml)) {
                 log.debug("문화시설정보 area2 건너뜀. tp={}", tp)
                 return@flatMap emptyList()
@@ -166,7 +180,7 @@ class CultureInfoApiClient(
                 put("numOfrows", numOfrows.coerceIn(1, 1000).toString())
                 if (!realmCode.isNullOrBlank()) put("realmCode", realmCode.trim())
             }
-        val xml = fetchXml(buildCultureUrl("realm2", key, params)) ?: return emptyList()
+        val xml = loadXml(buildCultureUrl("realm2", key, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 realm2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
             return emptyList()
@@ -192,7 +206,7 @@ class CultureInfoApiClient(
                         "numOfrows" to perRealmRows.toString(),
                         "realmCode" to code,
                     )
-                val xml = fetchXml(buildCultureUrl("realm2", encodedKey, params)) ?: return@flatMap emptyList()
+                val xml = loadXml(buildCultureUrl("realm2", encodedKey, params)) ?: return@flatMap emptyList()
                 if (!isResultOk(xml)) {
                     log.debug("문화시설정보 realm2 건너뜀. tp={}, realmCode={}", tp, code)
                     return@flatMap emptyList()
@@ -206,15 +220,15 @@ class CultureInfoApiClient(
         val key = resolveEncodedServiceKey(properties.serviceKey)
         if (key.isEmpty()) return null
         val url = buildCultureUrl("detail2", key, mapOf("seq" to seq.trim()))
-        val xml = fetchXml(url) ?: return null
+        val xml = loadXml(url) ?: return null
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 detail2 비정상 응답. seq={}, bodyPrefix={}", seq, xml.take(200))
             return null
         }
         val item = parseItems(xml).firstOrNull() ?: return null
         val m = item.toFieldMap()
-        val title = m["title"].orEmpty().ifBlank { return null }
-        val place = m["place"].orEmpty()
+        val title = EventSourceText.decodeOrNull(m["title"]) ?: return null
+        val place = EventSourceText.decode(m["place"].orEmpty())
         val area = m["area"].orEmpty()
         val sigungu = m["sigungu"].orEmpty()
         val address = listOf(area, sigungu, place).filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }
@@ -256,7 +270,7 @@ class CultureInfoApiClient(
                 put("PageNo", pageNo.toString())
                 put("numOfrows", numOfrows.coerceIn(1, 1000).toString())
             }
-        val xml = fetchXml(buildCultureUrl(operation, encodedKey, params)) ?: return emptyList()
+        val xml = loadXml(buildCultureUrl(operation, encodedKey, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 {} 비정상 응답. bodyPrefix={}", operation, xml.take(200))
             return emptyList()
@@ -271,8 +285,8 @@ class CultureInfoApiClient(
     ): FestivalEvent? {
         val m = el.toFieldMap()
         val seq = m["seq"]?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val title = m["title"]?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val place = m["place"].orEmpty()
+        val title = EventSourceText.decodeOrNull(m["title"]) ?: return null
+        val place = EventSourceText.decode(m["place"].orEmpty())
         val area = m["area"].orEmpty()
         val sigungu = m["sigungu"].orEmpty()
         val address = listOf(area, sigungu, place).filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }
@@ -300,6 +314,12 @@ class CultureInfoApiClient(
             synopsis = null,
             source = "${sourceRoot}_$serviceTp",
         )
+    }
+
+    private fun loadXml(url: String): String? = fetchXml(url).also { if (it == null) markFailedCall() }
+
+    private fun markFailedCall() {
+        failedCallsOnThread.set(failedCallsOnThread.get() + 1)
     }
 
     private fun fetchXml(url: String): String? {
@@ -494,6 +514,11 @@ class CultureInfoApiClient(
 private data class RawCultureResponse(
     val statusCode: HttpStatusCode,
     val body: String,
+)
+
+data class CalendarDayEvents(
+    val events: List<FestivalEvent>,
+    val complete: Boolean,
 )
 
 private data class CachedCalendarDay(

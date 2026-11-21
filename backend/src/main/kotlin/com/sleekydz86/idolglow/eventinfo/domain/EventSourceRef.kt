@@ -53,6 +53,8 @@ class EventSourceRef(
     @Column(length = 255)
     var venue: String? = null,
 ) : BaseEntity() {
+    fun confirmedGlobalId(): String? = globalId?.takeIf { matchStatus == EventMatchStatus.CONFIRMED }
+
     fun assignMatch(
         globalId: String?,
         status: EventMatchStatus,

@@ -17,7 +17,7 @@ class LocalLlmProvider(
 
     override fun isConfigured(): Boolean = props.enabled && props.baseUrl.isNotBlank() && props.model.isNotBlank()
 
-    override fun complete(request: LlmRequest): String? {
+    override fun complete(request: LlmRequest): LlmCompletion? {
         val payload = OpenAiCompatiblePayload.build(objectMapper, props.model, request)
         val raw =
             webClient
@@ -29,6 +29,6 @@ class LocalLlmProvider(
                 .bodyToMono(String::class.java)
                 .block(Duration.ofSeconds(props.timeoutSeconds))
                 ?: return null
-        return OpenAiCompatiblePayload.firstMessageContent(objectMapper, raw)
+        return OpenAiCompatiblePayload.parseCompletion(objectMapper, raw)
     }
 }

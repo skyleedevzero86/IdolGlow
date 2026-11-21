@@ -7,6 +7,7 @@ data class LlmRequest(
     val jsonOutput: Boolean = true,
     val maxOutputTokens: Int = 1024,
     val temperature: Double = 0.2,
+    val promptVersion: String? = null,
 )
 
 data class LlmResult(
@@ -15,11 +16,18 @@ data class LlmResult(
     val latencyMs: Long,
 )
 
+data class LlmCompletion(
+    val text: String,
+    val model: String? = null,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
+)
+
 interface LlmProvider {
     val name: String
     val external: Boolean
 
     fun isConfigured(): Boolean
 
-    fun complete(request: LlmRequest): String?
+    fun complete(request: LlmRequest): LlmCompletion?
 }

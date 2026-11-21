@@ -72,7 +72,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/search-keywords").permitAll()
+                auth.requestMatchers(HttpMethod.POST, "/search-keywords", "/api/translations/lookup").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/api/grounded-search", "/api/grounded-search/answer").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
@@ -196,8 +196,14 @@ class SecurityConfig(
                 "/api/comments",
             )
 
+        private val MONITORING_PUBLIC_GET =
+            arrayOf(
+                "/actuator/prometheus",
+            )
+
         private val PUBLIC_GET =
-            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET
+            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET +
+                MONITORING_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(
@@ -223,6 +229,7 @@ class SecurityConfig(
             arrayOf(
                 "/platform/auth/**",
                 "/auth/login/**",
+                "/auth/password/login",
                 "/auth/signup",
                 "/auth/signup/check-email",
                 "/auth/signup/check-nickname",
@@ -234,6 +241,7 @@ class SecurityConfig(
                 "/login/**",
                 "/auth/callback",
                 "/payments/mock/webhook",
+                "/partner/v1/**",
                 "/graphql",
                 "/graphiql",
                 "/graphiql/**",

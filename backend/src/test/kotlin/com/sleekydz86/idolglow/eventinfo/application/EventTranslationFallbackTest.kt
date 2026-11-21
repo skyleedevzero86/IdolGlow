@@ -13,10 +13,12 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class EventTranslationFallbackTest {
     @Test
@@ -71,7 +73,7 @@ class EventTranslationFallbackTest {
     @Test
     fun providerTranslationChangeReplacesStoredText() {
         val translations = InMemoryEventTranslationPort()
-        val tx = EventTranslationTxService(translations)
+        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true))
 
         tx.upsertProvider("g-1", "en", "Old title", "old synopsis")
         tx.upsertProvider("g-1", "en", "New title", "new synopsis")
@@ -95,7 +97,7 @@ class EventTranslationFallbackTest {
                 origin = EventTranslationOrigin.MANUAL,
             ),
         )
-        val tx = EventTranslationTxService(translations)
+        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true))
 
         tx.upsertProvider("g-1", "en", "Provider title", "provider synopsis")
         val saved = translations.findByGlobalIdAndLocale("g-1", "en")
@@ -126,7 +128,8 @@ class EventTranslationFallbackTest {
             TourEventTranslationCollector(
                 tourLocaleFestivalPort = tour,
                 eventSourceRefPort = refs,
-                eventTranslationTxService = EventTranslationTxService(translations),
+                eventTranslationTxService =
+                    EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true)),
             )
 
         collector.collect(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
@@ -136,6 +139,69 @@ class EventTranslationFallbackTest {
         assertEquals("사쿠라 축제", saved.single().title)
         assertEquals(EventTranslationOrigin.PROVIDER, saved.single().origin)
         assertNull(translations.findByGlobalIdAndLocale("g-missing", "ja"))
+    }
+
+    @Test
+    fun staleCandidateLinkIsNeitherServedNorFilled() {
+        // given
+        val translations = InMemoryEventTranslationPort()
+        translations.save(EventTranslation.provider("g-1", "en", "English title", "English synopsis"))
+        val refs = InMemoryEventSourceRefPort()
+        refs.save(staleCandidate("TOUR_API", "C1", "g-1"))
+        refs.save(staleCandidate("TOUR_API", "99", "g-1"))
+        val masters = InMemoryEventMasterPort()
+        masters.save(master("g-1", "한국어 제목"))
+        val service = EventLocalizedTextService(translations, refs, masters)
+        val collector =
+            TourEventTranslationCollector(
+                tourLocaleFestivalPort = FakeTourLocaleFestivalPort(mapOf("ja" to listOf(festival("99", "후보 공연")))),
+                eventSourceRefPort = refs,
+                eventTranslationTxService =
+                    EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true)),
+            )
+
+        // when
+        val resolved =
+            service
+                .resolve(listOf(EventTextLookup("TOUR_API", "C1", "후보 공연", "후보 소개")), "en")
+                .single()
+        collector.collect(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
+
+        // then
+        assertEquals("후보 공연", resolved.title)
+        assertEquals("ko", resolved.locale)
+        assertNull(translations.findByGlobalIdAndLocale("g-1", "ja"))
+    }
+
+    @Test
+    fun koreanRequestKeepsOriginalEvenWhenOnlyForeignTranslationsExist() {
+        // given
+        val translations = InMemoryEventTranslationPort()
+        translations.save(EventTranslation.provider("g-1", "en", "English title", "English synopsis"))
+        translations.save(EventTranslation.provider("g-1", "ja", "日本語タイトル", "日本語の紹介"))
+        val refs = InMemoryEventSourceRefPort()
+        refs.save(sourceRef("TOUR_API", "C1", "g-1"))
+        val masters = InMemoryEventMasterPort()
+        masters.save(master("g-1", "한국어 대표 제목"))
+        val service = EventLocalizedTextService(translations, refs, masters)
+
+        // when
+        val resolved =
+            service
+                .resolve(listOf(EventTextLookup("TOUR_API", "C1", "한국어 원본 제목", "한국어 원본 소개")), "ko")
+                .single()
+        val graph = service.title("g-1", "ko")
+        val graphDefault = service.title("g-1", null)
+
+        // then
+        assertEquals(listOf("ko"), EventLocale.order("ko"))
+        assertEquals(listOf("ja", "en", "ko"), EventLocale.order("ja"))
+        assertEquals("한국어 원본 제목", resolved.title)
+        assertEquals("한국어 원본 소개", resolved.synopsis)
+        assertEquals("ko", resolved.locale)
+        assertEquals("한국어 대표 제목", graph?.title)
+        assertEquals("ko", graph?.locale)
+        assertEquals("한국어 대표 제목", graphDefault?.title)
     }
 
     @Test
@@ -187,6 +253,8 @@ private class InMemoryEventSourceRefPort : EventSourceRefPort {
 
     override fun countByGlobalId(globalId: String): Long = rows.count { it.globalId == globalId }.toLong()
 
+    override fun findByGlobalId(globalId: String): List<EventSourceRef> = rows.filter { it.globalId == globalId }
+
     override fun countByMatchStatus(status: EventMatchStatus): Long = rows.count { it.matchStatus == status }.toLong()
 
     override fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef> =
@@ -205,7 +273,14 @@ private class InMemoryEventMasterPort : EventMasterPort {
 
     override fun findByGlobalId(globalId: String): EventMaster? = rows[globalId]
 
-    override fun findByNormalizedTitle(normalizedTitle: String): List<EventMaster> =
+    override fun findChangedAfter(
+        updatedAt: LocalDateTime,
+        globalId: String,
+        until: LocalDateTime,
+        limit: Int,
+    ): List<EventMaster> = emptyList()
+
+    override fun findActiveByNormalizedTitle(normalizedTitle: String): List<EventMaster> =
         rows.values.filter { it.normalizedTitle == normalizedTitle }
 
     override fun count(): Long = rows.size.toLong()
@@ -239,6 +314,21 @@ private fun sourceRef(
                 EventMatchStatus.CONFIRMED
             },
         matchScore = 0,
+        rawHash = "hash",
+        title = sourceId,
+    )
+
+private fun staleCandidate(
+    source: String,
+    sourceId: String,
+    globalId: String,
+): EventSourceRef =
+    EventSourceRef(
+        source = source,
+        sourceId = sourceId,
+        globalId = globalId,
+        matchStatus = EventMatchStatus.CANDIDATE,
+        matchScore = 60,
         rawHash = "hash",
         title = sourceId,
     )

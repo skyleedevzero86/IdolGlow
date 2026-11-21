@@ -4,6 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "app.kopis.api")
 data class KopisApiProperties(
-    var baseUrl: String = "http://www.kopis.or.kr/openApi/restful",
+    var baseUrl: String = "https://kopis.or.kr/openApi/restful",
     var serviceKey: String = "",
 )

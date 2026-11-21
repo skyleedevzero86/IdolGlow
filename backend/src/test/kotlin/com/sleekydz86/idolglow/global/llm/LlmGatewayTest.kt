@@ -23,9 +23,23 @@ class LlmGatewayTest {
 
         override fun isConfigured(): Boolean = true
 
-        override fun complete(request: LlmRequest): String? {
+        override fun complete(request: LlmRequest): LlmCompletion? {
             prompts += request.userPrompt
-            return answer()
+            return answer()?.let { LlmCompletion(it, model = "fake-model", inputTokens = 12, outputTokens = 3) }
+        }
+    }
+
+    private class RecordingTracer(
+        private val enabled: Boolean = true,
+        private val failure: RuntimeException? = null,
+    ) : LlmCallTracer {
+        val traces = mutableListOf<LlmCallTrace>()
+
+        override fun isEnabled(): Boolean = enabled
+
+        override fun record(trace: LlmCallTrace) {
+            traces += trace
+            failure?.let { throw it }
         }
     }
 
@@ -35,7 +49,8 @@ class LlmGatewayTest {
         providers: List<LlmProvider>,
         props: LlmGatewayProperties,
         breakers: CircuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults(),
-    ) = LlmGateway(providers, props, breakers, SimpleMeterRegistry(), LlmInputMasker())
+        tracer: LlmCallTracer = DisabledLlmCallTracer,
+    ) = LlmGateway(providers, props, breakers, SimpleMeterRegistry(), LlmInputMasker(), tracer)
 
     @DisplayName("로컬이 실패하면 체인의 다음 공급자로 넘어간다")
     @Test
@@ -132,5 +147,58 @@ class LlmGatewayTest {
         val result = gateway(listOf(local), props).complete(request.copy(feature = "unknown"))
 
         assertEquals("local", result?.provider)
+    }
+
+    @DisplayName("호출마다 기능·공급자·결과·모델·토큰·프롬프트 버전을 추적기에 넘기고, 외부 공급자 기록에는 가린 프롬프트가 들어간다")
+    @Test
+    fun recordsEveryCallToTracer() {
+        // given
+        val local = FakeProvider("local", false) { throw IllegalStateException("down") }
+        val openai = FakeProvider("openai", true) { "answer" }
+        val props = LlmGatewayProperties(externalEnabled = true, chains = mapOf("subway" to listOf("local", "openai")))
+        val tracer = RecordingTracer()
+
+        // when
+        gateway(listOf(local, openai), props, tracer = tracer).complete(request.copy(promptVersion = "v9"))
+
+        // then
+        val (failed, succeeded) = tracer.traces
+        assertEquals(listOf("local" to "error", "openai" to "success"), tracer.traces.map { it.provider to it.outcome })
+        assertEquals("IllegalStateException", failed.errorType)
+        assertEquals("v9", succeeded.promptVersion)
+        assertEquals(LlmCompletion("answer", "fake-model", 12, 3), succeeded.completion)
+        assertEquals("문의 <email>", succeeded.userPrompt)
+        assertTrue(!succeeded.endedAt.isBefore(succeeded.startedAt))
+    }
+
+    @DisplayName("추적기가 실패해도 LLM 결과는 그대로 돌려준다")
+    @Test
+    fun tracerFailureDoesNotBreakCall() {
+        // given
+        val local = FakeProvider("local", false) { "local answer" }
+        val props = LlmGatewayProperties(chains = mapOf("subway" to listOf("local")))
+        val tracer = RecordingTracer(failure = IllegalStateException("langfuse down"))
+
+        // when
+        val result = gateway(listOf(local), props, tracer = tracer).complete(request)
+
+        // then
+        assertEquals("local answer", result?.text)
+        assertEquals(1, tracer.traces.size)
+    }
+
+    @DisplayName("추적기가 꺼져 있으면 기록을 넘기지 않는다")
+    @Test
+    fun skipsTracerWhenDisabled() {
+        // given
+        val local = FakeProvider("local", false) { "local answer" }
+        val props = LlmGatewayProperties(chains = mapOf("subway" to listOf("local")))
+        val tracer = RecordingTracer(enabled = false)
+
+        // when
+        gateway(listOf(local), props, tracer = tracer).complete(request)
+
+        // then
+        assertTrue(tracer.traces.isEmpty())
     }
 }

@@ -24,7 +24,7 @@ class AnthropicLlmProvider(
 
     override fun isConfigured(): Boolean = enabled && apiKey.isNotBlank()
 
-    override fun complete(request: LlmRequest): String? {
+    override fun complete(request: LlmRequest): LlmCompletion? {
         val payload =
             objectMapper.createObjectNode().apply {
                 put("model", model)
@@ -50,13 +50,26 @@ class AnthropicLlmProvider(
                 .bodyToMono(String::class.java)
                 .block()
                 ?: return null
-        return objectMapper
-            .readTree(raw)
-            .path("content")
-            .firstOrNull { it.path("type").asText("") == "text" }
-            ?.path("text")
-            ?.asText("")
-            ?.takeIf { it.isNotBlank() }
+        return parseCompletion(raw)
+    }
+
+    private fun parseCompletion(raw: String): LlmCompletion? {
+        val root = objectMapper.readTree(raw)
+        val text =
+            root
+                .path("content")
+                .firstOrNull { it.path("type").asText("") == "text" }
+                ?.path("text")
+                ?.asText("")
+                ?.takeIf { it.isNotBlank() }
+                ?: return null
+        val usage = root.path("usage")
+        return LlmCompletion(
+            text = text,
+            model = root.path("model").asText("").ifBlank { model },
+            inputTokens = usage.path("input_tokens").takeIf { it.isNumber }?.asInt(),
+            outputTokens = usage.path("output_tokens").takeIf { it.isNumber }?.asInt(),
+        )
     }
 
     companion object {

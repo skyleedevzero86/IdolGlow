@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow
 
+import com.sleekydz86.idolglow.eventinfo.application.EventMetaStreamProperties
 import com.sleekydz86.idolglow.global.config.AppCalendarProperties
 import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
@@ -23,8 +24,10 @@ import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.global.config.TourApiProperties
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
+import com.sleekydz86.idolglow.global.llm.LangfuseProperties
 import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
 import com.sleekydz86.idolglow.global.llm.LocalLlmProperties
+import com.sleekydz86.idolglow.translation.application.TranslationProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -42,6 +45,8 @@ import org.springframework.cache.annotation.EnableCaching
     GemmaProperties::class,
     LocalLlmProperties::class,
     LlmGatewayProperties::class,
+    LangfuseProperties::class,
+    TranslationProperties::class,
     PlatformAuthProperties::class,
     TourApiProperties::class,
     TourKorApiProperties::class,
@@ -51,6 +56,7 @@ import org.springframework.cache.annotation.EnableCaching
     KmaWeatherProperties::class,
     KoreaEximExchangeProperties::class,
     KopisApiProperties::class,
+    EventMetaStreamProperties::class,
     NaverDirectionsProperties::class,
     ExchangeAirportHubProperties::class,
     SubwayProperties::class,

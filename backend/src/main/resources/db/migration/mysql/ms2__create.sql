@@ -1169,7 +1169,9 @@ CREATE TABLE IF NOT EXISTS event_master (
     end_date date null comment '대표 종료일',
     venue varchar(255) null comment '대표 장소',
     normalized_venue varchar(255) null comment '매칭용 장소',
-    status varchar(20) not null comment '대표 상태. ACTIVE',
+    status varchar(20) not null comment '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)',
+    merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움',
+    meta_version bigint not null default 0 comment '메타 버전. 생성·수정·병합·번역 변경마다 1 증가, 소비자가 순서 역전을 버리는 기준',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
     constraint uk_event_master_global_id unique (global_id)
@@ -1180,7 +1182,7 @@ CREATE TABLE IF NOT EXISTS event_source_ref (
     id bigint auto_increment primary key,
     source varchar(80) not null comment '공급처 코드. KOPIS_PBLPRFR, SEOUL_SJW_PERFORM 등',
     source_id varchar(80) not null comment '공급처 공연 ID',
-    global_id varchar(36) null comment '매칭된 글로벌 공연 ID. CONFLICT면 비움',
+    global_id varchar(36) null comment '확정(CONFIRMED)된 글로벌 공연 ID. CANDIDATE·CONFLICT는 사람이 승인하기 전까지 비움',
     match_status varchar(20) not null comment '매칭 상태. CONFIRMED, CANDIDATE, CONFLICT',
     match_score int not null comment '매칭 점수. 100이면 제목·기간·장소 일치',
     matched_at datetime(6) null comment '마지막으로 매칭한 시각',
@@ -1201,7 +1203,7 @@ CREATE TABLE IF NOT EXISTS event_source_ref (
 CREATE TABLE IF NOT EXISTS event_collect_log (
     id bigint auto_increment primary key,
     source varchar(80) not null comment '공급처 코드',
-    status varchar(20) not null comment '수집 상태. SUCCESS, FAILED',
+    status varchar(20) not null comment '수집 상태. SUCCESS(정상), PARTIAL(일부 호출 실패로 일부만 수집), FAILED(실패)',
     item_count int not null comment '이번 수집에서 저장을 시도한 건수',
     error_message varchar(1000) null comment '실패 원인. 1000자 이내',
     collected_at datetime(6) not null comment '수집 시각',
@@ -1241,7 +1243,7 @@ CREATE TABLE IF NOT EXISTS event_translation (
 -- 운영 변경 한 건. 적용 시점에 이전 상태를 남기고 되돌리기에서 복구한다.
 CREATE TABLE IF NOT EXISTS ops_change_request (
     id bigint auto_increment primary key,
-    type varchar(80) not null comment '변경 종류. EVENT_MATCH_MERGE 등',
+    type varchar(80) not null comment '변경 종류. EVENT_MATCH_MERGE(원본을 글로벌 공연에 연결), EVENT_MASTER_MERGE(글로벌 공연끼리 병합) 등',
     target varchar(255) not null comment '변경 대상. 공연 병합은 공급처|공급처ID',
     payload text not null comment '요청 내용. JSON',
     requested_by varchar(80) not null comment '요청자. 사용자 ID 또는 에이전트 이름',
@@ -1391,3 +1393,192 @@ CREATE TABLE IF NOT EXISTS content_likes (
     )),
     INDEX idx_content_likes_target (target_type, target_key)
 ) COMMENT='콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';
+
+-- =============================================================================
+-- 콘텐츠 번역
+-- -----
+-- 목적
+-- - 공지·이벤트·상품·기사·지역사회 게시글·댓글을 화면 언어(en, ja, zh)로 번역해 보관한다
+-- - AI 번역은 기계 검사와 검수를 거친 것만 화면에 보인다
+-- 대상
+-- - 마이에스큐엘 / content_translation, translation_glossary_term, translation_report
+-- 주의
+-- - AI가 꺼져 있으면 번역은 PENDING 으로 쌓이고, 켜면 밀린 것부터 처리한다
+-- - 원문이 바뀌면 source_hash 가 달라져 다시 PENDING 이 된다
+-- 연관
+-- - TranslationWorkerService, TranslationQueryService, TranslationAdminService
+-- =============================================================================
+
+-- 콘텐츠 한 건의 언어별 번역. 콘텐츠·언어 조합당 한 행.
+CREATE TABLE IF NOT EXISTS content_translation (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    content_type VARCHAR(40) NOT NULL COMMENT '콘텐츠 유형. NOTICE, EVENT, PRODUCT, ARTICLE, GLOW_COMMUNITY_POST, CONTENT_COMMENT',
+    content_key VARCHAR(120) NOT NULL COMMENT '콘텐츠 키. 공지·이벤트는 문서 UUID, 트렌드 기사는 호슬러그/기사슬러그, 그 밖은 ID',
+    locale VARCHAR(8) NOT NULL COMMENT '번역 언어. en, ja, zh',
+    source_hash VARCHAR(64) NOT NULL COMMENT '번역할 때 쓴 원문 해시. 원문이 바뀌면 다시 번역',
+    status VARCHAR(20) NOT NULL COMMENT '번역 상태. PENDING, VISIBLE, REVIEW, FAILED, SKIPPED',
+    priority INT NOT NULL DEFAULT 0 COMMENT '처리 우선순위. 사용자가 보는 중이면 높다',
+    fields_json TEXT NULL COMMENT '번역된 항목 JSON',
+    origin VARCHAR(20) NULL COMMENT '번역 출처. MACHINE, MANUAL',
+    model VARCHAR(80) NULL COMMENT '번역에 쓴 AI 공급자',
+    prompt_version VARCHAR(20) NULL COMMENT '번역 지시문 버전',
+    check_notes VARCHAR(1000) NULL COMMENT '검사에서 걸린 규칙 목록',
+    attempts INT NOT NULL DEFAULT 0 COMMENT '실패한 번역 시도 수',
+    next_attempt_at DATETIME(6) NULL COMMENT '다음 재시도 시각',
+    report_count INT NOT NULL DEFAULT 0 COMMENT '번역 오류 신고 수',
+    translated_at DATETIME(6) NULL COMMENT '번역한 시각',
+    reviewed_by BIGINT NULL COMMENT '승인하거나 고친 관리자 users.id',
+    reviewed_at DATETIME(6) NULL COMMENT '승인하거나 고친 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_content_translation_target UNIQUE (content_type, content_key, locale),
+    CONSTRAINT chk_content_translation_status CHECK (status IN ('PENDING', 'VISIBLE', 'REVIEW', 'FAILED', 'SKIPPED')),
+    CONSTRAINT chk_content_translation_locale CHECK (locale IN ('en', 'ja', 'zh')),
+    INDEX idx_content_translation_due (status, next_attempt_at)
+) COMMENT='콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
+
+-- 번역 용어집. 고정 번역어(FIXED)와 번역 금지어(KEEP).
+CREATE TABLE IF NOT EXISTS translation_glossary_term (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    source_term VARCHAR(100) NOT NULL COMMENT '원문 용어',
+    locale VARCHAR(8) NOT NULL COMMENT '적용 언어. KEEP 은 *',
+    target_term VARCHAR(200) NULL COMMENT '고정 번역어. KEEP 이면 비움',
+    mode VARCHAR(10) NOT NULL COMMENT '용어 방식. FIXED, KEEP',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_translation_glossary_term UNIQUE (source_term, locale),
+    CONSTRAINT chk_translation_glossary_term_mode CHECK (mode IN ('FIXED', 'KEEP'))
+) COMMENT='번역 용어집. 고유명사를 정해진 대로 번역한다';
+
+-- 번역 오류 신고. 회원당 번역마다 한 번.
+CREATE TABLE IF NOT EXISTS translation_report (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    translation_id BIGINT NOT NULL COMMENT '신고한 번역 content_translation.id',
+    user_id BIGINT NOT NULL COMMENT '신고한 회원 users.id',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_translation_report_user UNIQUE (translation_id, user_id),
+    CONSTRAINT fk_translation_report_translation FOREIGN KEY (translation_id) REFERENCES content_translation (id),
+    CONSTRAINT fk_translation_report_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
+
+-- =============================================================================
+-- 대외 파트너 메타 API
+-- -----
+-- 목적
+-- - 여행사·숙소 같은 파트너가 키로 공연 메타 변경분을 가져간다
+-- 대상
+-- - 마이에스큐엘 / partner_client, partner_call_log
+-- 주의
+-- - 키 원문은 저장하지 않는다. SHA-256 해시만 남기고 원문은 발급 응답에서 한 번만 보여 준다
+-- - 호출 제한은 서버 메모리에서 센다. 서버가 여러 대면 대수만큼 느슨해진다
+-- 연관
+-- - PartnerAccessService, PartnerEventFeedService, PartnerAdminService
+-- =============================================================================
+
+-- 파트너 한 곳. 키, 계약 언어, 분당 호출 한도를 가진다.
+CREATE TABLE IF NOT EXISTS partner_client (
+    id bigint auto_increment primary key,
+    name varchar(100) not null comment '파트너 이름',
+    key_hash varchar(64) not null comment '파트너 키 SHA-256 해시. 원문은 저장하지 않음',
+    locales varchar(100) not null comment '계약 언어. 쉼표로 구분, 예: en,ja',
+    rate_limit_per_minute int not null comment '분당 호출 한도',
+    enabled boolean not null comment '사용 여부. false면 403',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_partner_client_key_hash unique (key_hash)
+) comment='대외 파트너. 키로 공연 메타 API를 호출한다';
+
+-- 파트너 호출 한 건. 누가 언제 무엇을 몇 건 받았는지 남긴다.
+CREATE TABLE IF NOT EXISTS partner_call_log (
+    id bigint auto_increment primary key,
+    partner_id bigint not null comment '호출한 파트너 ID',
+    path varchar(200) not null comment '호출 경로',
+    status int not null comment '응답 상태 코드. 200, 400, 403, 429 등',
+    item_count int not null comment '응답에 담은 공연 수',
+    called_at datetime(6) not null comment '호출 시각',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint fk_partner_call_log_partner
+        foreign key (partner_id) references partner_client (id)
+) comment='파트너 호출 기록';
+
+-- =============================================================================
+-- 공연 메타 변경 이벤트 공급 (Outbox → Kafka → 소비자)
+-- -----
+-- 목적
+-- - 공연 메타가 바뀌면 같은 트랜잭션에서 outbox 행을 남기고, 중계가 Kafka 토픽 event-meta.changed 로 보낸다
+-- - 소비자: 검색·파트너용 읽기 모델(event_meta_projection), 관심 공연 알림(event_interest)
+-- 대상
+-- - 마이에스큐엘 / event_outbox, consumed_event, event_meta_projection, event_interest, event_meta_dead_letter
+-- 주의
+-- - 키는 global_id 라서 같은 공연 이벤트는 순서대로 간다
+-- - 소비자는 consumed_event 로 같은 이벤트를 한 번만 반영하고, meta_version 이 낮은 이벤트는 버린다
+-- 연관
+-- - EventMetaOutboxRecorder, EventOutboxRelay, EventMetaProjectionService, EventInterestAlertService
+-- =============================================================================
+
+-- 보낼 공연 메타 변경. 공연을 바꾼 트랜잭션 안에서 같이 저장한다.
+CREATE TABLE IF NOT EXISTS event_outbox (
+    id bigint auto_increment primary key,
+    event_id varchar(36) not null comment '이벤트 ID. UUID, 소비자 중복 판정 기준',
+    aggregate_id varchar(36) not null comment '글로벌 공연 ID. Kafka 메시지 키',
+    event_type varchar(40) not null comment '변경 종류. CREATED, UPDATED, MERGED, RESTORED, TRANSLATION_CHANGED',
+    meta_version bigint not null comment '이 변경 뒤의 공연 메타 버전',
+    payload text not null comment '보낼 메시지 JSON. 바뀐 필드와 공연 스냅샷 포함',
+    schema_version int not null comment '메시지 형식 버전',
+    sent_at datetime(6) null comment 'Kafka로 보낸 시각. 비어 있으면 아직 안 보냄',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_outbox_event_id unique (event_id)
+) comment='보낼 공연 메타 변경 이벤트. 공연을 바꾼 트랜잭션에서 같이 저장';
+
+-- 소비자가 처리한 이벤트. 같은 이벤트를 두 번 받아도 한 번만 반영한다.
+CREATE TABLE IF NOT EXISTS consumed_event (
+    id bigint auto_increment primary key,
+    consumer_name varchar(80) not null comment '소비자 이름. event-meta-projection, event-meta-interest-alert',
+    event_id varchar(36) not null comment '처리한 이벤트 ID',
+    processed_at datetime(6) not null comment '처리 시각',
+    result varchar(20) null comment '처리 결과. APPLIED, STALE, IGNORED',
+    constraint uk_consumed_event_consumer_event unique (consumer_name, event_id)
+) comment='소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
+
+-- 검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 최신 meta_version 으로만 갱신한다.
+CREATE TABLE IF NOT EXISTS event_meta_projection (
+    global_id varchar(36) primary key comment '글로벌 공연 ID',
+    meta_version bigint not null comment '반영한 메타 버전. 이보다 낮은 이벤트는 버림',
+    status varchar(20) not null comment '공연 상태. ACTIVE, MERGED',
+    merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID',
+    title varchar(255) not null comment '대표 제목',
+    start_date date null comment '시작일',
+    end_date date null comment '종료일',
+    venue varchar(255) null comment '장소',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각'
+) comment='검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
+
+-- 사용자가 관심 등록한 공연. 일정·장소·상태가 바뀌면 알림을 보낸다.
+CREATE TABLE IF NOT EXISTS event_interest (
+    id bigint auto_increment primary key,
+    user_id bigint not null comment '사용자 ID',
+    global_id varchar(36) not null comment '관심 등록한 글로벌 공연 ID',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_interest_user_global unique (user_id, global_id),
+    constraint fk_event_interest_user foreign key (user_id) references users (id),
+    constraint fk_event_interest_master foreign key (global_id) references event_master (global_id)
+) comment='사용자가 관심 등록한 공연';
+
+-- 소비자가 3번 연속 실패해 실패 토픽으로 간 이벤트. 관리 API로 다시 처리한다.
+CREATE TABLE IF NOT EXISTS event_meta_dead_letter (
+    id bigint auto_increment primary key,
+    consumer_name varchar(80) not null comment '실패한 소비자 이름. event-meta-projection, event-meta-interest-alert',
+    event_id varchar(80) not null comment '이벤트 ID. 메시지를 읽지 못하면 unreadable-파티션-오프셋',
+    payload text not null comment '실패한 메시지 JSON 원문',
+    error_type varchar(255) null comment '마지막 실패 예외 종류',
+    failed_at datetime(6) not null comment '실패 목록에 남긴 시각',
+    reprocessed_at datetime(6) null comment '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_meta_dead_letter_consumer_event unique (consumer_name, event_id)
+) comment='Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';

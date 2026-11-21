@@ -36,6 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aop:4.0.0-M2")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.4.0")
     implementation("org.springframework.boot:spring-boot-starter-graphql")
     implementation("org.springframework.boot:spring-boot-starter-mail")
@@ -63,6 +64,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-mysql")
+    testImplementation("org.testcontainers:testcontainers-kafka")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -86,6 +88,7 @@ dependencies {
 
     // webclient
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
     implementation("io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64")
 
     // QueryDsl

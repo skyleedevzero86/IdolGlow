@@ -9,6 +9,7 @@ import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.SpecialDayInfoResponse
 import com.sleekydz86.idolglow.eventinfo.application.EventLocalizedTextService
 import com.sleekydz86.idolglow.eventinfo.application.port.incoming.FestivalEventQueryUseCase
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
+import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocalizedText
 import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
 import com.sleekydz86.idolglow.eventinfo.infrastructure.CultureInfoApiClient
@@ -19,6 +20,7 @@ import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -40,6 +42,8 @@ class EventInfoController(
     private val cultureInfoApiClient: CultureInfoApiClient,
     private val eventLocalizedTextService: EventLocalizedTextService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Operation(
         summary = "통합 행사 목록 조회",
         description = "한국관광공사·서울문화재단·KOPIS·문화정보 캘린더를 date 기준으로 통합 조회합니다.",
@@ -74,7 +78,7 @@ class EventInfoController(
             )
         val cultureCalendarEvents =
             if (pageNo == 1) {
-                cultureInfoApiClient.listEventsForCalendarDay(yyyyMMdd, pageNo = 1, numOfRows = numOfRows)
+                cultureCalendarEvents(yyyyMMdd, numOfRows)
             } else {
                 emptyList()
             }
@@ -101,6 +105,22 @@ class EventInfoController(
                 introImageUrls = event.introImageUrls,
             )
         }.inRequestedLanguage()
+    }
+
+    private fun cultureCalendarEvents(
+        yyyyMMdd: String,
+        numOfRows: Int,
+    ): List<FestivalEvent> {
+        val result =
+            cultureInfoApiClient.listEventsForCalendarDayWithCompleteness(yyyyMMdd, pageNo = 1, numOfRows = numOfRows)
+        if (!result.complete) {
+            log.warn(
+                "문화정보 캘린더 일부 호출이 실패해 화면 목록에서 빠졌습니다. date={} returned={}",
+                yyyyMMdd,
+                result.events.size,
+            )
+        }
+        return result.events
     }
 
     @Operation(summary = "KOPIS 공연 목록 조회", description = "signgucode(기본 11=서울), prfstate(기본 02=공연중) 필터 지원.")

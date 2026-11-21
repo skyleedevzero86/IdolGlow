@@ -24,7 +24,7 @@ class OpenAiLlmProvider(
 
     override fun isConfigured(): Boolean = enabled && apiKey.isNotBlank()
 
-    override fun complete(request: LlmRequest): String? {
+    override fun complete(request: LlmRequest): LlmCompletion? {
         val payload = OpenAiCompatiblePayload.build(objectMapper, model, request)
         val raw =
             webClient
@@ -37,6 +37,6 @@ class OpenAiLlmProvider(
                 .bodyToMono(String::class.java)
                 .block()
                 ?: return null
-        return OpenAiCompatiblePayload.firstMessageContent(objectMapper, raw)
+        return OpenAiCompatiblePayload.parseCompletion(objectMapper, raw)
     }
 }
