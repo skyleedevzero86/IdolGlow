@@ -1510,6 +1510,7 @@ CREATE TABLE IF NOT EXISTS consumed_event (
     consumer_name varchar(80) not null,
     event_id varchar(36) not null,
     processed_at timestamp(6) not null,
+    result varchar(20),
     constraint uk_consumed_event_consumer_event unique (consumer_name, event_id)
 );
 

@@ -1374,3 +1374,22 @@ ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
         'EVENT_INTEREST_CHANGED'
     )
 );
+
+-- 소비자 처리 결과를 남겨 버린 이벤트 건수를 SQL로 집계한다
+SET @add_consumed_result := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE consumed_event ADD COLUMN result VARCHAR(20) NULL COMMENT ''처리 결과. APPLIED, STALE, IGNORED''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'consumed_event'
+      AND column_name = 'result'
+);
+
+PREPARE consumed_result_stmt FROM @add_consumed_result;
+
+EXECUTE consumed_result_stmt;
+
+DEALLOCATE PREPARE consumed_result_stmt;

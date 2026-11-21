@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMetaDeadLetterPort
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaDeadLetter
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException

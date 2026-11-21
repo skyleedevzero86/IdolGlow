@@ -15,11 +15,10 @@ class ConsumedEventGuard(
     fun firstDelivery(
         consumerName: String,
         eventId: String,
-    ): Boolean {
-        if (consumedEventPort.exists(consumerName, eventId)) return false
-        consumedEventPort.save(
+    ): ConsumedEvent? {
+        if (consumedEventPort.exists(consumerName, eventId)) return null
+        return consumedEventPort.save(
             ConsumedEvent(consumerName = consumerName, eventId = eventId, processedAt = LocalDateTime.now()),
         )
-        return true
     }
 }

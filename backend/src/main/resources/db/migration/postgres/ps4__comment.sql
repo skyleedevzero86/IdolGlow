@@ -1783,6 +1783,8 @@ COMMENT ON COLUMN consumed_event.event_id IS '처리한 이벤트 ID';
 
 COMMENT ON COLUMN consumed_event.processed_at IS '처리 시각';
 
+COMMENT ON COLUMN consumed_event.result IS '처리 결과. APPLIED 반영, STALE 옛 버전이라 버림, IGNORED 알림 대상 아님';
+
 COMMENT ON TABLE event_meta_projection IS '검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
 
 COMMENT ON COLUMN event_meta_projection.meta_version IS '반영한 메타 버전. 이보다 낮은 이벤트는 버림';

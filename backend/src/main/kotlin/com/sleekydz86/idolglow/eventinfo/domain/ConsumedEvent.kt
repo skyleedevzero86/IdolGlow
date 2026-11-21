@@ -2,6 +2,8 @@ package com.sleekydz86.idolglow.eventinfo.domain
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -26,4 +28,11 @@ class ConsumedEvent(
     val eventId: String,
     @Column(name = "processed_at", nullable = false)
     val processedAt: LocalDateTime,
-)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    var result: EventMetaApplyResult? = null,
+) {
+    fun markResult(applied: EventMetaApplyResult) {
+        result = applied
+    }
+}

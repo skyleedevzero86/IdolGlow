@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
@@ -75,14 +76,17 @@ class EventMetaConsumerPostgresTest : PostgresIntegrationTest() {
         val droppedBefore = 버린_건수()
         eventMetaProjectionService.apply(메시지("gid-t3", version = 2, title = "새 제목"))
 
+        val older = 메시지("gid-t3", version = 1, title = "옛 제목")
+
         // when
-        val result = eventMetaProjectionService.apply(메시지("gid-t3", version = 1, title = "옛 제목"))
+        val result = eventMetaProjectionService.apply(older)
 
         // then
         assertEquals(EventMetaApplyResult.STALE, result)
         val projection = eventMetaProjectionJpaRepository.findById("gid-t3").get()
         assertEquals(2L to "새 제목", projection.metaVersion to projection.title)
         assertEquals(1.0, 버린_건수() - droppedBefore)
+        assertEquals("STALE", 기록된_결과(EventMetaProjectionService.CONSUMER, older.eventId))
     }
 
     @DisplayName("관심 등록한 공연의 일정이 바뀌면 알림을 한 번 보내고, 번역만 바뀌면 보내지 않는다")
@@ -108,6 +112,9 @@ class EventMetaConsumerPostgresTest : PostgresIntegrationTest() {
         val alerts = notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(user.id)
         assertEquals(listOf(NotificationType.EVENT_INTEREST_CHANGED), alerts.map { it.type })
         assertEquals("관심 공연 의 일정이 바뀌었습니다.", alerts.single().message)
+        val consumer = EventInterestAlertService.CONSUMER
+        assertEquals("APPLIED", 기록된_결과(consumer, scheduleChanged.eventId))
+        assertEquals("IGNORED", 기록된_결과(consumer, translationChanged.eventId))
     }
 
     private fun 메시지(
@@ -141,6 +148,17 @@ class EventMetaConsumerPostgresTest : PostgresIntegrationTest() {
             Int::class.java,
             consumer,
         )!!
+
+    private fun 기록된_결과(
+        consumer: String,
+        eventId: String,
+    ): String? =
+        jdbcTemplate.queryForObject(
+            "select result from consumed_event where consumer_name = ? and event_id = ?",
+            String::class.java,
+            consumer,
+            eventId,
+        )
 
     private fun 버린_건수(): Double = meterRegistry.find("event_meta_projection_stale_dropped").counter()?.count() ?: 0.0
 

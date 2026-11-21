@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventInterestPort
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationType
@@ -14,15 +15,19 @@ class EventInterestAlertService(
     private val notificationCommandService: NotificationCommandService,
 ) {
     @Transactional
-    fun handle(message: EventMetaMessage): EventMetaApplyResult =
-        when {
-            !consumedEventGuard.firstDelivery(CONSUMER, message.eventId) -> EventMetaApplyResult.DUPLICATE
-            !message.alertWorthy() -> EventMetaApplyResult.IGNORED
-            else -> {
+    fun handle(message: EventMetaMessage): EventMetaApplyResult {
+        val consumed =
+            consumedEventGuard.firstDelivery(CONSUMER, message.eventId) ?: return EventMetaApplyResult.DUPLICATE
+        val result =
+            if (message.alertWorthy()) {
                 notifyInterestedUsers(message)
                 EventMetaApplyResult.APPLIED
+            } else {
+                EventMetaApplyResult.IGNORED
             }
-        }
+        consumed.markResult(result)
+        return result
+    }
 
     private fun notifyInterestedUsers(message: EventMetaMessage) {
         val title = message.snapshot?.title.orEmpty()

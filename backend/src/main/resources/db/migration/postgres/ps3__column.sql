@@ -1054,3 +1054,6 @@ ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
         'EVENT_INTEREST_CHANGED'
     )
 );
+
+-- 소비자 처리 결과를 남겨 버린 이벤트 건수를 SQL로 집계한다
+ALTER TABLE consumed_event ADD COLUMN IF NOT EXISTS result varchar(20);

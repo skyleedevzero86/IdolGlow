@@ -1539,6 +1539,7 @@ CREATE TABLE IF NOT EXISTS consumed_event (
     consumer_name varchar(80) not null comment '소비자 이름. event-meta-projection, event-meta-interest-alert',
     event_id varchar(36) not null comment '처리한 이벤트 ID',
     processed_at datetime(6) not null comment '처리 시각',
+    result varchar(20) null comment '처리 결과. APPLIED, STALE, IGNORED',
     constraint uk_consumed_event_consumer_event unique (consumer_name, event_id)
 ) comment='소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
 

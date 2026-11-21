@@ -196,8 +196,14 @@ class SecurityConfig(
                 "/api/comments",
             )
 
+        private val MONITORING_PUBLIC_GET =
+            arrayOf(
+                "/actuator/prometheus",
+            )
+
         private val PUBLIC_GET =
-            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET
+            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET +
+                MONITORING_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(

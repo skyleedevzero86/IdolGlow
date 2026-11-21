@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMetaProjectionPort
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaProjection
 import io.micrometer.core.instrument.Counter
@@ -24,7 +25,14 @@ class EventMetaProjectionService(
 
     @Transactional
     fun apply(message: EventMetaMessage): EventMetaApplyResult {
-        if (!consumedEventGuard.firstDelivery(CONSUMER, message.eventId)) return EventMetaApplyResult.DUPLICATE
+        val consumed =
+            consumedEventGuard.firstDelivery(CONSUMER, message.eventId) ?: return EventMetaApplyResult.DUPLICATE
+        val result = project(message)
+        consumed.markResult(result)
+        return result
+    }
+
+    private fun project(message: EventMetaMessage): EventMetaApplyResult {
         val snapshot = requireNotNull(message.snapshot) { "공연 메타 이벤트에 스냅샷이 없습니다. eventId=${message.eventId}" }
         val current = eventMetaProjectionPort.findByGlobalId(message.globalId)
         return when {
@@ -59,11 +67,4 @@ class EventMetaProjectionService(
     companion object {
         const val CONSUMER: String = "event-meta-projection"
     }
-}
-
-enum class EventMetaApplyResult {
-    APPLIED,
-    DUPLICATE,
-    STALE,
-    IGNORED,
 }
