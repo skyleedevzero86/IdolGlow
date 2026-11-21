@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
+import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleCallFailedException
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.AfterEach
@@ -32,7 +33,7 @@ class TourFestivalApiClientTest {
 
         // when
         val error =
-            assertThrows<IllegalStateException> {
+            assertThrows<TourLocaleCallFailedException> {
                 client.searchFestivalInLocale("ja", "20261120", "20261220", pageNo = 1, numOfRows = 100)
             }
 

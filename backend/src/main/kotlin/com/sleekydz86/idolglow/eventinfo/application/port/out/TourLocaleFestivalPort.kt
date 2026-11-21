@@ -11,3 +11,7 @@ fun interface TourLocaleFestivalPort {
         numOfRows: Int,
     ): List<FestivalEvent>
 }
+
+class TourLocaleCallFailedException(
+    message: String,
+) : IllegalStateException(message)

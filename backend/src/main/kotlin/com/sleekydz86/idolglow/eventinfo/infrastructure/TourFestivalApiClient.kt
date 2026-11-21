@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.sleekydz86.idolglow.eventinfo.application.port.out.FestivalEventExternalQueryPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleCallFailedException
 import com.sleekydz86.idolglow.eventinfo.domain.CodeEntry
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
@@ -68,7 +69,9 @@ class TourFestivalApiClient(
         failedCallsOnThread.set(0)
         try {
             val events = searchFestival(eventStartDate, eventEndDate, pageNo, numOfRows)
-            check(failedCallsOnThread.get() == 0) { "관광 다국어 API 호출이 실패했습니다. locale=$locale pageNo=$pageNo" }
+            if (failedCallsOnThread.get() != 0) {
+                throw TourLocaleCallFailedException("관광 다국어 API 호출이 실패했습니다. locale=$locale pageNo=$pageNo")
+            }
             return events
         } finally {
             if (previous == null) requestedServiceLocale.remove() else requestedServiceLocale.set(previous)
