@@ -4,6 +4,58 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.21.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.20.1...v0.21.0) (2026-11-21)
+
+
+### Features
+
+* LLM 호출을 기능별로 Langfuse에 기록하고 공급자가 모델과 토큰 수를 함께 돌려주게 함 ([9b0ddf4](https://github.com/skyleedevzero86/IdolGlow/commit/9b0ddf46dfb9c768e52b36fdd01851da8ff6a766))
+* 공연 메타 변경을 Outbox로 저장해 Kafka로 중계하고 읽기 모델·관심 공연 알림 소비자를 추가 ([39219cd](https://github.com/skyleedevzero86/IdolGlow/commit/39219cd192b83eb2a9ea7107f293cff978bb7912))
+* 공연 메타 소비자 처리 결과를 DB에 남기고 Prometheus로 지표를 내보내 버린 이벤트 건수를 볼 수 있게 함 ([b03df0e](https://github.com/skyleedevzero86/IdolGlow/commit/b03df0e2d0a8ff2d75cac0a2e57feb08be67ba39))
+* 공연 메타 소비자가 3번 실패한 이벤트를 실패 토픽과 실패 목록에 남기고 관리 API로 다시 처리하는 기능 추가 ([a437203](https://github.com/skyleedevzero86/IdolGlow/commit/a4372031a51d1c60854b8e80613e6e2cc94aaab1))
+* 공연 메타 수집 품질 개선과 대외 파트너 API, Outbox·Kafka 이벤트 공급, LLM 호출 추적 추가 ([#127](https://github.com/skyleedevzero86/IdolGlow/issues/127)) ([ce2bff7](https://github.com/skyleedevzero86/IdolGlow/commit/ce2bff72a79c7f3727b93d95df927ca67ff5e370))
+* 공연 상세에서 관심 등록 상태를 조회하는 API를 추가하고 관심 공연 알림 링크와 문장을 바로잡음 ([80c1e10](https://github.com/skyleedevzero86/IdolGlow/commit/80c1e10d3694d3ee6586bdbbfe0115237dacde57))
+* 대외 파트너용 공연 메타 변경분 API와 글로벌 공연 병합을 추가 ([7916e5e](https://github.com/skyleedevzero86/IdolGlow/commit/7916e5e42ee023442e5eaa4ceaefae45442632f7))
+* 콘텐츠 번역 파이프라인을 추가 ([f05295c](https://github.com/skyleedevzero86/IdolGlow/commit/f05295cded4f626268c2de5b84f413d026fc1cf4))
+
+
+### Bug Fixes
+
+* KOPIS 수집 호출이 실패해도 성공으로 기록되던 문제와 실패 로그에 인증키가 남던 문제 수정 ([887af7f](https://github.com/skyleedevzero86/IdolGlow/commit/887af7fcff0b3bd32590472141b6d7aad92fb52e))
+* KOPIS 주소 변경으로 막히던 수집을 복구하고 오류 응답과 기간 없는 문화정보 항목 처리 수정 ([4dde58a](https://github.com/skyleedevzero86/IdolGlow/commit/4dde58a4c0fb108c3a27692d509a045c71654d13))
+* 공공 API 수집이 실패해도 성공 0건으로 기록되던 문제를 실패·일부 수집으로 구분 ([a24ea60](https://github.com/skyleedevzero86/IdolGlow/commit/a24ea60e6815c9d38ca55edb1cecc9a934849c60))
+* 공급처가 HTML 기호로 보낸 공연 제목·장소를 원래 글자로 바꿔 매칭과 파트너 응답을 바로잡음 ([7617f0a](https://github.com/skyleedevzero86/IdolGlow/commit/7617f0ad1db3cbea5dc04580038b248249b8bc52))
+* 공연 매칭에서 공연장명이 주소 안에 들어 있으면 같은 장소로 판정 ([d2c05f7](https://github.com/skyleedevzero86/IdolGlow/commit/d2c05f76cde4fb9ff0a2e8a276411ad4305c5288))
+* 관광 국문 축제 목록을 부를 때 다국어 주소 변환 실패 경고가 잘못 찍히던 문제 수정 ([a64eb6d](https://github.com/skyleedevzero86/IdolGlow/commit/a64eb6d92857760325e2f15d00c2c430fc5449c1))
+* 관광 국문 축제 수집이 실패해도 성공 0건으로 기록되던 문제 수정 ([73debde](https://github.com/skyleedevzero86/IdolGlow/commit/73debded3370688c3a46677b8537f254d2cbc493))
+* 관광 다국어 조회가 403이어도 0건 수집으로만 보이던 문제와 연결 실패 로그에 인증키가 남던 문제 수정 ([f393af1](https://github.com/skyleedevzero86/IdolGlow/commit/f393af1a6dd2ff94dc4b74e348d9a0c45b5bd62b))
+* 관광 다국어 축제를 contentId가 달라도 기간·좌표로 국문 공연에 연결 ([0e50a96](https://github.com/skyleedevzero86/IdolGlow/commit/0e50a967b3d79770e5f1aa5241ffd364d5074571))
+* 서버 로그에 관리자 토큰을 남기지 않고 비밀번호 로그인을 로그인 없이 호출할 수 있게 수정 ([3d3d4a5](https://github.com/skyleedevzero86/IdolGlow/commit/3d3d4a5ecdce34f1c2b42506fd6ef7d1cb17135a))
+* 세종문화회관 공연 API 응답이 256KB를 넘으면 수집에 실패하던 문제 수정 ([aefa65a](https://github.com/skyleedevzero86/IdolGlow/commit/aefa65ae911d17a5683768dea12ba1470e63e052))
+* 아키텍처 이미지로 변경 ([dba1cb7](https://github.com/skyleedevzero86/IdolGlow/commit/dba1cb7e69b7de1fda65beaf26715ccc21f3dfe0))
+* 장소만 다른 공연 후보는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다 ([29912d1](https://github.com/skyleedevzero86/IdolGlow/commit/29912d1f94ba06a57e9163355c7842f358327c03))
+* 통합 행사 목록에서 문화정보가 호출 한도로 빠져도 경고 없이 0건으로 보이던 문제 수정 ([a671c67](https://github.com/skyleedevzero86/IdolGlow/commit/a671c67972119cd61bc520a88899b52f3c1834a8))
+* 파트너 API 호출 한도 초과 응답의 오류 이름을 다른 오류와 같게 수정 ([0cb3f3e](https://github.com/skyleedevzero86/IdolGlow/commit/0cb3f3e4c378755d4ba57dbe87bd0d4a7723ecd5))
+* 한국어 요청은 영어 번역으로 대체하지 않고 원본을 보여 주기 ([882c7f4](https://github.com/skyleedevzero86/IdolGlow/commit/882c7f4eb889ffa045c603b0c44ef16ed581c876))
+
+
+### Documentation
+
+* README 를 소개·아키텍처·실행 방법·정합성 중심으로 다시 정리 ([f86798c](https://github.com/skyleedevzero86/IdolGlow/commit/f86798c7e5417b25fbf5f575ddd5f8402484e291))
+
+
+### Build
+
+* 로컬 infra 에 Langfuse 를 추가하고 Jenkins 를 infra compose 에서 함께 관리 ([fd0d2f0](https://github.com/skyleedevzero86/IdolGlow/commit/fd0d2f075afa7eaf5a72fdb759104838fe34eeb0))
+
+
+### Tests
+
+* 번역 응답을 기다리는 동안 원문이 바뀌면 예전 번역을 저장하지 않는지 검증 ([0f4421c](https://github.com/skyleedevzero86/IdolGlow/commit/0f4421ce4e820eea5dfb14efd0fa7e6894491d09))
+* 예약 슬롯 동시 요청과 상품 목록 조회 부하 테스트 스크립트 추가 ([4b87429](https://github.com/skyleedevzero86/IdolGlow/commit/4b874297e33179ea2aa63dca7c21b9f371fa790e))
+* 중계 동시 실행 시 한 번만 발행되는지 확인하는 테스트 추가와 Kafka 테스트가 공용 DB 표를 지우던 문제 수정 ([9fa83b1](https://github.com/skyleedevzero86/IdolGlow/commit/9fa83b140d3bef4cb3239dcb00fd39ea31922dea))
+* 중계가 보낸 뒤 기록 전에 멈춰 다시 보내도 한 번만 반영되는지 확인하는 테스트 추가 ([18c7895](https://github.com/skyleedevzero86/IdolGlow/commit/18c7895858f95f5b0b9ac4ffb00ec06b51bc3b40))
+
 ## [0.20.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.20.0...v0.20.1) (2026-11-15)
 
 
