@@ -18,6 +18,8 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
         show_sql: false
+        jdbc:
+          time_zone: Asia/Seoul
   graphql:
     graphiql:
       enabled: false

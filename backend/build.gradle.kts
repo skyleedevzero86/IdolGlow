@@ -136,7 +136,7 @@ kapt {
 tasks.withType<Test>().configureEach {
     maxHeapSize = providers.gradleProperty("testMaxHeap").getOrElse("2g")
     maxParallelForks = 1
-    jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED")
+    jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED", "-Duser.timezone=Asia/Seoul")
     systemProperty("spring.test.context.cache.maxSize", "4")
     useJUnitPlatform {
         when (name) {
@@ -166,7 +166,7 @@ tasks.register<Test>("surveyLlmEval") {
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    jvmArgs("--enable-native-access=ALL-UNNAMED", "-Duser.timezone=Asia/Seoul")
 }
 
 detekt {

@@ -8,7 +8,8 @@ COPY ${JAR_FILE} /app/app.jar
 
 USER app
 
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError" \
+ENV TZ=Asia/Seoul \
+    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/Seoul" \
     SPRING_CONFIG_ADDITIONAL_LOCATION="optional:file:/config/"
 
 EXPOSE 8080
