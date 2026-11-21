@@ -9,4 +9,7 @@ data class EventMetaStreamProperties(
     val relayBatchSize: Int = 100,
     val sendTimeoutSeconds: Long = 5,
     val retentionDays: Long = 7,
+    val deadLetterTopic: String = "event-meta.changed-dlt",
+    val maxAttempts: Long = 3,
+    val retryIntervalMs: Long = 1000,
 )

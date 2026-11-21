@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
+import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMetaDeadLetterJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMetaProjectionJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventOutboxJpaRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
@@ -27,6 +28,9 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 @DisplayName("공연 메타 이벤트 Kafka 공급 (Postgres + Kafka)")
 class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
@@ -46,6 +50,10 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
 
     @Autowired private lateinit var userJpaRepository: UserJpaRepository
 
+    @Autowired private lateinit var eventMetaDeadLetterService: EventMetaDeadLetterService
+
+    @Autowired private lateinit var eventMetaDeadLetterJpaRepository: EventMetaDeadLetterJpaRepository
+
     @Autowired private lateinit var transactionTemplate: TransactionTemplate
 
     @Autowired private lateinit var jdbcTemplate: JdbcTemplate
@@ -57,6 +65,7 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         jdbcTemplate.update("delete from event_meta_projection")
         jdbcTemplate.update("delete from event_outbox")
         jdbcTemplate.update("delete from event_interest")
+        jdbcTemplate.update("delete from event_meta_dead_letter")
         jdbcTemplate.update("delete from notifications where type = 'EVENT_INTEREST_CHANGED'")
     }
 
@@ -107,6 +116,78 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         val alerts = notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(user.id)
         assertEquals(listOf(NotificationType.EVENT_INTEREST_CHANGED), alerts.map { it.type })
     }
+
+    @DisplayName("T6 읽기 모델 소비자가 3번 연속 실패하면 실패 토픽을 거쳐 실패 목록에 남고, 원인을 없앤 뒤 관리 기능으로 다시 처리하면 반영된다")
+    @Test
+    fun deadLetterIsReprocessedByAdmin() {
+        // given
+        val globalId = 공연_변경()
+        val createdEventId = jdbcTemplate.queryForObject(
+            "select event_id from event_outbox where aggregate_id = ?",
+            String::class.java,
+            globalId,
+        )!!
+        eventOutboxRelay.relayOnce()
+        처리될_때까지(createdEventId)
+
+        // when
+        val updatedEventId = 변경_기록(globalId, setOf("venue"))
+        val deadLetter =
+            읽기_모델을_잠근_채로(globalId) {
+                eventOutboxRelay.relayOnce()
+                실패_목록에_남을_때까지(updatedEventId)
+            }
+        val reprocessed = eventMetaDeadLetterService.reprocess(deadLetter.id)
+        val reprocessedAgain = runCatching { eventMetaDeadLetterService.reprocess(deadLetter.id) }
+
+        // then
+        assertEquals(EventMetaProjectionService.CONSUMER, deadLetter.consumerName)
+        assertEquals("org.springframework.dao.CannotAcquireLockException", deadLetter.errorType)
+        assertEquals(EventMetaApplyResult.APPLIED, reprocessed.result)
+        assertEquals(2L, eventMetaProjectionJpaRepository.findById(globalId).get().metaVersion)
+        assertTrue(eventMetaDeadLetterJpaRepository.findById(deadLetter.id).get().isReprocessed())
+        assertTrue(reprocessedAgain.isFailure)
+        assertEquals(emptyList<EventMetaDeadLetterView>(), eventMetaDeadLetterService.list(pendingOnly = true))
+    }
+
+    private fun 읽기_모델을_잠근_채로(
+        globalId: String,
+        block: () -> EventMetaDeadLetterView,
+    ): EventMetaDeadLetterView {
+        val locked = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val holder =
+            thread {
+                transactionTemplate.executeWithoutResult {
+                    jdbcTemplate.queryForList(
+                        "select global_id from event_meta_projection where global_id = ? for update",
+                        globalId,
+                    )
+                    locked.countDown()
+                    release.await(WAIT.seconds, TimeUnit.SECONDS)
+                }
+            }
+        locked.await(WAIT.seconds, TimeUnit.SECONDS)
+        try {
+            return block()
+        } finally {
+            release.countDown()
+            holder.join()
+        }
+    }
+
+    private fun 실패_목록에_남을_때까지(eventId: String): EventMetaDeadLetterView {
+        val deadline = Instant.now().plus(WAIT)
+        var found = 실패_목록(eventId)
+        while (found == null && Instant.now().isBefore(deadline)) {
+            Thread.sleep(POLL_MILLIS)
+            found = 실패_목록(eventId)
+        }
+        return requireNotNull(found) { "실패 목록에 남지 않았습니다. eventId=$eventId" }
+    }
+
+    private fun 실패_목록(eventId: String): EventMetaDeadLetterView? =
+        eventMetaDeadLetterService.list(pendingOnly = true).firstOrNull { it.eventId == eventId }
 
     private fun 변경_기록(
         globalId: String,
@@ -209,6 +290,8 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
             registry.add("app.event-meta.stream.enabled") { "true" }
             registry.add("app.event-meta.stream.topic") { "event-meta.changed.test" }
             registry.add("app.event-meta.stream.send-timeout-seconds") { "4" }
+            registry.add("app.event-meta.stream.dead-letter-topic") { "event-meta.changed.test-dlt" }
+            registry.add("app.event-meta.stream.retry-interval-ms") { "500" }
         }
     }
 }

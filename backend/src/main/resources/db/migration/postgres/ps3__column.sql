@@ -1011,6 +1011,9 @@ CREATE INDEX IF NOT EXISTS idx_event_outbox_unsent ON event_outbox (sent_at, id)
 -- 공연이 바뀌면 관심 등록한 사용자를 찾는다
 CREATE INDEX IF NOT EXISTS idx_event_interest_global ON event_interest (global_id);
 
+-- 아직 다시 처리하지 않은 실패 메시지를 최근 순으로 본다
+CREATE INDEX IF NOT EXISTS idx_event_meta_dead_letter_pending ON event_meta_dead_letter (reprocessed_at, id);
+
 -- 관심 공연 변경 알림 타입 추가
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS chk_notifications_type;
 

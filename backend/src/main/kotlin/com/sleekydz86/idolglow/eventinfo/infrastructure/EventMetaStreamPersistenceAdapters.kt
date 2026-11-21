@@ -2,10 +2,12 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.ConsumedEventPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventInterestPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMetaDeadLetterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMetaProjectionPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventOutboxPort
 import com.sleekydz86.idolglow.eventinfo.domain.ConsumedEvent
 import com.sleekydz86.idolglow.eventinfo.domain.EventInterest
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaDeadLetter
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaProjection
 import com.sleekydz86.idolglow.eventinfo.domain.EventOutbox
 import org.springframework.data.domain.PageRequest
@@ -50,6 +52,17 @@ interface EventInterestJpaRepository : JpaRepository<EventInterest, Long> {
     fun findUserIdsByGlobalId(
         @Param("globalId") globalId: String,
     ): List<Long>
+}
+
+interface EventMetaDeadLetterJpaRepository : JpaRepository<EventMetaDeadLetter, Long> {
+    fun existsByConsumerNameAndEventId(
+        consumerName: String,
+        eventId: String,
+    ): Boolean
+
+    fun findTop100ByOrderByIdDesc(): List<EventMetaDeadLetter>
+
+    fun findTop100ByReprocessedAtIsNullOrderByIdDesc(): List<EventMetaDeadLetter>
 }
 
 @Repository
@@ -103,4 +116,25 @@ class EventInterestAdapter(
     override fun findByUserId(userId: Long): List<EventInterest> = repository.findByUserIdOrderByIdDesc(userId)
 
     override fun findUserIdsByGlobalId(globalId: String): List<Long> = repository.findUserIdsByGlobalId(globalId)
+}
+
+@Repository
+class EventMetaDeadLetterAdapter(
+    private val repository: EventMetaDeadLetterJpaRepository,
+) : EventMetaDeadLetterPort {
+    override fun save(deadLetter: EventMetaDeadLetter): EventMetaDeadLetter = repository.save(deadLetter)
+
+    override fun findById(id: Long): EventMetaDeadLetter? = repository.findById(id).orElse(null)
+
+    override fun exists(
+        consumerName: String,
+        eventId: String,
+    ): Boolean = repository.existsByConsumerNameAndEventId(consumerName, eventId)
+
+    override fun findRecent(pendingOnly: Boolean): List<EventMetaDeadLetter> =
+        if (pendingOnly) {
+            repository.findTop100ByReprocessedAtIsNullOrderByIdDesc()
+        } else {
+            repository.findTop100ByOrderByIdDesc()
+        }
 }

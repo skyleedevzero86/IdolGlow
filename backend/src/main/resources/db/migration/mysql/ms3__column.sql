@@ -1330,6 +1330,10 @@ CREATE INDEX idx_event_outbox_unsent
 CREATE INDEX idx_event_interest_global
     ON event_interest (global_id);
 
+-- 아직 다시 처리하지 않은 실패 메시지를 최근 순으로 본다
+CREATE INDEX idx_event_meta_dead_letter_pending
+    ON event_meta_dead_letter (reprocessed_at, id);
+
 -- 관심 공연 변경 알림 타입 추가
 ALTER TABLE notifications DROP CHECK chk_notifications_type;
 

@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.application.port.out
 
 import com.sleekydz86.idolglow.eventinfo.domain.ConsumedEvent
 import com.sleekydz86.idolglow.eventinfo.domain.EventInterest
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaDeadLetter
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaProjection
 import com.sleekydz86.idolglow.eventinfo.domain.EventOutbox
 import java.time.LocalDateTime
@@ -44,4 +45,17 @@ interface EventInterestPort {
     fun findByUserId(userId: Long): List<EventInterest>
 
     fun findUserIdsByGlobalId(globalId: String): List<Long>
+}
+
+interface EventMetaDeadLetterPort {
+    fun save(deadLetter: EventMetaDeadLetter): EventMetaDeadLetter
+
+    fun findById(id: Long): EventMetaDeadLetter?
+
+    fun exists(
+        consumerName: String,
+        eventId: String,
+    ): Boolean
+
+    fun findRecent(pendingOnly: Boolean): List<EventMetaDeadLetter>
 }

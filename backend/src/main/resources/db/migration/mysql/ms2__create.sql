@@ -1510,7 +1510,7 @@ CREATE TABLE IF NOT EXISTS partner_call_log (
 -- - 공연 메타가 바뀌면 같은 트랜잭션에서 outbox 행을 남기고, 중계가 Kafka 토픽 event-meta.changed 로 보낸다
 -- - 소비자: 검색·파트너용 읽기 모델(event_meta_projection), 관심 공연 알림(event_interest)
 -- 대상
--- - 마이에스큐엘 / event_outbox, consumed_event, event_meta_projection, event_interest
+-- - 마이에스큐엘 / event_outbox, consumed_event, event_meta_projection, event_interest, event_meta_dead_letter
 -- 주의
 -- - 키는 global_id 라서 같은 공연 이벤트는 순서대로 간다
 -- - 소비자는 consumed_event 로 같은 이벤트를 한 번만 반영하고, meta_version 이 낮은 이벤트는 버린다
@@ -1567,3 +1567,17 @@ CREATE TABLE IF NOT EXISTS event_interest (
     constraint fk_event_interest_user foreign key (user_id) references users (id),
     constraint fk_event_interest_master foreign key (global_id) references event_master (global_id)
 ) comment='사용자가 관심 등록한 공연';
+
+-- 소비자가 3번 연속 실패해 실패 토픽으로 간 이벤트. 관리 API로 다시 처리한다.
+CREATE TABLE IF NOT EXISTS event_meta_dead_letter (
+    id bigint auto_increment primary key,
+    consumer_name varchar(80) not null comment '실패한 소비자 이름. event-meta-projection, event-meta-interest-alert',
+    event_id varchar(80) not null comment '이벤트 ID. 메시지를 읽지 못하면 unreadable-파티션-오프셋',
+    payload text not null comment '실패한 메시지 JSON 원문',
+    error_type varchar(255) null comment '마지막 실패 예외 종류',
+    failed_at datetime(6) not null comment '실패 목록에 남긴 시각',
+    reprocessed_at datetime(6) null comment '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_meta_dead_letter_consumer_event unique (consumer_name, event_id)
+) comment='Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';

@@ -1800,3 +1800,19 @@ COMMENT ON COLUMN event_interest.global_id IS '관심 등록한 글로벌 공연
 COMMENT ON INDEX idx_event_outbox_unsent IS '안 보낸 행 순서 조회와 보낸 행 정리용';
 
 COMMENT ON INDEX idx_event_interest_global IS '공연별 관심 사용자 조회용';
+
+COMMENT ON TABLE event_meta_dead_letter IS 'Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';
+
+COMMENT ON COLUMN event_meta_dead_letter.consumer_name IS '실패한 소비자 이름. event-meta-projection, event-meta-interest-alert';
+
+COMMENT ON COLUMN event_meta_dead_letter.event_id IS '이벤트 ID. 메시지를 읽지 못하면 unreadable-파티션-오프셋';
+
+COMMENT ON COLUMN event_meta_dead_letter.payload IS '실패한 메시지 JSON 원문';
+
+COMMENT ON COLUMN event_meta_dead_letter.error_type IS '마지막 실패 예외 종류';
+
+COMMENT ON COLUMN event_meta_dead_letter.failed_at IS '실패 목록에 남긴 시각';
+
+COMMENT ON COLUMN event_meta_dead_letter.reprocessed_at IS '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함';
+
+COMMENT ON INDEX idx_event_meta_dead_letter_pending IS '다시 처리하지 않은 실패 메시지 조회용';
