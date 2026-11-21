@@ -6,7 +6,11 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMetaProjectionJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventOutboxJpaRepository
+import com.sleekydz86.idolglow.notification.domain.NotificationType
+import com.sleekydz86.idolglow.notification.infrastructure.NotificationJpaRepository
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
+import com.sleekydz86.idolglow.user.user.domain.User
+import com.sleekydz86.idolglow.user.user.infrastructure.UserJpaRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -36,6 +40,12 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
 
     @Autowired private lateinit var eventMetaProjectionJpaRepository: EventMetaProjectionJpaRepository
 
+    @Autowired private lateinit var eventInterestService: EventInterestService
+
+    @Autowired private lateinit var notificationJpaRepository: NotificationJpaRepository
+
+    @Autowired private lateinit var userJpaRepository: UserJpaRepository
+
     @Autowired private lateinit var transactionTemplate: TransactionTemplate
 
     @Autowired private lateinit var jdbcTemplate: JdbcTemplate
@@ -46,6 +56,8 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         jdbcTemplate.update("delete from consumed_event")
         jdbcTemplate.update("delete from event_meta_projection")
         jdbcTemplate.update("delete from event_outbox")
+        jdbcTemplate.update("delete from event_interest")
+        jdbcTemplate.update("delete from notifications where type = 'EVENT_INTEREST_CHANGED'")
     }
 
     @DisplayName("T4 Kafka가 내려간 동안 바뀐 공연 N건은 outbox에 남았다가, 다시 올라오면 모두 반영되고 유실이 없다")
@@ -68,6 +80,56 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         val projected = 반영될_때까지(globalIds)
         assertEquals(globalIds.toSet(), projected.map { it.globalId }.toSet())
         assertTrue(projected.all { it.metaVersion == 1L })
+    }
+
+    @DisplayName("T5 중계가 보낸 뒤 sent_at을 기록하기 전에 멈춰 같은 이벤트가 다시 보내져도, 소비자 결과는 한 번 처리한 것과 같다")
+    @Test
+    fun resendAfterCrashIsProcessedOnce() {
+        // given
+        val user = userJpaRepository.save(User.of(email = "t5${UUID.randomUUID().toString().take(8)}@idolglow.test"))
+        val globalId = 공연_변경()
+        eventInterestService.register(user.id, globalId)
+        val scheduleEventId = 변경_기록(globalId, setOf("startDate"))
+        eventOutboxRelay.relayOnce()
+        처리될_때까지(scheduleEventId)
+        jdbcTemplate.update("update event_outbox set sent_at = null where event_id = ?", scheduleEventId)
+
+        // when
+        val resent = eventOutboxRelay.relayOnce()
+        val markerEventId = 변경_기록(globalId, setOf("translation"))
+        eventOutboxRelay.relayOnce()
+        처리될_때까지(markerEventId)
+
+        // then
+        assertEquals(1, resent)
+        assertEquals(2, 처리_건수(scheduleEventId))
+        assertEquals(3L, eventMetaProjectionJpaRepository.findById(globalId).get().metaVersion)
+        val alerts = notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(user.id)
+        assertEquals(listOf(NotificationType.EVENT_INTEREST_CHANGED), alerts.map { it.type })
+    }
+
+    private fun 변경_기록(
+        globalId: String,
+        changedFields: Set<String>,
+    ): String =
+        transactionTemplate.execute {
+            val master = requireNotNull(eventMasterJpaRepository.findByGlobalId(globalId))
+            eventMetaOutboxRecorder.record(master, EventMetaChangeType.UPDATED, changedFields).eventId
+        }!!
+
+    private fun 처리_건수(eventId: String): Int =
+        jdbcTemplate.queryForObject(
+            "select count(*) from consumed_event where event_id = ?",
+            Int::class.java,
+            eventId,
+        )!!
+
+    private fun 처리될_때까지(eventId: String) {
+        val deadline = Instant.now().plus(WAIT)
+        while (처리_건수(eventId) < CONSUMER_COUNT && Instant.now().isBefore(deadline)) {
+            Thread.sleep(POLL_MILLIS)
+        }
+        assertEquals(CONSUMER_COUNT, 처리_건수(eventId))
     }
 
     private fun 공연_변경(): String {
@@ -128,6 +190,7 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
 
     companion object {
         private const val EVENT_COUNT: Int = 5
+        private const val CONSUMER_COUNT: Int = 2
         private const val POLL_MILLIS: Long = 500
         private val WAIT: Duration = Duration.ofSeconds(60)
         private var paused: Boolean = false
