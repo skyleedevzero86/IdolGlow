@@ -3,6 +3,8 @@ package com.sleekydz86.idolglow.eventinfo.application
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
 import com.sleekydz86.idolglow.ops.application.port.OpsChangeHandler
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
@@ -12,6 +14,7 @@ class EventMasterMergeHandler(
     private val eventMasterPort: EventMasterPort,
     private val eventSourceRefPort: EventSourceRefPort,
     private val objectMapper: ObjectMapper,
+    private val eventMetaOutboxRecorder: EventMetaOutboxRecorder,
 ) : OpsChangeHandler {
     override val type: String = TYPE
 
@@ -37,6 +40,7 @@ class EventMasterMergeHandler(
         val from = loadMaster(target)
         val into = loadMaster(intoGlobalId(payload, target))
         from.mergeInto(into)
+        eventMetaOutboxRecorder.record(from, EventMetaChangeType.MERGED, setOf(EventMetaSnapshot.FIELD_STATUS))
         eventSourceRefPort.findByGlobalId(from.globalId).forEach {
             it.assignMatch(into.globalId, it.matchStatus, it.matchScore, it.matchedAt)
         }
@@ -47,7 +51,9 @@ class EventMasterMergeHandler(
         beforeSnapshot: String,
     ) {
         val snapshot = readSnapshot(beforeSnapshot, target)
-        loadMaster(target).restoreActive()
+        val master = loadMaster(target)
+        master.restoreActive()
+        eventMetaOutboxRecorder.record(master, EventMetaChangeType.RESTORED, setOf(EventMetaSnapshot.FIELD_STATUS))
         snapshot.movedRefs.forEach { key ->
             val (source, sourceId) = key.split('|', limit = 2)
             eventSourceRefPort.findBySourceAndSourceId(source, sourceId)?.let {

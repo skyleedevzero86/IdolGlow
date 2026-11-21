@@ -430,6 +430,7 @@ private fun NotificationType.categoryId(): String =
         NotificationType.REPLY_TO_MY_COMMENT,
         NotificationType.ADMIN_POST_REPORTED,
         NotificationType.ADMIN_POST_AUTO_BLINDED,
+        NotificationType.EVENT_INTEREST_CHANGED,
         -> "activity"
     }
 
@@ -453,6 +454,7 @@ private fun NotificationType.channelLabel(): String =
         NotificationType.COMMENT_ON_MY_POST,
         NotificationType.REPLY_TO_MY_COMMENT,
         -> "커뮤니티"
+        NotificationType.EVENT_INTEREST_CHANGED -> "관심 공연"
         NotificationType.ADMIN_POST_REPORTED,
         NotificationType.ADMIN_POST_AUTO_BLINDED,
         NotificationType.ADMIN_PAYMENT_COMPLETED,

@@ -1535,6 +1535,8 @@ COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE(사용 중), MER
 
 COMMENT ON COLUMN event_master.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움';
 
+COMMENT ON COLUMN event_master.meta_version IS '메타 버전. 생성·수정·병합·번역 변경마다 1 증가, 소비자가 순서 역전을 버리는 기준';
+
 COMMENT ON TABLE event_source_ref IS '공급처 공연 원본과 글로벌 식별자 매칭';
 
 COMMENT ON COLUMN event_source_ref.source IS '공급처 코드. KOPIS_PBLPRFR, SEOUL_SJW_PERFORM 등';
@@ -1756,3 +1758,45 @@ COMMENT ON COLUMN partner_call_log.called_at IS '호출 시각';
 COMMENT ON INDEX idx_event_master_updated_global IS '파트너 변경분 피드 커서 조회용';
 
 COMMENT ON INDEX idx_partner_call_log_partner_called IS '파트너별 최근 호출 조회용';
+
+COMMENT ON TABLE event_outbox IS '보낼 공연 메타 변경 이벤트. 공연을 바꾼 트랜잭션에서 같이 저장';
+
+COMMENT ON COLUMN event_outbox.event_id IS '이벤트 ID. UUID, 소비자 중복 판정 기준';
+
+COMMENT ON COLUMN event_outbox.aggregate_id IS '글로벌 공연 ID. Kafka 메시지 키';
+
+COMMENT ON COLUMN event_outbox.event_type IS '변경 종류. CREATED, UPDATED, MERGED, RESTORED, TRANSLATION_CHANGED';
+
+COMMENT ON COLUMN event_outbox.meta_version IS '이 변경 뒤의 공연 메타 버전';
+
+COMMENT ON COLUMN event_outbox.payload IS '보낼 메시지 JSON. 바뀐 필드와 공연 스냅샷 포함';
+
+COMMENT ON COLUMN event_outbox.schema_version IS '메시지 형식 버전';
+
+COMMENT ON COLUMN event_outbox.sent_at IS 'Kafka로 보낸 시각. 비어 있으면 아직 안 보냄';
+
+COMMENT ON TABLE consumed_event IS '소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
+
+COMMENT ON COLUMN consumed_event.consumer_name IS '소비자 이름. event-meta-projection, event-meta-interest-alert';
+
+COMMENT ON COLUMN consumed_event.event_id IS '처리한 이벤트 ID';
+
+COMMENT ON COLUMN consumed_event.processed_at IS '처리 시각';
+
+COMMENT ON TABLE event_meta_projection IS '검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
+
+COMMENT ON COLUMN event_meta_projection.meta_version IS '반영한 메타 버전. 이보다 낮은 이벤트는 버림';
+
+COMMENT ON COLUMN event_meta_projection.status IS '공연 상태. ACTIVE, MERGED';
+
+COMMENT ON COLUMN event_meta_projection.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID';
+
+COMMENT ON TABLE event_interest IS '사용자가 관심 등록한 공연';
+
+COMMENT ON COLUMN event_interest.user_id IS '사용자 ID';
+
+COMMENT ON COLUMN event_interest.global_id IS '관심 등록한 글로벌 공연 ID';
+
+COMMENT ON INDEX idx_event_outbox_unsent IS '안 보낸 행 순서 조회와 보낸 행 정리용';
+
+COMMENT ON INDEX idx_event_interest_global IS '공연별 관심 사용자 조회용';

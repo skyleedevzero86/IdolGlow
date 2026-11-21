@@ -9,6 +9,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventCollectStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchDecision
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.domain.EventPerformanceHasher
 import com.sleekydz86.idolglow.eventinfo.domain.EventPerformanceMatcher
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
@@ -23,6 +24,7 @@ class EventMetaTxService(
     private val eventMasterPort: EventMasterPort,
     private val eventSourceRefPort: EventSourceRefPort,
     private val eventCollectLogPort: EventCollectLogPort,
+    private val eventMetaOutboxRecorder: EventMetaOutboxRecorder,
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun upsert(item: CollectedPerformance) {
@@ -69,14 +71,23 @@ class EventMetaTxService(
             decision is EventMatchDecision.Attach -> ResolvedMatch(decision.globalId, decision.status, decision.score)
             owned != null -> keepOwned(item, owned)
             decision is EventMatchDecision.Hold -> ResolvedMatch(null, decision.status, decision.score)
-            else -> confirmed(eventMasterPort.save(EventMaster.open(item)).globalId)
+            else -> confirmed(openMaster(item).globalId)
         }
+
+    private fun openMaster(item: CollectedPerformance): EventMaster {
+        val master = eventMasterPort.save(EventMaster.open(item))
+        eventMetaOutboxRecorder.record(master, EventMetaChangeType.CREATED, emptySet())
+        return master
+    }
 
     private fun keepOwned(
         item: CollectedPerformance,
         owned: String,
     ): ResolvedMatch {
-        eventMasterPort.findByGlobalId(owned)?.refresh(item)
+        eventMasterPort.findByGlobalId(owned)?.let { master ->
+            val changed = master.refresh(item)
+            if (changed.isNotEmpty()) eventMetaOutboxRecorder.record(master, EventMetaChangeType.UPDATED, changed)
+        }
         return confirmed(owned)
     }
 

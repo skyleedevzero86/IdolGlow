@@ -1171,6 +1171,7 @@ CREATE TABLE IF NOT EXISTS event_master (
     normalized_venue varchar(255) null comment '매칭용 장소',
     status varchar(20) not null comment '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)',
     merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움',
+    meta_version bigint not null default 0 comment '메타 버전. 생성·수정·병합·번역 변경마다 1 증가, 소비자가 순서 역전을 버리는 기준',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
     constraint uk_event_master_global_id unique (global_id)
@@ -1501,3 +1502,68 @@ CREATE TABLE IF NOT EXISTS partner_call_log (
     constraint fk_partner_call_log_partner
         foreign key (partner_id) references partner_client (id)
 ) comment='파트너 호출 기록';
+
+-- =============================================================================
+-- 공연 메타 변경 이벤트 공급 (Outbox → Kafka → 소비자)
+-- -----
+-- 목적
+-- - 공연 메타가 바뀌면 같은 트랜잭션에서 outbox 행을 남기고, 중계가 Kafka 토픽 event-meta.changed 로 보낸다
+-- - 소비자: 검색·파트너용 읽기 모델(event_meta_projection), 관심 공연 알림(event_interest)
+-- 대상
+-- - 마이에스큐엘 / event_outbox, consumed_event, event_meta_projection, event_interest
+-- 주의
+-- - 키는 global_id 라서 같은 공연 이벤트는 순서대로 간다
+-- - 소비자는 consumed_event 로 같은 이벤트를 한 번만 반영하고, meta_version 이 낮은 이벤트는 버린다
+-- 연관
+-- - EventMetaOutboxRecorder, EventOutboxRelay, EventMetaProjectionService, EventInterestAlertService
+-- =============================================================================
+
+-- 보낼 공연 메타 변경. 공연을 바꾼 트랜잭션 안에서 같이 저장한다.
+CREATE TABLE IF NOT EXISTS event_outbox (
+    id bigint auto_increment primary key,
+    event_id varchar(36) not null comment '이벤트 ID. UUID, 소비자 중복 판정 기준',
+    aggregate_id varchar(36) not null comment '글로벌 공연 ID. Kafka 메시지 키',
+    event_type varchar(40) not null comment '변경 종류. CREATED, UPDATED, MERGED, RESTORED, TRANSLATION_CHANGED',
+    meta_version bigint not null comment '이 변경 뒤의 공연 메타 버전',
+    payload text not null comment '보낼 메시지 JSON. 바뀐 필드와 공연 스냅샷 포함',
+    schema_version int not null comment '메시지 형식 버전',
+    sent_at datetime(6) null comment 'Kafka로 보낸 시각. 비어 있으면 아직 안 보냄',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_outbox_event_id unique (event_id)
+) comment='보낼 공연 메타 변경 이벤트. 공연을 바꾼 트랜잭션에서 같이 저장';
+
+-- 소비자가 처리한 이벤트. 같은 이벤트를 두 번 받아도 한 번만 반영한다.
+CREATE TABLE IF NOT EXISTS consumed_event (
+    id bigint auto_increment primary key,
+    consumer_name varchar(80) not null comment '소비자 이름. event-meta-projection, event-meta-interest-alert',
+    event_id varchar(36) not null comment '처리한 이벤트 ID',
+    processed_at datetime(6) not null comment '처리 시각',
+    constraint uk_consumed_event_consumer_event unique (consumer_name, event_id)
+) comment='소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
+
+-- 검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 최신 meta_version 으로만 갱신한다.
+CREATE TABLE IF NOT EXISTS event_meta_projection (
+    global_id varchar(36) primary key comment '글로벌 공연 ID',
+    meta_version bigint not null comment '반영한 메타 버전. 이보다 낮은 이벤트는 버림',
+    status varchar(20) not null comment '공연 상태. ACTIVE, MERGED',
+    merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID',
+    title varchar(255) not null comment '대표 제목',
+    start_date date null comment '시작일',
+    end_date date null comment '종료일',
+    venue varchar(255) null comment '장소',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각'
+) comment='검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
+
+-- 사용자가 관심 등록한 공연. 일정·장소·상태가 바뀌면 알림을 보낸다.
+CREATE TABLE IF NOT EXISTS event_interest (
+    id bigint auto_increment primary key,
+    user_id bigint not null comment '사용자 ID',
+    global_id varchar(36) not null comment '관심 등록한 글로벌 공연 ID',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_interest_user_global unique (user_id, global_id),
+    constraint fk_event_interest_user foreign key (user_id) references users (id),
+    constraint fk_event_interest_master foreign key (global_id) references event_master (global_id)
+) comment='사용자가 관심 등록한 공연';

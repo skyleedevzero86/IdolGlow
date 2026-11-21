@@ -13,6 +13,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -72,7 +73,7 @@ class EventTranslationFallbackTest {
     @Test
     fun providerTranslationChangeReplacesStoredText() {
         val translations = InMemoryEventTranslationPort()
-        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort())
+        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true))
 
         tx.upsertProvider("g-1", "en", "Old title", "old synopsis")
         tx.upsertProvider("g-1", "en", "New title", "new synopsis")
@@ -96,7 +97,7 @@ class EventTranslationFallbackTest {
                 origin = EventTranslationOrigin.MANUAL,
             ),
         )
-        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort())
+        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true))
 
         tx.upsertProvider("g-1", "en", "Provider title", "provider synopsis")
         val saved = translations.findByGlobalIdAndLocale("g-1", "en")
@@ -127,7 +128,8 @@ class EventTranslationFallbackTest {
             TourEventTranslationCollector(
                 tourLocaleFestivalPort = tour,
                 eventSourceRefPort = refs,
-                eventTranslationTxService = EventTranslationTxService(translations, InMemoryEventMasterPort()),
+                eventTranslationTxService =
+                    EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true)),
             )
 
         collector.collect(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
@@ -154,7 +156,8 @@ class EventTranslationFallbackTest {
             TourEventTranslationCollector(
                 tourLocaleFestivalPort = FakeTourLocaleFestivalPort(mapOf("ja" to listOf(festival("99", "후보 공연")))),
                 eventSourceRefPort = refs,
-                eventTranslationTxService = EventTranslationTxService(translations, InMemoryEventMasterPort()),
+                eventTranslationTxService =
+                    EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true)),
             )
 
         // when

@@ -44,7 +44,16 @@ class EventMaster(
     var status: EventMasterStatus,
     @Column(name = "merged_into", length = 36)
     var mergedInto: String? = null,
+    @Column(name = "meta_version", nullable = false)
+    var metaVersion: Long = 0,
 ) : BaseEntity() {
+    fun nextMetaVersion(): Long {
+        metaVersion += 1
+        return metaVersion
+    }
+
+    fun snapshot(): EventMetaSnapshot = EventMetaSnapshot(title, startDate, endDate, venue, status.name, mergedInto)
+
     fun mergeInto(target: EventMaster) {
         require(target.globalId != globalId) { "같은 글로벌 공연끼리는 병합할 수 없습니다. globalId=$globalId" }
         check(status == EventMasterStatus.ACTIVE) { "이미 병합된 글로벌 공연입니다. globalId=$globalId" }
@@ -64,7 +73,8 @@ class EventMaster(
         mergedInto = null
     }
 
-    fun refresh(item: CollectedPerformance) {
+    fun refresh(item: CollectedPerformance): Set<String> {
+        val before = snapshot()
         val normalized = EventTitleNormalizer.normalize(item.title)
         require(normalized.isNotEmpty()) { "공연 제목을 정규화하면 비어 있습니다. title=${item.title}" }
         title = item.title.trim().take(TITLE_MAX)
@@ -73,6 +83,7 @@ class EventMaster(
         endDate = item.endDate
         venue = item.venue?.trim()?.take(TITLE_MAX)?.takeIf { it.isNotEmpty() }
         normalizedVenue = venue?.let(EventTitleNormalizer::normalize)?.takeIf { it.isNotEmpty() }
+        return before.changedFields(snapshot())
     }
 
     companion object {
