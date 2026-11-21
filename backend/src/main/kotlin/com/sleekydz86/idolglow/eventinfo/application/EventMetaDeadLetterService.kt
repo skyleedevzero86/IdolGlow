@@ -19,6 +19,7 @@ class EventMetaDeadLetterService(
     private val eventMetaDeadLetterPort: EventMetaDeadLetterPort,
     private val eventMetaProjectionService: EventMetaProjectionService,
     private val eventInterestAlertService: EventInterestAlertService,
+    private val eventSearchIndexService: EventSearchIndexService,
     private val eventMetaDeadLetterTxService: EventMetaDeadLetterTxService,
     private val objectMapper: ObjectMapper,
 ) {
@@ -79,6 +80,8 @@ class EventMetaDeadLetterService(
             throw reprocessFailed(deadLetter, e)
         } catch (e: IllegalArgumentException) {
             throw reprocessFailed(deadLetter, e)
+        } catch (e: IllegalStateException) {
+            throw reprocessFailed(deadLetter, e)
         }
 
     private fun reprocessFailed(
@@ -99,6 +102,7 @@ class EventMetaDeadLetterService(
         when (consumerName) {
             EventMetaProjectionService.CONSUMER -> eventMetaProjectionService::apply
             EventInterestAlertService.CONSUMER -> eventInterestAlertService::handle
+            EventSearchIndexService.CONSUMER -> eventSearchIndexService::handle
             else -> null
         }
 

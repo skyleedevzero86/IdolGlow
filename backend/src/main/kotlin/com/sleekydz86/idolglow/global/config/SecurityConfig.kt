@@ -145,6 +145,7 @@ class SecurityConfig(
                 "/mypage/event-info/festivals",
                 "/api/event-info/festivals",
                 "/api/event-info/sessions",
+                "/api/event-info/search",
                 "/mypage/event-info/kopis/performances",
                 "/api/event-info/kopis/performances",
                 "/mypage/event-info/kopis/festivals",

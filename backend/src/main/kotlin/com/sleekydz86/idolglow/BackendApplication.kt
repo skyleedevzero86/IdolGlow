@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow
 
 import com.sleekydz86.idolglow.eventinfo.application.EventMetaStreamProperties
+import com.sleekydz86.idolglow.eventinfo.application.EventSearchProperties
 import com.sleekydz86.idolglow.global.config.AppCalendarProperties
 import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.global.config.AppPublicUrlProperties
@@ -57,6 +58,7 @@ import org.springframework.cache.annotation.EnableCaching
     KoreaEximExchangeProperties::class,
     KopisApiProperties::class,
     EventMetaStreamProperties::class,
+    EventSearchProperties::class,
     NaverDirectionsProperties::class,
     ExchangeAirportHubProperties::class,
     SubwayProperties::class,
