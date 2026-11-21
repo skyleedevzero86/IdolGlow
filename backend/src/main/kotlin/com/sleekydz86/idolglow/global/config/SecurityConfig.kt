@@ -144,6 +144,7 @@ class SecurityConfig(
             arrayOf(
                 "/mypage/event-info/festivals",
                 "/api/event-info/festivals",
+                "/api/event-info/sessions",
                 "/mypage/event-info/kopis/performances",
                 "/api/event-info/kopis/performances",
                 "/mypage/event-info/kopis/festivals",

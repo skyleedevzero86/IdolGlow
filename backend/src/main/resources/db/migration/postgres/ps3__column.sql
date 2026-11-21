@@ -1086,3 +1086,13 @@ RESET lock_timeout;
 
 -- 공연 하나에 붙은 외부 번호를 빨리 찾는다
 CREATE INDEX IF NOT EXISTS idx_event_external_id_global ON event_external_id (global_id);
+
+-- 공연 회차를 만들려고 공급처 원본에 공연 시간 안내 문장과 마지막으로 읽은 상태를 적는다
+ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS schedule_guidance varchar(500);
+
+ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS schedule_hash varchar(64);
+
+ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS session_horizon date;
+
+-- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
+CREATE INDEX IF NOT EXISTS idx_event_session_starts ON event_session (starts_at);

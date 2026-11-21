@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.partner.adapter.web
 
 import com.sleekydz86.idolglow.eventinfo.application.EventExternalIdService
+import com.sleekydz86.idolglow.eventinfo.application.EventSessionQueryService
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.global.infrastructure.exception.GlobalExceptionAdvice
@@ -38,6 +39,7 @@ class PartnerEventControllerTest {
         mockk { every { findChangedAfter(any(), any(), any(), any()) } returns emptyList() }
     private val translationPort: EventTranslationPort = mockk { every { findByGlobalIdIn(any()) } returns emptyList() }
     private val externalIdService: EventExternalIdService = mockk { every { idsOf(any()) } returns emptyMap() }
+    private val sessionQueryService: EventSessionQueryService = mockk()
 
     private val mockMvc: MockMvc =
         MockMvcBuilders
@@ -48,6 +50,7 @@ class PartnerEventControllerTest {
                         masterPort,
                         translationPort,
                         externalIdService,
+                        sessionQueryService,
                     ),
                 ),
             ).setControllerAdvice(GlobalExceptionAdvice())

@@ -1608,3 +1608,31 @@ CREATE TABLE IF NOT EXISTS event_external_id (
     constraint uk_event_external_id_scheme_value unique (scheme, external_id),
     constraint fk_event_external_id_master foreign key (global_id) references event_master (global_id)
 ) comment='대표 공연에 관리자가 붙인 국제 표준 번호';
+
+-- =============================================================================
+-- 공연 회차: 대표 공연 아래에 날짜와 시각 단위 회차를 둔다
+-- -----
+-- 목적
+-- - 지금까지 공연은 시작일과 종료일만 있었다. 같은 공연이라도 12월 2일 저녁 8시 공연과 12월 3일 오후 3시 공연은 다른 회차다
+-- - KOPIS 상세 정보의 공연 시간 안내 문장을 읽어, 오늘부터 90일 안의 회차를 한 줄씩 적는다
+-- - 대표 공연, 공급처 원본, 회차 순서로 묶인다. 회차는 공급처 원본에 매달리므로 공연을 합치거나 되돌려도 회차를 따로 옮길 필요가 없다
+-- 대상
+-- - 마이에스큐엘 / event_session 표, event_source_ref 표의 칸 3개
+-- 주의
+-- - 회차가 없어지면 지우지 않고 취소로 바꾼다. 파트너가 취소된 것을 알 수 있게 하려는 것이다
+-- - 같은 원본의 같은 시각 회차는 한 줄만 있을 수 있다
+-- - 지난 회차는 건드리지 않는다
+-- 연관
+-- - EventSession, EventSchedule, EventSessionTxService, EventSessionSyncService, EventSessionQueryService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS event_session (
+    id bigint auto_increment primary key,
+    source_ref_id bigint not null comment '회차가 매달린 공급처 원본',
+    starts_at timestamp(6) not null comment '회차 시작 시각. 세계 표준시로 저장한다',
+    status varchar(20) not null default 'SCHEDULED' comment '회차 상태. SCHEDULED는 예정, CANCELLED는 취소',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_event_session_ref_starts unique (source_ref_id, starts_at),
+    constraint fk_event_session_source_ref foreign key (source_ref_id) references event_source_ref (id),
+    constraint ck_event_session_status check (status in ('SCHEDULED', 'CANCELLED'))
+) comment='대표 공연 아래 날짜와 시각 단위 회차';

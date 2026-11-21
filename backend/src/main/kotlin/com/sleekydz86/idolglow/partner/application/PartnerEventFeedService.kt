@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.partner.application
 
 import com.sleekydz86.idolglow.eventinfo.application.EventExternalIdService
+import com.sleekydz86.idolglow.eventinfo.application.EventSessionQueryService
 import com.sleekydz86.idolglow.eventinfo.application.ExternalIdView
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
@@ -14,11 +15,13 @@ import com.sleekydz86.idolglow.partner.application.dto.PartnerEventItem
 import com.sleekydz86.idolglow.partner.application.dto.PartnerEventPage
 import com.sleekydz86.idolglow.partner.application.dto.PartnerExternalId
 import com.sleekydz86.idolglow.partner.application.dto.PartnerFeedQuery
+import com.sleekydz86.idolglow.partner.application.dto.PartnerSession
 import com.sleekydz86.idolglow.partner.domain.PartnerClient
 import com.sleekydz86.idolglow.partner.domain.PartnerFeedCursor
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -28,6 +31,7 @@ class PartnerEventFeedService(
     private val eventMasterPort: EventMasterPort,
     private val eventTranslationPort: EventTranslationPort,
     private val eventExternalIdService: EventExternalIdService,
+    private val eventSessionQueryService: EventSessionQueryService,
 ) {
     internal var clock: Clock = Clock.systemDefaultZone()
 
@@ -46,6 +50,23 @@ class PartnerEventFeedService(
     ): PartnerEventItem {
         val client = partnerAccessService.authorize(rawKey, EVENT_PATH)
         return served(client, EVENT_PATH, { 1 }) { single(client, globalId, lang) }
+    }
+
+    fun sessions(
+        rawKey: String?,
+        globalId: String,
+        from: LocalDate?,
+        to: LocalDate?,
+    ): List<PartnerSession> {
+        val client = partnerAccessService.authorize(rawKey, SESSIONS_PATH)
+        return served(client, SESSIONS_PATH, { it.size }) {
+            val master =
+                eventMasterPort.findByGlobalId(globalId.trim())
+                    ?: throw CustomException(PartnerExceptionType.EVENT_NOT_FOUND)
+            eventSessionQueryService
+                .sessions(master.globalId, from, to)
+                .map { PartnerSession(it.startsAt, it.status.name) }
+        }
     }
 
     fun eventByExternalId(
@@ -159,6 +180,7 @@ class PartnerEventFeedService(
         const val FEED_PATH: String = "/partner/v1/events"
         const val EVENT_PATH: String = "/partner/v1/events/{globalId}"
         const val LOOKUP_PATH: String = "/partner/v1/events/by-external-id"
+        const val SESSIONS_PATH: String = "/partner/v1/events/{globalId}/sessions"
         const val MAX_SIZE: Int = 200
         val SAFETY_LAG: Duration = Duration.ofSeconds(5)
         private const val OK: Int = 200

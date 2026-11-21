@@ -24,6 +24,11 @@ data class PartnerEventItem(
     val externalIds: List<PartnerExternalId>,
 )
 
+data class PartnerSession(
+    val startsAt: OffsetDateTime,
+    val status: String,
+)
+
 data class PartnerExternalId(
     val scheme: String,
     val id: String,

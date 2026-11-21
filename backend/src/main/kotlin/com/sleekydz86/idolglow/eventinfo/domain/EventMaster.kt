@@ -72,6 +72,10 @@ class EventMaster(
         updatedAt = changedAt
     }
 
+    fun markSessionsChanged(changedAt: LocalDateTime) {
+        updatedAt = changedAt
+    }
+
     fun restoreActive() {
         status = EventMasterStatus.ACTIVE
         mergedInto = null

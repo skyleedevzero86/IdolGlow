@@ -1440,3 +1440,62 @@ SET SESSION lock_wait_timeout = DEFAULT;
 -- 공연 하나에 붙은 외부 번호를 빨리 찾는다
 CREATE INDEX idx_event_external_id_global
     ON event_external_id (global_id);
+
+-- 공연 회차를 만들려고 공급처 원본에 공연 시간 안내 문장과 마지막으로 읽은 상태를 적는다
+SET @add_schedule_guidance := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN schedule_guidance VARCHAR(500) NULL COMMENT ''KOPIS 상세의 공연 시간 안내 문장''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'schedule_guidance'
+);
+
+PREPARE schedule_guidance_stmt FROM @add_schedule_guidance;
+
+EXECUTE schedule_guidance_stmt;
+
+DEALLOCATE PREPARE schedule_guidance_stmt;
+
+SET @add_schedule_hash := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN schedule_hash VARCHAR(64) NULL COMMENT ''공연 시간 안내를 읽을 때의 원본 내용 지문. 원본이 바뀌면 다시 읽는다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'schedule_hash'
+);
+
+PREPARE schedule_hash_stmt FROM @add_schedule_hash;
+
+EXECUTE schedule_hash_stmt;
+
+DEALLOCATE PREPARE schedule_hash_stmt;
+
+SET @add_session_horizon := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN session_horizon DATE NULL COMMENT ''회차를 어느 날짜까지 만들어 두었는지''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'session_horizon'
+);
+
+PREPARE session_horizon_stmt FROM @add_session_horizon;
+
+EXECUTE session_horizon_stmt;
+
+DEALLOCATE PREPARE session_horizon_stmt;
+
+-- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
+CREATE INDEX idx_event_session_starts
+    ON event_session (starts_at);

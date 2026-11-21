@@ -7,6 +7,8 @@ import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
+import com.sleekydz86.idolglow.eventinfo.domain.EventSession
+import com.sleekydz86.idolglow.eventinfo.domain.EventSessionStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
@@ -14,6 +16,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.ExternalIdScheme
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventCollectLogJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventExternalIdJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
+import com.sleekydz86.idolglow.eventinfo.infrastructure.EventSessionJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventSourceRefJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventTranslationJpaRepository
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
@@ -40,6 +43,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @DisplayName("파트너 변경분 피드와 글로벌 공연 병합 (Postgres)")
 class PartnerEventFeedPostgresTest : PostgresIntegrationTest() {
@@ -73,12 +78,15 @@ class PartnerEventFeedPostgresTest : PostgresIntegrationTest() {
 
     @Autowired private lateinit var eventExternalIdJpaRepository: EventExternalIdJpaRepository
 
+    @Autowired private lateinit var eventSessionJpaRepository: EventSessionJpaRepository
+
     @BeforeEach
     fun clean() {
         partnerCallLogJpaRepository.deleteAllInBatch()
         partnerClientJpaRepository.deleteAllInBatch()
         eventTranslationJpaRepository.deleteAllInBatch()
         eventExternalIdJpaRepository.deleteAllInBatch()
+        eventSessionJpaRepository.deleteAllInBatch()
         eventSourceRefJpaRepository.deleteAllInBatch()
         eventCollectLogJpaRepository.deleteAllInBatch()
         eventMasterJpaRepository.deleteAllInBatch()
@@ -311,6 +319,39 @@ class PartnerEventFeedPostgresTest : PostgresIntegrationTest() {
         // then
         assertEquals(emptyList<PartnerExternalId>(), first.items.single().externalIds)
         assertEquals(listOf(PartnerExternalId("WIKIDATA", "Q999")), next.items.single().externalIds)
+    }
+
+    @DisplayName("파트너가 대표 공연의 회차를 기간으로 받고, 취소된 회차도 상태와 함께 받으며, 없는 공연은 404")
+    @Test
+    fun partnerReceivesSessions() {
+        // given
+        공연("gid-a", BASE)
+        원본("KOPIS_PBLPRFR", "PF-A", "gid-a")
+        val refId = checkNotNull(eventSourceRefJpaRepository.findBySourceAndSourceId("KOPIS_PBLPRFR", "PF-A")).id
+        val first = OffsetDateTime.of(2026, 12, 5, 19, 0, 0, 0, ZoneOffset.ofHours(9))
+        eventSessionJpaRepository.saveAll(
+            listOf(
+                EventSession(sourceRefId = refId, startsAt = first),
+                EventSession(sourceRefId = refId, startsAt = first.plusDays(7), status = EventSessionStatus.CANCELLED),
+                EventSession(sourceRefId = refId, startsAt = first.plusDays(60)),
+            ),
+        )
+        val key = 파트너_키()
+
+        // when
+        val december =
+            partnerEventFeedService.sessions(key, "gid-a", LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 31))
+        val missing =
+            assertThrows<CustomException> {
+                partnerEventFeedService.sessions(key, "gid-none", LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 31))
+            }
+
+        // then
+        assertEquals(
+            listOf("2026-12-05T19:00+09:00" to "SCHEDULED", "2026-12-12T19:00+09:00" to "CANCELLED"),
+            december.map { it.startsAt.toString() to it.status },
+        )
+        assertEquals(PartnerExceptionType.EVENT_NOT_FOUND, missing.getExceptionType())
     }
 
     private fun 후보_원본(

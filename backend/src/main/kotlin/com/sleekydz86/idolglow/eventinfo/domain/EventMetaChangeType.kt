@@ -6,4 +6,5 @@ enum class EventMetaChangeType {
     MERGED,
     RESTORED,
     TRANSLATION_CHANGED,
+    SESSIONS_CHANGED,
 }

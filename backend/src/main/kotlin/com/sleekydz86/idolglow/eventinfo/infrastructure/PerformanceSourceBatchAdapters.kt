@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
+import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceScheduleSourcePort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceSourceBatchPort
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedBatch
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedPerformance
@@ -37,6 +38,15 @@ class KopisPerformanceBatchAdapter(
         private const val MAX_PAGES: Int = 30
         private const val PAGE_SIZE: Int = 100
     }
+}
+
+@Component
+class KopisScheduleAdapter(
+    private val kopisPerformanceApiClient: KopisPerformanceApiClient,
+) : PerformanceScheduleSourcePort {
+    override val source: String = "KOPIS_PBLPRFR"
+
+    override fun guidance(sourceId: String): String = kopisPerformanceApiClient.scheduleGuidance(sourceId)
 }
 
 @Component

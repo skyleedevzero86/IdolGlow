@@ -1830,3 +1830,19 @@ COMMENT ON COLUMN event_external_id.scheme IS '번호 체계. 지금은 WIKIDATA
 COMMENT ON COLUMN event_external_id.external_id IS '그 체계에서 쓰는 번호. 위키데이터는 Q로 시작한다';
 
 COMMENT ON INDEX idx_event_external_id_global IS '공연 하나에 붙은 외부 번호를 찾을 때 쓴다';
+
+COMMENT ON TABLE event_session IS '대표 공연 아래 날짜와 시각 단위 회차';
+
+COMMENT ON COLUMN event_session.source_ref_id IS '회차가 매달린 공급처 원본';
+
+COMMENT ON COLUMN event_session.starts_at IS '회차 시작 시각. 어느 나라 시간인지까지 함께 저장한다';
+
+COMMENT ON COLUMN event_session.status IS '회차 상태. SCHEDULED는 예정, CANCELLED는 취소';
+
+COMMENT ON COLUMN event_source_ref.schedule_guidance IS 'KOPIS 상세의 공연 시간 안내 문장';
+
+COMMENT ON COLUMN event_source_ref.schedule_hash IS '공연 시간 안내를 읽을 때의 원본 내용 지문. 원본이 바뀌면 다시 읽는다';
+
+COMMENT ON COLUMN event_source_ref.session_horizon IS '회차를 어느 날짜까지 만들어 두었는지';
+
+COMMENT ON INDEX idx_event_session_starts IS '회차를 날짜 순서로 찾을 때 쓴다';
