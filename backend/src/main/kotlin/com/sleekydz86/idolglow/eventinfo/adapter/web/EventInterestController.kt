@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.adapter.web
 
 import com.sleekydz86.idolglow.eventinfo.application.EventInterestService
+import com.sleekydz86.idolglow.eventinfo.application.EventInterestStatus
 import com.sleekydz86.idolglow.eventinfo.application.EventInterestView
 import com.sleekydz86.idolglow.global.adapter.resolver.LoginUser
 import io.swagger.v3.oas.annotations.Operation
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "공연 관심 등록", description = "관심 등록한 공연의 일정·장소·상태가 바뀌면 알림을 받는다")
@@ -37,6 +39,17 @@ class EventInterestController(
         eventInterestService.unregister(userId, globalId)
         return ResponseEntity.noContent().build()
     }
+
+    @Operation(
+        summary = "공연 상세의 관심 등록 상태",
+        description = "공급처와 원본 ID로 대표 공연을 찾는다. 대표 공연에 확정 연결되지 않았으면 globalId가 비어 있다",
+    )
+    @GetMapping("/status")
+    fun status(
+        @LoginUser userId: Long,
+        @RequestParam source: String,
+        @RequestParam sourceId: String,
+    ): ResponseEntity<EventInterestStatus> = ResponseEntity.ok(eventInterestService.status(userId, source, sourceId))
 
     @Operation(summary = "내 관심 공연 목록")
     @GetMapping

@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventInterestPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventInterest
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 class EventInterestService(
     private val eventInterestPort: EventInterestPort,
     private val eventMasterPort: EventMasterPort,
+    private val eventSourceRefPort: EventSourceRefPort,
 ) {
     @Transactional
     fun register(
@@ -35,6 +37,18 @@ class EventInterestService(
     }
 
     @Transactional(readOnly = true)
+    fun status(
+        userId: Long,
+        source: String,
+        sourceId: String,
+    ): EventInterestStatus {
+        val globalId =
+            eventSourceRefPort.findBySourceAndSourceId(source.trim(), sourceId.trim())?.confirmedGlobalId()
+                ?: return EventInterestStatus(globalId = null, interested = false)
+        return EventInterestStatus(globalId, eventInterestPort.find(userId, globalId) != null)
+    }
+
+    @Transactional(readOnly = true)
     fun list(userId: Long): List<EventInterestView> =
         eventInterestPort.findByUserId(userId).map { interest ->
             EventInterestView(interest.globalId, eventMasterPort.findByGlobalId(interest.globalId)?.title.orEmpty())
@@ -44,4 +58,9 @@ class EventInterestService(
 data class EventInterestView(
     val globalId: String,
     val title: String,
+)
+
+data class EventInterestStatus(
+    val globalId: String?,
+    val interested: Boolean,
 )
