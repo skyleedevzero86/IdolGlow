@@ -1582,3 +1582,29 @@ CREATE TABLE IF NOT EXISTS event_meta_dead_letter (
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
     constraint uk_event_meta_dead_letter_consumer_event unique (consumer_name, event_id)
 ) comment='Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';
+
+-- =============================================================================
+-- 공연 외부 ID: 국제 표준 ID 붙이기
+-- -----
+-- 목적
+-- - 영화에 TMDB, IMDB 번호가 있듯이 공연에도 세계에서 함께 쓰는 번호가 있다. 위키데이터 번호가 그 예다
+-- - 대표 공연에 이런 국제 표준 번호를 붙여 두면, 파트너가 자기가 아는 번호로 우리 공연을 찾을 수 있다
+-- - KOPIS 같은 공급처 번호는 이미 공급처 원본 표에 있으므로 여기에 다시 적지 않는다. 이 표에는 관리자가 직접 붙이는 번호만 적는다
+-- 대상
+-- - 마이에스큐엘 / event_external_id 표
+-- 주의
+-- - 같은 체계의 같은 번호는 공연 하나에만 붙을 수 있다
+-- - 공연을 합치면 이 번호도 남는 공연으로 옮기고, 합친 것을 되돌리면 원래 공연으로 돌려놓는다
+-- 연관
+-- - EventExternalId, EventExternalIdService, EventMasterMergeHandler, AdminEventExternalIdController
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS event_external_id (
+    id bigint auto_increment primary key,
+    global_id varchar(36) not null comment '번호를 붙인 대표 공연',
+    scheme varchar(20) not null comment '번호 체계. 지금은 WIKIDATA만 직접 붙인다',
+    external_id varchar(80) not null comment '그 체계에서 쓰는 번호. 위키데이터는 Q로 시작한다',
+    created_at timestamp not null default current_timestamp comment '붙인 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막으로 바뀐 시각',
+    constraint uk_event_external_id_scheme_value unique (scheme, external_id),
+    constraint fk_event_external_id_master foreign key (global_id) references event_master (global_id)
+) comment='대표 공연에 관리자가 붙인 국제 표준 번호';

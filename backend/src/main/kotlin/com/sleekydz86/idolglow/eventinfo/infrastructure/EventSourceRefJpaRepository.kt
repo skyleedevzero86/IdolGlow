@@ -19,6 +19,8 @@ interface EventSourceRefJpaRepository : JpaRepository<EventSourceRef, Long> {
 
     fun findByGlobalId(globalId: String): List<EventSourceRef>
 
+    fun findByGlobalIdIn(globalIds: Collection<String>): List<EventSourceRef>
+
     fun countByMatchStatus(matchStatus: EventMatchStatus): Long
 
     fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef>

@@ -20,6 +20,8 @@ interface EventSourceRefPort {
 
     fun findByGlobalId(globalId: String): List<EventSourceRef>
 
+    fun findByGlobalIdIn(globalIds: Collection<String>): List<EventSourceRef>
+
     fun countByMatchStatus(status: EventMatchStatus): Long
 
     fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef>

@@ -21,6 +21,12 @@ data class PartnerEventItem(
     val endDate: LocalDate?,
     val venue: String?,
     val updatedAt: OffsetDateTime?,
+    val externalIds: List<PartnerExternalId>,
+)
+
+data class PartnerExternalId(
+    val scheme: String,
+    val id: String,
 )
 
 data class PartnerEventPage(

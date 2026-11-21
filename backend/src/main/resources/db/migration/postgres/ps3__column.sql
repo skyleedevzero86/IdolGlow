@@ -1083,3 +1083,6 @@ ALTER TABLE event_collect_log ADD COLUMN IF NOT EXISTS collected_at_tz timestamp
 
 RESET lock_timeout;
 -- 무중단 전환 1단계 끝
+
+-- 공연 하나에 붙은 외부 번호를 빨리 찾는다
+CREATE INDEX IF NOT EXISTS idx_event_external_id_global ON event_external_id (global_id);

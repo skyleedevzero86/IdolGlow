@@ -1436,3 +1436,7 @@ DEALLOCATE PREPARE collected_at_tz_stmt;
 
 SET SESSION lock_wait_timeout = DEFAULT;
 -- 무중단 전환 1단계 끝
+
+-- 공연 하나에 붙은 외부 번호를 빨리 찾는다
+CREATE INDEX idx_event_external_id_global
+    ON event_external_id (global_id);

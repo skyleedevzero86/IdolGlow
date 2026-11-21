@@ -44,6 +44,18 @@ class PartnerEventController(
         @Parameter(description = "언어. 계약하지 않은 언어는 400") @RequestParam(required = false) lang: String?,
     ): PartnerEventPage = partnerEventFeedService.feed(key, PartnerFeedQuery(updatedSince, cursor, size, lang))
 
+    @Operation(
+        summary = "외부 ID로 공연 찾기",
+        description = "KOPIS·KTO·SJW·CULTURE는 공급처 원본 ID, WIKIDATA는 Q로 시작하는 위키데이터 ID. 모르는 체계는 400, 없으면 404",
+    )
+    @GetMapping("/events/by-external-id")
+    fun eventByExternalId(
+        @Parameter(description = "파트너 키") @RequestHeader(name = KEY_HEADER, required = false) key: String?,
+        @Parameter(description = "외부 ID 체계. KOPIS, KTO, SJW, CULTURE, WIKIDATA") @RequestParam scheme: String,
+        @Parameter(description = "외부 ID. 예: PF123456, Q12345") @RequestParam id: String,
+        @RequestParam(required = false) lang: String?,
+    ): PartnerEventItem = partnerEventFeedService.eventByExternalId(key, scheme, id, lang)
+
     @Operation(summary = "공연 한 건 조회", description = "병합된 공연은 status=MERGED와 이어받은 mergedInto를 준다")
     @GetMapping("/events/{globalId}")
     fun event(

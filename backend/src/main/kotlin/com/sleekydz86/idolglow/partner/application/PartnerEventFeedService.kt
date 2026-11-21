@@ -1,14 +1,18 @@
 package com.sleekydz86.idolglow.partner.application
 
+import com.sleekydz86.idolglow.eventinfo.application.EventExternalIdService
+import com.sleekydz86.idolglow.eventinfo.application.ExternalIdView
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
+import com.sleekydz86.idolglow.eventinfo.domain.ExternalIdScheme
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.partner.PartnerExceptionType
 import com.sleekydz86.idolglow.partner.application.dto.PartnerEventItem
 import com.sleekydz86.idolglow.partner.application.dto.PartnerEventPage
+import com.sleekydz86.idolglow.partner.application.dto.PartnerExternalId
 import com.sleekydz86.idolglow.partner.application.dto.PartnerFeedQuery
 import com.sleekydz86.idolglow.partner.domain.PartnerClient
 import com.sleekydz86.idolglow.partner.domain.PartnerFeedCursor
@@ -23,6 +27,7 @@ class PartnerEventFeedService(
     private val partnerAccessService: PartnerAccessService,
     private val eventMasterPort: EventMasterPort,
     private val eventTranslationPort: EventTranslationPort,
+    private val eventExternalIdService: EventExternalIdService,
 ) {
     internal var clock: Clock = Clock.systemDefaultZone()
 
@@ -40,13 +45,36 @@ class PartnerEventFeedService(
         lang: String?,
     ): PartnerEventItem {
         val client = partnerAccessService.authorize(rawKey, EVENT_PATH)
-        return served(client, EVENT_PATH, { 1 }) {
-            val locale = servedLocale(client, lang)
-            val master =
-                eventMasterPort.findByGlobalId(globalId.trim())
+        return served(client, EVENT_PATH, { 1 }) { single(client, globalId, lang) }
+    }
+
+    fun eventByExternalId(
+        rawKey: String?,
+        scheme: String,
+        externalId: String,
+        lang: String?,
+    ): PartnerEventItem {
+        val client = partnerAccessService.authorize(rawKey, LOOKUP_PATH)
+        return served(client, LOOKUP_PATH, { 1 }) {
+            val globalId =
+                eventExternalIdService.resolve(ExternalIdScheme.parse(scheme), externalId)
                     ?: throw CustomException(PartnerExceptionType.EVENT_NOT_FOUND)
-            item(master, client.fallbackOrder(locale), eventTranslationPort.findByGlobalId(master.globalId))
+            single(client, globalId, lang)
         }
+    }
+
+    private fun single(
+        client: PartnerClient,
+        globalId: String,
+        lang: String?,
+    ): PartnerEventItem {
+        val locale = servedLocale(client, lang)
+        val master =
+            eventMasterPort.findByGlobalId(globalId.trim())
+                ?: throw CustomException(PartnerExceptionType.EVENT_NOT_FOUND)
+        val externalIds = eventExternalIdService.idsOf(listOf(master.globalId))[master.globalId].orEmpty()
+        val translations = eventTranslationPort.findByGlobalId(master.globalId)
+        return item(master, client.fallbackOrder(locale), translations, externalIds)
     }
 
     private fun page(
@@ -61,10 +89,15 @@ class PartnerEventFeedService(
         val until = LocalDateTime.now(clock).minus(SAFETY_LAG)
         val rows = eventMasterPort.findChangedAfter(start.updatedAt, start.globalId, until, size + 1)
         val pageRows = rows.take(size)
-        val translations = eventTranslationPort.findByGlobalIdIn(pageRows.map { it.globalId }).groupBy { it.globalId }
+        val globalIds = pageRows.map { it.globalId }
+        val translations = eventTranslationPort.findByGlobalIdIn(globalIds).groupBy { it.globalId }
+        val externalIds = eventExternalIdService.idsOf(globalIds)
         val last = pageRows.lastOrNull()?.let { PartnerFeedCursor(checkNotNull(it.updatedAt), it.globalId) } ?: start
         return PartnerEventPage(
-            items = pageRows.map { item(it, order, translations[it.globalId].orEmpty()) },
+            items =
+                pageRows.map {
+                    item(it, order, translations[it.globalId].orEmpty(), externalIds[it.globalId].orEmpty())
+                },
             nextCursor = last.takeIf { it.globalId.isNotEmpty() }?.encode() ?: query.cursor,
             hasMore = rows.size > size,
         )
@@ -83,6 +116,7 @@ class PartnerEventFeedService(
         master: EventMaster,
         order: List<String>,
         translations: List<EventTranslation>,
+        externalIds: List<ExternalIdView>,
     ): PartnerEventItem {
         val visible = translations.filter { it.origin.visible }
         val picked = order.firstNotNullOfOrNull { locale -> visible.find { it.locale == locale } }
@@ -97,6 +131,7 @@ class PartnerEventFeedService(
             endDate = master.endDate,
             venue = master.venue,
             updatedAt = master.updatedAt?.atZone(ZoneId.systemDefault())?.toOffsetDateTime(),
+            externalIds = externalIds.map { PartnerExternalId(it.scheme, it.id) },
         )
     }
 
@@ -123,6 +158,7 @@ class PartnerEventFeedService(
     companion object {
         const val FEED_PATH: String = "/partner/v1/events"
         const val EVENT_PATH: String = "/partner/v1/events/{globalId}"
+        const val LOOKUP_PATH: String = "/partner/v1/events/by-external-id"
         const val MAX_SIZE: Int = 200
         val SAFETY_LAG: Duration = Duration.ofSeconds(5)
         private const val OK: Int = 200
