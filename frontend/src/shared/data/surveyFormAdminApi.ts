@@ -13,6 +13,8 @@ export function visibleChoiceLabel(option: string): string {
   return index > 0 ? option.slice(0, index) : option;
 }
 
+export type SurveyRecommendationSignal = 'CONCEPT' | 'IDOL' | 'PLACE' | 'TAG';
+
 export type SurveyFormStatus = 'PLANNED' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
 export type SurveyFormPrimaryCategory =
   | 'ALL'
@@ -52,6 +54,7 @@ export interface SurveyFormQuestionResponse {
   readonly type: SurveyQuestionType;
   readonly required: boolean;
   readonly options: readonly string[];
+  readonly recommendationSignal?: SurveyRecommendationSignal | null;
 }
 
 export interface SurveyFormResponse {
@@ -113,6 +116,7 @@ export interface SurveyFormQuestionInput {
   readonly type: SurveyQuestionType;
   readonly required: boolean;
   readonly options: readonly string[];
+  readonly recommendationSignal: SurveyRecommendationSignal | null;
 }
 
 export interface UpsertSurveyFormInput {

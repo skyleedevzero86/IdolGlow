@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '../../auth/authConfig';
+import { isGlowRemoteApiEnabled } from './glowRemoteApi';
 
 export type GlowTodayPhoto = {
   id: number;
@@ -178,6 +179,8 @@ async function fetchGlowPage<T>(
   const query = new URLSearchParams({ page: String(params.page), size: String(params.size) });
 
   try {
+
+    if (!isGlowRemoteApiEnabled) throw new Error('GLOW remote API disabled');
     const response = await fetch(`${getApiBaseUrl()}${path}?${query.toString()}`, {
       cache: 'no-store',
       credentials: 'include',

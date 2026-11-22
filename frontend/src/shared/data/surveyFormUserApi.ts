@@ -1,6 +1,9 @@
 import { getApiBaseUrl } from '../../auth/authConfig';
 import { acceptLanguageHeader } from '../../ui/i18n/uiLangStorage';
-import { sanitizeProductRecommendationItem, type ProductRecommendationItem } from './productRecommendationApi';
+import {
+  sanitizePersonalizedRecommendationList,
+  type PersonalizedRecommendationItem,
+} from './productRecommendationApi';
 import type { SurveyFormResponse, SurveyQuestionType } from './surveyFormAdminApi';
 
 export type { SurveyFormResponse, SurveyQuestionType };
@@ -40,14 +43,67 @@ export interface SurveyRecommendedAttractionResponse {
   readonly reason: string;
 }
 
+export type SurveyUsedSignalType = 'CONCEPT' | 'IDOL' | 'PLACE' | 'TAG' | 'BEHAVIOR_TAG' | 'VISIT_PERIOD';
+export type SurveyUsedSignalSource = 'FORM' | 'USER_SURVEY' | 'ACTIVITY';
+
+export interface SurveyUsedSignal {
+  readonly type: SurveyUsedSignalType;
+  readonly source: SurveyUsedSignalSource;
+  readonly values: readonly string[];
+}
+
 export interface SurveyRecommendationResponse {
   readonly submissionId: number;
   readonly llmEnhanced: boolean;
+  readonly llmPending: boolean;
   readonly title: string;
   readonly subtitle: string;
   readonly narrative: string;
   readonly attractions: readonly SurveyRecommendedAttractionResponse[];
-  readonly recommendedProducts: readonly ProductRecommendationItem[];
+  readonly recommendedProducts: readonly PersonalizedRecommendationItem[];
+  readonly usedSignals: readonly SurveyUsedSignal[];
+}
+
+const USED_SIGNAL_TYPES: ReadonlySet<string> = new Set<SurveyUsedSignalType>([
+  'CONCEPT',
+  'IDOL',
+  'PLACE',
+  'TAG',
+  'BEHAVIOR_TAG',
+  'VISIT_PERIOD',
+]);
+const USED_SIGNAL_SOURCES: ReadonlySet<string> = new Set<SurveyUsedSignalSource>(['FORM', 'USER_SURVEY', 'ACTIVITY']);
+
+function sanitizeUsedSignals(value: unknown): SurveyUsedSignal[] {
+  if (!Array.isArray(value)) return [];
+  const signals: SurveyUsedSignal[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const { type, source, values } = item as { type?: unknown; source?: unknown; values?: unknown };
+    if (typeof type !== 'string' || !USED_SIGNAL_TYPES.has(type)) continue;
+    if (typeof source !== 'string' || !USED_SIGNAL_SOURCES.has(source)) continue;
+    const cleaned = Array.isArray(values)
+      ? values.filter((v): v is string => typeof v === 'string' && v.trim().length > 0).map(v => v.trim())
+      : [];
+    if (cleaned.length === 0) continue;
+    signals.push({ type: type as SurveyUsedSignalType, source: source as SurveyUsedSignalSource, values: cleaned });
+  }
+  return signals;
+}
+
+function sanitizeSurveyRecommendation(raw: unknown): SurveyRecommendationResponse {
+  const body = (raw ?? {}) as Partial<Record<keyof SurveyRecommendationResponse, unknown>>;
+  return {
+    submissionId: typeof body.submissionId === 'number' ? body.submissionId : 0,
+    llmEnhanced: body.llmEnhanced === true,
+    llmPending: body.llmPending === true,
+    title: typeof body.title === 'string' ? body.title : '',
+    subtitle: typeof body.subtitle === 'string' ? body.subtitle : '',
+    narrative: typeof body.narrative === 'string' ? body.narrative : '',
+    attractions: Array.isArray(body.attractions) ? (body.attractions as SurveyRecommendedAttractionResponse[]) : [],
+    recommendedProducts: sanitizePersonalizedRecommendationList(body.recommendedProducts),
+    usedSignals: sanitizeUsedSignals(body.usedSignals),
+  };
 }
 
 interface ErrorBody {
@@ -156,9 +212,26 @@ export async function generateSurveyRecommendation(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
-  const body = (await response.json()) as SurveyRecommendationResponse;
-  return {
-    ...body,
-    recommendedProducts: body.recommendedProducts.map(sanitizeProductRecommendationItem),
-  };
+  return sanitizeSurveyRecommendation(await response.json());
+}
+
+export async function fetchMyLatestSurveyRecommendation(
+  accessToken: string,
+  useLlm: boolean,
+): Promise<SurveyRecommendationResponse | null> {
+  const query = new URLSearchParams();
+  query.set('useLlm', useLlm ? 'true' : 'false');
+  const response = await fetch(`${getApiBaseUrl()}/survey-forms/current/submissions/me/latest/recommendation?${query}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+    headers: withAuth(accessToken),
+  });
+  if (response.status === 204 || response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+  return sanitizeSurveyRecommendation(await response.json());
 }

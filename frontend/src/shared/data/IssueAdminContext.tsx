@@ -15,7 +15,7 @@ import {
   type RelatedIssueContent,
 } from './mockIssues';
 
-const STORAGE_KEY = 'idolglow.acc-webzine.issue-admin.v1';
+const STORAGE_KEY = 'idolglow.idolglow.issue-admin.v1';
 
 export interface ManagedIssueArticle extends IssueArticle {
   readonly galleryImageUrls: readonly string[];

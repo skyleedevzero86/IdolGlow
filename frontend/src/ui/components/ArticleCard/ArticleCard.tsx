@@ -1,10 +1,21 @@
-import { memo } from 'react';
-import { Link } from 'react-router-dom';
+import { memo, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../auth/AuthContext';
+import { setContentLiked } from '../../../shared/data/contentLikeApi';
 import type { ArticleViewModel, CategoryType } from "../../../domains/article/domain/article.types";
 import styles from './ArticleCard.module.css';
 
+export interface ArticleCardLikeTarget {
+  readonly type: string;
+  readonly key: string;
+  readonly liked: boolean;
+}
+
 interface ArticleCardProps {
   readonly article: ArticleViewModel;
+  readonly linkTo?: string;
+  readonly likeTarget?: ArticleCardLikeTarget;
 }
 
 const getCategoryClass = (category: CategoryType): string => {
@@ -35,11 +46,97 @@ const ShareIcon = () => (
   </svg>
 );
 
-export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
+const LinkIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15" />
+    <path d="M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20l1.15-1.15" />
+  </svg>
+);
+
+export const ArticleCard = memo<ArticleCardProps>(({ article, linkTo, likeTarget }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { accessToken, authReady, user } = useAuth();
+  const [isLiked, setIsLiked] = useState(likeTarget?.liked ?? false);
+  const [likeCount, setLikeCount] = useState(article.likeCount);
+  const [likePending, setLikePending] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const articlePath = linkTo ?? `/articles/${article.id}`;
+  const articleUrl = new URL(articlePath, window.location.origin).toString();
+  const initialLiked = likeTarget?.liked ?? false;
+
+  useEffect(() => {
+    setIsLiked(initialLiked);
+    setLikeCount(article.likeCount);
+  }, [initialLiked, article.likeCount]);
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShareOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [shareOpen]);
+
+  const openSharePopup = () => {
+    setIsCopied(false);
+    setShareOpen(true);
+  };
+
+  const copyArticleUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(articleUrl);
+      setIsCopied(true);
+    } catch {
+      setIsCopied(false);
+    }
+  };
+
+  const toggleRemoteLike = async (target: ArticleCardLikeTarget, token: string) => {
+    const nextLiked = !isLiked;
+    const previous = { liked: isLiked, count: likeCount };
+    setLikePending(true);
+    setIsLiked(nextLiked);
+    setLikeCount((count) => Math.max(0, count + (nextLiked ? 1 : -1)));
+    try {
+      const result = await setContentLiked(target.type, target.key, nextLiked, token);
+      setIsLiked(result.liked);
+      setLikeCount(result.likeCount);
+    } catch {
+      setIsLiked(previous.liked);
+      setLikeCount(previous.count);
+    } finally {
+      setLikePending(false);
+    }
+  };
+
+  const toggleLike = () => {
+    if (!authReady) return;
+    if (!user) {
+      const redirect = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
+      navigate(`/?login=1&redirect=${redirect}`);
+      return;
+    }
+
+    if (likeTarget) {
+      if (likePending || !accessToken) return;
+      void toggleRemoteLike(likeTarget, accessToken);
+      return;
+    }
+
+    setIsLiked((liked) => {
+      setLikeCount((count) => Math.max(0, count + (liked ? -1 : 1)));
+      return !liked;
+    });
+  };
+
   return (
+    <>
     <article className={styles.card}>
       <Link
-        to={`/articles/${article.id}`}
+        to={articlePath}
         className={styles.imageWrapper}
         tabIndex={-1}
         aria-hidden="true"
@@ -63,15 +160,20 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
           <div className={styles.actions}>
             <button
               type="button"
-              className={styles.actionButton}
-              aria-label="좋아요"
+              className={`${styles.actionButton} ${styles.likeButton} ${isLiked ? styles.liked : ''}`}
+              aria-label={isLiked ? '좋아요 취소' : '좋아요'}
+              aria-pressed={isLiked}
+              disabled={likePending}
+              onClick={toggleLike}
             >
               <HeartIcon />
+              <span className={styles.likeCount} aria-hidden="true">{likeCount}</span>
             </button>
             <button
               type="button"
               className={styles.actionButton}
               aria-label="공유하기"
+              onClick={openSharePopup}
             >
               <ShareIcon />
             </button>
@@ -80,7 +182,7 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
 
         <h3 className={styles.title}>
           <Link
-            to={`/articles/${article.id}`}
+            to={articlePath}
             className={styles.titleLink}
           >
             {article.title}
@@ -98,6 +200,32 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
         </div>
       </div>
     </article>
+    {shareOpen ? createPortal(
+      <div className={styles.shareOverlay} role="presentation" onMouseDown={() => setShareOpen(false)}>
+        <section
+          className={styles.sharePopup}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`article-share-title-${article.id}`}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <div className={styles.sharePopupHeader}>
+            <h2 id={`article-share-title-${article.id}`}>공유하기</h2>
+            <button type="button" aria-label="공유 창 닫기" onClick={() => setShareOpen(false)}>×</button>
+          </div>
+          <p className={styles.shareArticleTitle}>{article.title}</p>
+          <div className={styles.shareUrlRow}>
+            <input aria-label="게시물 주소" value={articleUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
+            <button type="button" aria-label="게시물 주소 복사" onClick={() => void copyArticleUrl()}>
+              <LinkIcon />
+            </button>
+          </div>
+          <p className={styles.copyStatus} role="status">{isCopied ? '주소가 복사되었습니다.' : ''}</p>
+        </section>
+      </div>,
+      document.body,
+    ) : null}
+    </>
   );
 });
 
