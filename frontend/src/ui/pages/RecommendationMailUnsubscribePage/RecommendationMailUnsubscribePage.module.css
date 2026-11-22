@@ -1,0 +1,237 @@
+.root {
+  --shell-ink: #111111;
+  --shell-body: #333333;
+  --shell-muted: #8b919a;
+  --shell-line: #eeeeee;
+  --shell-frame: #e8e8e8;
+  --shell-hover-bg: #f7f7f5;
+  --shell-card: #ffffff;
+  --shell-bar-bg: var(--header-bg, #0d0d0d);
+  --shell-bar-text: var(--header-logo-light, #ffffff);
+  --shell-accent: var(--header-accent, #e31c2a);
+
+  display: flex;
+  justify-content: center;
+  min-height: calc(100vh - var(--header-height, 4rem));
+  padding: 3rem 1rem 4.5rem;
+  color: var(--shell-body);
+  font-family: var(--font-family-primary);
+}
+
+:global(html[data-theme='dark']) .root {
+  --shell-ink: #f8fafc;
+  --shell-body: #cbd5e1;
+  --shell-muted: #94a3b8;
+  --shell-line: #253041;
+  --shell-frame: #253041;
+  --shell-hover-bg: rgba(255, 255, 255, 0.06);
+  --shell-card: #131a24;
+  --shell-bar-bg: #f8fafc;
+  --shell-bar-text: #111111;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  align-self: flex-start;
+  padding: 1.75rem 1.75rem 1.5rem;
+  border: 1px solid var(--shell-frame);
+  border-top: 2px solid var(--shell-bar-bg);
+  border-radius: 0;
+  background: var(--shell-card);
+  box-shadow: none;
+}
+
+.header {
+  padding-bottom: 1rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--shell-line);
+}
+
+.kicker {
+  display: inline-block;
+  margin: 0 0 0.45rem;
+  padding-left: 0.55rem;
+  border-left: 3px solid var(--shell-accent);
+  color: var(--shell-accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.title {
+  margin: 0;
+  color: var(--shell-ink);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+}
+
+.body,
+.done,
+.error {
+  margin: 1rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+.body {
+  color: var(--shell-body);
+}
+
+.done {
+  padding: 0.85rem 1rem 0.85rem calc(1rem - 3px);
+  border-left: 3px solid var(--shell-accent);
+  background: var(--shell-hover-bg);
+  color: var(--shell-ink);
+  font-weight: 600;
+}
+
+.error {
+  color: var(--shell-accent);
+  font-weight: 600;
+}
+
+.infoList {
+  margin: 0;
+  padding: 0;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--shell-line);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.infoRow dt {
+  margin: 0;
+  color: var(--shell-muted);
+  font-weight: 600;
+}
+
+.infoRow dd {
+  margin: 0;
+  color: var(--shell-ink);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--shell-line);
+}
+
+.closeNotice {
+  display: block;
+  margin: 0;
+  color: var(--shell-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10rem;
+  min-height: 2.875rem;
+  padding: 0 1.5rem;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast, 0.15s ease),
+    border-color var(--transition-fast, 0.15s ease),
+    color var(--transition-fast, 0.15s ease);
+}
+
+.primaryButton {
+  border: 1px solid var(--shell-bar-bg);
+  background: var(--shell-bar-bg);
+  color: var(--shell-bar-text);
+}
+
+.primaryButton:hover:not(:disabled) {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+  color: #ffffff;
+}
+
+.secondaryButton {
+  border: 1px solid var(--shell-frame);
+  background: var(--shell-card);
+  color: var(--shell-body);
+}
+
+.secondaryButton:hover {
+  border-color: var(--shell-ink);
+  background: var(--shell-hover-bg);
+  color: var(--shell-ink);
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline: 2px solid var(--shell-accent);
+  outline-offset: 2px;
+}
+
+.primaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 568px) {
+  .root {
+    min-height: 0;
+    padding: 1.5rem 0 2.5rem;
+  }
+
+  .sheet {
+    padding: 1.25rem 16px;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .infoRow {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+    padding: 0.7rem 0;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+  }
+}
