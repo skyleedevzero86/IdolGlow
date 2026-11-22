@@ -667,3 +667,240 @@ a.secondaryButton {
     align-items: stretch;
   }
 }
+
+.recoSection {
+  background: var(--portal-admin-sheet-bg, #ffffff);
+  border: 1px solid var(--portal-admin-sheet-border, #e8e8e8);
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.recoHeader {
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 2px solid var(--portal-admin-label, #111111);
+}
+
+.recoHeader .sectionHeading,
+.recoHeader .resultTitle,
+.recoHeader .resultSub {
+  margin-bottom: 0.25rem;
+}
+
+.recoHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--portal-admin-muted, #555555);
+}
+
+.recoEmpty {
+  margin: 0;
+  padding: 1.5rem 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--portal-admin-muted, #555555);
+}
+
+.recoNotice {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.recoSubheading {
+  margin: 1.1rem 0 0.55rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--portal-admin-label, #111111);
+}
+
+.recoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recoCard {
+  min-width: 0;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: var(--portal-admin-control-bg, #ffffff);
+}
+
+.recoLink {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recoLink:hover .recoName {
+  text-decoration: underline;
+}
+
+.recoThumb {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f1f1f1;
+}
+
+.recoThumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recoBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.65rem 0.75rem 0.8rem;
+}
+
+.recoName {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--portal-admin-label, #111111);
+  word-break: keep-all;
+}
+
+.recoPrice {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--portal-admin-control-text, #111111);
+}
+
+.recoReasons {
+  margin: 0.2rem 0 0;
+  padding: 0.45rem 0 0;
+  border-top: 1px solid #eeeeee;
+  list-style: none;
+}
+
+.recoReasons li {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--portal-admin-muted, #555555);
+}
+
+.recoReasons li::before {
+  content: '· ';
+}
+
+.signalBlock {
+  margin: 0.75rem 0 0;
+}
+
+.signalHeading {
+  margin: 0 0 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--portal-admin-label, #111111);
+}
+
+.signalChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.signalChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.75rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--portal-admin-control-border, #cccccc);
+  background: var(--portal-admin-control-bg, #ffffff);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.signalChip strong {
+  font-weight: 800;
+  color: var(--portal-admin-label, #111111);
+}
+
+.signalChip em {
+  font-style: normal;
+  color: var(--portal-admin-muted, #555555);
+}
+
+.signalChip em::before {
+  content: '· ';
+}
+
+.attractionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--portal-admin-label, #111111);
+}
+
+.attractionList li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #eeeeee;
+  font-size: 0.875rem;
+}
+
+.attractionMeta {
+  margin-left: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--portal-admin-muted, #555555);
+}
+
+.attractionReason {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--portal-admin-muted, #555555);
+}
+
+:global(html[data-theme='dark']) .recoThumb {
+  background: #1e293b;
+}
+
+:global(html[data-theme='dark']) .recoReasons,
+:global(html[data-theme='dark']) .attractionList li {
+  border-color: #253041;
+}
+
+:global(html[data-theme='dark']) .recoNotice {
+  border-color: #92400e;
+  background: #1f1a0e;
+  color: #fcd34d;
+}
+
+@media (max-width: 568px) {
+  .recoSection {
+    padding: 1rem 18px 1.1rem;
+  }
+
+  .recoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .recoBody {
+    padding: 0.55rem 0.6rem 0.65rem;
+  }
+}
