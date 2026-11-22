@@ -1,41 +1,65 @@
-import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../auth/AuthContext';
 import {
-  GLOW_COMMUNITY_SUGGESTED_KEYWORDS,
+  type FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "../../../auth/AuthContext";
+import { apiErrorMessage, isAbortError } from "../../../shared/data/apiClient";
+import {
   GLOW_COMMUNITY_TAG_LABELS,
   type GlowCommunityPost,
   type GlowCommunitySort,
   type GlowCommunityTag,
   type GlowCommunityTagFilter,
-  createGlowCommunityPost,
   deleteGlowCommunityPost,
   fetchGlowCommunityHighlights,
+  fetchGlowCommunityKeywords,
   fetchGlowCommunityPosts,
+  glowCommunityPostPath,
+  glowCommunityTagLabel,
+  isGlowCommunityTag,
   reportGlowCommunityPost,
   toggleGlowCommunityLike,
-} from '../../../shared/data/glowCommunityApi';
-import glowStyles from './GlowPage.module.css';
-import styles from './GlowCommunity.module.css';
+} from "../../../shared/data/glowCommunityApi";
+import { formatIdolGlowDate } from "../../../shared/format/idolGlowDateTime";
+import { SimplePager } from "../../components/SimplePager/SimplePager";
+import styles from "./GlowCommunity.module.css";
+import { GlowCommunityEditor } from "./GlowCommunityEditor";
+import {
+  ChevronIcon,
+  CommentIcon,
+  SearchIcon,
+  ThumbIcon,
+} from "./GlowCommunityIcons";
+import { GlowCommunityLoginPrompt } from "./GlowCommunityLoginPrompt";
+import { GlowCommunityPostDetail } from "./GlowCommunityPostDetail";
 
 const PAGE_SIZE = 8;
-const PAGE_GROUP_SIZE = 5;
-const RECENT_KEYWORDS_KEY = 'idolglow:glow-community-recent-keywords';
+const RECENT_KEYWORDS_KEY = "idolglow:glow-community-recent-keywords";
 const MAX_RECENT_KEYWORDS = 10;
-const COLLAPSED_KEYWORD_COUNT = 3;
+const COLLAPSED_KEYWORD_COUNT = 5;
 
-const TAG_FILTERS: readonly { readonly id: GlowCommunityTagFilter; readonly label: string }[] = [
-  { id: 'all', label: '모두' },
-  { id: 'talk', label: GLOW_COMMUNITY_TAG_LABELS.talk },
-  { id: 'question', label: GLOW_COMMUNITY_TAG_LABELS.question },
-  { id: 'travel', label: GLOW_COMMUNITY_TAG_LABELS.travel },
+const TAG_FILTERS: readonly {
+  readonly id: GlowCommunityTagFilter;
+  readonly label: string;
+}[] = [
+  { id: "all", label: "전체" },
+  { id: "talk", label: GLOW_COMMUNITY_TAG_LABELS.talk },
+  { id: "question", label: GLOW_COMMUNITY_TAG_LABELS.question },
+  { id: "travel", label: GLOW_COMMUNITY_TAG_LABELS.travel },
 ];
 
 const readRecentKeywords = (): string[] => {
   try {
     const raw = window.localStorage.getItem(RECENT_KEYWORDS_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
   } catch {
     return [];
   }
@@ -49,48 +73,35 @@ const writeRecentKeywords = (keywords: readonly string[]) => {
   }
 };
 
-const formatDate = (value: string): string => value.split('-').join('.');
+const parseTagFilter = (raw: string | null): GlowCommunityTagFilter =>
+  raw && isGlowCommunityTag(raw) ? raw : "all";
 
-const ThumbIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-    <path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3Zm0 0 4-7a2 2 0 0 1 3 1.7V9h5a2 2 0 0 1 2 2.3l-1.3 8A2 2 0 0 1 17.7 21H7" />
-  </svg>
-);
+const parseSort = (raw: string | null): GlowCommunitySort =>
+  raw === "popular" ? "popular" : "latest";
 
-const CommentIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.2-4.6A8 8 0 1 1 21 12Z" />
-    <path d="M8.5 12h.01M12 12h.01M15.5 12h.01" strokeLinecap="round" strokeWidth="2.4" />
-  </svg>
-);
+const parsePage = (raw: string | null): number => {
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 1 ? Math.floor(value) - 1 : 0;
+};
 
-const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3.5-3.5" />
-  </svg>
-);
-
-const SortIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-    <path d="M4 6h10M4 12h7M4 18h4M18 5v14m0 0-3-3m3 3 3-3" />
-  </svg>
-);
-
-const ChevronIcon = ({ direction }: { readonly direction: 'left' | 'right' }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-    <polyline points={direction === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
-  </svg>
-);
+const parsePostId = (raw: string | null): number | null => {
+  const value = Number(raw);
+  return Number.isInteger(value) && value > 0 ? value : null;
+};
 
 type PostActionsProps = {
   readonly post: GlowCommunityPost;
-  readonly isMine: boolean;
+  readonly onEdit: (post: GlowCommunityPost) => void;
   readonly onDelete: (post: GlowCommunityPost) => void;
   readonly onReport: (post: GlowCommunityPost) => void;
 };
 
-const PostActions = ({ post, isMine, onDelete, onReport }: PostActionsProps) => {
+const PostActions = ({
+  post,
+  onEdit,
+  onDelete,
+  onReport,
+}: PostActionsProps) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -99,8 +110,8 @@ const PostActions = ({ post, isMine, onDelete, onReport }: PostActionsProps) => 
     const close = (event: MouseEvent) => {
       if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
   return (
@@ -108,7 +119,7 @@ const PostActions = ({ post, isMine, onDelete, onReport }: PostActionsProps) => 
       <button
         type="button"
         className={styles.menuButton}
-        aria-label="게시물 메뉴"
+        aria-label="게시글 메뉴"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
@@ -116,12 +127,38 @@ const PostActions = ({ post, isMine, onDelete, onReport }: PostActionsProps) => 
       </button>
       {open ? (
         <div className={styles.menuList} role="menu">
-          {isMine ? (
-            <button type="button" role="menuitem" onClick={() => { setOpen(false); onDelete(post); }}>
-              삭제하기
-            </button>
+          {post.mine ? (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  onEdit(post);
+                }}
+              >
+                수정하기
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  onDelete(post);
+                }}
+              >
+                삭제하기
+              </button>
+            </>
           ) : (
-            <button type="button" role="menuitem" onClick={() => { setOpen(false); onReport(post); }}>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onReport(post);
+              }}
+            >
               신고하기
             </button>
           )}
@@ -131,109 +168,176 @@ const PostActions = ({ post, isMine, onDelete, onReport }: PostActionsProps) => 
   );
 };
 
-export const GlowCommunity = ({ filterBar }: { readonly filterBar: ReactNode }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+export const GlowCommunity = ({
+  filterBar,
+}: { readonly filterBar: ReactNode }) => {
   const { authReady, user, accessToken } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tag = parseTagFilter(searchParams.get("tag"));
+  const sort = parseSort(searchParams.get("sort"));
+  const page = parsePage(searchParams.get("page"));
+  const keyword = (searchParams.get("q") ?? "").trim();
+  const postId = parsePostId(searchParams.get("post"));
 
-  const [tag, setTag] = useState<GlowCommunityTagFilter>('all');
-  const [sort, setSort] = useState<GlowCommunitySort>('latest');
-  const [page, setPage] = useState(0);
-  const [keywordInput, setKeywordInput] = useState('');
-  const [keyword, setKeyword] = useState('');
-  const [recentKeywords, setRecentKeywords] = useState<string[]>(readRecentKeywords);
+  const [keywordInput, setKeywordInput] = useState(keyword);
+  const [recentKeywords, setRecentKeywords] =
+    useState<string[]>(readRecentKeywords);
+  const [suggestedKeywords, setSuggestedKeywords] = useState<readonly string[]>(
+    [],
+  );
+  const [keywordsError, setKeywordsError] = useState(false);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
   const [posts, setPosts] = useState<readonly GlowCommunityPost[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [highlights, setHighlights] = useState<readonly GlowCommunityPost[]>([]);
+  const [highlights, setHighlights] = useState<readonly GlowCommunityPost[]>(
+    [],
+  );
+  const [highlightError, setHighlightError] = useState<string | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [writeOpen, setWriteOpen] = useState(false);
-  const [draftTag, setDraftTag] = useState<GlowCommunityTag>('talk');
-  const [draftTitle, setDraftTitle] = useState('');
-  const [draftContent, setDraftContent] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [editorPost, setEditorPost] = useState<GlowCommunityPost | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [loginMessage, setLoginMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
   const highlightRef = useRef<HTMLDivElement>(null);
   const listTopRef = useRef<HTMLDivElement>(null);
-
-  const requireLogin = useCallback((): boolean => {
-    if (!authReady) return false;
-    if (user) return true;
-    const redirect = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
-    navigate(`/?login=1&redirect=${redirect}`);
-    return false;
-  }, [authReady, user, location.pathname, location.search, location.hash, navigate]);
+  const loggedIn = Boolean(authReady && user && accessToken);
 
   useEffect(() => {
-    let cancelled = false;
+    setKeywordInput(keyword);
+  }, [keyword]);
+
+  const updateParams = useCallback(
+    (
+      changes: Record<string, string | null>,
+      options: { readonly push?: boolean } = {},
+    ) => {
+      const next = new URLSearchParams(searchParams);
+      next.set("tab", "local");
+      for (const [key, value] of Object.entries(changes)) {
+        if (value === null || value === "") next.delete(key);
+        else next.set(key, value);
+      }
+      setSearchParams(next, { replace: !options.push });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dependency is an intentional re-run trigger
+  useEffect(() => {
+    if (!authReady || postId !== null) return;
+    const controller = new AbortController();
     setLoading(true);
-    void fetchGlowCommunityPosts({ tag, q: keyword, sort, page, size: PAGE_SIZE, accessToken }).then((response) => {
-      if (cancelled) return;
-      setPosts(response.items);
-      setTotalElements(response.totalElements);
-      setTotalPages(Math.max(1, response.totalPages));
-      setLoading(false);
-    });
+    setListError(null);
+    fetchGlowCommunityPosts({
+      tag,
+      q: keyword,
+      sort,
+      page,
+      size: PAGE_SIZE,
+      accessToken,
+      signal: controller.signal,
+    })
+      .then((response) => {
+        setPosts(response.items);
+        setTotalElements(response.totalElements);
+        setTotalPages(Math.max(1, response.totalPages));
+      })
+      .catch((error: unknown) => {
+        if (isAbortError(error)) return;
+        setPosts([]);
+        setTotalElements(0);
+        setTotalPages(1);
+        setListError(apiErrorMessage(error, "게시글을 불러오지 못했습니다."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [accessToken, authReady, keyword, page, postId, reloadKey, sort, tag]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dependency is an intentional re-run trigger
+  useEffect(() => {
+    if (!authReady || postId !== null) return;
+    let cancelled = false;
+    fetchGlowCommunityHighlights(accessToken)
+      .then((items) => {
+        if (cancelled) return;
+        setHighlights(items);
+        setHighlightError(null);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setHighlights([]);
+        setHighlightError(
+          apiErrorMessage(error, "하이라이트를 불러오지 못했습니다."),
+        );
+      });
     return () => {
       cancelled = true;
     };
-  }, [tag, keyword, sort, page, accessToken, reloadKey]);
+  }, [accessToken, authReady, postId, reloadKey]);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchGlowCommunityHighlights().then((items) => {
-      if (!cancelled) setHighlights(items);
-    });
+    fetchGlowCommunityKeywords()
+      .then((result) => {
+        if (cancelled) return;
+        setSuggestedKeywords(result.keywords.filter((item) => item.trim()));
+        setKeywordsError(false);
+      })
+      .catch(() => {
+        if (!cancelled) setKeywordsError(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, []);
 
   const updateScrollButtons = useCallback(() => {
     const track = highlightRef.current;
     if (!track) return;
     setCanScrollLeft(track.scrollLeft > 4);
-    setCanScrollRight(track.scrollLeft + track.clientWidth < track.scrollWidth - 4);
+    setCanScrollRight(
+      track.scrollLeft + track.clientWidth < track.scrollWidth - 4,
+    );
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dependency is an intentional re-run trigger
   useEffect(() => {
     updateScrollButtons();
-    window.addEventListener('resize', updateScrollButtons);
-    return () => window.removeEventListener('resize', updateScrollButtons);
+    window.addEventListener("resize", updateScrollButtons);
+    return () => window.removeEventListener("resize", updateScrollButtons);
   }, [highlights, updateScrollButtons]);
 
   useEffect(() => {
     if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(''), 2200);
+    const timer = window.setTimeout(() => setNotice(""), 2200);
     return () => window.clearTimeout(timer);
   }, [notice]);
-
-  useEffect(() => {
-    if (!writeOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setWriteOpen(false);
-    };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [writeOpen]);
 
   const scrollHighlights = (direction: 1 | -1) => {
     const track = highlightRef.current;
     if (!track) return;
-    track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: 'smooth' });
+    track.scrollBy({
+      left: direction * track.clientWidth * 0.8,
+      behavior: "smooth",
+    });
   };
 
   const applyKeyword = (value: string) => {
     const trimmed = value.trim();
     setKeywordInput(trimmed);
-    setKeyword(trimmed);
-    setPage(0);
+    updateParams({ q: trimmed || null, page: null });
     if (!trimmed) return;
-    const next = [trimmed, ...recentKeywords.filter((item) => item !== trimmed)].slice(0, MAX_RECENT_KEYWORDS);
+    const next = [
+      trimmed,
+      ...recentKeywords.filter((item) => item !== trimmed),
+    ].slice(0, MAX_RECENT_KEYWORDS);
     setRecentKeywords(next);
     writeRecentKeywords(next);
   };
@@ -249,156 +353,301 @@ export const GlowCommunity = ({ filterBar }: { readonly filterBar: ReactNode }) 
     applyKeyword(keywordInput);
   };
 
-  const clearKeyword = () => {
-    setKeywordInput('');
-    setKeyword('');
-    setPage(0);
-  };
-
-  const changeTag = (next: GlowCommunityTagFilter) => {
-    setTag(next);
-    setPage(0);
-  };
-
   const goToPage = (next: number) => {
     const target = Math.min(totalPages - 1, Math.max(0, next));
-    setPage(target);
-    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateParams({ page: target > 0 ? String(target + 1) : null });
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const openPost = (id: number) => {
+    updateParams({ post: String(id) }, { push: true });
+    window.requestAnimationFrame(() =>
+      listTopRef.current
+        ?.closest("section")
+        ?.scrollIntoView({ block: "start" }),
+    );
+  };
+
+  const closePost = () => {
+    updateParams({ post: null }, { push: true });
   };
 
   const handleLike = async (post: GlowCommunityPost) => {
-    if (!requireLogin()) return;
-    const result = await toggleGlowCommunityLike(post.id, accessToken);
-    const apply = (item: GlowCommunityPost) =>
-      item.id === post.id ? { ...item, liked: result.liked, likeCount: result.likeCount } : item;
-    setPosts((current) => current.map(apply));
-    setHighlights((current) => current.map(apply));
+    if (!loggedIn || !accessToken) {
+      setLoginMessage("좋아요를 누르려면 로그인해 주세요.");
+      return;
+    }
+    try {
+      const result = await toggleGlowCommunityLike(post.id, accessToken);
+      const apply = (item: GlowCommunityPost) =>
+        item.id === post.id
+          ? {
+              ...item,
+              liked: result.liked,
+              likedByMe: result.liked,
+              likeCount: result.likeCount,
+            }
+          : item;
+      setPosts((current) => current.map(apply));
+      setHighlights((current) => current.map(apply));
+    } catch (error) {
+      setNotice(apiErrorMessage(error, "좋아요를 처리하지 못했습니다."));
+    }
   };
 
   const openWrite = () => {
-    if (!requireLogin()) return;
-    setDraftTag(tag === 'all' ? 'talk' : tag);
-    setDraftTitle('');
-    setDraftContent('');
-    setWriteOpen(true);
+    if (!loggedIn) {
+      setLoginMessage("글을 쓰려면 로그인해 주세요.");
+      return;
+    }
+    setEditorPost(null);
+    setEditorOpen(true);
   };
 
-  const handleWriteSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!user || submitting) return;
-    const title = draftTitle.trim();
-    const content = draftContent.trim();
-    if (!title || !content) return;
-    setSubmitting(true);
-    await createGlowCommunityPost({
-      tag: draftTag,
-      title,
-      content,
-      authorName: user.nickname || user.name || '사용자',
-      authorId: user.id,
-      accessToken,
-    });
-    setSubmitting(false);
-    setWriteOpen(false);
-    setSort('latest');
-    setPage(0);
-    setReloadKey((value) => value + 1);
-    setNotice('게시물이 등록되었습니다.');
+  const openEdit = (post: GlowCommunityPost) => {
+    setEditorPost(post);
+    setEditorOpen(true);
   };
 
   const handleDelete = async (post: GlowCommunityPost) => {
-    if (!window.confirm('이 게시물을 삭제할까요?')) return;
-    await deleteGlowCommunityPost(post.id, accessToken);
-    setReloadKey((value) => value + 1);
-    setNotice('게시물이 삭제되었습니다.');
+    if (!accessToken) return;
+    if (
+      !window.confirm("이 게시글을 삭제할까요? 삭제한 글은 되돌릴 수 없습니다.")
+    )
+      return;
+    try {
+      await deleteGlowCommunityPost(post.id, accessToken);
+      setReloadKey((value) => value + 1);
+      setNotice("게시글을 삭제했습니다.");
+    } catch (error) {
+      setNotice(apiErrorMessage(error, "게시글을 삭제하지 못했습니다."));
+    }
   };
 
   const handleReport = async (post: GlowCommunityPost) => {
-    if (!requireLogin()) return;
-    await reportGlowCommunityPost(post.id, accessToken);
-    setNotice('신고가 접수되었습니다.');
+    if (!loggedIn || !accessToken) {
+      setLoginMessage("신고하려면 로그인해 주세요.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "이 게시글을 신고할까요? 신고가 누적되면 블라인드 처리됩니다.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await reportGlowCommunityPost(post.id, accessToken);
+      setNotice("신고가 접수되었습니다.");
+    } catch (error) {
+      setNotice(apiErrorMessage(error, "신고를 접수하지 못했습니다."));
+    }
   };
 
-  const keywordChips = recentKeywords.length > 0 ? recentKeywords : [...GLOW_COMMUNITY_SUGGESTED_KEYWORDS];
-  const visibleKeywords = showAllKeywords ? keywordChips : keywordChips.slice(0, COLLAPSED_KEYWORD_COUNT);
-  const groupStart = Math.floor(page / PAGE_GROUP_SIZE) * PAGE_GROUP_SIZE;
-  const groupEnd = Math.min(totalPages, groupStart + PAGE_GROUP_SIZE);
-  const pageNumbers = Array.from({ length: groupEnd - groupStart }, (_, index) => groupStart + index);
+  const defaultTag: GlowCommunityTag = tag === "all" ? "talk" : tag;
+  const visibleSuggestions = showAllKeywords
+    ? suggestedKeywords
+    : suggestedKeywords.slice(0, COLLAPSED_KEYWORD_COUNT);
+
+  const overlays = (
+    <>
+      {notice ? (
+        <p className={styles.toast} aria-live="polite">
+          {notice}
+        </p>
+      ) : null}
+      {editorOpen && accessToken ? (
+        <GlowCommunityEditor
+          accessToken={accessToken}
+          post={editorPost}
+          defaultTag={defaultTag}
+          onClose={() => setEditorOpen(false)}
+          onSaved={(saved, created) => {
+            setEditorOpen(false);
+            setReloadKey((value) => value + 1);
+            if (created) {
+              setNotice("게시글을 등록했습니다.");
+              openPost(saved.id);
+            } else {
+              setNotice("게시글을 수정했습니다.");
+            }
+          }}
+        />
+      ) : null}
+      {loginMessage ? (
+        <GlowCommunityLoginPrompt
+          message={loginMessage}
+          onClose={() => setLoginMessage(null)}
+        />
+      ) : null}
+    </>
+  );
+
+  if (postId !== null) {
+    return (
+      <div className={styles.community}>
+        {filterBar}
+        <GlowCommunityPostDetail
+          key={postId}
+          postId={postId}
+          onBack={closePost}
+          onDeleted={() => {
+            setNotice("게시글을 삭제했습니다.");
+            setReloadKey((value) => value + 1);
+            updateParams({ post: null }, { push: false });
+          }}
+        />
+        {overlays}
+      </div>
+    );
+  }
+
+  const renderCounts = (post: GlowCommunityPost) => (
+    <div className={styles.counts}>
+      <button
+        type="button"
+        className={
+          post.liked || post.likedByMe ? styles.likedButton : undefined
+        }
+        aria-pressed={post.liked || post.likedByMe}
+        aria-label={`좋아요 ${post.likeCount}`}
+        onClick={() => void handleLike(post)}
+      >
+        <ThumbIcon />
+        {post.likeCount}
+      </button>
+      <span aria-label={`댓글 ${post.commentCount}`}>
+        <CommentIcon />
+        {post.commentCount}
+      </span>
+    </div>
+  );
 
   return (
     <div className={styles.community}>
       {filterBar}
 
       <div className={styles.toolbar}>
-        <div className={styles.tagChips} role="tablist" aria-label="게시물 태그">
+        <div
+          className={styles.tagChips}
+          role="tablist"
+          aria-label="게시글 말머리"
+        >
           {TAG_FILTERS.map((option) => (
             <button
               key={option.id}
               type="button"
               role="tab"
               aria-selected={tag === option.id}
-              className={tag === option.id ? styles.activeTag : undefined}
-              onClick={() => changeTag(option.id)}
+              className={
+                tag === option.id ? styles.tagChipActive : styles.tagChip
+              }
+              onClick={() =>
+                updateParams({
+                  tag: option.id === "all" ? null : option.id,
+                  page: null,
+                })
+              }
             >
               # {option.label}
             </button>
           ))}
         </div>
-        <button type="button" className={styles.writeButton} onClick={openWrite}>
+        <button
+          type="button"
+          className={styles.writeButton}
+          onClick={openWrite}
+        >
           쓰기
         </button>
       </div>
 
-      <section className={styles.highlightSection} aria-labelledby="community-highlight-title">
-        <h2 id="community-highlight-title" className={styles.sectionTitle}>하이라이트</h2>
-        <div className={styles.highlightWrap}>
-          {canScrollLeft ? (
-            <button type="button" className={`${styles.slideButton} ${styles.slidePrev}`} aria-label="이전 하이라이트" onClick={() => scrollHighlights(-1)}>
-              <ChevronIcon direction="left" />
-            </button>
-          ) : null}
-          <div className={styles.highlightTrack} ref={highlightRef} onScroll={updateScrollButtons}>
-            {highlights.map((post) => (
-              <article key={post.id} className={styles.highlightCard}>
-                <span className={styles.tagBadge}>{GLOW_COMMUNITY_TAG_LABELS[post.tag]}</span>
-                <h3>{post.title}</h3>
-                <div className={styles.counts}>
-                  <button
-                    type="button"
-                    className={post.liked ? styles.likedButton : undefined}
-                    aria-pressed={post.liked}
-                    aria-label={`좋아요 ${post.likeCount}`}
-                    onClick={() => void handleLike(post)}
-                  >
-                    <ThumbIcon />
-                    {post.likeCount}
-                  </button>
-                  <span aria-label={`댓글 ${post.commentCount}`}>
-                    <CommentIcon />
-                    {post.commentCount}
+      <section
+        className={styles.highlightSection}
+        aria-labelledby="community-highlight-title"
+      >
+        <h2 id="community-highlight-title" className={styles.sectionTitle}>
+          하이라이트
+        </h2>
+        {highlightError ? (
+          <p className={styles.inlineError}>{highlightError}</p>
+        ) : null}
+        {!highlightError && highlights.length === 0 ? (
+          <p className={styles.inlineStatus}>
+            아직 하이라이트 게시글이 없습니다.
+          </p>
+        ) : null}
+        {highlights.length > 0 ? (
+          <div className={styles.highlightWrap}>
+            {canScrollLeft ? (
+              <button
+                type="button"
+                className={`${styles.slideButton} ${styles.slidePrev}`}
+                aria-label="이전 하이라이트"
+                onClick={() => scrollHighlights(-1)}
+              >
+                <ChevronIcon direction="left" />
+              </button>
+            ) : null}
+            <div
+              className={styles.highlightTrack}
+              ref={highlightRef}
+              onScroll={updateScrollButtons}
+            >
+              {highlights.map((post) => (
+                <article key={post.id} className={styles.highlightCard}>
+                  <span className={styles.tagBadge}>
+                    {glowCommunityTagLabel(post)}
                   </span>
-                </div>
-              </article>
-            ))}
+                  <h3>
+                    <Link
+                      to={glowCommunityPostPath(post.id)}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        openPost(post.id);
+                      }}
+                    >
+                      {post.title}
+                    </Link>
+                  </h3>
+                  {renderCounts(post)}
+                </article>
+              ))}
+            </div>
+            {canScrollRight ? (
+              <button
+                type="button"
+                className={`${styles.slideButton} ${styles.slideNext}`}
+                aria-label="다음 하이라이트"
+                onClick={() => scrollHighlights(1)}
+              >
+                <ChevronIcon direction="right" />
+              </button>
+            ) : null}
           </div>
-          {canScrollRight ? (
-            <button type="button" className={`${styles.slideButton} ${styles.slideNext}`} aria-label="다음 하이라이트" onClick={() => scrollHighlights(1)}>
-              <ChevronIcon direction="right" />
-            </button>
-          ) : null}
-        </div>
+        ) : null}
       </section>
 
-      <form className={styles.searchForm} role="search" onSubmit={handleSearchSubmit}>
+      <form
+        className={styles.searchForm}
+        // biome-ignore lint/a11y/useSemanticElements: search landmark on a form element
+        role="search"
+        onSubmit={handleSearchSubmit}
+      >
         <input
           type="search"
           value={keywordInput}
-          placeholder="검색어를 입력해 주세요(최근 검색어 최대 10개가 저장됩니다)"
-          aria-label="게시물 검색"
+          placeholder="검색어를 입력해 주세요 (최근 검색어 최대 10개가 저장됩니다)"
+          aria-label="게시글 검색"
           onChange={(event) => setKeywordInput(event.target.value)}
         />
         {keywordInput ? (
-          <button type="button" className={styles.clearButton} aria-label="검색어 지우기" onClick={clearKeyword}>
+          <button
+            type="button"
+            className={styles.clearButton}
+            aria-label="검색어 지우기"
+            onClick={() => applyKeyword("")}
+          >
             ×
           </button>
         ) : null}
@@ -407,153 +656,166 @@ export const GlowCommunity = ({ filterBar }: { readonly filterBar: ReactNode }) 
         </button>
       </form>
 
-      <div className={styles.keywordRow}>
-        <ul className={styles.keywordChips} aria-label={recentKeywords.length > 0 ? '최근 검색어' : '추천 검색어'}>
-          {visibleKeywords.map((item) => (
-            <li key={item}>
-              <button type="button" onClick={() => applyKeyword(item)}>{item}</button>
-              {recentKeywords.length > 0 ? (
-                <button type="button" className={styles.removeKeyword} aria-label={`${item} 검색어 삭제`} onClick={() => removeRecentKeyword(item)}>
-                  ×
-                </button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-        {keywordChips.length > COLLAPSED_KEYWORD_COUNT ? (
-          <button type="button" className={styles.showAllButton} aria-expanded={showAllKeywords} onClick={() => setShowAllKeywords((value) => !value)}>
-            {showAllKeywords ? '− 접기' : '+ 모두 보기'}
-          </button>
+      <div className={styles.keywordBlock}>
+        <div className={styles.keywordRow}>
+          <span className={styles.keywordLabel}>AI 추천 검색어</span>
+          {suggestedKeywords.length > 0 ? (
+            <ul className={styles.keywordChips} aria-label="AI 추천 검색어">
+              {visibleSuggestions.map((item) => (
+                <li key={item}>
+                  <button
+                    type="button"
+                    className={
+                      keyword === item ? styles.keywordActive : undefined
+                    }
+                    onClick={() => applyKeyword(item)}
+                  >
+                    {item}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span className={styles.keywordEmpty}>
+              {keywordsError
+                ? "추천 검색어를 불러오지 못했습니다."
+                : "추천 검색어를 준비 중입니다."}
+            </span>
+          )}
+          {suggestedKeywords.length > COLLAPSED_KEYWORD_COUNT ? (
+            <button
+              type="button"
+              className={styles.showAllButton}
+              aria-expanded={showAllKeywords}
+              onClick={() => setShowAllKeywords((value) => !value)}
+            >
+              {showAllKeywords ? "− 접기" : "+ 모두 보기"}
+            </button>
+          ) : null}
+        </div>
+        {recentKeywords.length > 0 ? (
+          <div className={styles.keywordRow}>
+            <span className={styles.keywordLabel}>최근 검색어</span>
+            <ul className={styles.keywordChips} aria-label="최근 검색어">
+              {recentKeywords.map((item) => (
+                <li key={item}>
+                  <button type="button" onClick={() => applyKeyword(item)}>
+                    {item}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.removeKeyword}
+                    aria-label={`${item} 검색어 삭제`}
+                    onClick={() => removeRecentKeyword(item)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : null}
       </div>
 
       <div className={styles.listHeader} ref={listTopRef}>
         <p>
-          총 <strong>{totalElements.toLocaleString()}</strong>개의 게시물
-          {keyword ? <span className={styles.keywordResult}> · 「{keyword}」 검색 결과</span> : null}
+          총 <strong>{totalElements.toLocaleString()}</strong>개의 게시글
+          {keyword ? (
+            <span className={styles.keywordResult}>
+              {" "}
+              · 「{keyword}」 검색 결과
+            </span>
+          ) : null}
         </p>
-        <button
-          type="button"
-          className={styles.sortButton}
-          aria-label={`정렬 바꾸기, 현재 ${sort === 'latest' ? '최신순' : '인기순'}`}
-          onClick={() => { setSort((value) => (value === 'latest' ? 'popular' : 'latest')); setPage(0); }}
-        >
-          <SortIcon />
-          {sort === 'latest' ? '최신순' : '인기순'}
-        </button>
+        <div className={styles.sortTabs} role="tablist" aria-label="정렬">
+          {(["latest", "popular"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="tab"
+              aria-selected={sort === option}
+              className={sort === option ? styles.sortActive : undefined}
+              onClick={() =>
+                updateParams({
+                  sort: option === "latest" ? null : option,
+                  page: null,
+                })
+              }
+            >
+              {option === "latest" ? "최신" : "인기"}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {listError ? (
+        <p className={styles.errorBox} role="alert">
+          {listError}
+        </p>
+      ) : null}
 
       <ul className={styles.postList} aria-busy={loading}>
         {posts.map((post) => (
           <li key={post.id} className={styles.postItem}>
             <div className={styles.postHead}>
-              <span className={styles.tagBadge}>{GLOW_COMMUNITY_TAG_LABELS[post.tag]}</span>
-              <PostActions
-                post={post}
-                isMine={Boolean(user && post.authorId === user.id)}
-                onDelete={(target) => void handleDelete(target)}
-                onReport={(target) => void handleReport(target)}
-              />
+              <span className={styles.badgeRow}>
+                <span className={styles.tagBadge}>
+                  {glowCommunityTagLabel(post)}
+                </span>
+                {post.blinded ? (
+                  <span className={styles.blindBadge}>블라인드</span>
+                ) : null}
+              </span>
+              {loggedIn ? (
+                <PostActions
+                  post={post}
+                  onEdit={openEdit}
+                  onDelete={(target) => void handleDelete(target)}
+                  onReport={(target) => void handleReport(target)}
+                />
+              ) : null}
             </div>
             <p className={styles.postMeta}>
               <span>{post.authorName}</span>
-              <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
+              <time dateTime={post.createdAt ?? undefined}>
+                {formatIdolGlowDate(post.createdAt).replace(/-/g, ".")}
+              </time>
             </p>
-            <h3 className={styles.postTitle}>{post.title}</h3>
-            <div className={styles.counts}>
-              <button
-                type="button"
-                className={post.liked ? styles.likedButton : undefined}
-                aria-pressed={post.liked}
-                aria-label={`좋아요 ${post.likeCount}`}
-                onClick={() => void handleLike(post)}
+            <h3 className={styles.postTitle}>
+              <Link
+                to={glowCommunityPostPath(post.id)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  openPost(post.id);
+                }}
               >
-                <ThumbIcon />
-                {post.likeCount}
-              </button>
-              <span aria-label={`댓글 ${post.commentCount}`}>
-                <CommentIcon />
-                {post.commentCount}
-              </span>
-            </div>
+                {post.title}
+              </Link>
+            </h3>
+            {renderCounts(post)}
           </li>
         ))}
       </ul>
 
-      {!loading && posts.length === 0 ? (
-        <p className={styles.empty} role="status">
-          {keyword ? `「${keyword}」에 맞는 게시물이 없습니다.` : '아직 등록된 게시물이 없습니다.'}
+      {loading && posts.length === 0 ? (
+        <p className={styles.status}>게시글을 불러오는 중입니다.</p>
+      ) : null}
+      {!loading && !listError && posts.length === 0 ? (
+        <p className={styles.status} aria-live="polite">
+          {keyword
+            ? `「${keyword}」에 맞는 게시글이 없습니다.`
+            : "아직 등록된 게시글이 없습니다."}
         </p>
       ) : null}
 
-      <nav className={styles.pagination} aria-label="게시물 페이지">
-        <button type="button" className={styles.pageArrow} aria-label="이전 페이지" disabled={page === 0} onClick={() => goToPage(page - 1)}>
-          <ChevronIcon direction="left" />
-        </button>
-        {pageNumbers.map((number) => (
-          <button
-            key={number}
-            type="button"
-            className={number === page ? styles.activePage : undefined}
-            aria-current={number === page ? 'page' : undefined}
-            onClick={() => goToPage(number)}
-          >
-            {number + 1}
-          </button>
-        ))}
-        <button type="button" className={styles.pageArrow} aria-label="다음 페이지" disabled={page >= totalPages - 1} onClick={() => goToPage(page + 1)}>
-          <ChevronIcon direction="right" />
-        </button>
-      </nav>
+      <SimplePager
+        page={page}
+        totalPages={totalPages}
+        onChange={goToPage}
+        label="게시글 페이지"
+      />
 
-      {notice ? <p className={styles.toast} role="status">{notice}</p> : null}
-
-      {writeOpen ? (
-        <div className={glowStyles.shareOverlay} role="presentation" onMouseDown={() => setWriteOpen(false)}>
-          <form
-            className={styles.writeDialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="community-write-title"
-            onMouseDown={(event) => event.stopPropagation()}
-            onSubmit={(event) => void handleWriteSubmit(event)}
-          >
-            <div className={styles.writeHeader}>
-              <h2 id="community-write-title">글쓰기</h2>
-              <button type="button" aria-label="글쓰기 닫기" onClick={() => setWriteOpen(false)}>×</button>
-            </div>
-            <fieldset className={styles.writeTags}>
-              <legend>태그</legend>
-              {(Object.keys(GLOW_COMMUNITY_TAG_LABELS) as GlowCommunityTag[]).map((option) => (
-                <label key={option} className={draftTag === option ? styles.activeTag : undefined}>
-                  <input
-                    type="radio"
-                    name="community-tag"
-                    value={option}
-                    checked={draftTag === option}
-                    onChange={() => setDraftTag(option)}
-                  />
-                  # {GLOW_COMMUNITY_TAG_LABELS[option]}
-                </label>
-              ))}
-            </fieldset>
-            <label className={styles.writeField}>
-              <span>제목</span>
-              <input value={draftTitle} maxLength={100} required onChange={(event) => setDraftTitle(event.target.value)} />
-            </label>
-            <label className={styles.writeField}>
-              <span>내용</span>
-              <textarea value={draftContent} rows={7} maxLength={2000} required onChange={(event) => setDraftContent(event.target.value)} />
-            </label>
-            <div className={styles.writeActions}>
-              <button type="button" onClick={() => setWriteOpen(false)}>취소</button>
-              <button type="submit" className={styles.writeSubmit} disabled={submitting || !draftTitle.trim() || !draftContent.trim()}>
-                {submitting ? '등록 중...' : '등록'}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
+      {overlays}
     </div>
   );
 };
