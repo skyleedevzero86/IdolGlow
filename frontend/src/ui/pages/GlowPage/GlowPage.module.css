@@ -1,8 +1,101 @@
-.glowPage {
-  width: 100%;
+.glowPage { width: 100%; color: #171717; background: #f7f7f5; }
+.hero { position: relative; min-height: 520px; overflow: hidden; color: #fff; background-position: center; background-size: cover; transition: background-image 280ms ease; }
+.heroShade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.68) 0%, rgba(0,0,0,.2) 58%, rgba(0,0,0,.3) 100%); }
+.heroInner { position: relative; z-index: 1; width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding-top: 235px; }
+.heroEyebrow { display: inline-flex; padding: 7px 13px; color: #151515; font-size: 13px; font-weight: 800; background: #fff; }
+.hero h1 { margin: 18px 0 8px; font-size: clamp(30px, 4vw, 54px); line-height: 1.08; letter-spacing: -.045em; }
+.hero p { margin: 0; color: rgba(255,255,255,.86); font-size: 16px; }
+.heroControls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 56px; }
+.heroControls > button { display: grid; width: 42px; height: 42px; place-items: center; border: 0; border-radius: 50%; color: #181818; font-size: 30px; line-height: 1; background: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.2); }
+.heroDots { display: flex; gap: 8px; }
+.heroDots button { width: 7px; height: 7px; padding: 0; border: 1px solid rgba(255,255,255,.82); border-radius: 50%; background: transparent; }
+.heroDots .activeDot { background: #fff; }
+.heroActions { position: absolute; z-index: 2; right: max(24px, calc((100% - 1180px) / 2)); bottom: 0; display: flex; }
+.heroActions a { padding: 17px 26px; border-right: 1px solid rgba(255,255,255,.22); color: #fff; font-size: 14px; font-weight: 800; background: #0758b7; }
+.heroActions a:hover, .heroActions a:focus-visible { background: #083f86; }
+.contentSection { padding: 72px 0 84px; background: #f7f7f5; scroll-margin-top: var(--header-height); }
+.contentInner { width: min(1280px, calc(100% - 48px)); margin: 0 auto; }
+.filterBar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 38px; }
+.filterBar button { padding: 11px 19px; border: 1px solid #d6d6d6; border-radius: 999px; color: #292929; font-size: 14px; font-weight: 700; background: #fff; }
+.filterBar button:hover, .filterBar button:focus-visible, .filterBar .activeFilter { border-color: #183cff; color: #fff; background: #183cff; }
+.contentLayout { display: grid; grid-template-columns: minmax(0,3fr) minmax(270px,1fr); gap: 54px; align-items: start; }
+.mainColumn { min-width: 0; }
+.articleGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px 18px; }
+.articleCard, .popularCard { overflow: hidden; border: 1px solid #e2e2e2; border-radius: 9px; background: #fff; box-shadow: 0 5px 20px rgba(22,32,54,.045); }
+.articleCard { transition: transform 180ms ease, box-shadow 180ms ease; }
+.articleCard:hover { transform: translateY(-4px); box-shadow: 0 16px 34px rgba(22,32,54,.12); }
+.cardImageLink { display: block; aspect-ratio: 1.42 / 1; overflow: hidden; background: #e8e8e8; }
+.cardImageLink img, .popularCard img { width: 100%; height: 100%; object-fit: cover; transition: transform 260ms ease; }
+.articleCard:hover img, .popularCard:hover img { transform: scale(1.04); }
+.cardBody { padding: 14px 14px 16px; }
+.cardMeta, .popularMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.categoryBadge { display: inline-flex; align-items: center; padding: 5px 9px; border-radius: 0; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.categoryTrend { background: var(--color-category-exchange); }
+.categoryNews { background: var(--color-category-performance); }
+.categoryRecent { background: var(--color-category-exhibition); }
+.categoryLocal { background: #f28c28; }
+.popularMeta > span:last-child { color: #3f3f3f; white-space: nowrap; }
+.actions { display: flex; align-items: center; gap: 3px; margin-left: auto; }
+.actionButton { display: grid; width: 30px; height: 30px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: #555; background: transparent; transition: color 160ms ease, background 160ms ease, transform 160ms ease; }
+.actionButton:hover, .actionButton:focus-visible { color: #173cff; background: #eef1ff; transform: translateY(-1px); }
+.actionButton svg { width: 17px; height: 17px; }
+.likeButton { width: auto; min-width: 30px; gap: 4px; padding: 0 5px; }
+.likeCount { font-size: 11px; font-variant-numeric: tabular-nums; }
+.actionButton.liked { color: #ef3350; }
+.actionButton.liked svg { fill: currentColor; }
+.articleCard h2 { min-height: 52px; margin: 14px 0 16px; font-size: 17px; line-height: 1.5; letter-spacing: -.035em; }
+.articleCard h2 a:hover, .popularCard h3 a:hover { color: #173cff; }
+.cardFooter { display: flex; align-items: center; gap: 10px; overflow: hidden; font-size: 11px; white-space: nowrap; }
+.cardFooter strong { color: #202020; }
+.cardFooter span { overflow: hidden; color: #818181; text-overflow: ellipsis; }
+.popularPanel { min-width: 0; }
+.popularHeader { display: flex; align-items: center; gap: 28px; min-height: 42px; margin-bottom: 38px; }
+.popularHeader button { padding: 10px 0; border: 0; color: #171717; font-size: 16px; font-weight: 800; background: transparent; white-space: nowrap; }
+.popularHeader button:hover, .popularHeader button:focus-visible, .popularHeader .activePopularTab { color: #173cff; }
+.popularList { display: grid; gap: 24px; }
+.popularCard > a { display: block; aspect-ratio: 1.7 / 1; overflow: hidden; background: #e8e8e8; }
+.popularCard > div { padding: 14px 15px 17px; }
+.popularCard h3 { margin: 15px 0 14px; font-size: 17px; line-height: 1.55; letter-spacing: -.035em; }
+.popularCard p { margin: 0; color: #666; font-size: 12px; font-weight: 700; }
+.moreButton { display: grid; width: 48px; height: 48px; margin: 44px auto 0; place-items: center; border: 0; border-radius: 50%; color: #fff; font-size: 34px; line-height: 1; background: #111; transition: transform 160ms ease, background 160ms ease; }
+.moreButton:hover:not(:disabled), .moreButton:focus-visible:not(:disabled) { background: #173cff; transform: scale(1.06); }
+.moreButton:disabled { cursor: wait; opacity: .78; }
+.loadingSpinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.38); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+.shareOverlay { position: fixed; z-index: 1200; inset: 0; display: grid; padding: 18px; place-items: start center; background: rgba(15,23,42,.3); }
+.sharePopup { width: min(400px,100%); margin-top: 8vh; padding: 17px 20px 14px; border-radius: 6px; background: #fff; box-shadow: 0 18px 50px rgba(15,23,42,.26); }
+.sharePopupHeader { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #d8d8d8; }
+.sharePopupHeader h2 { margin: 0; color: #202020; font-size: 22px; font-weight: 500; }
+.sharePopupHeader button { width: 34px; height: 34px; padding: 0; border: 0; color: #555; font-size: 31px; font-weight: 300; line-height: 1; background: transparent; }
+.sharePopupHeader button:hover, .sharePopupHeader button:focus-visible { color: #173cff; }
+.shareArticleTitle { overflow: hidden; margin: 10px 0 8px; color: #555; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.shareUrlRow { display: grid; grid-template-columns: minmax(0,1fr) 52px; }
+.shareUrlRow input { min-width: 0; height: 50px; padding: 0 12px; border: 1px solid #cfd3da; border-right: 0; border-radius: 5px 0 0 5px; color: #3f4a5a; font-size: 14px; background: #fff; outline: none; }
+.shareUrlRow input:focus { border-color: #173cff; box-shadow: inset 0 0 0 1px #173cff; }
+.shareUrlRow button { display: grid; width: 52px; height: 50px; padding: 0; place-items: center; border: 0; border-radius: 0 5px 5px 0; color: #fff; background: #263858; }
+.shareUrlRow button:hover, .shareUrlRow button:focus-visible { background: #173cff; }
+.shareUrlRow svg { width: 23px; height: 23px; }
+.copyStatus { min-height: 18px; margin: 7px 0 0; color: #173cff; font-size: 12px; text-align: right; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1080px) {
+  .contentLayout { grid-template-columns: 1fr; }
+  .popularHeader { margin-top: 18px; }
+  .popularList { grid-template-columns: repeat(3,minmax(0,1fr)); }
 }
 
-.glowMain {
-  min-height: 100vh;
-  padding: var(--spacing-2xl) 0;
+@media (max-width: 760px) {
+  .hero { min-height: 500px; }
+  .heroInner { width: min(100% - 32px,1180px); padding-top: 190px; }
+  .heroActions { right: 0; left: 0; }
+  .heroActions a { flex: 1; padding: 15px 8px; text-align: center; }
+  .contentInner { width: min(100% - 28px,1280px); }
+  .articleGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .popularList { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .articleGrid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 32px; }
+  .heroControls { margin-top: 42px; }
 }
