@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.discovery.application.dto
 
+import com.sleekydz86.idolglow.productpackage.discovery.application.RecommendationFallback
+import com.sleekydz86.idolglow.productpackage.discovery.application.RecommendationReason
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
@@ -36,6 +38,10 @@ data class ProductRankingResponse(
     val matchedTags: List<String>,
     @field:Schema(description = "상품 대표 이미지 URL(없으면 null)")
     val thumbnailUrl: String? = null,
+    @field:Schema(description = "추천 이유. 점수에 들어간 항목의 코드와 문장. 인기 상품 대체 시 빈 목록")
+    val reasons: List<RecommendationReason> = emptyList(),
+    @field:Schema(description = "설문·행동 신호가 없거나 맞는 상품이 없어 대신 보여 준 목록이면 POPULAR, 아니면 null")
+    val fallback: RecommendationFallback? = null,
 ) {
     companion object {
         fun from(
@@ -46,6 +52,7 @@ data class ProductRankingResponse(
             reviewCount: Long,
             matchedTags: List<String> = emptyList(),
             thumbnailUrl: String? = null,
+            reasons: List<RecommendationReason> = emptyList(),
         ): ProductRankingResponse =
             ProductRankingResponse(
                 id = product.id,
@@ -61,6 +68,7 @@ data class ProductRankingResponse(
                 reviewCount = reviewCount,
                 matchedTags = matchedTags,
                 thumbnailUrl = thumbnailUrl,
+                reasons = reasons,
             )
     }
 }

@@ -11,5 +11,5 @@ data class MinioStorageProperties(
     var bucket: String = "",
     var publicBaseUrl: String = "",
     var publicReadProfileObjects: Boolean = false,
-    var publicReadWebzineObjects: Boolean = false,
+    var publicReadIdolGlowObjects: Boolean = false,
 )

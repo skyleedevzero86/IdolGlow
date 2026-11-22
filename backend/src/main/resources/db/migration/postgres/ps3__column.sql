@@ -244,7 +244,13 @@ ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
         'PAYMENT_FAILED',
         'PAYMENT_EXPIRED',
         'RESERVATION_SLOT_AVAILABLE',
-        'RESERVATION_EXPIRING_SOON'
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE'
     )
 );
 
@@ -265,7 +271,7 @@ ALTER TABLE product_review_reports
     ADD COLUMN updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6);
 
 -- 이슈별 기사 목록 조회용
-create index if not exists idx_webzine_articles_issue_id on webzine_articles(issue_id);
+create index if not exists idx_idolglow_articles_issue_id on idolglow_articles(issue_id);
 
 create index if not exists idx_newsletters_published_at on newsletters(published_at);
 
@@ -277,7 +283,7 @@ create index if not exists idx_admin_audit_logs_created_at on admin_audit_logs (
 
 create index if not exists idx_admin_audit_logs_admin_user on admin_audit_logs (admin_user_id);
 
-create index if not exists idx_webzine_articles_issue_id on webzine_articles(issue_id);
+create index if not exists idx_idolglow_articles_issue_id on idolglow_articles(issue_id);
 
 create index if not exists idx_newsletters_published_at on newsletters (published_at);
 
@@ -663,6 +669,22 @@ CREATE INDEX IF NOT EXISTS idx_subscription_dispatch_histories_sending
 CREATE INDEX IF NOT EXISTS idx_subscription_dispatch_recipients_dispatch
     ON subscription_dispatch_recipients (dispatch_id);
 
+-- 상품 추천 메일에서 보낼 상품이 없어 건너뛴 수신자의 이유를 남긴다. 기존 행은 비어 있다.
+ALTER TABLE subscription_dispatch_recipients
+    ADD COLUMN IF NOT EXISTS skip_reason VARCHAR(40);
+
+CREATE INDEX IF NOT EXISTS idx_product_reco_mail_subscriptions_active
+    ON product_recommendation_mail_subscriptions (active);
+
+CREATE INDEX IF NOT EXISTS idx_mail_send_logs_created
+    ON mail_send_logs (created_at);
+
+CREATE INDEX IF NOT EXISTS idx_mail_send_logs_kind_created
+    ON mail_send_logs (mail_kind, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_mail_send_logs_dispatch
+    ON mail_send_logs (dispatch_id);
+
 CREATE INDEX IF NOT EXISTS idx_event_master_normalized_title
     ON event_master (normalized_title);
 
@@ -690,3 +712,387 @@ ALTER TABLE users ADD CONSTRAINT chk_users_role CHECK (role IN ('USER', 'ADMIN',
 
 CREATE INDEX IF NOT EXISTS idx_ops_change_request_status
     ON ops_change_request (status);
+
+-- =============================================================================
+-- GLOW 지역사회, 콘텐츠 댓글, 최근 본 콘텐츠 조회 인덱스
+-- -----
+-- 목적
+-- - 최신순, 내 글, 신고순 목록과 대상별 댓글, 나의 리뷰, 최근 본 콘텐츠 조회
+-- 대상
+-- - 포스트그레스 / glow_community_posts, glow_community_likes, content_comments, user_content_views
+-- 연관
+-- - GlowCommunityPostJpaRepository, ContentCommentJpaRepository, UserContentViewJpaRepository
+-- =============================================================================
+
+CREATE INDEX IF NOT EXISTS idx_glow_community_posts_created
+    ON glow_community_posts (created_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_glow_community_posts_user_created
+    ON glow_community_posts (user_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_glow_community_posts_tag_created
+    ON glow_community_posts (tag, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_glow_community_posts_last_reported
+    ON glow_community_posts (last_reported_at);
+
+CREATE INDEX IF NOT EXISTS idx_glow_community_likes_user
+    ON glow_community_likes (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_content_comments_target_created
+    ON content_comments (target_type, target_key, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_content_comments_root
+    ON content_comments (root_id);
+
+CREATE INDEX IF NOT EXISTS idx_content_comments_user_created
+    ON content_comments (user_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_user_content_views_user_viewed
+    ON user_content_views (user_id, viewed_at);
+
+-- =============================================================================
+-- webzine 이름을 idolglow 로 바꾼다
+-- -----
+-- 목적
+-- - 기존 디비의 webzine 테이블, 시퀀스, 인덱스, 제약 이름을 idolglow 로 바꾼다
+-- - 저장된 WEBZINE 코드값과 webzine/ 업로드 경로를 idolglow 로 바꾼다
+-- 대상
+-- - ps
+-- 주의
+-- - 새 데이터베이스는 ps2 가 idolglow 이름으로 만들기 때문에 이름 변경은 건너뛴다
+-- - 이미 반영된 데이터베이스에는 이 묶음만 따로 한 번 실행한다
+-- - MinIO 의 webzine/ 객체도 idolglow/ 로 옮겨야 한다
+-- 연관
+-- - IdolGlowIssue, IdolGlowArticle, MailSendKind, SubscriptionContentType, RagSourceType
+-- =============================================================================
+
+ALTER TABLE IF EXISTS webzine_issues RENAME TO idolglow_issues;
+
+ALTER TABLE IF EXISTS webzine_articles RENAME TO idolglow_articles;
+
+ALTER TABLE IF EXISTS webzine_article_sections RENAME TO idolglow_article_sections;
+
+ALTER TABLE IF EXISTS webzine_article_gallery_images RENAME TO idolglow_article_gallery_images;
+
+ALTER TABLE IF EXISTS webzine_article_tags RENAME TO idolglow_article_tags;
+
+ALTER SEQUENCE IF EXISTS webzine_issues_id_seq RENAME TO idolglow_issues_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_articles_id_seq RENAME TO idolglow_articles_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_article_sections_id_seq RENAME TO idolglow_article_sections_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_article_gallery_images_id_seq RENAME TO idolglow_article_gallery_images_id_seq;
+
+ALTER SEQUENCE IF EXISTS webzine_article_tags_id_seq RENAME TO idolglow_article_tags_id_seq;
+
+ALTER INDEX IF EXISTS webzine_issues_pkey RENAME TO idolglow_issues_pkey;
+
+ALTER INDEX IF EXISTS webzine_articles_pkey RENAME TO idolglow_articles_pkey;
+
+ALTER INDEX IF EXISTS webzine_article_sections_pkey RENAME TO idolglow_article_sections_pkey;
+
+ALTER INDEX IF EXISTS webzine_article_gallery_images_pkey RENAME TO idolglow_article_gallery_images_pkey;
+
+ALTER INDEX IF EXISTS webzine_article_tags_pkey RENAME TO idolglow_article_tags_pkey;
+
+ALTER INDEX IF EXISTS uk_webzine_issue_slug RENAME TO uk_idolglow_issue_slug;
+
+ALTER INDEX IF EXISTS uk_webzine_issue_volume RENAME TO uk_idolglow_issue_volume;
+
+ALTER INDEX IF EXISTS uk_webzine_article_issue_slug RENAME TO uk_idolglow_article_issue_slug;
+
+ALTER INDEX IF EXISTS uk_webzine_article_section_order RENAME TO uk_idolglow_article_section_order;
+
+ALTER INDEX IF EXISTS uk_webzine_article_gallery_order RENAME TO uk_idolglow_article_gallery_order;
+
+ALTER INDEX IF EXISTS uk_webzine_article_tag_name RENAME TO uk_idolglow_article_tag_name;
+
+ALTER INDEX IF EXISTS idx_webzine_articles_issue_id RENAME TO idx_idolglow_articles_issue_id;
+
+-- 외래 키처럼 인덱스가 없는 제약은 이름에 webzine 이 남은 것만 골라 바꾼다
+DO $$
+DECLARE
+    item record;
+BEGIN
+    FOR item IN
+        SELECT c.conrelid::regclass AS table_name, c.conname
+        FROM pg_constraint c
+        JOIN pg_namespace n ON n.oid = c.connamespace
+        WHERE n.nspname = current_schema()
+          AND c.conname LIKE 'webzine\_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %s RENAME CONSTRAINT %I TO %I',
+            item.table_name,
+            item.conname,
+            'idolglow_' || substr(item.conname, 9)
+        );
+    END LOOP;
+END $$;
+
+ALTER TABLE mail_send_logs DROP CONSTRAINT IF EXISTS chk_mail_send_logs_kind;
+
+UPDATE mail_send_logs SET mail_kind = 'IDOLGLOW' WHERE mail_kind = 'WEBZINE';
+
+ALTER TABLE mail_send_logs
+    ADD CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'IDOLGLOW', 'UNSUBSCRIBE_CONFIRM',
+        'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
+    ));
+
+UPDATE subscription_dispatch_histories SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+UPDATE subscription_dispatch_schedules SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+UPDATE admin_audit_logs
+SET action_code = 'IDOLGLOW_' || substr(action_code, 9)
+WHERE action_code LIKE 'WEBZINE\_%';
+
+UPDATE admin_audit_logs
+SET target_type = 'IDOLGLOW_' || substr(target_type, 9)
+WHERE target_type LIKE 'WEBZINE\_%';
+
+UPDATE admin_audit_logs
+SET detail = replace(detail, 'objectKey=webzine/', 'objectKey=idolglow/')
+WHERE detail LIKE '%objectKey=webzine/%';
+
+UPDATE idolglow_articles
+SET author_email = 'idolglow@idolglow.local'
+WHERE author_email = 'webzine@idolglow.local';
+
+-- 업로드 URL 은 MinIO 공개 주소 뒤나 /uploads/ 뒤에 webzine/ 객체 키가 붙어 있다
+UPDATE idolglow_issues
+SET cover_image_url = replace(cover_image_url, '/webzine/', '/idolglow/')
+WHERE cover_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET hero_image_url = replace(hero_image_url, '/webzine/', '/idolglow/')
+WHERE hero_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET card_image_url = replace(card_image_url, '/webzine/', '/idolglow/')
+WHERE card_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_article_gallery_images
+SET image_url = replace(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE newsletters
+SET image_url = replace(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET thumbnail_image_url = replace(thumbnail_image_url, '/webzine/', '/idolglow/')
+WHERE thumbnail_image_url LIKE '%/webzine/%';
+
+UPDATE user_content_views
+SET image_url = replace(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE tb_banner
+SET banner_image = replace(banner_image, '/webzine/', '/idolglow/')
+WHERE banner_image LIKE '%/webzine/%';
+
+UPDATE tb_main_image
+SET image = replace(image, '/webzine/', '/idolglow/')
+WHERE image LIKE '%/webzine/%';
+
+UPDATE tb_popup_manage
+SET popup_img_path = replace(popup_img_path, '/webzine/', '/idolglow/')
+WHERE popup_img_path LIKE '%/webzine/%';
+
+UPDATE editor_assets
+SET object_key = 'idolglow/' || substr(object_key, 9)
+WHERE object_key LIKE 'webzine/%';
+
+-- 본문은 업로드 파일 이름 규칙 폴더/UUID.확장자 에 맞는 경로만 바꾼다
+UPDATE idolglow_article_sections
+SET body = regexp_replace(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE newsletter_paragraphs
+SET body = regexp_replace(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET markdown = regexp_replace(
+    markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE markdown LIKE '%/webzine/%';
+
+UPDATE glow_community_posts
+SET content_markdown = regexp_replace(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+UPDATE content_comments
+SET content_markdown = regexp_replace(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/\1',
+    'g'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+-- rag_chunks 는 ps7 에서 만들기 때문에 새 데이터베이스에서는 건너뛴다
+DO $$
+BEGIN
+    IF to_regclass('rag_chunks') IS NOT NULL THEN
+        UPDATE rag_chunks
+        SET source_type = 'IDOLGLOW_' || substr(source_type, 9)
+        WHERE source_type LIKE 'WEBZINE\_%';
+
+        UPDATE rag_chunks
+        SET link_key = 'idolglow/' || substr(link_key, 9)
+        WHERE link_key LIKE 'webzine/%';
+
+        COMMENT ON COLUMN rag_chunks.source_type IS '출처 종류. IDOLGLOW_ARTICLE, IDOLGLOW_SECTION, PRODUCT, OPTION';
+    END IF;
+END $$;
+
+COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+
+COMMENT ON COLUMN subscription_dispatch_histories.content_type IS '콘텐츠 유형. 예: NEWSLETTER, IDOLGLOW_ISSUE';
+
+COMMENT ON COLUMN admin_audit_logs.target_type IS '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
+
+-- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+UPDATE event_source_ref
+SET global_id = NULL
+WHERE match_status = 'CANDIDATE'
+  AND global_id IS NOT NULL;
+
+-- 콘텐츠 번역 처리 대기열 조회
+CREATE INDEX IF NOT EXISTS idx_content_translation_due ON content_translation (status, next_attempt_at);
+
+-- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+CREATE INDEX IF NOT EXISTS idx_event_master_updated_global ON event_master (updated_at, global_id);
+
+-- 파트너별 최근 호출 조회
+CREATE INDEX IF NOT EXISTS idx_partner_call_log_partner_called ON partner_call_log (partner_id, called_at);
+
+-- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
+UPDATE event_master
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    updated_at = current_timestamp
+WHERE title ~ '&([a-zA-Z]+|#[0-9]+);'
+   OR venue ~ '&([a-zA-Z]+|#[0-9]+);';
+
+UPDATE event_source_ref
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&')
+WHERE title ~ '&([a-zA-Z]+|#[0-9]+);'
+   OR venue ~ '&([a-zA-Z]+|#[0-9]+);';
+
+-- 중계가 아직 안 보낸 outbox 행을 순서대로 읽고, 보낸 지 오래된 행을 정리한다
+CREATE INDEX IF NOT EXISTS idx_event_outbox_unsent ON event_outbox (sent_at, id);
+
+-- 공연이 바뀌면 관심 등록한 사용자를 찾는다
+CREATE INDEX IF NOT EXISTS idx_event_interest_global ON event_interest (global_id);
+
+-- 아직 다시 처리하지 않은 실패 메시지를 최근 순으로 본다
+CREATE INDEX IF NOT EXISTS idx_event_meta_dead_letter_pending ON event_meta_dead_letter (reprocessed_at, id);
+
+-- 관심 공연 변경 알림 타입 추가
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CONSTRAINT IF EXISTS chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED'
+    )
+);
+
+-- 소비자 처리 결과를 남겨 버린 이벤트 건수를 SQL로 집계한다
+ALTER TABLE consumed_event ADD COLUMN IF NOT EXISTS result varchar(20);
+
+-- =============================================================================
+-- 서비스를 멈추지 않고 수집 시각 칸 바꾸기 1단계: 새 칸 추가
+-- -----
+-- 목적
+-- - 지금 수집 시각 칸 collected_at에는 몇 시인지만 있고 어느 나라 시간인지는 없다
+-- - 그래서 2026-11-19에 서버를 띄운 방법에 따라 시각이 9시간씩 다르게 저장됐다
+-- - 어느 나라 시간인지까지 함께 저장하는 새 칸 collected_at_tz를 옆에 만들고, 옛 칸은 그대로 둔다
+-- 대상
+-- - 포스트그레스 / event_collect_log 표
+-- 주의
+-- - 빈 칸으로 추가하면 표에 있는 기존 기록을 하나도 다시 쓰지 않아서, 기록이 많아도 바로 끝난다
+-- - 칸을 추가하는 아주 짧은 순간에는 다른 작업이 이 표를 쓰지 못하게 막아야 한다
+-- - 다른 작업이 이 표를 오래 붙잡고 있으면 그 뒤의 조회까지 줄줄이 기다리게 되므로, 5초를 기다려도 차례가 안 오면 포기하고 나중에 다시 실행한다
+-- - 지금 돌고 있는 서버는 이 새 칸을 몰라도 아무 문제 없이 그대로 동작한다
+-- - 서버가 새 칸에도 시각을 적기 시작하는 것은 2단계다
+-- 연관
+-- - EventCollectLog, ZeroDowntimeExpandMigrationTest
+-- =============================================================================
+-- 무중단 전환 1단계 시작
+SET lock_timeout = '5s';
+
+ALTER TABLE event_collect_log ADD COLUMN IF NOT EXISTS collected_at_tz timestamptz(6);
+
+RESET lock_timeout;
+-- 무중단 전환 1단계 끝
+
+-- 공연 하나에 붙은 외부 번호를 빨리 찾는다
+CREATE INDEX IF NOT EXISTS idx_event_external_id_global ON event_external_id (global_id);
+
+-- 공연 회차를 만들려고 공급처 원본에 공연 시간 안내 문장과 마지막으로 읽은 상태를 적는다
+ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS schedule_guidance varchar(500);
+
+ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS schedule_hash varchar(64);
+
+ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS session_horizon date;
+
+-- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
+CREATE INDEX IF NOT EXISTS idx_event_session_starts ON event_session (starts_at);

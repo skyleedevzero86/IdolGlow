@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.survey.application.dto
 
+import com.sleekydz86.idolglow.survey.domain.RecommendationSignalType
 import com.sleekydz86.idolglow.survey.domain.SurveyFormPrimaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormSecondaryCategory
 import com.sleekydz86.idolglow.survey.domain.SurveyFormStatus
@@ -22,6 +23,7 @@ data class UpsertSurveyQuestionCommand(
     val type: SurveyQuestionType,
     val required: Boolean,
     val options: List<String>,
+    val recommendationSignal: RecommendationSignalType? = null,
 )
 
 data class SubmitSurveyResponseCommand(

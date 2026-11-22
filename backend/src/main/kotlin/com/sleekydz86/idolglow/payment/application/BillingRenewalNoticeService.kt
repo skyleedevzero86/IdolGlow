@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.payment.domain.BillingCycle
 import com.sleekydz86.idolglow.payment.domain.RenewalDecision
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -102,6 +103,7 @@ class BillingRenewalNoticeService(
                     subject = subject,
                     plainTextBody = plainText,
                     htmlBody = htmlBody,
+                    kind = MailSendKind.PAYMENT,
                 ),
             )
             true

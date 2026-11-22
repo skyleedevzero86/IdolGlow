@@ -4,5 +4,6 @@ enum class SubscriptionAudience(
     val label: String,
 ) {
     NEWSLETTER("소식지"),
-    WEBZINE_ISSUE("호별보기"),
+    IDOLGLOW_ISSUE("호별보기"),
+    PRODUCT_RECOMMENDATION("상품 추천"),
 }

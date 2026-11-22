@@ -30,4 +30,15 @@ class AsyncConfig {
         executor.initialize()
         return executor
     }
+
+    @Bean(name = ["surveyLlmExecutor"])
+    fun surveyLlmExecutor(): Executor {
+        val executor = ThreadPoolTaskExecutor()
+        executor.corePoolSize = 1
+        executor.maxPoolSize = 1
+        executor.queueCapacity = 50
+        executor.setThreadNamePrefix("survey-llm-")
+        executor.initialize()
+        return executor
+    }
 }

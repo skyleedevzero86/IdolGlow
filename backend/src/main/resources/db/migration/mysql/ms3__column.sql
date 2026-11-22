@@ -241,7 +241,13 @@ ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
         'PAYMENT_FAILED',
         'PAYMENT_EXPIRED',
         'RESERVATION_SLOT_AVAILABLE',
-        'RESERVATION_EXPIRING_SOON'
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE'
     )
 );
 
@@ -263,7 +269,7 @@ ALTER TABLE product_review_reports
         COMMENT '레코드 마지막 수정 시각 감사·낙관적 락 등 공통 엔티티 필드';
 
 -- 이슈별 기사 목록 조회
-create index idx_webzine_articles_issue_id on webzine_articles(issue_id);
+create index idx_idolglow_articles_issue_id on idolglow_articles(issue_id);
 
 create index idx_newsletters_published_at on newsletters(published_at);
 
@@ -404,6 +410,7 @@ ALTER TABLE survey_question
     MODIFY COLUMN description TEXT NULL COMMENT '문항 부가 설명',
     MODIFY COLUMN question_type VARCHAR(30) NOT NULL COMMENT '문항 타입 TEXT/SINGLE_CHOICE/MULTIPLE_CHOICE',
     MODIFY COLUMN required BOOLEAN NOT NULL DEFAULT FALSE COMMENT '필수 응답 여부',
+    MODIFY COLUMN recommendation_signal VARCHAR(20) NULL COMMENT '추천 신호 종류 CONCEPT/IDOL/PLACE/TAG. NULL이면 추천에 쓰지 않음',
     MODIFY COLUMN created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
     MODIFY COLUMN updated_at DATETIME(6) NOT NULL COMMENT '수정 시각';
 
@@ -543,7 +550,7 @@ ALTER TABLE toss_billing_methods
 SET @add_hash := (
     SELECT IF(
         COUNT(*) = 0,
-        'ALTER TABLE toss_billing_methods ADD COLUMN billing_key_hash VARCHAR 64 NULL COMMENT ''빌링키 평문 해시. 암호문이 매번 달라도 동일 키 중복 등록 방지''',
+        'ALTER TABLE toss_billing_methods ADD COLUMN billing_key_hash VARCHAR(64) NULL COMMENT ''빌링키 평문 해시. 암호문이 매번 달라도 동일 키 중복 등록 방지''',
         'SELECT 1'
     )
     FROM information_schema.columns
@@ -819,6 +826,25 @@ CREATE INDEX idx_subscription_dispatch_histories_sending
 CREATE INDEX idx_subscription_dispatch_recipients_dispatch
     ON subscription_dispatch_recipients (dispatch_id);
 
+-- 상품 추천 메일에서 보낼 상품이 없어 건너뛴 수신자의 이유를 남긴다. 기존 행은 비어 있다.
+ALTER TABLE subscription_dispatch_recipients
+    ADD COLUMN skip_reason VARCHAR(40) NULL COMMENT '건너뛴 이유. NO_PRODUCTS 보낼 상품 없음';
+
+ALTER TABLE subscription_dispatch_recipients
+    MODIFY COLUMN status VARCHAR(20) NOT NULL COMMENT '수신자 상태. SENT, FAILED, SKIPPED';
+
+CREATE INDEX idx_product_reco_mail_subscriptions_active
+    ON product_recommendation_mail_subscriptions (active);
+
+CREATE INDEX idx_mail_send_logs_created
+    ON mail_send_logs (created_at);
+
+CREATE INDEX idx_mail_send_logs_kind_created
+    ON mail_send_logs (mail_kind, created_at);
+
+CREATE INDEX idx_mail_send_logs_dispatch
+    ON mail_send_logs (dispatch_id);
+
 CREATE INDEX idx_event_master_normalized_title
     ON event_master (normalized_title);
 
@@ -848,3 +874,628 @@ ALTER TABLE users MODIFY COLUMN role VARCHAR(255) NOT NULL COMMENT '권한 역�
 
 CREATE INDEX idx_ops_change_request_status
     ON ops_change_request (status);
+
+-- =============================================================================
+-- GLOW 지역사회, 콘텐츠 댓글, 최근 본 콘텐츠 조회 인덱스
+-- -----
+-- 목적
+-- - 최신순, 내 글, 신고순 목록과 대상별 댓글, 나의 리뷰, 최근 본 콘텐츠 조회
+-- 대상
+-- - 마이에스큐엘 / glow_community_posts, glow_community_likes, content_comments, user_content_views
+-- 연관
+-- - GlowCommunityPostJpaRepository, ContentCommentJpaRepository, UserContentViewJpaRepository
+-- =============================================================================
+
+CREATE INDEX idx_glow_community_posts_created
+    ON glow_community_posts (created_at, id);
+
+CREATE INDEX idx_glow_community_posts_user_created
+    ON glow_community_posts (user_id, created_at);
+
+CREATE INDEX idx_glow_community_posts_tag_created
+    ON glow_community_posts (tag, created_at);
+
+CREATE INDEX idx_glow_community_posts_last_reported
+    ON glow_community_posts (last_reported_at);
+
+CREATE INDEX idx_glow_community_likes_user
+    ON glow_community_likes (user_id);
+
+CREATE INDEX idx_content_comments_target_created
+    ON content_comments (target_type, target_key, created_at);
+
+CREATE INDEX idx_content_comments_root
+    ON content_comments (root_id);
+
+CREATE INDEX idx_content_comments_user_created
+    ON content_comments (user_id, created_at);
+
+CREATE INDEX idx_user_content_views_user_viewed
+    ON user_content_views (user_id, viewed_at);
+
+-- =============================================================================
+-- webzine 이름을 idolglow 로 바꾼다
+-- -----
+-- 목적
+-- - 기존 디비의 webzine 테이블, 인덱스, 외래 키 이름을 idolglow 로 바꾼다
+-- - 저장된 WEBZINE 코드값과 webzine/ 업로드 경로를 idolglow 로 바꾼다
+-- 대상
+-- - ms
+-- 주의
+-- - 새 데이터베이스는 ms2 가 idolglow 이름으로 만들기 때문에 이름 변경은 건너뛴다
+-- - 이미 반영된 데이터베이스에는 이 묶음만 따로 한 번 실행한다
+-- - 마이에스큐엘은 RENAME TABLE IF EXISTS 가 없어서 information_schema 로 확인한 뒤 실행한다
+-- - MinIO 의 webzine/ 객체도 idolglow/ 로 옮겨야 한다
+-- 연관
+-- - IdolGlowIssue, IdolGlowArticle, MailSendKind, SubscriptionContentType, RagSourceType
+-- =============================================================================
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_issues TO idolglow_issues',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_issues'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_articles TO idolglow_articles',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_articles'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_article_sections TO idolglow_article_sections',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_article_sections'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_article_gallery_images TO idolglow_article_gallery_images',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_article_gallery_images'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'RENAME TABLE webzine_article_tags TO idolglow_article_tags',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'webzine_article_tags'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_issues RENAME INDEX uk_webzine_issue_slug TO uk_idolglow_issue_slug, RENAME INDEX uk_webzine_issue_volume TO uk_idolglow_issue_volume',
+        'SELECT 1'
+    )
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_issues'
+      AND index_name = 'uk_webzine_issue_slug'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+-- 외래 키는 이름만 바꿀 수 없어서 지우고 같은 정의로 다시 만든다
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_articles RENAME INDEX uk_webzine_article_issue_slug TO uk_idolglow_article_issue_slug, RENAME INDEX idx_webzine_articles_issue_id TO idx_idolglow_articles_issue_id, DROP FOREIGN KEY fk_webzine_articles_issue, ADD CONSTRAINT fk_idolglow_articles_issue FOREIGN KEY (issue_id) REFERENCES idolglow_issues (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_articles'
+      AND constraint_name = 'fk_webzine_articles_issue'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_article_sections RENAME INDEX uk_webzine_article_section_order TO uk_idolglow_article_section_order, DROP FOREIGN KEY fk_webzine_article_sections_article, ADD CONSTRAINT fk_idolglow_article_sections_article FOREIGN KEY (article_id) REFERENCES idolglow_articles (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_article_sections'
+      AND constraint_name = 'fk_webzine_article_sections_article'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_article_gallery_images RENAME INDEX uk_webzine_article_gallery_order TO uk_idolglow_article_gallery_order, DROP FOREIGN KEY fk_webzine_article_gallery_article, ADD CONSTRAINT fk_idolglow_article_gallery_article FOREIGN KEY (article_id) REFERENCES idolglow_articles (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_article_gallery_images'
+      AND constraint_name = 'fk_webzine_article_gallery_article'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE idolglow_article_tags RENAME INDEX uk_webzine_article_tag_name TO uk_idolglow_article_tag_name, DROP FOREIGN KEY fk_webzine_article_tags_article, ADD CONSTRAINT fk_idolglow_article_tags_article FOREIGN KEY (article_id) REFERENCES idolglow_articles (id) ON DELETE CASCADE',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'idolglow_article_tags'
+      AND constraint_name = 'fk_webzine_article_tags_article'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+ALTER TABLE idolglow_articles
+    MODIFY COLUMN issue_id BIGINT NOT NULL COMMENT 'FK → idolglow_issues.id';
+
+ALTER TABLE idolglow_article_sections
+    MODIFY COLUMN article_id BIGINT NOT NULL COMMENT 'FK → idolglow_articles.id';
+
+ALTER TABLE idolglow_article_gallery_images
+    MODIFY COLUMN article_id BIGINT NOT NULL COMMENT 'FK → idolglow_articles.id';
+
+ALTER TABLE idolglow_article_tags
+    MODIFY COLUMN article_id BIGINT NOT NULL COMMENT 'FK → idolglow_articles.id';
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE mail_send_logs DROP CHECK chk_mail_send_logs_kind',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'mail_send_logs'
+      AND constraint_name = 'chk_mail_send_logs_kind'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+UPDATE mail_send_logs SET mail_kind = 'IDOLGLOW' WHERE mail_kind = 'WEBZINE';
+
+ALTER TABLE mail_send_logs
+    MODIFY COLUMN mail_kind VARCHAR(40) NOT NULL
+        COMMENT '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+
+ALTER TABLE mail_send_logs
+    ADD CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'IDOLGLOW', 'UNSUBSCRIBE_CONFIRM',
+        'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
+    ));
+
+UPDATE subscription_dispatch_histories SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+ALTER TABLE subscription_dispatch_histories
+    MODIFY COLUMN content_type VARCHAR(40) NOT NULL
+        COMMENT '콘텐츠 유형 코드. NEWSLETTER, IDOLGLOW 등 서비스에서 정의한 값.';
+
+UPDATE subscription_dispatch_schedules SET content_type = 'IDOLGLOW_ISSUE' WHERE content_type = 'WEBZINE_ISSUE';
+
+UPDATE admin_audit_logs
+SET action_code = CONCAT('IDOLGLOW_', SUBSTRING(action_code, 9))
+WHERE LEFT(action_code, 8) = 'WEBZINE_';
+
+UPDATE admin_audit_logs
+SET target_type = CONCAT('IDOLGLOW_', SUBSTRING(target_type, 9))
+WHERE LEFT(target_type, 8) = 'WEBZINE_';
+
+UPDATE admin_audit_logs
+SET detail = REPLACE(detail, 'objectKey=webzine/', 'objectKey=idolglow/')
+WHERE detail LIKE '%objectKey=webzine/%';
+
+UPDATE idolglow_articles
+SET author_email = 'idolglow@idolglow.local'
+WHERE author_email = 'webzine@idolglow.local';
+
+-- 업로드 URL 은 MinIO 공개 주소 뒤나 /uploads/ 뒤에 webzine/ 객체 키가 붙어 있다
+UPDATE idolglow_issues
+SET cover_image_url = REPLACE(cover_image_url, '/webzine/', '/idolglow/')
+WHERE cover_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET hero_image_url = REPLACE(hero_image_url, '/webzine/', '/idolglow/')
+WHERE hero_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_articles
+SET card_image_url = REPLACE(card_image_url, '/webzine/', '/idolglow/')
+WHERE card_image_url LIKE '%/webzine/%';
+
+UPDATE idolglow_article_gallery_images
+SET image_url = REPLACE(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE newsletters
+SET image_url = REPLACE(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET thumbnail_image_url = REPLACE(thumbnail_image_url, '/webzine/', '/idolglow/')
+WHERE thumbnail_image_url LIKE '%/webzine/%';
+
+UPDATE user_content_views
+SET image_url = REPLACE(image_url, '/webzine/', '/idolglow/')
+WHERE image_url LIKE '%/webzine/%';
+
+UPDATE tb_banner
+SET banner_image = REPLACE(banner_image, '/webzine/', '/idolglow/')
+WHERE banner_image LIKE '%/webzine/%';
+
+UPDATE tb_main_image
+SET image = REPLACE(image, '/webzine/', '/idolglow/')
+WHERE image LIKE '%/webzine/%';
+
+UPDATE tb_popup_manage
+SET popup_img_path = REPLACE(popup_img_path, '/webzine/', '/idolglow/')
+WHERE popup_img_path LIKE '%/webzine/%';
+
+UPDATE editor_assets
+SET object_key = CONCAT('idolglow/', SUBSTRING(object_key, 9))
+WHERE LEFT(object_key, 8) = 'webzine/';
+
+-- 본문은 업로드 파일 이름 규칙 폴더/UUID.확장자 에 맞는 경로만 바꾼다
+UPDATE idolglow_article_sections
+SET body = REGEXP_REPLACE(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE newsletter_paragraphs
+SET body = REGEXP_REPLACE(
+    body,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE body LIKE '%/webzine/%';
+
+UPDATE editor_documents
+SET markdown = REGEXP_REPLACE(
+    markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE markdown LIKE '%/webzine/%';
+
+UPDATE glow_community_posts
+SET content_markdown = REGEXP_REPLACE(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+UPDATE content_comments
+SET content_markdown = REGEXP_REPLACE(
+    content_markdown,
+    '/webzine/(([a-z0-9_-]+/)*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|gif))',
+    '/idolglow/$1'
+)
+WHERE content_markdown LIKE '%/webzine/%';
+
+-- rag_chunks 는 ms7 에서 만들기 때문에 새 데이터베이스에서는 건너뛴다
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'UPDATE rag_chunks SET source_type = CONCAT(''IDOLGLOW_'', SUBSTRING(source_type, 9)), link_key = IF(LEFT(link_key, 8) = ''webzine/'', CONCAT(''idolglow/'', SUBSTRING(link_key, 9)), link_key) WHERE LEFT(source_type, 8) = ''WEBZINE_''',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'rag_chunks'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+SET @idolglow_sql := (
+    SELECT IF(
+        COUNT(*) > 0,
+        'ALTER TABLE rag_chunks MODIFY COLUMN source_type VARCHAR(32) NOT NULL COMMENT ''출처 종류. IDOLGLOW_ARTICLE, IDOLGLOW_SECTION, PRODUCT, OPTION''',
+        'SELECT 1'
+    )
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name = 'rag_chunks'
+);
+
+PREPARE idolglow_stmt FROM @idolglow_sql;
+
+EXECUTE idolglow_stmt;
+
+DEALLOCATE PREPARE idolglow_stmt;
+
+-- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+UPDATE event_source_ref
+SET global_id = NULL
+WHERE match_status = 'CANDIDATE'
+  AND global_id IS NOT NULL;
+
+-- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+CREATE INDEX idx_event_master_updated_global
+    ON event_master (updated_at, global_id);
+
+-- 파트너별 최근 호출 조회
+CREATE INDEX idx_partner_call_log_partner_called
+    ON partner_call_log (partner_id, called_at);
+
+-- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
+UPDATE event_master
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    updated_at = current_timestamp
+WHERE title REGEXP '&([a-zA-Z]+|#[0-9]+);'
+   OR venue REGEXP '&([a-zA-Z]+|#[0-9]+);';
+
+UPDATE event_source_ref
+SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
+    venue = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(venue, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&')
+WHERE title REGEXP '&([a-zA-Z]+|#[0-9]+);'
+   OR venue REGEXP '&([a-zA-Z]+|#[0-9]+);';
+
+-- 중계가 아직 안 보낸 outbox 행을 순서대로 읽고, 보낸 지 오래된 행을 정리한다
+CREATE INDEX idx_event_outbox_unsent
+    ON event_outbox (sent_at, id);
+
+-- 공연이 바뀌면 관심 등록한 사용자를 찾는다
+CREATE INDEX idx_event_interest_global
+    ON event_interest (global_id);
+
+-- 아직 다시 처리하지 않은 실패 메시지를 최근 순으로 본다
+CREATE INDEX idx_event_meta_dead_letter_pending
+    ON event_meta_dead_letter (reprocessed_at, id);
+
+-- 관심 공연 변경 알림 타입 추가
+ALTER TABLE notifications DROP CHECK chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CHECK chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED'
+    )
+);
+
+-- 소비자 처리 결과를 남겨 버린 이벤트 건수를 SQL로 집계한다
+SET @add_consumed_result := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE consumed_event ADD COLUMN result VARCHAR(20) NULL COMMENT ''처리 결과. APPLIED, STALE, IGNORED''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'consumed_event'
+      AND column_name = 'result'
+);
+
+PREPARE consumed_result_stmt FROM @add_consumed_result;
+
+EXECUTE consumed_result_stmt;
+
+DEALLOCATE PREPARE consumed_result_stmt;
+
+-- =============================================================================
+-- 서비스를 멈추지 않고 수집 시각 칸 바꾸기 1단계: 새 칸 추가
+-- -----
+-- 목적
+-- - 지금 수집 시각 칸 collected_at에는 몇 시인지만 있고 어느 나라 시간인지는 없다
+-- - 그래서 2026-11-19에 서버를 띄운 방법에 따라 시각이 9시간씩 다르게 저장됐다
+-- - 세계 표준시로 바꿔 저장하는 새 칸 collected_at_tz를 옆에 만들고, 옛 칸은 그대로 둔다
+-- 대상
+-- - 마이에스큐엘 / event_collect_log 표
+-- 주의
+-- - 표 전체를 복사하지 않고 칸 정보만 바꾸는 방식으로 추가한다
+-- - 그 방식이 안 되는 상황이면 표 복사로 넘어가지 않고 그냥 실패한다
+-- - 다른 작업이 이 표를 붙잡고 있으면 5초까지만 기다린다
+-- - 이 칸 종류는 2038년 1월 19일까지의 시각만 담을 수 있다. 수집 기록에는 충분하다
+-- - 지금 돌고 있는 서버는 이 새 칸을 몰라도 아무 문제 없이 그대로 동작한다
+-- - 서버가 새 칸에도 시각을 적기 시작하는 것은 2단계다
+-- 연관
+-- - EventCollectLog, ZeroDowntimeExpandMigrationTest
+-- =============================================================================
+-- 무중단 전환 1단계 시작
+SET SESSION lock_wait_timeout = 5;
+
+SET @add_collected_at_tz := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_collect_log ADD COLUMN collected_at_tz TIMESTAMP(6) NULL COMMENT ''수집 시각을 세계 표준시로 바꿔 저장하는 칸. 2단계부터 서버가 옛 칸과 함께 적고, 5단계에서 옛 칸 collected_at을 지운다'', ALGORITHM=INSTANT',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_collect_log'
+      AND column_name = 'collected_at_tz'
+);
+
+PREPARE collected_at_tz_stmt FROM @add_collected_at_tz;
+
+EXECUTE collected_at_tz_stmt;
+
+DEALLOCATE PREPARE collected_at_tz_stmt;
+
+SET SESSION lock_wait_timeout = DEFAULT;
+-- 무중단 전환 1단계 끝
+
+-- 공연 하나에 붙은 외부 번호를 빨리 찾는다
+CREATE INDEX idx_event_external_id_global
+    ON event_external_id (global_id);
+
+-- 공연 회차를 만들려고 공급처 원본에 공연 시간 안내 문장과 마지막으로 읽은 상태를 적는다
+SET @add_schedule_guidance := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN schedule_guidance VARCHAR(500) NULL COMMENT ''KOPIS 상세의 공연 시간 안내 문장''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'schedule_guidance'
+);
+
+PREPARE schedule_guidance_stmt FROM @add_schedule_guidance;
+
+EXECUTE schedule_guidance_stmt;
+
+DEALLOCATE PREPARE schedule_guidance_stmt;
+
+SET @add_schedule_hash := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN schedule_hash VARCHAR(64) NULL COMMENT ''공연 시간 안내를 읽을 때의 원본 내용 지문. 원본이 바뀌면 다시 읽는다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'schedule_hash'
+);
+
+PREPARE schedule_hash_stmt FROM @add_schedule_hash;
+
+EXECUTE schedule_hash_stmt;
+
+DEALLOCATE PREPARE schedule_hash_stmt;
+
+SET @add_session_horizon := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN session_horizon DATE NULL COMMENT ''회차를 어느 날짜까지 만들어 두었는지''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'session_horizon'
+);
+
+PREPARE session_horizon_stmt FROM @add_session_horizon;
+
+EXECUTE session_horizon_stmt;
+
+DEALLOCATE PREPARE session_horizon_stmt;
+
+-- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
+CREATE INDEX idx_event_session_starts
+    ON event_session (starts_at);

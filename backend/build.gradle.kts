@@ -36,6 +36,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aop:4.0.0-M2")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.4.0")
     implementation("org.springframework.boot:spring-boot-starter-graphql")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -62,6 +64,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-mysql")
+    testImplementation("org.testcontainers:testcontainers-kafka")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -85,6 +88,7 @@ dependencies {
 
     // webclient
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
     implementation("io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64")
 
     // QueryDsl
@@ -130,13 +134,15 @@ kapt {
 }
 
 tasks.withType<Test>().configureEach {
-    maxHeapSize = "2g"
+    maxHeapSize = providers.gradleProperty("testMaxHeap").getOrElse("2g")
     maxParallelForks = 1
-    jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED")
+    jvmArgs("-XX:MaxMetaspaceSize=512m", "--enable-native-access=ALL-UNNAMED", "-Duser.timezone=Asia/Seoul")
+    systemProperty("spring.test.context.cache.maxSize", "4")
     useJUnitPlatform {
         when (name) {
-            "test" -> excludeTags("eval")
+            "test" -> excludeTags("eval", "llm-eval")
             "groundedSearchEval" -> includeTags("eval")
+            "surveyLlmEval" -> includeTags("llm-eval")
         }
     }
 }
@@ -149,8 +155,18 @@ tasks.register<Test>("groundedSearchEval") {
     classpath = testSet.runtimeClasspath
 }
 
+tasks.register<Test>("surveyLlmEval") {
+    group = "verification"
+    description = "설문 추천 LLM 공급자별 품질 평가"
+    val testSet = sourceSets.getByName("test")
+    testClassesDirs = testSet.output.classesDirs
+    classpath = testSet.runtimeClasspath
+    outputs.upToDateWhen { false }
+    testLogging.showStandardStreams = true
+}
+
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    jvmArgs("--enable-native-access=ALL-UNNAMED", "-Duser.timezone=Asia/Seoul")
 }
 
 detekt {

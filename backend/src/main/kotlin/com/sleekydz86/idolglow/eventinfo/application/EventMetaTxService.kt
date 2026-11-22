@@ -9,6 +9,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventCollectStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchDecision
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.domain.EventPerformanceHasher
 import com.sleekydz86.idolglow.eventinfo.domain.EventPerformanceMatcher
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
@@ -23,6 +24,7 @@ class EventMetaTxService(
     private val eventMasterPort: EventMasterPort,
     private val eventSourceRefPort: EventSourceRefPort,
     private val eventCollectLogPort: EventCollectLogPort,
+    private val eventMetaOutboxRecorder: EventMetaOutboxRecorder,
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun upsert(item: CollectedPerformance) {
@@ -33,8 +35,10 @@ class EventMetaTxService(
         if (existing != null && existing.matchStatus == EventMatchStatus.CONFIRMED && existing.rawHash == hash) {
             return
         }
-        val decision = EventPerformanceMatcher.decide(item, eventMasterPort.findByNormalizedTitle(normalizedTitle))
-        val resolved = resolve(item, existing, decision)
+        val owned = soleConfirmedGlobalId(existing)
+        val others = eventMasterPort.findActiveByNormalizedTitle(normalizedTitle).filterNot { it.globalId == owned }
+        val decision = EventPerformanceMatcher.decide(item, others)
+        val resolved = resolve(item, owned, decision)
         val ref = existing ?: EventSourceRef.create(item.source, item.sourceId)
         ref.record(resolved.globalId, resolved.status, resolved.score, item, hash, LocalDateTime.now())
         eventSourceRefPort.save(ref)
@@ -60,27 +64,35 @@ class EventMetaTxService(
 
     private fun resolve(
         item: CollectedPerformance,
-        existing: EventSourceRef?,
+        owned: String?,
         decision: EventMatchDecision,
     ): ResolvedMatch =
-        when (decision) {
-            is EventMatchDecision.Attach -> ResolvedMatch(decision.globalId, decision.status, decision.score)
-            is EventMatchDecision.Hold -> ResolvedMatch(null, decision.status, decision.score)
-            EventMatchDecision.Fresh -> freshMaster(item, existing)
+        when {
+            decision is EventMatchDecision.Attach -> ResolvedMatch(decision.globalId, decision.status, decision.score)
+            owned != null -> keepOwned(item, owned)
+            decision is EventMatchDecision.Hold -> ResolvedMatch(null, decision.status, decision.score)
+            else -> confirmed(openMaster(item).globalId)
         }
 
-    private fun freshMaster(
-        item: CollectedPerformance,
-        existing: EventSourceRef?,
-    ): ResolvedMatch {
-        val ownedGlobalId = soleConfirmedGlobalId(existing)
-        if (ownedGlobalId != null) {
-            eventMasterPort.findByGlobalId(ownedGlobalId)?.refresh(item)
-            return ResolvedMatch(ownedGlobalId, EventMatchStatus.CONFIRMED, EventPerformanceMatcher.CONFIRMED_SCORE)
-        }
-        val created = eventMasterPort.save(EventMaster.open(item))
-        return ResolvedMatch(created.globalId, EventMatchStatus.CONFIRMED, EventPerformanceMatcher.CONFIRMED_SCORE)
+    private fun openMaster(item: CollectedPerformance): EventMaster {
+        val master = eventMasterPort.save(EventMaster.open(item))
+        eventMetaOutboxRecorder.record(master, EventMetaChangeType.CREATED, emptySet())
+        return master
     }
+
+    private fun keepOwned(
+        item: CollectedPerformance,
+        owned: String,
+    ): ResolvedMatch {
+        eventMasterPort.findByGlobalId(owned)?.let { master ->
+            val changed = master.refresh(item)
+            if (changed.isNotEmpty()) eventMetaOutboxRecorder.record(master, EventMetaChangeType.UPDATED, changed)
+        }
+        return confirmed(owned)
+    }
+
+    private fun confirmed(globalId: String): ResolvedMatch =
+        ResolvedMatch(globalId, EventMatchStatus.CONFIRMED, EventPerformanceMatcher.CONFIRMED_SCORE)
 
     private fun soleConfirmedGlobalId(existing: EventSourceRef?): String? {
         val globalId = existing?.takeIf { it.matchStatus == EventMatchStatus.CONFIRMED }?.globalId

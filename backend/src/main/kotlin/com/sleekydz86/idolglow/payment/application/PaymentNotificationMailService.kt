@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.global.config.AppMailProperties
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -78,6 +79,7 @@ class PaymentNotificationMailService(
                 subject = subject,
                 plainTextBody = plainText,
                 htmlBody = htmlBody,
+                kind = MailSendKind.PAYMENT,
             )
         runAfterCommit {
             runCatching { outboundMailPort.send(message) }

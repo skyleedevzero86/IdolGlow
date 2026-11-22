@@ -36,7 +36,7 @@ class MinioBucketInitializer(
         }
         if (
             !minioStorageProperties.publicReadProfileObjects &&
-            !minioStorageProperties.publicReadWebzineObjects
+            !minioStorageProperties.publicReadIdolGlowObjects
         ) {
             return
         }
@@ -45,7 +45,7 @@ class MinioBucketInitializer(
                 publicReadPolicyJson(
                     bucket = bucket,
                     allowProfiles = minioStorageProperties.publicReadProfileObjects,
-                    allowWebzine = minioStorageProperties.publicReadWebzineObjects,
+                    allowIdolGlow = minioStorageProperties.publicReadIdolGlowObjects,
                 )
             minioClient.setBucketPolicy(
                 SetBucketPolicyArgs
@@ -55,10 +55,10 @@ class MinioBucketInitializer(
                     .build(),
             )
             log.info(
-                "MinIO 익명 읽기 정책 적용: bucket={}, profiles={}, webzine={}",
+                "MinIO 익명 읽기 정책 적용: bucket={}, profiles={}, idolglow={}",
                 bucket,
                 minioStorageProperties.publicReadProfileObjects,
-                minioStorageProperties.publicReadWebzineObjects,
+                minioStorageProperties.publicReadIdolGlowObjects,
             )
         } catch (e: Exception) {
             log.warn("MinIO 익명 읽기 정책 적용 실패 (bucket={}): {}", bucket, e.message)
@@ -68,15 +68,15 @@ class MinioBucketInitializer(
     private fun publicReadPolicyJson(
         bucket: String,
         allowProfiles: Boolean,
-        allowWebzine: Boolean,
+        allowIdolGlow: Boolean,
     ): String {
         val resources =
             buildList {
                 if (allowProfiles) {
                     add("arn:aws:s3:::$bucket/profiles/*")
                 }
-                if (allowWebzine) {
-                    add("arn:aws:s3:::$bucket/webzine/*")
+                if (allowIdolGlow) {
+                    add("arn:aws:s3:::$bucket/idolglow/*")
                 }
             }.joinToString(",\n        ") { "\"$it\"" }
 

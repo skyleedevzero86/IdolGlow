@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.domain
 
 import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -10,6 +11,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 @Entity
 @Table(name = "event_collect_log")
@@ -28,6 +30,8 @@ class EventCollectLog(
     val errorMessage: String?,
     @Column(name = "collected_at", nullable = false)
     val collectedAt: LocalDateTime,
+    @Column(name = "collected_at_tz")
+    val collectedAtTz: OffsetDateTime? = null,
 ) : BaseEntity() {
     companion object {
         private const val SOURCE_MAX: Int = 80
@@ -48,6 +52,7 @@ class EventCollectLog(
                 itemCount = itemCount,
                 errorMessage = errorMessage?.trim()?.take(MESSAGE_MAX)?.takeIf { it.isNotEmpty() },
                 collectedAt = collectedAt,
+                collectedAtTz = collectedAt.atZone(IdolGlowDateTimes.ZONE).toOffsetDateTime(),
             )
         }
     }

@@ -35,6 +35,9 @@ class SurveyQuestion(
     var questionType: SurveyQuestionType,
     @Column(nullable = false)
     var required: Boolean = false,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recommendation_signal", length = 20)
+    var recommendationSignal: RecommendationSignalType? = null,
     @OneToMany(
         mappedBy = "question",
         cascade = [CascadeType.ALL],

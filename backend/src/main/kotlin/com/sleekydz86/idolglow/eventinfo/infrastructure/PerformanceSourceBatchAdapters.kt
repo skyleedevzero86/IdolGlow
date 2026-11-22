@@ -1,8 +1,11 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
+import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceScheduleSourcePort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.PerformanceSourceBatchPort
+import com.sleekydz86.idolglow.eventinfo.domain.CollectedBatch
 import com.sleekydz86.idolglow.eventinfo.domain.CollectedPerformance
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -16,22 +19,34 @@ class KopisPerformanceBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            kopisPerformanceApiClient.listPerformances(
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch =
+        collectPagesUntilFailure(source, MAX_PAGES, PAGE_SIZE) { page ->
+            kopisPerformanceApiClient.listPerformancesForBatch(
                 stDate = from.basic(),
                 edDate = to.basic(),
                 page = page,
                 rows = PAGE_SIZE,
-                signguCode = null,
-                prfState = null,
             )
-        }.map { event -> event.toCollected(source) }
+        }
 
     companion object {
         private const val MAX_PAGES: Int = 30
         private const val PAGE_SIZE: Int = 100
     }
+}
+
+@Component
+class KopisScheduleAdapter(
+    private val kopisPerformanceApiClient: KopisPerformanceApiClient,
+) : PerformanceScheduleSourcePort {
+    override val source: String = "KOPIS_PBLPRFR"
+
+    override fun guidance(sourceId: String): String = kopisPerformanceApiClient.scheduleGuidance(sourceId)
 }
 
 @Component
@@ -43,15 +58,20 @@ class KopisFestivalBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            kopisPerformanceApiClient.listFestivals(
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch =
+        collectPagesUntilFailure(source, MAX_PAGES, PAGE_SIZE) { page ->
+            kopisPerformanceApiClient.listFestivalsForBatch(
                 stDate = from.basic(),
                 edDate = to.basic(),
                 page = page,
                 rows = PAGE_SIZE,
             )
-        }.map { event -> event.toCollected(source) }
+        }
 
     companion object {
         private const val MAX_PAGES: Int = 30
@@ -70,7 +90,7 @@ class SeoulSjwPerformanceBatchAdapter(
         to: LocalDate,
     ): List<CollectedPerformance> =
         collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            seoulSjwPerformApiClient.list(pageNo = page, numOfRows = PAGE_SIZE)
+            seoulSjwPerformApiClient.listForBatch(pageNo = page, numOfRows = PAGE_SIZE)
         }.filter { event -> event.overlaps(from, to) }
             .map { event -> event.toCollected(source) }
 
@@ -84,18 +104,50 @@ class SeoulSjwPerformanceBatchAdapter(
 class CultureInfoPerformanceBatchAdapter(
     private val cultureInfoApiClient: CultureInfoApiClient,
 ) : PerformanceSourceBatchPort {
+    private val log = LoggerFactory.getLogger(javaClass)
     override val source: String = "CULTURE_INFO"
 
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        days(from, to)
-            .flatMap { day ->
-                cultureInfoApiClient.listEventsForCalendarDay(day.basic(), pageNo = 1, numOfRows = PAGE_SIZE)
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch {
+        val targetDays = days(from, to)
+        val loaded =
+            targetDays.map { day ->
+                cultureInfoApiClient.listEventsForCalendarDayWithCompleteness(
+                    day.basic(),
+                    pageNo = 1,
+                    numOfRows = PAGE_SIZE,
+                )
             }
-            .map { event -> event.toCollected(event.source.ifBlank { source }) }
-            .distinctBy { item -> item.source to item.sourceId }
+        val incompleteDays = loaded.count { !it.complete }
+        val items =
+            loaded
+                .flatMap { it.events }
+                .map { event -> event.toCollected(event.source.ifBlank { source }) }
+                .distinctBy { item -> item.source to item.sourceId }
+        check(items.isNotEmpty() || targetDays.isEmpty() || incompleteDays < targetDays.size) {
+            "문화정보 API 호출이 모든 날짜에서 실패해 받은 공연이 없습니다. days=${targetDays.size}"
+        }
+        val dated = items.filter { it.startDate != null }
+        if (dated.size < items.size) {
+            log.info("문화정보 공연 기간이 없는 항목은 수집에서 뺍니다. skipped={} kept={}", items.size - dated.size, dated.size)
+        }
+        return CollectedBatch(dated, incompleteReason(incompleteDays, targetDays.size))
+    }
+
+    private fun incompleteReason(
+        incompleteDays: Int,
+        totalDays: Int,
+    ): String? {
+        if (incompleteDays == 0) return null
+        return "API 호출 실패(요청 한도 초과 등)로 ${totalDays}일 중 ${incompleteDays}일의 공연이 일부 또는 전부 빠졌습니다."
+    }
 
     companion object {
         private const val PAGE_SIZE: Int = 100
@@ -111,19 +163,26 @@ class TourFestivalBatchAdapter(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> =
-        collectPages(MAX_PAGES, PAGE_SIZE) { page ->
-            tourFestivalApiClient.searchFestival(
+    ): List<CollectedPerformance> = fetchBatch(from, to).items
+
+    override fun fetchBatch(
+        from: LocalDate,
+        to: LocalDate,
+    ): CollectedBatch =
+        collectPagesUntilFailure(source, MAX_PAGES, PAGE_SIZE) { page ->
+            tourFestivalApiClient.searchFestivalInLocale(
+                locale = KOREAN_LOCALE,
                 eventStartDate = from.basic(),
                 eventEndDate = to.basic(),
                 pageNo = page,
                 numOfRows = PAGE_SIZE,
             )
-        }.map { event -> event.toCollected(source) }
+        }
 
     companion object {
         private const val MAX_PAGES: Int = 10
         private const val PAGE_SIZE: Int = 100
+        private const val KOREAN_LOCALE: String = "ko"
     }
 }
 
@@ -144,6 +203,29 @@ private fun <T> collectPages(
     return all
 }
 
+private fun collectPagesUntilFailure(
+    sourceName: String,
+    maxPages: Int,
+    pageSize: Int,
+    load: (page: Int) -> List<FestivalEvent>,
+): CollectedBatch {
+    val all = mutableListOf<FestivalEvent>()
+    var page = 1
+    var more = true
+    var failure: Throwable? = null
+    while (page <= maxPages && more && failure == null) {
+        val loaded = runCatching { load(page) }
+        failure = loaded.exceptionOrNull()
+        val rows = loaded.getOrDefault(emptyList())
+        all += rows
+        more = rows.size >= pageSize
+        page += 1
+    }
+    if (failure != null && all.isEmpty()) throw failure
+    val reason = failure?.let { "${page - 1}쪽 호출이 실패해 그 뒤 공연이 빠졌습니다. ${it.message}" }
+    return CollectedBatch(all.map { event -> event.toCollected(sourceName) }, reason)
+}
+
 private fun days(
     from: LocalDate,
     to: LocalDate,
@@ -161,8 +243,8 @@ private fun FestivalEvent.toCollected(sourceName: String): CollectedPerformance 
     CollectedPerformance(
         source = sourceName,
         sourceId = contentId,
-        title = title,
-        venue = address,
+        title = EventSourceText.decode(title),
+        venue = EventSourceText.decodeOrNull(address),
         startDate = eventStartDate.toEventDate(),
         endDate = eventEndDate.toEventDate(),
         rawPayload =

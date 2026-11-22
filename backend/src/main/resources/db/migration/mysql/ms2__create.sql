@@ -422,7 +422,13 @@ CREATE TABLE notification_preferences (
             'PAYMENT_FAILED',
             'PAYMENT_EXPIRED',
             'RESERVATION_SLOT_AVAILABLE',
-            'RESERVATION_EXPIRING_SOON'
+            'RESERVATION_EXPIRING_SOON',
+            'COMMENT_ON_MY_POST',
+            'REPLY_TO_MY_COMMENT',
+            'ADMIN_POST_REPORTED',
+            'ADMIN_POST_AUTO_BLINDED',
+            'ADMIN_PAYMENT_COMPLETED',
+            'ADMIN_PAYMENT_ISSUE'
         )
     )
 ) COMMENT='사용자별 알림 타입 수신 ON/OFF';
@@ -445,7 +451,7 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
 -- PK: BIGINT AUTO_INCREMENT. FK는 별도 CONSTRAINT로 선언 순서: 자식 테이블 정의 후.
 -- updated_at: ON UPDATE CURRENT_TIMESTAMP — DB에서 갱신 시각 자동 반영 앱과 이중 갱신 시 정책 통일 권장.
 -- 웹진 호
-create table if not exists webzine_issues (
+create table if not exists idolglow_issues (
     id bigint not null auto_increment primary key comment '이슈 PK',
     slug varchar(80) not null comment '공개 URL용 슬러그',
     volume int not null comment '권호 정수, 전역 유일',
@@ -454,14 +460,14 @@ create table if not exists webzine_issues (
     teaser varchar(1000) not null comment '목록/공유용 티저',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_issue_slug unique (slug),
-    constraint uk_webzine_issue_volume unique (volume)
+    constraint uk_idolglow_issue_slug unique (slug),
+    constraint uk_idolglow_issue_volume unique (volume)
 ) comment='웹진 이슈 호 메타';
 
 -- 기사
-create table if not exists webzine_articles (
+create table if not exists idolglow_articles (
     id bigint not null auto_increment primary key comment '기사 PK',
-    issue_id bigint not null comment 'FK → webzine_issues.id',
+    issue_id bigint not null comment 'FK → idolglow_issues.id',
     slug varchar(150) not null comment '이슈 내 기사 URL 슬러그',
     title varchar(200) not null comment '제목',
     kicker varchar(200) not null comment '상단 키커/톤',
@@ -476,46 +482,46 @@ create table if not exists webzine_articles (
     highlight_quote varchar(500) comment '강조 인용 옵션',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_issue_slug unique (issue_id, slug),
-    constraint fk_webzine_articles_issue foreign key (issue_id) references webzine_issues(id) on delete cascade
+    constraint uk_idolglow_article_issue_slug unique (issue_id, slug),
+    constraint fk_idolglow_articles_issue foreign key (issue_id) references idolglow_issues(id) on delete cascade
 ) comment='웹진 기사 본문 메타';
 
 -- 본문 섹션
-create table if not exists webzine_article_sections (
+create table if not exists idolglow_article_sections (
     id bigint not null auto_increment primary key comment '섹션 PK',
-    article_id bigint not null comment 'FK → webzine_articles.id',
+    article_id bigint not null comment 'FK → idolglow_articles.id',
     display_order int not null comment '렌더 순서',
     heading varchar(200) comment '소제목 옵션',
     body text not null comment '본문 표현 형식은 앱 규약',
     note varchar(1000) comment '각주·편집자 주 옵션',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_section_order unique (article_id, display_order),
-    constraint fk_webzine_article_sections_article foreign key (article_id) references webzine_articles(id) on delete cascade
+    constraint uk_idolglow_article_section_order unique (article_id, display_order),
+    constraint fk_idolglow_article_sections_article foreign key (article_id) references idolglow_articles(id) on delete cascade
 ) comment='기사 본문 블록 섹션';
 
 -- 갤러리 이미지
-create table if not exists webzine_article_gallery_images (
+create table if not exists idolglow_article_gallery_images (
     id bigint not null auto_increment primary key comment '갤러리 행 PK',
-    article_id bigint not null comment 'FK → webzine_articles.id',
+    article_id bigint not null comment 'FK → idolglow_articles.id',
     display_order int not null comment '갤러리 내 순서',
     image_url varchar(500) not null comment '이미지 URL',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_gallery_order unique (article_id, display_order),
-    constraint fk_webzine_article_gallery_article foreign key (article_id) references webzine_articles(id) on delete cascade
+    constraint uk_idolglow_article_gallery_order unique (article_id, display_order),
+    constraint fk_idolglow_article_gallery_article foreign key (article_id) references idolglow_articles(id) on delete cascade
 ) comment='기사 갤러리 이미지 순서';
 
 -- 태그
-create table if not exists webzine_article_tags (
+create table if not exists idolglow_article_tags (
     id bigint not null auto_increment primary key comment '태그 행 PK',
-    article_id bigint not null comment 'FK → webzine_articles.id',
+    article_id bigint not null comment 'FK → idolglow_articles.id',
     display_order int not null comment '표시 순서',
     tag_name varchar(80) not null comment '태그 문자열',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
-    constraint uk_webzine_article_tag_name unique (article_id, tag_name),
-    constraint fk_webzine_article_tags_article foreign key (article_id) references webzine_articles(id) on delete cascade
+    constraint uk_idolglow_article_tag_name unique (article_id, tag_name),
+    constraint fk_idolglow_article_tags_article foreign key (article_id) references idolglow_articles(id) on delete cascade
 ) comment='기사 태그';
 
 -- Newsletter admin domain tables for MySQL
@@ -575,7 +581,7 @@ create table if not exists email_subscriptions (
 
 create table if not exists subscription_dispatch_histories (
     id bigint auto_increment primary key,
-    content_type varchar(40) not null comment '콘텐츠 유형 코드. NEWSLETTER, WEBZINE 등 서비스에서 정의한 값.',
+    content_type varchar(40) not null comment '콘텐츠 유형 코드. NEWSLETTER, IDOLGLOW 등 서비스에서 정의한 값.',
     content_slug varchar(160) not null comment '콘텐츠 고유 slug/키',
     content_title varchar(255) not null comment '발송 당시 제목 스냅샷',
     content_summary varchar(1000) comment '발송 당시 요약 스냅샷',
@@ -796,6 +802,7 @@ CREATE TABLE IF NOT EXISTS survey_question (
     description TEXT NULL,
     question_type VARCHAR(30) NOT NULL,
     required BOOLEAN NOT NULL DEFAULT FALSE,
+    recommendation_signal VARCHAR(20) NULL COMMENT '추천 신호 종류 CONCEPT/IDOL/PLACE/TAG. NULL이면 추천에 쓰지 않음',
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,
     CONSTRAINT fk_survey_question_form
@@ -1094,6 +1101,50 @@ CREATE TABLE IF NOT EXISTS subscription_dispatch_recipients (
         foreign key (dispatch_id) references subscription_dispatch_histories (id)
 ) comment='구독 발송 수신자별 결과';
 
+-- 회원 한 명당 한 행. 광고성 상품 추천 메일 수신 동의와 수신 거부 상태를 남긴다.
+CREATE TABLE IF NOT EXISTS product_recommendation_mail_subscriptions (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '추천 메일 구독 기본키',
+    user_id BIGINT NOT NULL COMMENT '회원 아이디 외래키. 회원당 1행',
+    active BOOLEAN NOT NULL COMMENT '수신 중 여부. 수신 거부하면 false',
+    preferred_basis VARCHAR(20) NOT NULL DEFAULT 'AUTO' COMMENT '추천 기준. AUTO 설문 있으면 취향, 없으면 인기순. POPULAR 인기순만',
+    consented_at DATETIME(6) NOT NULL COMMENT '광고성 정보 수신 동의 시각',
+    consent_source VARCHAR(20) NOT NULL COMMENT '동의한 화면. MY_SURVEY 회원 설문, MYPAGE 마이페이지',
+    token_version INT NOT NULL DEFAULT 1 COMMENT '수신 거부 링크 토큰 버전. 다시 구독하면 1 올려 예전 링크를 무효로 함',
+    unsubscribed_at DATETIME(6) NULL COMMENT '수신 거부 시각',
+    last_sent_at DATETIME(6) NULL COMMENT '마지막 추천 메일 발송 시각',
+    last_sent_product_ids VARCHAR(200) NULL COMMENT '바로 전 메일에 넣은 상품 아이디. 쉼표 구분',
+    consent_reminded_at DATETIME(6) NULL COMMENT '마지막 수신 동의 상태 안내 시각. 2년마다 안내',
+    created_at DATETIME(6) NOT NULL COMMENT '행 생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '행 수정 시각',
+    CONSTRAINT uk_product_reco_mail_subscriptions_user UNIQUE (user_id),
+    CONSTRAINT fk_product_reco_mail_subscriptions_user
+        FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_product_reco_mail_subscriptions_basis CHECK (preferred_basis IN ('AUTO', 'POPULAR')),
+    CONSTRAINT chk_product_reco_mail_subscriptions_source CHECK (consent_source IN ('MY_SURVEY', 'MYPAGE'))
+) COMMENT='상품 추천 메일 수신 동의. 회원당 1건';
+
+-- 보내는 모든 메일 한 통당 한 행. 본문 속 링크 토큰은 token=*** 로 가려 저장하고 90일이 지나면 지운다.
+CREATE TABLE IF NOT EXISTS mail_send_logs (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '메일 발송 기록 기본키',
+    mail_kind VARCHAR(40) NOT NULL COMMENT '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER',
+    recipient_email VARCHAR(255) NOT NULL COMMENT '수신 이메일 원문. 관리자 검색용이며 API 응답에서는 가림',
+    subject VARCHAR(500) NOT NULL COMMENT '메일 제목. 500자 이내',
+    html_body TEXT NULL COMMENT 'HTML 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음',
+    text_body TEXT NULL COMMENT '텍스트 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음',
+    status VARCHAR(20) NOT NULL COMMENT '발송 결과. SENT, FAILED, SKIPPED',
+    error VARCHAR(500) NULL COMMENT '실패 원인. 500자 이내',
+    dispatch_id BIGINT NULL COMMENT '구독 발송 이력 ID. 예약 발송에 속한 메일만 채움',
+    sent_at DATETIME(6) NULL COMMENT '발송에 성공한 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '기록 시각. 보관 기간 기준',
+    CONSTRAINT fk_mail_send_logs_dispatch
+        FOREIGN KEY (dispatch_id) REFERENCES subscription_dispatch_histories (id) ON DELETE SET NULL,
+    CONSTRAINT chk_mail_send_logs_kind CHECK (mail_kind IN (
+        'PRODUCT_RECOMMENDATION', 'NEWSLETTER', 'IDOLGLOW', 'UNSUBSCRIBE_CONFIRM',
+        'CONSENT_REMINDER', 'AUTH', 'PAYMENT', 'OTHER'
+    )),
+    CONSTRAINT chk_mail_send_logs_status CHECK (status IN ('SENT', 'FAILED', 'SKIPPED'))
+) COMMENT='메일 발송 기록. 보내는 모든 메일 한 통당 1건. 90일 보관';
+
 -- =============================================================================
 -- 공연 메타 글로벌 식별자
 -- -----
@@ -1118,7 +1169,9 @@ CREATE TABLE IF NOT EXISTS event_master (
     end_date date null comment '대표 종료일',
     venue varchar(255) null comment '대표 장소',
     normalized_venue varchar(255) null comment '매칭용 장소',
-    status varchar(20) not null comment '대표 상태. ACTIVE',
+    status varchar(20) not null comment '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)',
+    merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움',
+    meta_version bigint not null default 0 comment '메타 버전. 생성·수정·병합·번역 변경마다 1 증가, 소비자가 순서 역전을 버리는 기준',
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
     constraint uk_event_master_global_id unique (global_id)
@@ -1129,7 +1182,7 @@ CREATE TABLE IF NOT EXISTS event_source_ref (
     id bigint auto_increment primary key,
     source varchar(80) not null comment '공급처 코드. KOPIS_PBLPRFR, SEOUL_SJW_PERFORM 등',
     source_id varchar(80) not null comment '공급처 공연 ID',
-    global_id varchar(36) null comment '매칭된 글로벌 공연 ID. CONFLICT면 비움',
+    global_id varchar(36) null comment '확정(CONFIRMED)된 글로벌 공연 ID. CANDIDATE·CONFLICT는 사람이 승인하기 전까지 비움',
     match_status varchar(20) not null comment '매칭 상태. CONFIRMED, CANDIDATE, CONFLICT',
     match_score int not null comment '매칭 점수. 100이면 제목·기간·장소 일치',
     matched_at datetime(6) null comment '마지막으로 매칭한 시각',
@@ -1150,7 +1203,7 @@ CREATE TABLE IF NOT EXISTS event_source_ref (
 CREATE TABLE IF NOT EXISTS event_collect_log (
     id bigint auto_increment primary key,
     source varchar(80) not null comment '공급처 코드',
-    status varchar(20) not null comment '수집 상태. SUCCESS, FAILED',
+    status varchar(20) not null comment '수집 상태. SUCCESS(정상), PARTIAL(일부 호출 실패로 일부만 수집), FAILED(실패)',
     item_count int not null comment '이번 수집에서 저장을 시도한 건수',
     error_message varchar(1000) null comment '실패 원인. 1000자 이내',
     collected_at datetime(6) not null comment '수집 시각',
@@ -1190,7 +1243,7 @@ CREATE TABLE IF NOT EXISTS event_translation (
 -- 운영 변경 한 건. 적용 시점에 이전 상태를 남기고 되돌리기에서 복구한다.
 CREATE TABLE IF NOT EXISTS ops_change_request (
     id bigint auto_increment primary key,
-    type varchar(80) not null comment '변경 종류. EVENT_MATCH_MERGE 등',
+    type varchar(80) not null comment '변경 종류. EVENT_MATCH_MERGE(원본을 글로벌 공연에 연결), EVENT_MASTER_MERGE(글로벌 공연끼리 병합) 등',
     target varchar(255) not null comment '변경 대상. 공연 병합은 공급처|공급처ID',
     payload text not null comment '요청 내용. JSON',
     requested_by varchar(80) not null comment '요청자. 사용자 ID 또는 에이전트 이름',
@@ -1202,3 +1255,384 @@ CREATE TABLE IF NOT EXISTS ops_change_request (
     created_at timestamp not null default current_timestamp comment '생성 시각',
     updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각'
 ) comment='운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';
+
+-- =============================================================================
+-- GLOW 지역사회 게시판, 콘텐츠 댓글, 최근 본 콘텐츠
+-- -----
+-- 목적
+-- - 회원 게시글(토크, 질문, 나의 여행 계획)과 좋아요, 신고, 블라인드
+-- - 모든 콘텐츠 화면이 함께 쓰는 댓글과 5단계까지의 답글
+-- - 회원별 최근 본 콘텐츠
+-- 대상
+-- - 마이에스큐엘 / glow_community_posts, glow_community_likes, glow_community_reports, content_comments, user_content_views
+-- 주의
+-- - 게시글과 댓글은 deleted_at 으로만 지운다
+-- - 공지사항(NOTICE)과 이벤트(EVENT)는 댓글과 최근 본 콘텐츠 대상이 아니다
+-- 연관
+-- - GlowCommunityPostCommandService, ContentCommentService, ContentViewService
+-- =============================================================================
+
+-- 지역사회 게시글. 좋아요, 댓글, 신고 수는 같은 트랜잭션에서 함께 바꾼다.
+CREATE TABLE IF NOT EXISTS glow_community_posts (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '작성 회원 users.id',
+    tag VARCHAR(20) NOT NULL COMMENT '말머리. TALK 토크, QUESTION 질문, TRAVEL 나의 여행 계획',
+    title VARCHAR(150) NOT NULL COMMENT '제목. 150자 이내',
+    content_markdown TEXT NOT NULL COMMENT '마크다운 원문 본문',
+    like_count BIGINT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
+    comment_count BIGINT NOT NULL DEFAULT 0 COMMENT '삭제되지 않은 댓글과 답글 수',
+    report_count BIGINT NOT NULL DEFAULT 0 COMMENT '신고한 회원 수',
+    last_reported_at DATETIME(6) NULL COMMENT '마지막 신고 시각',
+    blinded TINYINT(1) NOT NULL DEFAULT 0 COMMENT '블라인드 여부. 작성자와 관리자만 볼 수 있음',
+    blinded_at DATETIME(6) NULL COMMENT '블라인드 시각',
+    blind_reason VARCHAR(100) NULL COMMENT '블라인드 사유. 자동 또는 관리자 입력',
+    deleted_at DATETIME(6) NULL COMMENT '작성자가 삭제한 시각. 비어 있으면 게시 중',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT fk_glow_community_posts_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_glow_community_posts_tag CHECK (tag IN ('TALK', 'QUESTION', 'TRAVEL')),
+    CONSTRAINT chk_glow_community_posts_counts CHECK (like_count >= 0 AND comment_count >= 0 AND report_count >= 0)
+) COMMENT='GLOW 지역사회 게시글';
+
+-- 게시글 좋아요. 회원은 글마다 한 번만 누른다.
+CREATE TABLE IF NOT EXISTS glow_community_likes (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL COMMENT 'glow_community_posts.id',
+    user_id BIGINT NOT NULL COMMENT '누른 회원 users.id',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_glow_community_likes_post_user UNIQUE (post_id, user_id),
+    CONSTRAINT fk_glow_community_likes_post FOREIGN KEY (post_id) REFERENCES glow_community_posts (id) ON DELETE CASCADE,
+    CONSTRAINT fk_glow_community_likes_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='GLOW 지역사회 게시글 좋아요. 회원당 글마다 1건';
+
+-- 게시글 신고. 회원은 글마다 한 번만 신고하고 서로 다른 3명이면 자동 블라인드한다.
+CREATE TABLE IF NOT EXISTS glow_community_reports (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL COMMENT 'glow_community_posts.id',
+    user_id BIGINT NOT NULL COMMENT '신고 회원 users.id',
+    reason VARCHAR(200) NULL COMMENT '신고 사유. 비워도 됨',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_glow_community_reports_post_user UNIQUE (post_id, user_id),
+    CONSTRAINT fk_glow_community_reports_post FOREIGN KEY (post_id) REFERENCES glow_community_posts (id) ON DELETE CASCADE,
+    CONSTRAINT fk_glow_community_reports_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='GLOW 지역사회 게시글 신고. 회원당 글마다 1건';
+
+-- 콘텐츠 댓글과 답글. 최상위 댓글은 parent_id, root_id 가 비어 있고 depth 1 이다.
+CREATE TABLE IF NOT EXISTS content_comments (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '작성 회원 users.id',
+    target_type VARCHAR(40) NOT NULL COMMENT '대상 유형. NOTICE, EVENT 는 받지 않음',
+    target_key VARCHAR(200) NOT NULL COMMENT '대상 키. 게시글이면 게시글 ID',
+    target_title VARCHAR(300) NOT NULL COMMENT '작성 시점의 대상 제목',
+    target_path VARCHAR(500) NULL COMMENT '대상 화면 경로. / 로 시작하고 /admin 은 받지 않음',
+    content_markdown TEXT NOT NULL COMMENT '마크다운 본문. 5000자 이내, 이미지는 URL 로 참조',
+    parent_id BIGINT NULL COMMENT '부모 댓글 ID. 최상위면 비움',
+    root_id BIGINT NULL COMMENT '최상위 댓글 ID. 최상위면 비움',
+    depth INT NOT NULL DEFAULT 1 COMMENT '깊이. 최상위 1, 최대 5',
+    deleted_at DATETIME(6) NULL COMMENT '삭제 시각. 답글이 있으면 자리만 남김',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT fk_content_comments_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_content_comments_parent FOREIGN KEY (parent_id) REFERENCES content_comments (id),
+    CONSTRAINT fk_content_comments_root FOREIGN KEY (root_id) REFERENCES content_comments (id),
+    CONSTRAINT chk_content_comments_depth CHECK (depth BETWEEN 1 AND 5),
+    CONSTRAINT chk_content_comments_target_type CHECK (target_type IN (
+        'ARTICLE', 'PRODUCT', 'GLOW', 'GLOW_COMMUNITY_POST', 'EVENT_INFO', 'ARCHIVE',
+        'SUBWAY', 'AIRPORT_CROWD', 'EXCHANGE_RATE', 'GLOW_WEATHER', 'GLOW_MAP', 'OTHER'
+    ))
+) COMMENT='콘텐츠 공용 댓글과 답글. 회원의 나의 리뷰로 모아 보여 줌';
+
+-- 최근 본 콘텐츠. 회원과 콘텐츠 조합당 한 행이고 회원당 최근 200개만 남긴다.
+CREATE TABLE IF NOT EXISTS user_content_views (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '회원 users.id',
+    content_type VARCHAR(40) NOT NULL COMMENT '콘텐츠 유형. NOTICE, EVENT 는 받지 않음',
+    content_key VARCHAR(200) NOT NULL COMMENT '콘텐츠 키',
+    title VARCHAR(300) NOT NULL COMMENT '콘텐츠 제목. 비어 오면 경로',
+    path VARCHAR(500) NOT NULL COMMENT '화면 경로. / 로 시작하고 /admin 은 받지 않음',
+    image_url VARCHAR(500) NULL COMMENT '대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로',
+    viewed_at DATETIME(6) NOT NULL COMMENT '마지막으로 본 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_user_content_views_user_content UNIQUE (user_id, content_type, content_key),
+    CONSTRAINT fk_user_content_views_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_user_content_views_content_type CHECK (content_type IN (
+        'ARTICLE', 'PRODUCT', 'GLOW', 'GLOW_COMMUNITY_POST', 'EVENT_INFO', 'ARCHIVE',
+        'SUBWAY', 'AIRPORT_CROWD', 'EXCHANGE_RATE', 'GLOW_WEATHER', 'GLOW_MAP', 'OTHER'
+    ))
+) COMMENT='회원별 최근 본 콘텐츠. 회원당 최근 200건';
+
+-- =============================================================================
+-- 콘텐츠 공용 좋아요
+-- -----
+-- 목적
+-- - 트렌드 기사, 행사, 상품 리뷰, 댓글에 회원별 좋아요 한 번
+-- 대상
+-- - 마이에스큐엘 / content_likes
+-- 주의
+-- - 지역사회 게시글 좋아요는 glow_community_likes 를 그대로 쓴다
+-- - target_key 는 최근 본 콘텐츠와 같은 키다. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID
+-- 연관
+-- - ContentLikeService, GlowFeedQueryService, IdolGlowArticleRankingService
+-- =============================================================================
+
+-- 콘텐츠 좋아요. 회원과 콘텐츠 조합당 한 행.
+CREATE TABLE IF NOT EXISTS content_likes (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '누른 회원 users.id',
+    target_type VARCHAR(40) NOT NULL COMMENT '대상 유형. ARTICLE, EVENT_INFO, PRODUCT_REVIEW, CONTENT_COMMENT',
+    target_key VARCHAR(200) NOT NULL COMMENT '대상 키. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID, 그 밖은 ID',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_content_likes_user_target UNIQUE (user_id, target_type, target_key),
+    CONSTRAINT fk_content_likes_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_content_likes_target_type CHECK (target_type IN (
+        'ARTICLE', 'EVENT_INFO', 'PRODUCT_REVIEW', 'CONTENT_COMMENT', 'GLOW_COMMUNITY_POST'
+    )),
+    INDEX idx_content_likes_target (target_type, target_key)
+) COMMENT='콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';
+
+-- =============================================================================
+-- 콘텐츠 번역
+-- -----
+-- 목적
+-- - 공지·이벤트·상품·기사·지역사회 게시글·댓글을 화면 언어(en, ja, zh)로 번역해 보관한다
+-- - AI 번역은 기계 검사와 검수를 거친 것만 화면에 보인다
+-- 대상
+-- - 마이에스큐엘 / content_translation, translation_glossary_term, translation_report
+-- 주의
+-- - AI가 꺼져 있으면 번역은 PENDING 으로 쌓이고, 켜면 밀린 것부터 처리한다
+-- - 원문이 바뀌면 source_hash 가 달라져 다시 PENDING 이 된다
+-- 연관
+-- - TranslationWorkerService, TranslationQueryService, TranslationAdminService
+-- =============================================================================
+
+-- 콘텐츠 한 건의 언어별 번역. 콘텐츠·언어 조합당 한 행.
+CREATE TABLE IF NOT EXISTS content_translation (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    content_type VARCHAR(40) NOT NULL COMMENT '콘텐츠 유형. NOTICE, EVENT, PRODUCT, ARTICLE, GLOW_COMMUNITY_POST, CONTENT_COMMENT',
+    content_key VARCHAR(120) NOT NULL COMMENT '콘텐츠 키. 공지·이벤트는 문서 UUID, 트렌드 기사는 호슬러그/기사슬러그, 그 밖은 ID',
+    locale VARCHAR(8) NOT NULL COMMENT '번역 언어. en, ja, zh',
+    source_hash VARCHAR(64) NOT NULL COMMENT '번역할 때 쓴 원문 해시. 원문이 바뀌면 다시 번역',
+    status VARCHAR(20) NOT NULL COMMENT '번역 상태. PENDING, VISIBLE, REVIEW, FAILED, SKIPPED',
+    priority INT NOT NULL DEFAULT 0 COMMENT '처리 우선순위. 사용자가 보는 중이면 높다',
+    fields_json TEXT NULL COMMENT '번역된 항목 JSON',
+    origin VARCHAR(20) NULL COMMENT '번역 출처. MACHINE, MANUAL',
+    model VARCHAR(80) NULL COMMENT '번역에 쓴 AI 공급자',
+    prompt_version VARCHAR(20) NULL COMMENT '번역 지시문 버전',
+    check_notes VARCHAR(1000) NULL COMMENT '검사에서 걸린 규칙 목록',
+    attempts INT NOT NULL DEFAULT 0 COMMENT '실패한 번역 시도 수',
+    next_attempt_at DATETIME(6) NULL COMMENT '다음 재시도 시각',
+    report_count INT NOT NULL DEFAULT 0 COMMENT '번역 오류 신고 수',
+    translated_at DATETIME(6) NULL COMMENT '번역한 시각',
+    reviewed_by BIGINT NULL COMMENT '승인하거나 고친 관리자 users.id',
+    reviewed_at DATETIME(6) NULL COMMENT '승인하거나 고친 시각',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_content_translation_target UNIQUE (content_type, content_key, locale),
+    CONSTRAINT chk_content_translation_status CHECK (status IN ('PENDING', 'VISIBLE', 'REVIEW', 'FAILED', 'SKIPPED')),
+    CONSTRAINT chk_content_translation_locale CHECK (locale IN ('en', 'ja', 'zh')),
+    INDEX idx_content_translation_due (status, next_attempt_at)
+) COMMENT='콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
+
+-- 번역 용어집. 고정 번역어(FIXED)와 번역 금지어(KEEP).
+CREATE TABLE IF NOT EXISTS translation_glossary_term (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    source_term VARCHAR(100) NOT NULL COMMENT '원문 용어',
+    locale VARCHAR(8) NOT NULL COMMENT '적용 언어. KEEP 은 *',
+    target_term VARCHAR(200) NULL COMMENT '고정 번역어. KEEP 이면 비움',
+    mode VARCHAR(10) NOT NULL COMMENT '용어 방식. FIXED, KEEP',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_translation_glossary_term UNIQUE (source_term, locale),
+    CONSTRAINT chk_translation_glossary_term_mode CHECK (mode IN ('FIXED', 'KEEP'))
+) COMMENT='번역 용어집. 고유명사를 정해진 대로 번역한다';
+
+-- 번역 오류 신고. 회원당 번역마다 한 번.
+CREATE TABLE IF NOT EXISTS translation_report (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    translation_id BIGINT NOT NULL COMMENT '신고한 번역 content_translation.id',
+    user_id BIGINT NOT NULL COMMENT '신고한 회원 users.id',
+    created_at DATETIME(6) NOT NULL COMMENT '생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정 시각',
+    CONSTRAINT uk_translation_report_user UNIQUE (translation_id, user_id),
+    CONSTRAINT fk_translation_report_translation FOREIGN KEY (translation_id) REFERENCES content_translation (id),
+    CONSTRAINT fk_translation_report_user FOREIGN KEY (user_id) REFERENCES users (id)
+) COMMENT='번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
+
+-- =============================================================================
+-- 대외 파트너 메타 API
+-- -----
+-- 목적
+-- - 여행사·숙소 같은 파트너가 키로 공연 메타 변경분을 가져간다
+-- 대상
+-- - 마이에스큐엘 / partner_client, partner_call_log
+-- 주의
+-- - 키 원문은 저장하지 않는다. SHA-256 해시만 남기고 원문은 발급 응답에서 한 번만 보여 준다
+-- - 호출 제한은 서버 메모리에서 센다. 서버가 여러 대면 대수만큼 느슨해진다
+-- 연관
+-- - PartnerAccessService, PartnerEventFeedService, PartnerAdminService
+-- =============================================================================
+
+-- 파트너 한 곳. 키, 계약 언어, 분당 호출 한도를 가진다.
+CREATE TABLE IF NOT EXISTS partner_client (
+    id bigint auto_increment primary key,
+    name varchar(100) not null comment '파트너 이름',
+    key_hash varchar(64) not null comment '파트너 키 SHA-256 해시. 원문은 저장하지 않음',
+    locales varchar(100) not null comment '계약 언어. 쉼표로 구분, 예: en,ja',
+    rate_limit_per_minute int not null comment '분당 호출 한도',
+    enabled boolean not null comment '사용 여부. false면 403',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_partner_client_key_hash unique (key_hash)
+) comment='대외 파트너. 키로 공연 메타 API를 호출한다';
+
+-- 파트너 호출 한 건. 누가 언제 무엇을 몇 건 받았는지 남긴다.
+CREATE TABLE IF NOT EXISTS partner_call_log (
+    id bigint auto_increment primary key,
+    partner_id bigint not null comment '호출한 파트너 ID',
+    path varchar(200) not null comment '호출 경로',
+    status int not null comment '응답 상태 코드. 200, 400, 403, 429 등',
+    item_count int not null comment '응답에 담은 공연 수',
+    called_at datetime(6) not null comment '호출 시각',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint fk_partner_call_log_partner
+        foreign key (partner_id) references partner_client (id)
+) comment='파트너 호출 기록';
+
+-- =============================================================================
+-- 공연 메타 변경 이벤트 공급 (Outbox → Kafka → 소비자)
+-- -----
+-- 목적
+-- - 공연 메타가 바뀌면 같은 트랜잭션에서 outbox 행을 남기고, 중계가 Kafka 토픽 event-meta.changed 로 보낸다
+-- - 소비자: 검색·파트너용 읽기 모델(event_meta_projection), 관심 공연 알림(event_interest)
+-- 대상
+-- - 마이에스큐엘 / event_outbox, consumed_event, event_meta_projection, event_interest, event_meta_dead_letter
+-- 주의
+-- - 키는 global_id 라서 같은 공연 이벤트는 순서대로 간다
+-- - 소비자는 consumed_event 로 같은 이벤트를 한 번만 반영하고, meta_version 이 낮은 이벤트는 버린다
+-- 연관
+-- - EventMetaOutboxRecorder, EventOutboxRelay, EventMetaProjectionService, EventInterestAlertService
+-- =============================================================================
+
+-- 보낼 공연 메타 변경. 공연을 바꾼 트랜잭션 안에서 같이 저장한다.
+CREATE TABLE IF NOT EXISTS event_outbox (
+    id bigint auto_increment primary key,
+    event_id varchar(36) not null comment '이벤트 ID. UUID, 소비자 중복 판정 기준',
+    aggregate_id varchar(36) not null comment '글로벌 공연 ID. Kafka 메시지 키',
+    event_type varchar(40) not null comment '변경 종류. CREATED, UPDATED, MERGED, RESTORED, TRANSLATION_CHANGED',
+    meta_version bigint not null comment '이 변경 뒤의 공연 메타 버전',
+    payload text not null comment '보낼 메시지 JSON. 바뀐 필드와 공연 스냅샷 포함',
+    schema_version int not null comment '메시지 형식 버전',
+    sent_at datetime(6) null comment 'Kafka로 보낸 시각. 비어 있으면 아직 안 보냄',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_outbox_event_id unique (event_id)
+) comment='보낼 공연 메타 변경 이벤트. 공연을 바꾼 트랜잭션에서 같이 저장';
+
+-- 소비자가 처리한 이벤트. 같은 이벤트를 두 번 받아도 한 번만 반영한다.
+CREATE TABLE IF NOT EXISTS consumed_event (
+    id bigint auto_increment primary key,
+    consumer_name varchar(80) not null comment '소비자 이름. event-meta-projection, event-meta-interest-alert',
+    event_id varchar(36) not null comment '처리한 이벤트 ID',
+    processed_at datetime(6) not null comment '처리 시각',
+    result varchar(20) null comment '처리 결과. APPLIED, STALE, IGNORED',
+    constraint uk_consumed_event_consumer_event unique (consumer_name, event_id)
+) comment='소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
+
+-- 검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 최신 meta_version 으로만 갱신한다.
+CREATE TABLE IF NOT EXISTS event_meta_projection (
+    global_id varchar(36) primary key comment '글로벌 공연 ID',
+    meta_version bigint not null comment '반영한 메타 버전. 이보다 낮은 이벤트는 버림',
+    status varchar(20) not null comment '공연 상태. ACTIVE, MERGED',
+    merged_into varchar(36) null comment '병합됐을 때 이어받은 글로벌 공연 ID',
+    title varchar(255) not null comment '대표 제목',
+    start_date date null comment '시작일',
+    end_date date null comment '종료일',
+    venue varchar(255) null comment '장소',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각'
+) comment='검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
+
+-- 사용자가 관심 등록한 공연. 일정·장소·상태가 바뀌면 알림을 보낸다.
+CREATE TABLE IF NOT EXISTS event_interest (
+    id bigint auto_increment primary key,
+    user_id bigint not null comment '사용자 ID',
+    global_id varchar(36) not null comment '관심 등록한 글로벌 공연 ID',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_interest_user_global unique (user_id, global_id),
+    constraint fk_event_interest_user foreign key (user_id) references users (id),
+    constraint fk_event_interest_master foreign key (global_id) references event_master (global_id)
+) comment='사용자가 관심 등록한 공연';
+
+-- 소비자가 3번 연속 실패해 실패 토픽으로 간 이벤트. 관리 API로 다시 처리한다.
+CREATE TABLE IF NOT EXISTS event_meta_dead_letter (
+    id bigint auto_increment primary key,
+    consumer_name varchar(80) not null comment '실패한 소비자 이름. event-meta-projection, event-meta-interest-alert',
+    event_id varchar(80) not null comment '이벤트 ID. 메시지를 읽지 못하면 unreadable-파티션-오프셋',
+    payload text not null comment '실패한 메시지 JSON 원문',
+    error_type varchar(255) null comment '마지막 실패 예외 종류',
+    failed_at datetime(6) not null comment '실패 목록에 남긴 시각',
+    reprocessed_at datetime(6) null comment '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막 수정 시각',
+    constraint uk_event_meta_dead_letter_consumer_event unique (consumer_name, event_id)
+) comment='Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';
+
+-- =============================================================================
+-- 공연 외부 ID: 국제 표준 ID 붙이기
+-- -----
+-- 목적
+-- - 영화에 TMDB, IMDB 번호가 있듯이 공연에도 세계에서 함께 쓰는 번호가 있다. 위키데이터 번호가 그 예다
+-- - 대표 공연에 이런 국제 표준 번호를 붙여 두면, 파트너가 자기가 아는 번호로 우리 공연을 찾을 수 있다
+-- - KOPIS 같은 공급처 번호는 이미 공급처 원본 표에 있으므로 여기에 다시 적지 않는다. 이 표에는 관리자가 직접 붙이는 번호만 적는다
+-- 대상
+-- - 마이에스큐엘 / event_external_id 표
+-- 주의
+-- - 같은 체계의 같은 번호는 공연 하나에만 붙을 수 있다
+-- - 공연을 합치면 이 번호도 남는 공연으로 옮기고, 합친 것을 되돌리면 원래 공연으로 돌려놓는다
+-- 연관
+-- - EventExternalId, EventExternalIdService, EventMasterMergeHandler, AdminEventExternalIdController
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS event_external_id (
+    id bigint auto_increment primary key,
+    global_id varchar(36) not null comment '번호를 붙인 대표 공연',
+    scheme varchar(20) not null comment '번호 체계. 지금은 WIKIDATA만 직접 붙인다',
+    external_id varchar(80) not null comment '그 체계에서 쓰는 번호. 위키데이터는 Q로 시작한다',
+    created_at timestamp not null default current_timestamp comment '붙인 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막으로 바뀐 시각',
+    constraint uk_event_external_id_scheme_value unique (scheme, external_id),
+    constraint fk_event_external_id_master foreign key (global_id) references event_master (global_id)
+) comment='대표 공연에 관리자가 붙인 국제 표준 번호';
+
+-- =============================================================================
+-- 공연 회차: 대표 공연 아래에 날짜와 시각 단위 회차를 둔다
+-- -----
+-- 목적
+-- - 지금까지 공연은 시작일과 종료일만 있었다. 같은 공연이라도 12월 2일 저녁 8시 공연과 12월 3일 오후 3시 공연은 다른 회차다
+-- - KOPIS 상세 정보의 공연 시간 안내 문장을 읽어, 오늘부터 90일 안의 회차를 한 줄씩 적는다
+-- - 대표 공연, 공급처 원본, 회차 순서로 묶인다. 회차는 공급처 원본에 매달리므로 공연을 합치거나 되돌려도 회차를 따로 옮길 필요가 없다
+-- 대상
+-- - 마이에스큐엘 / event_session 표, event_source_ref 표의 칸 3개
+-- 주의
+-- - 회차가 없어지면 지우지 않고 취소로 바꾼다. 파트너가 취소된 것을 알 수 있게 하려는 것이다
+-- - 같은 원본의 같은 시각 회차는 한 줄만 있을 수 있다
+-- - 지난 회차는 건드리지 않는다
+-- 연관
+-- - EventSession, EventSchedule, EventSessionTxService, EventSessionSyncService, EventSessionQueryService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS event_session (
+    id bigint auto_increment primary key,
+    source_ref_id bigint not null comment '회차가 매달린 공급처 원본',
+    starts_at timestamp(6) not null comment '회차 시작 시각. 세계 표준시로 저장한다',
+    status varchar(20) not null default 'SCHEDULED' comment '회차 상태. SCHEDULED는 예정, CANCELLED는 취소',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_event_session_ref_starts unique (source_ref_id, starts_at),
+    constraint fk_event_session_source_ref foreign key (source_ref_id) references event_source_ref (id),
+    constraint ck_event_session_status check (status in ('SCHEDULED', 'CANCELLED'))
+) comment='대표 공연 아래 날짜와 시각 단위 회차';

@@ -18,13 +18,20 @@ data class EventMatchFacts(
 ) {
     fun sameShow(): Boolean = sameNormalizedTitle && periodsOverlap && sameVenue
 
+    fun verdict(): String = if (sameNormalizedTitle && periodsOverlap) SAME_VERDICT else DIFFERENT_VERDICT
+
     fun localReason(): String =
         when {
-            sameShow() -> "같은 공연으로 보임. 근거: 기간·장소가 같고 제목은 부제만 다릅니다."
+            sameShow() -> "$SAME_VERDICT 근거: 기간·장소가 같고 제목은 부제만 다릅니다."
             sameNormalizedTitle && periodsOverlap ->
-                "같은 공연으로 보임. 근거: 기간이 겹치고 제목이 같습니다. 장소는 다릅니다."
-            else -> "다른 공연으로 보임. 근거: 제목, 기간, 장소가 모두 같지는 않습니다."
+                "$SAME_VERDICT 근거: 기간이 겹치고 제목이 같습니다. 장소는 다릅니다."
+            else -> "$DIFFERENT_VERDICT 근거: 제목, 기간, 장소가 모두 같지는 않습니다."
         }
+
+    companion object {
+        const val SAME_VERDICT: String = "같은 공연으로 보임."
+        const val DIFFERENT_VERDICT: String = "다른 공연으로 보임."
+    }
 }
 
 object EventSourceComparison {

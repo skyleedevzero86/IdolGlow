@@ -37,12 +37,16 @@ class SubscriptionDispatchRecipient(
     var sentAt: LocalDateTime? = null,
     @Column(name = "error", length = 1000)
     var errorMessage: String? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "skip_reason", length = 40)
+    var skipReason: SubscriptionDispatchSkipReason? = null,
 ) : BaseEntity() {
     fun applyOutcome(
         sent: Boolean,
         error: String?,
         sentAt: LocalDateTime,
     ) {
+        skipReason = null
         if (sent) {
             status = SubscriptionDispatchRecipientStatus.SENT
             this.sentAt = sentAt
@@ -52,6 +56,13 @@ class SubscriptionDispatchRecipient(
         status = SubscriptionDispatchRecipientStatus.FAILED
         this.sentAt = null
         errorMessage = error?.trim()?.take(ERROR_MAX_LENGTH)?.takeIf { it.isNotEmpty() }
+    }
+
+    fun skip(reason: SubscriptionDispatchSkipReason) {
+        status = SubscriptionDispatchRecipientStatus.SKIPPED
+        sentAt = null
+        errorMessage = null
+        skipReason = reason
     }
 
     companion object {

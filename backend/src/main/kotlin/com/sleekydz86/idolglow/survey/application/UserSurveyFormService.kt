@@ -10,6 +10,7 @@ import com.sleekydz86.idolglow.survey.domain.dto.SurveySubmissionResponse
 import com.sleekydz86.idolglow.survey.infrastructure.SurveyFormJpaRepository
 import com.sleekydz86.idolglow.survey.infrastructure.SurveySubmissionJpaRepository
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -19,6 +20,7 @@ class UserSurveyFormService(
     private val surveyFormJpaRepository: SurveyFormJpaRepository,
     private val surveySubmissionJpaRepository: SurveySubmissionJpaRepository,
     private val userRepository: UserRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional(readOnly = true)
     fun findCurrentForm(): SurveyFormResponse? = surveyFormJpaRepository.findFirstByActiveTrueOrderByIdDesc()?.let(SurveyFormResponse::from)
@@ -90,6 +92,7 @@ class UserSurveyFormService(
         }
 
         val saved = surveySubmissionJpaRepository.save(submission)
+        eventPublisher.publishEvent(SurveySubmittedEvent(userId = userId, submissionId = saved.id))
         return SurveySubmissionResponse.from(saved)
     }
 

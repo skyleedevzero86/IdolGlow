@@ -48,6 +48,7 @@ type Query {
     me: UserProfile!
     myPromo: MypagePromo!
     mySurvey: UserSurvey!
+    myRecommendationMail: RecommendationMailSetting!
     currentSurveyForm: SurveyForm
     adminCurrentSurveyForm: SurveyForm
     myLatestSurveySubmission: SurveySubmission
@@ -95,6 +96,8 @@ type Mutation {
     markNotificationRead(notificationId: ID!): Notification!
     updateProfile(input: UpdateProfileInput!): UserProfile!
     upsertUserSurvey(input: UpsertUserSurveyInput!): UserSurveyUpsertPayload!
+    subscribeRecommendationMail(input: SubscribeRecommendationMailInput!): RecommendationMailSetting!
+    unsubscribeRecommendationMail: RecommendationMailSetting!
     createSchedule(input: CreateScheduleInput!): Schedule!
     updateSchedule(scheduleId: ID!, input: UpdateScheduleInput!): Schedule!
     deleteSchedule(scheduleId: ID!): Boolean!
@@ -178,6 +181,27 @@ type ProductRanking {
     averageRating: String!
     reviewCount: Int!
     matchedTags: [String!]!
+    thumbnailUrl: String
+    reasons: [RecommendationReason!]!
+    fallback: RecommendationFallback
+}
+
+type RecommendationReason {
+    code: RecommendationReasonCode!
+    label: String!
+}
+
+enum RecommendationReasonCode {
+    CONCEPT_MATCH
+    BEHAVIOR_TAG
+    PLACE_MATCH
+    IDOL_MATCH
+    SCHEDULE_FIT
+    EXTRA_TAG
+}
+
+enum RecommendationFallback {
+    POPULAR
 }
 
 type ProductTourAttractionResult {
@@ -380,6 +404,32 @@ type AuthToken {
 
 type ProductCreatedPayload {
     id: ID!
+}
+
+enum RecommendationMailPreferredBasis {
+    AUTO
+    POPULAR
+}
+
+enum RecommendationMailConsentSource {
+    MY_SURVEY
+    MYPAGE
+}
+
+enum RecommendationMailBasisPreview {
+    PERSONALIZED
+    POPULAR
+}
+
+type RecommendationMailSetting {
+    active: Boolean!
+    preferredBasis: RecommendationMailPreferredBasis!
+    consentSource: RecommendationMailConsentSource
+    consentedAt: String
+    unsubscribedAt: String
+    hasUserSurvey: Boolean!
+    expectedBasis: RecommendationMailBasisPreview!
+    maskedEmail: String
 }
 
 type AdminSubscriptionOverview {
@@ -652,6 +702,14 @@ type SurveyQuestion {
     type: SurveyQuestionType!
     required: Boolean!
     options: [String!]!
+    recommendationSignal: RecommendationSignalType
+}
+
+enum RecommendationSignalType {
+    CONCEPT
+    IDOL
+    PLACE
+    TAG
 }
 
 type SurveySubmission {
@@ -801,6 +859,7 @@ input UpsertAdminSurveyQuestionInput {
     type: SurveyQuestionType!
     required: Boolean = false
     options: [String!]! = []
+    recommendationSignal: RecommendationSignalType
 }
 
 input SubmitSurveyFormInput {
@@ -811,4 +870,10 @@ input SubmitSurveyAnswerInput {
     questionId: ID!
     answerText: String
     selectedOptions: [String!]! = []
+}
+
+input SubscribeRecommendationMailInput {
+    agreedToAdvertising: Boolean!
+    preferredBasis: RecommendationMailPreferredBasis
+    consentSource: RecommendationMailConsentSource
 }

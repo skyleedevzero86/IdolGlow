@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.subscription.application.dto
 
 import com.sleekydz86.idolglow.subscription.domain.EmailSubscription
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientCounts
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSchedule
 import java.time.DayOfWeek
 
@@ -49,10 +50,16 @@ data class SubscriptionDispatchResult(
     val dispatchStatus: String,
     val dispatchStatusLabel: String,
     val recipientCount: Long,
+    val sentCount: Long,
+    val failedCount: Long,
+    val skippedCount: Long,
     val dispatchedAt: String,
 ) {
     companion object {
-        fun from(history: SubscriptionDispatchHistory): SubscriptionDispatchResult =
+        fun from(
+            history: SubscriptionDispatchHistory,
+            counts: SubscriptionDispatchRecipientCounts = SubscriptionDispatchRecipientCounts.EMPTY,
+        ): SubscriptionDispatchResult =
             SubscriptionDispatchResult(
                 id = history.id,
                 contentType = history.contentType.name,
@@ -65,6 +72,9 @@ data class SubscriptionDispatchResult(
                 dispatchStatus = history.dispatchStatus.name,
                 dispatchStatusLabel = history.dispatchStatus.label,
                 recipientCount = history.recipientCount,
+                sentCount = counts.sentCount,
+                failedCount = counts.failedCount,
+                skippedCount = counts.skippedCount,
                 dispatchedAt = history.dispatchedAt.asSubscriptionDateTime(),
             )
     }
@@ -133,6 +143,7 @@ data class SubscriptionOverviewResult(
             subscriberTotalPages: Int,
             subscriberHasNext: Boolean,
             dispatches: List<SubscriptionDispatchHistory>,
+            dispatchRecipientCounts: Map<Long, SubscriptionDispatchRecipientCounts>,
             dispatchPage: Int,
             dispatchSize: Int,
             dispatchTotalElements: Long,
@@ -153,7 +164,13 @@ data class SubscriptionOverviewResult(
                 subscriberTotalElements = subscriberTotalElements,
                 subscriberTotalPages = subscriberTotalPages,
                 subscriberHasNext = subscriberHasNext,
-                dispatches = dispatches.map(SubscriptionDispatchResult::from),
+                dispatches =
+                    dispatches.map {
+                        SubscriptionDispatchResult.from(
+                            it,
+                            dispatchRecipientCounts[it.id] ?: SubscriptionDispatchRecipientCounts.EMPTY,
+                        )
+                    },
                 dispatchPage = dispatchPage,
                 dispatchSize = dispatchSize,
                 dispatchTotalElements = dispatchTotalElements,

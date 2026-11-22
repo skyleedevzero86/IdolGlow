@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: idolglow-prod
+  namespace: argocd
+spec:
+  project: idolglow
+  source:
+    repoURL: https://github.com/skyleedevzero86/IdolGlow.git
+    targetRevision: main
+    path: infra/deploy/k8s/overlays/eks
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: idolglow
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: idolglow-backend-config
+      jsonPointers:
+        - /data

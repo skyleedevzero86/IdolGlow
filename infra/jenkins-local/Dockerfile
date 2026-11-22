@@ -26,6 +26,17 @@ RUN apt-get update \
     && rm -rf /root/.cache /tmp/* \
     && rm -rf /var/lib/apt/lists/*
 
+ARG KUBECTL_VERSION=v1.31.4
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends unzip \
+    && arch="$(uname -m)" \
+    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${arch}.zip" -o /tmp/awscliv2.zip \
+    && unzip -q /tmp/awscliv2.zip -d /tmp \
+    && /tmp/aws/install \
+    && curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/$(dpkg --print-architecture)/kubectl" -o /usr/local/bin/kubectl \
+    && chmod 755 /usr/local/bin/kubectl \
+    && rm -rf /tmp/aws /tmp/awscliv2.zip /var/lib/apt/lists/*
+
 RUN mkdir -p /var/jenkins_home/.gradle \
         /var/jenkins_home/deployments/dev /var/jenkins_home/deployments/staging /var/jenkins_home/deployments/prod \
         /deployments/dev /deployments/staging /deployments/prod \

@@ -589,7 +589,7 @@ comment on column email_subscriptions.updated_at is '마지막 수정 시각';
 
 comment on table subscription_dispatch_histories is '콘텐츠 발송 이력 테이블';
 
-comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형 코드. NEWSLETTER, WEBZINE 등 서비스에서 정의한 값.';
+comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형 코드. NEWSLETTER, IDOLGLOW 등 서비스에서 정의한 값.';
 
 comment on column subscription_dispatch_histories.content_slug is '콘텐츠 고유 slug/키';
 
@@ -619,7 +619,7 @@ comment on column admin_audit_logs.admin_user_id is '행위를 수행한 관리�
 
 comment on column admin_audit_logs.action_code is '행위 코드. 예: RESERVATION_CANCEL, ISSUE_CREATE';
 
-comment on column admin_audit_logs.target_type is '대상 도메인 유형. 예: RESERVATION, WEBZINE_ISSUE';
+comment on column admin_audit_logs.target_type is '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
 
 comment on column admin_audit_logs.target_id is '대상 엔티티 식별자';
 
@@ -631,75 +631,75 @@ comment on index idx_admin_audit_logs_created_at is '최신 감사 로그 목록
 
 comment on index idx_admin_audit_logs_admin_user is '관리자별 감사 로그 조회 최적화';
 
-comment on table webzine_issues is '웹진 호 메타데이터';
+comment on table idolglow_issues is '웹진 호 메타데이터';
 
-comment on column webzine_issues.slug is '호 공개 slug';
+comment on column idolglow_issues.slug is '호 공개 slug';
 
-comment on column webzine_issues.volume is '발행 호수';
+comment on column idolglow_issues.volume is '발행 호수';
 
-comment on column webzine_issues.issue_date is '발행일';
+comment on column idolglow_issues.issue_date is '발행일';
 
-comment on column webzine_issues.cover_image_url is '호 표지 이미지 URL';
+comment on column idolglow_issues.cover_image_url is '호 표지 이미지 URL';
 
-comment on column webzine_issues.teaser is '호 소개 문구';
+comment on column idolglow_issues.teaser is '호 소개 문구';
 
-comment on table webzine_articles is '웹진 기사 메타데이터';
+comment on table idolglow_articles is '웹진 기사 메타데이터';
 
-comment on column webzine_articles.issue_id is '소속 웹진 호 FK';
+comment on column idolglow_articles.issue_id is '소속 웹진 호 FK';
 
-comment on column webzine_articles.slug is '기사 공개 slug';
+comment on column idolglow_articles.slug is '기사 공개 slug';
 
-comment on column webzine_articles.title is '기사 제목';
+comment on column idolglow_articles.title is '기사 제목';
 
-comment on column webzine_articles.kicker is '카테고리성 보조 제목';
+comment on column idolglow_articles.kicker is '카테고리성 보조 제목';
 
-comment on column webzine_articles.summary is '목록/공유용 요약';
+comment on column idolglow_articles.summary is '목록/공유용 요약';
 
-comment on column webzine_articles.hero_image_url is '상세 상단 대표 이미지 URL';
+comment on column idolglow_articles.hero_image_url is '상세 상단 대표 이미지 URL';
 
-comment on column webzine_articles.card_image_url is '카드 목록용 이미지 URL';
+comment on column idolglow_articles.card_image_url is '카드 목록용 이미지 URL';
 
-comment on column webzine_articles.category is '기사 분류';
+comment on column idolglow_articles.category is '기사 분류';
 
-comment on column webzine_articles.format_label is '아티클 형식 라벨';
+comment on column idolglow_articles.format_label is '아티클 형식 라벨';
 
-comment on column webzine_articles.author_name is '작성자명';
+comment on column idolglow_articles.author_name is '작성자명';
 
-comment on column webzine_articles.author_email is '작성자 연락 이메일';
+comment on column idolglow_articles.author_email is '작성자 연락 이메일';
 
-comment on column webzine_articles.credit_line is '크레딧 라인';
+comment on column idolglow_articles.credit_line is '크레딧 라인';
 
-comment on column webzine_articles.highlight_quote is '강조 인용문';
+comment on column idolglow_articles.highlight_quote is '강조 인용문';
 
-comment on index idx_webzine_articles_issue_id is '호별 기사 목록 조회 최적화';
+comment on index idx_idolglow_articles_issue_id is '호별 기사 목록 조회 최적화';
 
-comment on table webzine_article_sections is '웹진 기사 본문 섹션';
+comment on table idolglow_article_sections is '웹진 기사 본문 섹션';
 
-comment on column webzine_article_sections.article_id is '소속 기사 FK';
+comment on column idolglow_article_sections.article_id is '소속 기사 FK';
 
-comment on column webzine_article_sections.display_order is '본문 표시 순서';
+comment on column idolglow_article_sections.display_order is '본문 표시 순서';
 
-comment on column webzine_article_sections.heading is '섹션 제목';
+comment on column idolglow_article_sections.heading is '섹션 제목';
 
-comment on column webzine_article_sections.body is '본문 내용';
+comment on column idolglow_article_sections.body is '본문 내용';
 
-comment on column webzine_article_sections.note is '보충 메모 또는 각주';
+comment on column idolglow_article_sections.note is '보충 메모 또는 각주';
 
-comment on table webzine_article_gallery_images is '웹진 기사 상세 갤러리 이미지';
+comment on table idolglow_article_gallery_images is '웹진 기사 상세 갤러리 이미지';
 
-comment on column webzine_article_gallery_images.article_id is '소속 기사 FK';
+comment on column idolglow_article_gallery_images.article_id is '소속 기사 FK';
 
-comment on column webzine_article_gallery_images.display_order is '갤러리 이미지 표시 순서';
+comment on column idolglow_article_gallery_images.display_order is '갤러리 이미지 표시 순서';
 
-comment on column webzine_article_gallery_images.image_url is '갤러리 이미지 URL';
+comment on column idolglow_article_gallery_images.image_url is '갤러리 이미지 URL';
 
-comment on table webzine_article_tags is '웹진 기사 태그';
+comment on table idolglow_article_tags is '웹진 기사 태그';
 
-comment on column webzine_article_tags.article_id is '소속 기사 FK';
+comment on column idolglow_article_tags.article_id is '소속 기사 FK';
 
-comment on column webzine_article_tags.display_order is '태그 표시 순서';
+comment on column idolglow_article_tags.display_order is '태그 표시 순서';
 
-comment on column webzine_article_tags.tag_name is '태그 문자열';
+comment on column idolglow_article_tags.tag_name is '태그 문자열';
 
 comment on table newsletters is '소식지 마스터';
 
@@ -751,7 +751,7 @@ comment on column email_subscriptions.active is '활성 구독 여부';
 
 comment on table subscription_dispatch_histories is '구독 콘텐츠 발송 이력';
 
-comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형. 예: NEWSLETTER, WEBZINE_ISSUE';
+comment on column subscription_dispatch_histories.content_type is '콘텐츠 유형. 예: NEWSLETTER, IDOLGLOW_ISSUE';
 
 comment on column subscription_dispatch_histories.content_slug is '발송된 콘텐츠 slug';
 
@@ -1082,6 +1082,7 @@ COMMENT ON COLUMN survey_question.description IS '문항 부가 설명';
 COMMENT ON COLUMN survey_question.question_type IS '문항 타입 TEXT/SINGLE_CHOICE/MULTIPLE_CHOICE';
 
 COMMENT ON COLUMN survey_question.required IS '필수 응답 여부';
+COMMENT ON COLUMN survey_question.recommendation_signal IS '추천 신호 종류 CONCEPT/IDOL/PLACE/TAG. NULL이면 추천에 쓰지 않음';
 
 COMMENT ON COLUMN survey_question.created_at IS '생성 시각';
 
@@ -1454,11 +1455,65 @@ COMMENT ON COLUMN subscription_dispatch_recipients.dispatch_id IS '구독 발송
 
 COMMENT ON COLUMN subscription_dispatch_recipients.email IS '수신 이메일';
 
-COMMENT ON COLUMN subscription_dispatch_recipients.status IS '수신자 상태. SENT, FAILED';
+COMMENT ON COLUMN subscription_dispatch_recipients.status IS '수신자 상태. SENT, FAILED, SKIPPED';
 
 COMMENT ON COLUMN subscription_dispatch_recipients.sent_at IS '발송에 성공한 시각';
 
 COMMENT ON COLUMN subscription_dispatch_recipients.error IS '실패 원인. 1000자 이내';
+
+COMMENT ON COLUMN subscription_dispatch_recipients.skip_reason IS '건너뛴 이유. NO_PRODUCTS 보낼 상품 없음';
+
+COMMENT ON TABLE product_recommendation_mail_subscriptions IS '상품 추천 메일 수신 동의. 회원당 1건';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.user_id IS '회원 아이디 외래키. 회원당 1행';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.active IS '수신 중 여부. 수신 거부하면 false';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.preferred_basis IS '추천 기준. AUTO 설문 있으면 취향, 없으면 인기순. POPULAR 인기순만';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.consented_at IS '광고성 정보 수신 동의 시각';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.consent_source IS '동의한 화면. MY_SURVEY 회원 설문, MYPAGE 마이페이지';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.token_version IS '수신 거부 링크 토큰 버전. 다시 구독하면 1 올려 예전 링크를 무효로 함';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.unsubscribed_at IS '수신 거부 시각';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.last_sent_at IS '마지막 추천 메일 발송 시각';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.last_sent_product_ids IS '바로 전 메일에 넣은 상품 아이디. 쉼표 구분';
+
+COMMENT ON COLUMN product_recommendation_mail_subscriptions.consent_reminded_at IS '마지막 수신 동의 상태 안내 시각. 2년마다 안내';
+
+COMMENT ON INDEX idx_product_reco_mail_subscriptions_active IS '수신 중인 추천 메일 구독 조회용';
+
+COMMENT ON TABLE mail_send_logs IS '메일 발송 기록. 보내는 모든 메일 한 통당 1건. 90일 보관';
+
+COMMENT ON COLUMN mail_send_logs.mail_kind IS '메일 종류. PRODUCT_RECOMMENDATION, NEWSLETTER, IDOLGLOW, UNSUBSCRIBE_CONFIRM, CONSENT_REMINDER, AUTH, PAYMENT, OTHER';
+
+COMMENT ON COLUMN mail_send_logs.recipient_email IS '수신 이메일 원문. 관리자 검색용이며 API 응답에서는 가림';
+
+COMMENT ON COLUMN mail_send_logs.subject IS '메일 제목. 500자 이내';
+
+COMMENT ON COLUMN mail_send_logs.html_body IS 'HTML 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음';
+
+COMMENT ON COLUMN mail_send_logs.text_body IS '텍스트 본문. 링크 토큰은 token=*** 로 가림. 인증 메일은 저장하지 않음';
+
+COMMENT ON COLUMN mail_send_logs.status IS '발송 결과. SENT, FAILED, SKIPPED';
+
+COMMENT ON COLUMN mail_send_logs.error IS '실패 원인. 500자 이내';
+
+COMMENT ON COLUMN mail_send_logs.dispatch_id IS '구독 발송 이력 ID. 예약 발송에 속한 메일만 채움';
+
+COMMENT ON COLUMN mail_send_logs.sent_at IS '발송에 성공한 시각';
+
+COMMENT ON COLUMN mail_send_logs.created_at IS '기록 시각. 보관 기간 기준';
+
+COMMENT ON INDEX idx_mail_send_logs_created IS '기간 조회와 보관 기간 정리용';
+
+COMMENT ON INDEX idx_mail_send_logs_kind_created IS '종류별 최근 기록 조회용';
+
+COMMENT ON INDEX idx_mail_send_logs_dispatch IS '발송 이력별 대표 메일 조회용';
 
 COMMENT ON TABLE event_master IS '공연 대표 식별자. 공급처가 달라도 같은 공연은 한 행';
 
@@ -1476,7 +1531,11 @@ COMMENT ON COLUMN event_master.venue IS '대표 장소';
 
 COMMENT ON COLUMN event_master.normalized_venue IS '매칭용 장소';
 
-COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE';
+COMMENT ON COLUMN event_master.status IS '대표 상태. ACTIVE(사용 중), MERGED(다른 대표 공연에 병합됨)';
+
+COMMENT ON COLUMN event_master.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID. ACTIVE면 비움';
+
+COMMENT ON COLUMN event_master.meta_version IS '메타 버전. 생성·수정·병합·번역 변경마다 1 증가, 소비자가 순서 역전을 버리는 기준';
 
 COMMENT ON TABLE event_source_ref IS '공급처 공연 원본과 글로벌 식별자 매칭';
 
@@ -1484,7 +1543,7 @@ COMMENT ON COLUMN event_source_ref.source IS '공급처 코드. KOPIS_PBLPRFR, S
 
 COMMENT ON COLUMN event_source_ref.source_id IS '공급처 공연 ID';
 
-COMMENT ON COLUMN event_source_ref.global_id IS '매칭된 글로벌 공연 ID. CONFLICT면 비움';
+COMMENT ON COLUMN event_source_ref.global_id IS '확정(CONFIRMED)된 글로벌 공연 ID. CANDIDATE·CONFLICT는 사람이 승인하기 전까지 비움';
 
 COMMENT ON COLUMN event_source_ref.match_status IS '매칭 상태. CONFIRMED, CANDIDATE, CONFLICT';
 
@@ -1498,7 +1557,7 @@ COMMENT ON COLUMN event_source_ref.raw_payload IS '공급처에서 받은 원본
 
 COMMENT ON TABLE event_collect_log IS '공연 공급처 수집 결과';
 
-COMMENT ON COLUMN event_collect_log.status IS '수집 상태. SUCCESS, FAILED';
+COMMENT ON COLUMN event_collect_log.status IS '수집 상태. SUCCESS(정상), PARTIAL(일부 호출 실패로 일부만 수집), FAILED(실패)';
 
 COMMENT ON COLUMN event_collect_log.item_count IS '이번 수집에서 저장을 시도한 건수';
 
@@ -1524,7 +1583,7 @@ COMMENT ON COLUMN users.role IS '권한 역할. USER 일반, ADMIN 관리자, OP
 
 COMMENT ON TABLE ops_change_request IS '운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';
 
-COMMENT ON COLUMN ops_change_request.type IS '변경 종류. EVENT_MATCH_MERGE 등';
+COMMENT ON COLUMN ops_change_request.type IS '변경 종류. EVENT_MATCH_MERGE(원본을 글로벌 공연에 연결), EVENT_MASTER_MERGE(글로벌 공연끼리 병합) 등';
 
 COMMENT ON COLUMN ops_change_request.target IS '변경 대상. 공연 병합은 공급처|공급처ID';
 
@@ -1541,3 +1600,249 @@ COMMENT ON COLUMN ops_change_request.before_snapshot IS '적용 직전 상태. �
 COMMENT ON COLUMN ops_change_request.approved_by IS '승인자 사용자 ID';
 
 COMMENT ON COLUMN ops_change_request.applied_at IS '적용 시각';
+
+COMMENT ON TABLE glow_community_posts IS 'GLOW 지역사회 게시글';
+
+COMMENT ON COLUMN glow_community_posts.user_id IS '작성 회원 users.id';
+
+COMMENT ON COLUMN glow_community_posts.tag IS '말머리. TALK 토크, QUESTION 질문, TRAVEL 나의 여행 계획';
+
+COMMENT ON COLUMN glow_community_posts.title IS '제목. 150자 이내';
+
+COMMENT ON COLUMN glow_community_posts.content_markdown IS '마크다운 원문 본문';
+
+COMMENT ON COLUMN glow_community_posts.like_count IS '좋아요 수';
+
+COMMENT ON COLUMN glow_community_posts.comment_count IS '삭제되지 않은 댓글과 답글 수';
+
+COMMENT ON COLUMN glow_community_posts.report_count IS '신고한 회원 수';
+
+COMMENT ON COLUMN glow_community_posts.last_reported_at IS '마지막 신고 시각';
+
+COMMENT ON COLUMN glow_community_posts.blinded IS '블라인드 여부. 작성자와 관리자만 볼 수 있음';
+
+COMMENT ON COLUMN glow_community_posts.blinded_at IS '블라인드 시각';
+
+COMMENT ON COLUMN glow_community_posts.blind_reason IS '블라인드 사유. 자동 또는 관리자 입력';
+
+COMMENT ON COLUMN glow_community_posts.deleted_at IS '작성자가 삭제한 시각. 비어 있으면 게시 중';
+
+COMMENT ON TABLE glow_community_likes IS 'GLOW 지역사회 게시글 좋아요. 회원당 글마다 1건';
+
+COMMENT ON TABLE glow_community_reports IS 'GLOW 지역사회 게시글 신고. 회원당 글마다 1건';
+
+COMMENT ON COLUMN glow_community_reports.reason IS '신고 사유. 비워도 됨';
+
+COMMENT ON TABLE content_comments IS '콘텐츠 공용 댓글과 답글. 회원의 나의 리뷰로 모아 보여 줌';
+
+COMMENT ON COLUMN content_comments.target_type IS '대상 유형. NOTICE, EVENT 는 받지 않음';
+
+COMMENT ON COLUMN content_comments.target_key IS '대상 키. 게시글이면 게시글 ID';
+
+COMMENT ON COLUMN content_comments.target_title IS '작성 시점의 대상 제목';
+
+COMMENT ON COLUMN content_comments.target_path IS '대상 화면 경로. / 로 시작하고 /admin 은 받지 않음';
+
+COMMENT ON COLUMN content_comments.content_markdown IS '마크다운 본문. 5000자 이내, 이미지는 URL 로 참조';
+
+COMMENT ON COLUMN content_comments.parent_id IS '부모 댓글 ID. 최상위면 비움';
+
+COMMENT ON COLUMN content_comments.root_id IS '최상위 댓글 ID. 최상위면 비움';
+
+COMMENT ON COLUMN content_comments.depth IS '깊이. 최상위 1, 최대 5';
+
+COMMENT ON COLUMN content_comments.deleted_at IS '삭제 시각. 답글이 있으면 자리만 남김';
+
+COMMENT ON TABLE user_content_views IS '회원별 최근 본 콘텐츠. 회원당 최근 200건';
+
+COMMENT ON COLUMN user_content_views.content_type IS '콘텐츠 유형. NOTICE, EVENT 는 받지 않음';
+
+COMMENT ON COLUMN user_content_views.content_key IS '콘텐츠 키';
+
+COMMENT ON COLUMN user_content_views.title IS '콘텐츠 제목. 비어 오면 경로';
+
+COMMENT ON COLUMN user_content_views.path IS '화면 경로. / 로 시작하고 /admin 은 받지 않음';
+
+COMMENT ON COLUMN user_content_views.image_url IS '대표 이미지 주소. http(s) 주소나 / 로 시작하는 경로';
+
+COMMENT ON COLUMN user_content_views.viewed_at IS '마지막으로 본 시각';
+
+COMMENT ON TABLE content_likes IS '콘텐츠 공용 좋아요. 회원당 콘텐츠마다 1건';
+
+COMMENT ON COLUMN content_likes.user_id IS '누른 회원 users.id';
+
+COMMENT ON COLUMN content_likes.target_type IS '대상 유형. ARTICLE, EVENT_INFO, PRODUCT_REVIEW, CONTENT_COMMENT';
+
+COMMENT ON COLUMN content_likes.target_key IS '대상 키. 트렌드 기사는 호슬러그/기사슬러그, 행사는 공급처:콘텐츠ID, 그 밖은 ID';
+
+COMMENT ON COLUMN content_likes.created_at IS '생성 시각';
+
+COMMENT ON COLUMN content_likes.updated_at IS '수정 시각';
+
+COMMENT ON TABLE content_translation IS '콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
+
+COMMENT ON COLUMN content_translation.content_type IS '콘텐츠 유형. NOTICE, EVENT, PRODUCT, ARTICLE, GLOW_COMMUNITY_POST, CONTENT_COMMENT';
+
+COMMENT ON COLUMN content_translation.content_key IS '콘텐츠 키. 공지·이벤트는 문서 UUID, 트렌드 기사는 호슬러그/기사슬러그, 그 밖은 ID';
+
+COMMENT ON COLUMN content_translation.locale IS '번역 언어. en, ja, zh';
+
+COMMENT ON COLUMN content_translation.source_hash IS '번역할 때 쓴 원문 해시. 원문이 바뀌면 다시 번역';
+
+COMMENT ON COLUMN content_translation.status IS '번역 상태. PENDING, VISIBLE, REVIEW, FAILED, SKIPPED';
+
+COMMENT ON COLUMN content_translation.priority IS '처리 우선순위. 사용자가 보는 중이면 높다';
+
+COMMENT ON COLUMN content_translation.fields_json IS '번역된 항목 JSON';
+
+COMMENT ON COLUMN content_translation.origin IS '번역 출처. MACHINE, MANUAL';
+
+COMMENT ON COLUMN content_translation.model IS '번역에 쓴 AI 공급자';
+
+COMMENT ON COLUMN content_translation.prompt_version IS '번역 지시문 버전';
+
+COMMENT ON COLUMN content_translation.check_notes IS '검사에서 걸린 규칙 목록';
+
+COMMENT ON COLUMN content_translation.attempts IS '실패한 번역 시도 수';
+
+COMMENT ON COLUMN content_translation.next_attempt_at IS '다음 재시도 시각';
+
+COMMENT ON COLUMN content_translation.report_count IS '번역 오류 신고 수';
+
+COMMENT ON COLUMN content_translation.translated_at IS '번역한 시각';
+
+COMMENT ON COLUMN content_translation.reviewed_by IS '승인하거나 고친 관리자 users.id';
+
+COMMENT ON COLUMN content_translation.reviewed_at IS '승인하거나 고친 시각';
+
+COMMENT ON TABLE translation_glossary_term IS '번역 용어집. 고유명사를 정해진 대로 번역한다';
+
+COMMENT ON COLUMN translation_glossary_term.source_term IS '원문 용어';
+
+COMMENT ON COLUMN translation_glossary_term.locale IS '적용 언어. KEEP 은 *';
+
+COMMENT ON COLUMN translation_glossary_term.target_term IS '고정 번역어. KEEP 이면 비움';
+
+COMMENT ON COLUMN translation_glossary_term.mode IS '용어 방식. FIXED, KEEP';
+
+COMMENT ON TABLE translation_report IS '번역 오류 신고. 쌓이면 번역을 숨기고 검수 대기로 돌린다';
+
+COMMENT ON COLUMN translation_report.translation_id IS '신고한 번역 content_translation.id';
+
+COMMENT ON COLUMN translation_report.user_id IS '신고한 회원 users.id';
+
+COMMENT ON TABLE partner_client IS '대외 파트너. 키로 공연 메타 API를 호출한다';
+
+COMMENT ON COLUMN partner_client.name IS '파트너 이름';
+
+COMMENT ON COLUMN partner_client.key_hash IS '파트너 키 SHA-256 해시. 원문은 저장하지 않음';
+
+COMMENT ON COLUMN partner_client.locales IS '계약 언어. 쉼표로 구분, 예: en,ja';
+
+COMMENT ON COLUMN partner_client.rate_limit_per_minute IS '분당 호출 한도';
+
+COMMENT ON COLUMN partner_client.enabled IS '사용 여부. false면 403';
+
+COMMENT ON TABLE partner_call_log IS '파트너 호출 기록';
+
+COMMENT ON COLUMN partner_call_log.partner_id IS '호출한 파트너 ID';
+
+COMMENT ON COLUMN partner_call_log.path IS '호출 경로';
+
+COMMENT ON COLUMN partner_call_log.status IS '응답 상태 코드. 200, 400, 403, 429 등';
+
+COMMENT ON COLUMN partner_call_log.item_count IS '응답에 담은 공연 수';
+
+COMMENT ON COLUMN partner_call_log.called_at IS '호출 시각';
+
+COMMENT ON INDEX idx_event_master_updated_global IS '파트너 변경분 피드 커서 조회용';
+
+COMMENT ON INDEX idx_partner_call_log_partner_called IS '파트너별 최근 호출 조회용';
+
+COMMENT ON TABLE event_outbox IS '보낼 공연 메타 변경 이벤트. 공연을 바꾼 트랜잭션에서 같이 저장';
+
+COMMENT ON COLUMN event_outbox.event_id IS '이벤트 ID. UUID, 소비자 중복 판정 기준';
+
+COMMENT ON COLUMN event_outbox.aggregate_id IS '글로벌 공연 ID. Kafka 메시지 키';
+
+COMMENT ON COLUMN event_outbox.event_type IS '변경 종류. CREATED, UPDATED, MERGED, RESTORED, TRANSLATION_CHANGED';
+
+COMMENT ON COLUMN event_outbox.meta_version IS '이 변경 뒤의 공연 메타 버전';
+
+COMMENT ON COLUMN event_outbox.payload IS '보낼 메시지 JSON. 바뀐 필드와 공연 스냅샷 포함';
+
+COMMENT ON COLUMN event_outbox.schema_version IS '메시지 형식 버전';
+
+COMMENT ON COLUMN event_outbox.sent_at IS 'Kafka로 보낸 시각. 비어 있으면 아직 안 보냄';
+
+COMMENT ON TABLE consumed_event IS '소비자별로 처리한 이벤트. 같은 이벤트를 한 번만 반영';
+
+COMMENT ON COLUMN consumed_event.consumer_name IS '소비자 이름. event-meta-projection, event-meta-interest-alert';
+
+COMMENT ON COLUMN consumed_event.event_id IS '처리한 이벤트 ID';
+
+COMMENT ON COLUMN consumed_event.processed_at IS '처리 시각';
+
+COMMENT ON COLUMN consumed_event.result IS '처리 결과. APPLIED 반영, STALE 옛 버전이라 버림, IGNORED 알림 대상 아님';
+
+COMMENT ON TABLE event_meta_projection IS '검색·파트너용 공연 메타 읽기 모델. Kafka 소비자가 갱신';
+
+COMMENT ON COLUMN event_meta_projection.meta_version IS '반영한 메타 버전. 이보다 낮은 이벤트는 버림';
+
+COMMENT ON COLUMN event_meta_projection.status IS '공연 상태. ACTIVE, MERGED';
+
+COMMENT ON COLUMN event_meta_projection.merged_into IS '병합됐을 때 이어받은 글로벌 공연 ID';
+
+COMMENT ON TABLE event_interest IS '사용자가 관심 등록한 공연';
+
+COMMENT ON COLUMN event_interest.user_id IS '사용자 ID';
+
+COMMENT ON COLUMN event_interest.global_id IS '관심 등록한 글로벌 공연 ID';
+
+COMMENT ON INDEX idx_event_outbox_unsent IS '안 보낸 행 순서 조회와 보낸 행 정리용';
+
+COMMENT ON INDEX idx_event_interest_global IS '공연별 관심 사용자 조회용';
+
+COMMENT ON TABLE event_meta_dead_letter IS 'Kafka 소비자가 3번 연속 실패한 공연 메타 이벤트';
+
+COMMENT ON COLUMN event_meta_dead_letter.consumer_name IS '실패한 소비자 이름. event-meta-projection, event-meta-interest-alert';
+
+COMMENT ON COLUMN event_meta_dead_letter.event_id IS '이벤트 ID. 메시지를 읽지 못하면 unreadable-파티션-오프셋';
+
+COMMENT ON COLUMN event_meta_dead_letter.payload IS '실패한 메시지 JSON 원문';
+
+COMMENT ON COLUMN event_meta_dead_letter.error_type IS '마지막 실패 예외 종류';
+
+COMMENT ON COLUMN event_meta_dead_letter.failed_at IS '실패 목록에 남긴 시각';
+
+COMMENT ON COLUMN event_meta_dead_letter.reprocessed_at IS '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함';
+
+COMMENT ON INDEX idx_event_meta_dead_letter_pending IS '다시 처리하지 않은 실패 메시지 조회용';
+
+COMMENT ON COLUMN event_collect_log.collected_at_tz IS '수집 시각을 어느 나라 시간인지까지 함께 저장하는 칸. 2단계부터 서버가 옛 칸과 함께 적고, 4단계에서 이 칸을 읽도록 바꾼 뒤, 5단계에서 옛 칸 collected_at을 지운다';
+
+COMMENT ON TABLE event_external_id IS '대표 공연에 관리자가 붙인 국제 표준 번호';
+
+COMMENT ON COLUMN event_external_id.global_id IS '번호를 붙인 대표 공연';
+
+COMMENT ON COLUMN event_external_id.scheme IS '번호 체계. 지금은 WIKIDATA만 직접 붙인다';
+
+COMMENT ON COLUMN event_external_id.external_id IS '그 체계에서 쓰는 번호. 위키데이터는 Q로 시작한다';
+
+COMMENT ON INDEX idx_event_external_id_global IS '공연 하나에 붙은 외부 번호를 찾을 때 쓴다';
+
+COMMENT ON TABLE event_session IS '대표 공연 아래 날짜와 시각 단위 회차';
+
+COMMENT ON COLUMN event_session.source_ref_id IS '회차가 매달린 공급처 원본';
+
+COMMENT ON COLUMN event_session.starts_at IS '회차 시작 시각. 어느 나라 시간인지까지 함께 저장한다';
+
+COMMENT ON COLUMN event_session.status IS '회차 상태. SCHEDULED는 예정, CANCELLED는 취소';
+
+COMMENT ON COLUMN event_source_ref.schedule_guidance IS 'KOPIS 상세의 공연 시간 안내 문장';
+
+COMMENT ON COLUMN event_source_ref.schedule_hash IS '공연 시간 안내를 읽을 때의 원본 내용 지문. 원본이 바뀌면 다시 읽는다';
+
+COMMENT ON COLUMN event_source_ref.session_horizon IS '회차를 어느 날짜까지 만들어 두었는지';
+
+COMMENT ON INDEX idx_event_session_starts IS '회차를 날짜 순서로 찾을 때 쓴다';

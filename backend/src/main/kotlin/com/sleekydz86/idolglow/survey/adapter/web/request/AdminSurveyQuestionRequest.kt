@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.survey.adapter.web.request
 
+import com.sleekydz86.idolglow.survey.domain.RecommendationSignalType
 import com.sleekydz86.idolglow.survey.domain.SurveyQuestionType
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -21,4 +22,5 @@ data class AdminSurveyQuestionRequest(
         @Size(max = 300)
         String,
     > = emptyList(),
+    val recommendationSignal: RecommendationSignalType? = null,
 )

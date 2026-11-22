@@ -72,7 +72,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/search-keywords").permitAll()
+                auth.requestMatchers(HttpMethod.POST, "/search-keywords", "/api/translations/lookup").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/api/grounded-search", "/api/grounded-search/answer").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
@@ -80,10 +80,13 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
-                auth.requestMatchers(HttpMethod.GET, "/uploads/webzine/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, "/uploads/idolglow/**").permitAll()
+                auth.requestMatchers(HttpMethod.GET, *PUBLIC_GET).permitAll()
                 auth.requestMatchers("/api/mbrd/**").permitAll()
                 auth.requestMatchers("/ws-mbrd/**").permitAll()
                 auth.requestMatchers(*SWAGGER_WHITE_LIST).permitAll()
+                auth.requestMatchers(HttpMethod.GET, UNSUBSCRIBE_PATH).permitAll()
+                auth.requestMatchers(HttpMethod.POST, UNSUBSCRIBE_PATH, ONE_CLICK_UNSUBSCRIBE_PATH).permitAll()
                 val permitList = PERMIT_LIST.toMutableList()
                 if (testLoginEnabled) {
                     permitList.add("/auth/test/**")
@@ -98,7 +101,7 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers("/payments/toss/billing/renewal-notices/**")
                     .permitAll()
-                    .requestMatchers("/mcp", "/mcp/**", "/sse", "/sse/**")
+                    .requestMatchers(*ADMIN_ONLY)
                     .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated()
@@ -134,6 +137,88 @@ class SecurityConfig(
     }
 
     companion object {
+        private const val UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe"
+        private const val ONE_CLICK_UNSUBSCRIBE_PATH = "/recommendation-mail/unsubscribe/one-click"
+
+        private val EVENT_INFO_PUBLIC_GET =
+            arrayOf(
+                "/mypage/event-info/festivals",
+                "/api/event-info/festivals",
+                "/api/event-info/sessions",
+                "/api/event-info/search",
+                "/mypage/event-info/kopis/performances",
+                "/api/event-info/kopis/performances",
+                "/mypage/event-info/kopis/festivals",
+                "/api/event-info/kopis/festivals",
+                "/mypage/event-info/kopis/area-stats",
+                "/api/event-info/kopis/area-stats",
+                "/mypage/event-info/special-days/holidays",
+                "/api/event-info/special-days/holidays",
+                "/mypage/event-info/special-days/rest-days",
+                "/api/event-info/special-days/rest-days",
+                "/mypage/event-info/special-days/anniversaries",
+                "/api/event-info/special-days/anniversaries",
+                "/mypage/event-info/sjw-perform",
+                "/api/event-info/sjw-perform",
+                "/mypage/event-info/search-keyword",
+                "/api/event-info/search-keyword",
+                "/mypage/event-info/ldong-codes",
+                "/api/event-info/ldong-codes",
+                "/mypage/event-info/lcls-codes",
+                "/api/event-info/lcls-codes",
+                "/mypage/event-info/culture-calendar/areas",
+                "/api/event-info/culture-calendar/areas",
+                "/mypage/event-info/culture-calendar/realm2",
+                "/api/event-info/culture-calendar/realm2",
+                "/mypage/event-info/culture-calendar/area2",
+                "/api/event-info/culture-calendar/area2",
+                "/mypage/event-info/culture-calendar/realm-code-reference",
+                "/api/event-info/culture-calendar/realm-code-reference",
+            )
+
+        private val IDOLGLOW_PUBLIC_GET =
+            arrayOf(
+                "/api/idolglow/issues",
+                "/api/idolglow/issues/**",
+                "/api/idolglow/articles",
+            )
+
+        private val GLOW_FEED_PUBLIC_GET =
+            arrayOf(
+                "/api/glow/feed",
+                "/api/glow/feed/highlights",
+            )
+
+        private val COMMUNITY_PUBLIC_GET =
+            arrayOf(
+                "/api/glow-community/posts",
+                "/api/glow-community/posts/*",
+                "/api/glow-community/highlights",
+                "/api/glow-community/keywords",
+                "/api/comments",
+            )
+
+        private val MONITORING_PUBLIC_GET =
+            arrayOf(
+                "/actuator/prometheus",
+            )
+
+        private val PUBLIC_GET =
+            COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET +
+                MONITORING_PUBLIC_GET
+
+        private val ADMIN_ONLY =
+            arrayOf(
+                "/mcp",
+                "/mcp/**",
+                "/sse",
+                "/sse/**",
+                "/api/admin/glow-community/**",
+                "/admin/glow-community/**",
+                "/admin/subscriptions",
+                "/admin/subscriptions/**",
+            )
+
         private val SWAGGER_WHITE_LIST =
             arrayOf(
                 "/swagger-ui/**",
@@ -146,6 +231,7 @@ class SecurityConfig(
             arrayOf(
                 "/platform/auth/**",
                 "/auth/login/**",
+                "/auth/password/login",
                 "/auth/signup",
                 "/auth/signup/check-email",
                 "/auth/signup/check-nickname",
@@ -157,6 +243,7 @@ class SecurityConfig(
                 "/login/**",
                 "/auth/callback",
                 "/payments/mock/webhook",
+                "/partner/v1/**",
                 "/graphql",
                 "/graphiql",
                 "/graphiql/**",

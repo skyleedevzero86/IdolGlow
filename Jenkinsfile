@@ -419,8 +419,8 @@ def withTelegramCredentials(Closure body) {
         def token = ''
         def chat = ''
         if (isUnix()) {
-            token = sh(script: 'printf %s "${TELEGRAM_BOT_TOKEN}"', returnStdout: true).trim()
-            chat = sh(script: 'printf %s "${TELEGRAM_CHAT_ID}"', returnStdout: true).trim()
+            token = sh(script: 'set +x; printf %s "${TELEGRAM_BOT_TOKEN}"', returnStdout: true).trim()
+            chat = sh(script: 'set +x; printf %s "${TELEGRAM_CHAT_ID}"', returnStdout: true).trim()
         } else {
             token = bat(script: '@echo %TELEGRAM_BOT_TOKEN%', returnStdout: true).trim()
             chat = bat(script: '@echo %TELEGRAM_CHAT_ID%', returnStdout: true).trim()
@@ -504,6 +504,106 @@ def sendTelegramMessage(String message, boolean finalSummary = false) {
     }
 }
 
+def telegramHtmlToDiscord(String html) {
+    if (html == null) {
+        return ''
+    }
+
+    return html
+        .replaceAll(/<br\s*\/?>/, '\n')
+        .replaceAll(/<\/?b>/, '**')
+        .replaceAll(/<\/?code>/, '`')
+        .replaceAll(/<\/?i>/, '_')
+        .replaceAll(/<[^>]+>/, '')
+        .replace('&lt;', '<')
+        .replace('&gt;', '>')
+        .replace('&quot;', '"')
+        .replace('&amp;', '&')
+}
+
+def withDiscordWebhook(Closure body) {
+    try {
+        withCredentials([string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL')]) {
+            body()
+        }
+    } catch (Exception credentialError) {
+        echo "Discord Credentials 미사용: ${credentialError.message}"
+        def fromEnv = sh(script: 'set +x; printf %s "${DISCORD_WEBHOOK_URL}"', returnStdout: true).trim()
+        if (!fromEnv) {
+            echo 'Discord 설정이 없어 전송을 건너뜁니다. DISCORD_WEBHOOK_URL 또는 discord-webhook-url Credentials를 확인하세요.'
+            return
+        }
+        withEnv(["DISCORD_URL=${fromEnv}"]) {
+            body()
+        }
+    }
+}
+
+def discordColorFor(String outcome) {
+    switch (outcome) {
+        case 'success':
+            return 5763719
+        case 'failure':
+            return 15548997
+        case 'approval_wait':
+            return 16705372
+        default:
+            return 9807270
+    }
+}
+
+def sendDiscordMessage(String telegramHtml, boolean finalSummary = false, String outcome = '') {
+    if (!params.SEND_DISCORD || !isUnix()) {
+        return
+    }
+
+    if (finalSummary && env.DISCORD_FINAL_SUMMARY_SENT == 'true') {
+        echo 'Discord 최종 요약은 이미 전송됨 — 중복 생략'
+        return
+    }
+
+    try {
+        def text = telegramHtmlToDiscord(telegramHtml).trim()
+        def newline = text.indexOf('\n')
+        def title = (newline > 0 ? text.substring(0, newline) : text).replace('**', '').trim()
+        def body = newline > 0 ? text.substring(newline + 1).trim() : ''
+        def embed = [
+            title: truncateTelegramText(title, 250),
+            description: truncateTelegramText(body, 3900),
+            color: discordColorFor(outcome),
+            footer: [text: "Jenkins 빌드 #${env.BUILD_NUMBER}"],
+        ]
+        if (env.BUILD_URL?.trim()) {
+            embed.url = env.BUILD_URL.trim()
+        }
+        def json = groovy.json.JsonOutput.toJson([
+            username: 'Jenkins Build Bot',
+            allowed_mentions: [parse: []],
+            embeds: [embed],
+        ])
+        writeFile file: 'discord-payload.json', text: json, encoding: 'UTF-8'
+
+        withDiscordWebhook {
+            def exitCode = sh(
+                script: '''
+                    set +x
+                    curl -fsS -X POST "$DISCORD_URL" \
+                      -H 'Content-Type: application/json; charset=utf-8' \
+                      --data-binary @discord-payload.json
+                ''',
+                returnStatus: true
+            )
+            if (exitCode != 0) {
+                echo "Discord 전송 실패(exit=${exitCode})"
+            } else if (finalSummary) {
+                env.DISCORD_FINAL_SUMMARY_SENT = 'true'
+            }
+        }
+    } catch (Exception discordError) {
+        echo "Discord 알림 전송 실패 (빌드는 계속): ${discordError.message}"
+    }
+}
+
 def formatTelegramActionLines(String action) {
     return action
         .split('\n')
@@ -511,6 +611,11 @@ def formatTelegramActionLines(String action) {
         .findAll { it }
         .collect { line -> "• ${escapeTelegramHtml(line)}" }
         .join('\n')
+}
+
+def failedStageFilePath() {
+    def workspace = env.WORKSPACE?.trim()
+    return workspace ? "${workspace}/.pipeline-failed-stage" : '.pipeline-failed-stage'
 }
 
 def resolveFailedStageName() {
@@ -523,8 +628,8 @@ def resolveFailedStageName() {
         return stageName
     }
 
-    if (fileExists('.pipeline-failed-stage')) {
-        return readFile(file: '.pipeline-failed-stage', encoding: 'UTF-8').trim()
+    if (fileExists(failedStageFilePath())) {
+        return readFile(file: failedStageFilePath(), encoding: 'UTF-8').trim()
     }
 
     return '알 수 없음'
@@ -538,17 +643,31 @@ def captureFailureStageIfMissing() {
     def stageName = env.STAGE_NAME?.trim()
     if (stageName && stageName != 'Declarative: Post Actions') {
         env.PIPELINE_FAILED_STAGE = stageName
-        writeFile file: '.pipeline-failed-stage', text: stageName, encoding: 'UTF-8'
+        writeFile file: failedStageFilePath(), text: stageName, encoding: 'UTF-8'
     }
 }
 
 def markPipelineFailed(String stageName) {
     env.PIPELINE_FAILED_STAGE = stageName
-    writeFile file: '.pipeline-failed-stage', text: stageName, encoding: 'UTF-8'
+    writeFile file: failedStageFilePath(), text: stageName, encoding: 'UTF-8'
 }
 
 def backendGradleFlags() {
     return '--build-cache --console=plain --stacktrace --info --profile --no-parallel'
+}
+
+def backendTestMemoryFlags() {
+    return '-PtestMaxHeap=1536m'
+}
+
+def releaseBackendBuildMemory() {
+    if (!isUnix()) {
+        return
+    }
+    dir('backend') {
+        sh './gradlew --stop || true'
+        sh 'pkill -f KotlinCompileDaemon || true'
+    }
 }
 
 def resolveBackendBootJarGoals() {
@@ -582,13 +701,47 @@ def verifyBackendGradleWrapper() {
     }
 }
 
+def runFailureAnalysis() {
+    if (!params.AI_FAILURE_ANALYSIS || !isUnix()) {
+        return
+    }
+    try {
+        def failedStage = resolveFailedStageName() ?: ''
+        def envs = [
+            "FAILED_STAGE=${failedStage}",
+            "CI_LLM_API_ENABLED=${params.AI_ANALYSIS_EXTERNAL_API ? 'true' : 'false'}",
+        ]
+        def run = {
+            withEnv(envs) {
+                timeout(time: 150, unit: 'SECONDS') {
+                    sh 'cd infra/jenkins-local/ci-analyzer && (test -d node_modules || npm ci --no-audit --no-fund) && cd ../../.. && node infra/jenkins-local/ci-analyzer/analyze-failure.mjs || true'
+                }
+            }
+        }
+        if (params.AI_ANALYSIS_EXTERNAL_API) {
+            withCredentials([string(credentialsId: 'anthropic-api-key', variable: 'ANTHROPIC_API_KEY')]) {
+                run()
+            }
+        } else {
+            run()
+        }
+        if (fileExists('ci-logs/failure-analysis.txt')) {
+            env.AI_FAILURE_ANALYSIS_TEXT = readFile(file: 'ci-logs/failure-analysis.txt', encoding: 'UTF-8')
+        }
+    } catch (Exception analysisError) {
+        echo "실패 분석 건너뜀: ${analysisError.message}"
+    }
+}
+
 def runBackendGradle(String stageLabel, String goals, int timeoutMinutes = 20) {
     try {
+        def logName = goals.replaceAll(/[^A-Za-z0-9]+/, '-')
         dir('backend') {
             timeout(time: timeoutMinutes, unit: 'MINUTES') {
                 if (isUnix()) {
                     sh 'chmod +x gradlew || true'
-                    sh "./gradlew ${goals} ${backendGradleFlags()}"
+                    sh 'mkdir -p ../ci-logs'
+                    sh "bash -o pipefail -c './gradlew ${goals} ${backendGradleFlags()} 2>&1 | tee ../ci-logs/backend-${logName}.log'"
                 } else {
                     bat "gradlew.bat ${goals} ${backendGradleFlags()}"
                 }
@@ -687,7 +840,7 @@ CHANGELOG: <code>${section}</code> | 프론트: <code>${frontend}</code>
 }
 
 def notifyTelegramSummary(String outcome) {
-    if (!params.SEND_TELEGRAM) {
+    if (!params.SEND_TELEGRAM && !params.SEND_DISCORD) {
         return
     }
 
@@ -723,6 +876,10 @@ ${buildTelegramContextBlock(true)}
         } else if (outcome == 'failure') {
             def failedStage = resolveFailedStageName()
             def guide = resolveFailureGuide(failedStage)
+            def aiText = env.AI_FAILURE_ANALYSIS_TEXT?.trim()
+            def aiBlock = aiText
+                ? "\n<b>🤖 로그 분석 (참고용)</b>\n${escapeTelegramHtml(truncateTelegramText(aiText, 1200))}\n"
+                : ''
 
             message = """❌ <b>IdolGlow 배포 중단</b>
 
@@ -737,7 +894,7 @@ ${escapeTelegramHtml(guide.impact)}
 
 <b>✅ 다음 조치 (개발팀)</b>
 ${formatTelegramActionLines(guide.action)}
-
+${aiBlock}
 ${buildTelegramContextBlock(false)}
 <i>알림 summary-v5 · 빌드 #${env.BUILD_NUMBER}</i>"""
         } else if (outcome == 'aborted') {
@@ -768,6 +925,7 @@ ${buildTelegramContextBlock(false)}"""
         if (message) {
             def isFinalSummary = outcome in ['success', 'failure', 'aborted']
             sendTelegramMessage(message, isFinalSummary)
+            sendDiscordMessage(message, isFinalSummary, outcome)
         }
     } catch (Exception telegramError) {
         echo "Telegram 알림 전송 실패 (빌드는 계속): ${telegramError.message}"
@@ -784,6 +942,16 @@ pipeline {
     }
 
     parameters {
+        booleanParam(
+    name: 'AI_FAILURE_ANALYSIS',
+    defaultValue: true,
+    description: '실패 시 로그를 규칙과 로컬 LLM(Ollama)으로 분석해 Telegram 알림에 참고용으로 덧붙입니다.'
+)
+booleanParam(
+    name: 'AI_ANALYSIS_EXTERNAL_API',
+    defaultValue: false,
+    description: 'true이면 규칙 분류가 불확실하거나 로컬 LLM이 실패했을 때만 외부 LLM API를 부릅니다. 민감 정보를 가린 로그 일부만 보냅니다.'
+)
         choice(
             name: 'DEPLOY_ENV',
             choices: ['dev', 'staging', 'prod'],
@@ -806,8 +974,8 @@ pipeline {
         )
         booleanParam(
             name: 'RUN_FRONTEND_BUILD',
-            defaultValue: true,
-            description: '배포 전 프론트엔드 빌드를 실행합니다.'
+            defaultValue: false,
+            description: '배포 전 프론트엔드 빌드를 실행합니다. 루트 frontend 가 아직 작업 중이라 기본은 건너뜁니다.'
         )
         booleanParam(
             name: 'RUN_HEALTH_CHECK',
@@ -828,6 +996,11 @@ pipeline {
             name: 'SEND_TELEGRAM',
             defaultValue: true,
             description: 'true이면 파이프라인 완료·실패·승인 대기 시 Telegram으로 요약 알림 1통을 전송합니다.'
+        )
+        booleanParam(
+            name: 'SEND_DISCORD',
+            defaultValue: true,
+            description: 'true이면 Telegram과 같은 요약을 Discord 웹훅으로도 보냅니다. 웹훅 URL이 없으면 건너뜁니다.'
         )
     }
 
@@ -851,6 +1024,9 @@ pipeline {
             steps {
                 checkout scm
                 script {
+                    if (isUnix()) {
+                        sh 'rm -rf ci-logs .pipeline-failed-stage && mkdir -p ci-logs'
+                    }
                     fetchGitTagsForReleaseDetection()
                     env.REPO_ROOT = pwd()
                     env.FRONTEND_DIR = resolveFrontendDir()
@@ -944,7 +1120,9 @@ pipeline {
             }
             steps {
                 script {
-                    runBackendGradle('백엔드 테스트', 'test', 20)
+                    runBackendGradle('백엔드 테스트 컴파일', 'testClasses', 20)
+                    releaseBackendBuildMemory()
+                    runBackendGradle('백엔드 테스트', "test ${backendTestMemoryFlags()}", 40)
                 }
             }
         }
@@ -1013,6 +1191,7 @@ pipeline {
                         )
                     }
 
+                    def ciLogDir = "${pwd()}/ci-logs"
                     dir(frontendDir) {
                         try {
                             if (isUnix()) {
@@ -1021,7 +1200,8 @@ pipeline {
                                 sh 'corepack prepare pnpm@9.15.4 --activate || true'
                                 sh 'pnpm -v'
                                 installFrontendDependencies(frontendDir)
-                                sh 'pnpm build'
+                                sh "mkdir -p '${ciLogDir}'"
+                                sh "bash -o pipefail -c 'pnpm build 2>&1 | tee \"${ciLogDir}/frontend-build.log\"'"
                             } else {
                                 bat 'node -v'
                                 bat 'corepack enable'
@@ -1194,6 +1374,8 @@ pipeline {
                     notifyTelegramSummary('success')
                     echo '배포 파이프라인이 성공적으로 완료되었습니다.'
                 } else if (result == 'FAILURE') {
+                    captureFailureStageIfMissing()
+                    runFailureAnalysis()
                     notifyTelegramSummary('failure')
                     echo '배포 파이프라인이 실패했습니다. CHANGELOG 섹션, 태그, 빌드 로그를 확인하세요.'
                 } else if (result == 'ABORTED') {
@@ -1203,6 +1385,7 @@ pipeline {
             archiveArtifacts artifacts: 'CHANGELOG.md', allowEmptyArchive: false
             archiveArtifacts artifacts: 'changelog-release-notes.txt', allowEmptyArchive: true
             archiveArtifacts artifacts: 'backend/build/reports/profile/*.html', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'ci-logs/failure-analysis.*', allowEmptyArchive: true
         }
     }
 }

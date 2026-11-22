@@ -1,0 +1,197 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    parameters {
+        choice(name: 'DEPLOY_TARGET', choices: ['local', 'eks'], description: 'local = Docker Desktop Kubernetes, eks = AWS EKS')
+        choice(name: 'DEPLOY_MODE', choices: ['push', 'gitops'], description: 'push = Jenkins가 kubectl로 배포, gitops = 이미지 태그만 Git에 커밋하고 ArgoCD가 배포 (eks 전용)')
+        string(name: 'AWS_REGION', defaultValue: 'ap-northeast-2', description: 'AWS 리전')
+        string(name: 'ECR_REGISTRY', defaultValue: '', description: '<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com')
+        string(name: 'EKS_CLUSTER', defaultValue: 'idolglow', description: 'EKS 클러스터 이름')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: '이미지 만들기 전에 백엔드 테스트 실행')
+        booleanParam(name: 'APPLY_CONFIG_SECRET', defaultValue: true, description: 'Jenkins Credentials의 설정 파일로 Kubernetes Secret 갱신 (External Secrets를 쓰면 끕니다)')
+    }
+
+    environment {
+        NAMESPACE = 'idolglow'
+        KUBECONFIG = "${WORKSPACE}/.kube/config"
+    }
+
+    stages {
+        stage('준비') {
+            steps {
+                checkout scm
+                script {
+                    if (params.DEPLOY_TARGET == 'eks' && !params.ECR_REGISTRY?.trim()) {
+                        error('DEPLOY_TARGET=eks 이면 ECR_REGISTRY가 필요합니다.')
+                    }
+                    if (params.DEPLOY_MODE == 'gitops' && params.DEPLOY_TARGET != 'eks') {
+                        error('gitops 모드는 eks 대상에서만 씁니다.')
+                    }
+                    def shortSha = sh(script: 'git rev-parse --short=8 HEAD', returnStdout: true).trim()
+                    env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
+                    def registry = params.DEPLOY_TARGET == 'eks' ? "${params.ECR_REGISTRY.trim()}/" : ''
+                    env.BACKEND_IMAGE = "${registry}idolglow-backend:${env.IMAGE_TAG}"
+                    env.FRONTEND_IMAGE = "${registry}idolglow-frontend:${env.IMAGE_TAG}"
+                    env.OVERLAY = params.DEPLOY_TARGET == 'eks' ? 'infra/deploy/k8s/overlays/eks' : 'infra/deploy/k8s/overlays/local'
+                    echo "이미지 태그: ${env.IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('백엔드 JAR 빌드') {
+            steps {
+                dir('backend') {
+                    sh 'chmod +x gradlew'
+                    sh "./gradlew bootJar ${params.RUN_TESTS ? 'test' : ''} --console=plain"
+                    script {
+                        env.BACKEND_JAR = sh(
+                            script: "ls build/libs/*.jar | grep -v -- '-plain.jar' | head -1",
+                            returnStdout: true
+                        ).trim()
+                        if (!env.BACKEND_JAR) {
+                            error('bootJar 산출물을 찾지 못했습니다.')
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('이미지 빌드') {
+            steps {
+                sh 'docker build -f backend/Dockerfile --build-arg JAR_FILE="$BACKEND_JAR" -t "$BACKEND_IMAGE" backend'
+                sh 'docker build -t "$FRONTEND_IMAGE" frontend'
+            }
+        }
+
+        stage('ECR 푸시') {
+            when { expression { params.DEPLOY_TARGET == 'eks' } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-idolglow-deployer', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                        set +x
+                        aws ecr get-login-password --region "$AWS_REGION" \
+                          | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+                        docker push "$BACKEND_IMAGE"
+                        docker push "$FRONTEND_IMAGE"
+                    '''
+                }
+            }
+        }
+
+        stage('클러스터 연결') {
+            when { expression { params.DEPLOY_MODE == 'push' } }
+            steps {
+                sh 'mkdir -p "$WORKSPACE/.kube"'
+                script {
+                    if (params.DEPLOY_TARGET == 'eks') {
+                        withCredentials([usernamePassword(credentialsId: 'aws-idolglow-deployer', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                            sh 'set +x; aws eks update-kubeconfig --name "$EKS_CLUSTER" --region "$AWS_REGION" --kubeconfig "$KUBECONFIG"'
+                        }
+                    } else {
+                        withCredentials([file(credentialsId: 'local-k8s-kubeconfig', variable: 'LOCAL_KUBECONFIG')]) {
+                            sh 'cp "$LOCAL_KUBECONFIG" "$KUBECONFIG"'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('설정 Secret 갱신') {
+            when { expression { params.DEPLOY_MODE == 'push' && params.APPLY_CONFIG_SECRET } }
+            steps {
+                script {
+                    def profileKey = params.DEPLOY_TARGET == 'eks' ? 'application-prod.yml' : 'application-local.yml'
+                    withCredentials([
+                        file(credentialsId: 'idolglow-application-yml', variable: 'APP_YML'),
+                        file(credentialsId: 'idolglow-application-prod-yml', variable: 'PROFILE_YML'),
+                        file(credentialsId: 'idolglow-application-select-yml', variable: 'SELECT_YML')
+                    ]) {
+                        withEnv(["PROFILE_KEY=${profileKey}"]) {
+                            runKubectl('bash infra/deploy/k8s/scripts/create-backend-config-secret.sh')
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('운영 배포 승인') {
+            when { expression { params.DEPLOY_TARGET == 'eks' } }
+            steps {
+                timeout(time: 30, unit: 'MINUTES') {
+                    input message: "EKS 운영에 배포할까요?\n이미지: ${env.IMAGE_TAG}\n방식: ${params.DEPLOY_MODE}", ok: '배포 승인'
+                }
+            }
+        }
+
+        stage('배포 (kubectl)') {
+            when { expression { params.DEPLOY_MODE == 'push' } }
+            steps {
+                script {
+                    env.DEPLOY_STARTED = 'true'
+                    runKubectl('''
+                        kubectl apply -k "$OVERLAY"
+                        kubectl -n "$NAMESPACE" set image deployment/idolglow-backend backend="$BACKEND_IMAGE"
+                        kubectl -n "$NAMESPACE" set image deployment/idolglow-frontend frontend="$FRONTEND_IMAGE"
+                        kubectl -n "$NAMESPACE" rollout status deployment/idolglow-backend --timeout=300s
+                        kubectl -n "$NAMESPACE" rollout status deployment/idolglow-frontend --timeout=180s
+                    ''')
+                }
+            }
+        }
+
+        stage('배포 (GitOps 태그 커밋)') {
+            when { expression { params.DEPLOY_MODE == 'gitops' } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-gitops-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                    sh '''
+                        set +x
+                        file=infra/deploy/k8s/overlays/eks/kustomization.yaml
+                        sed -i -E "s#(newName: ).*idolglow-backend#\\1${ECR_REGISTRY}/idolglow-backend#; s#(newName: ).*idolglow-frontend#\\1${ECR_REGISTRY}/idolglow-frontend#" "$file"
+                        sed -i -E "s#(newTag: ).*#\\1${IMAGE_TAG}#" "$file"
+                        git config user.name "idolglow-jenkins"
+                        git config user.email "jenkins@localhost"
+                        git add "$file"
+                        git commit -m "chore(deploy): eks 이미지 태그 ${IMAGE_TAG}"
+                        branch="$(git rev-parse --abbrev-ref HEAD)"
+                        remote="$(git remote get-url origin | sed -E 's#https://#https://'"${GIT_USER}"':'"${GIT_TOKEN}"'@#')"
+                        git push "$remote" "HEAD:${BRANCH_NAME:-$branch}"
+                    '''
+                }
+                echo 'ArgoCD 화면에서 idolglow-prod 가 OutOfSync로 바뀌면 승인자가 Sync를 누릅니다.'
+            }
+        }
+    }
+
+    post {
+        failure {
+            script {
+                if (params.DEPLOY_MODE == 'push' && env.DEPLOY_STARTED == 'true') {
+                    echo '배포가 실패해서 이전 버전으로 되돌립니다.'
+                    runKubectl('''
+                        kubectl -n "$NAMESPACE" rollout undo deployment/idolglow-backend || true
+                        kubectl -n "$NAMESPACE" rollout undo deployment/idolglow-frontend || true
+                    ''')
+                }
+            }
+        }
+        always {
+            sh 'rm -rf "$WORKSPACE/.kube" || true'
+        }
+    }
+}
+
+def runKubectl(String script) {
+    if (params.DEPLOY_TARGET == 'eks') {
+        withCredentials([usernamePassword(credentialsId: 'aws-idolglow-deployer', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+            sh "set +x\n${script}"
+        }
+    } else {
+        sh "set +x\n${script}"
+    }
+}

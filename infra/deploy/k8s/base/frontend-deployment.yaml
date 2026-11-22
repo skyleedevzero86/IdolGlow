@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idolglow-frontend
+  labels:
+    app.kubernetes.io/name: idolglow-frontend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: idolglow-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: idolglow-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: idolglow-frontend
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi

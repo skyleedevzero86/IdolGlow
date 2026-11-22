@@ -1,11 +1,12 @@
 package com.sleekydz86.idolglow.subscription.application
 
 import com.sleekydz86.idolglow.global.config.AppMailProperties
+import com.sleekydz86.idolglow.subscription.application.event.IdolGlowIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.event.NewsletterDispatchRequestedEvent
-import com.sleekydz86.idolglow.subscription.application.event.WebzineIssueDispatchRequestedEvent
 import com.sleekydz86.idolglow.subscription.application.port.out.EmailSubscriptionPort
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailMessage
 import com.sleekydz86.idolglow.subscription.application.port.out.OutboundMailPort
+import com.sleekydz86.idolglow.subscription.domain.MailSendKind
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionAudience
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
@@ -44,11 +45,11 @@ class SubscriptionDispatchMailService(
         }
     }
 
-    fun dispatchWebzineIssue(event: WebzineIssueDispatchRequestedEvent) {
+    fun dispatchIdolGlowIssue(event: IdolGlowIssueDispatchRequestedEvent) {
         dispatchIfNeeded(
             draft =
                 SubscriptionDispatchHistory.record(
-                    contentType = SubscriptionContentType.WEBZINE_ISSUE,
+                    contentType = SubscriptionContentType.IDOLGLOW_ISSUE,
                     contentSlug = event.slug,
                     contentTitle = "Vol.${event.volume} 웹진",
                     contentSummary = event.teaser,
@@ -57,9 +58,9 @@ class SubscriptionDispatchMailService(
                     dispatchedAt = LocalDateTime.now(),
                     dispatchStatus = SubscriptionDispatchStatus.SENDING,
                 ),
-            audience = SubscriptionAudience.WEBZINE_ISSUE,
+            audience = SubscriptionAudience.IDOLGLOW_ISSUE,
         ) {
-            subscriptionEmailComposer.composeWebzineIssue(event)
+            subscriptionEmailComposer.composeIdolGlowIssue(event)
         }
     }
 
@@ -137,15 +138,16 @@ class SubscriptionDispatchMailService(
         emailSubscriptionPort
             .findActiveEmailsByAudience(audience)
             .filterNot { it in alreadySent }
-            .forEach { recipient -> sendOne(history.id, composed, recipient) }
+            .forEach { recipient -> sendOne(history, composed, recipient) }
         subscriptionDispatchTxService.finish(history.id)
     }
 
     private fun sendOne(
-        dispatchId: Long,
+        history: SubscriptionDispatchHistory,
         email: ComposedSubscriptionEmail,
         recipient: String,
     ) {
+        val dispatchId = history.id
         try {
             outboundMailPort.send(
                 OutboundMailMessage(
@@ -153,6 +155,8 @@ class SubscriptionDispatchMailService(
                     subject = email.subject,
                     plainTextBody = email.plainText,
                     htmlBody = email.htmlBody,
+                    kind = MailSendKind.of(history.contentType),
+                    dispatchId = dispatchId,
                 ),
             )
             subscriptionDispatchTxService.recordOutcome(

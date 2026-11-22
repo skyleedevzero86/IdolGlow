@@ -6,9 +6,11 @@ import com.sleekydz86.idolglow.global.config.KopisApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.util.UriUtils
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
+import reactor.core.publisher.Mono
 import java.io.StringReader
 import java.nio.charset.StandardCharsets
 import javax.xml.parsers.DocumentBuilderFactory
@@ -44,26 +46,7 @@ class KopisPerformanceApiClient(
                         prfState?.takeIf { it.isNotBlank() }?.let { put("prfstate", it) }
                     },
             ) ?: return emptyList()
-        return parseRows(xml, "db").mapNotNull { row ->
-            val id = row.text("mt20id") ?: return@mapNotNull null
-            val title = row.text("prfnm") ?: return@mapNotNull null
-            FestivalEvent(
-                contentId = id,
-                title = title,
-                address = row.text("fcltynm"),
-                eventStartDate = normalizeDate(row.text("prfpdfrom")),
-                eventEndDate = normalizeDate(row.text("prfpdto")),
-                thumbnailImageUrl = row.text("poster"),
-                imageUrl = row.text("poster"),
-                mapX = null,
-                mapY = null,
-                phone = null,
-                detailUrl = null,
-                category = row.text("genrenm"),
-                synopsis = null,
-                source = "KOPIS_PBLPRFR",
-            )
-        }
+        return parseRows(xml, "db").mapNotNull { it.toListEvent("KOPIS_PBLPRFR") }
     }
 
     fun detailPerformance(mt20id: String): FestivalEvent? {
@@ -100,6 +83,19 @@ class KopisPerformanceApiClient(
         )
     }
 
+    fun scheduleGuidance(mt20id: String): String {
+        val key = kopisApiProperties.serviceKey.trim()
+        check(key.isNotEmpty()) { "KOPIS API 인증키가 비어 있습니다." }
+        val path = "pblprfr/${UriUtils.encodePath(mt20id.trim(), StandardCharsets.UTF_8)}"
+        val xml = requestXml(path, mapOf("service" to key))
+        val rows =
+            runCatching { parseXmlRows(xml, "db") }
+                .getOrElse { throw IllegalStateException("KOPIS 상세 응답을 읽지 못했습니다. mt20id=$mt20id", it) }
+        val error = rows.firstOrNull { it.text("returncode") != null }
+        check(error == null) { "KOPIS 오류 응답. path=$path returncode=${error?.text("returncode")}" }
+        return rows.firstOrNull()?.text("dtguidance").orEmpty()
+    }
+
     fun listFestivals(
         stDate: String,
         edDate: String,
@@ -120,26 +116,7 @@ class KopisPerformanceApiClient(
                         "rows" to rows.coerceIn(1, 100).toString(),
                     ),
             ) ?: return emptyList()
-        return parseRows(xml, "db").mapNotNull { row ->
-            val id = row.text("mt20id") ?: return@mapNotNull null
-            val title = row.text("prfnm") ?: return@mapNotNull null
-            FestivalEvent(
-                contentId = id,
-                title = title,
-                address = row.text("fcltynm"),
-                eventStartDate = normalizeDate(row.text("prfpdfrom")),
-                eventEndDate = normalizeDate(row.text("prfpdto")),
-                thumbnailImageUrl = row.text("poster"),
-                imageUrl = row.text("poster"),
-                mapX = null,
-                mapY = null,
-                phone = null,
-                detailUrl = null,
-                category = row.text("genrenm"),
-                synopsis = null,
-                source = "KOPIS_PRFFEST",
-            )
-        }
+        return parseRows(xml, "db").mapNotNull { it.toListEvent("KOPIS_PRFFEST") }
     }
 
     fun areaStats(
@@ -171,49 +148,134 @@ class KopisPerformanceApiClient(
         }
     }
 
+    fun listPerformancesForBatch(
+        stDate: String,
+        edDate: String,
+        page: Int,
+        rows: Int,
+    ): List<FestivalEvent> =
+        batchRows("pblprfr", periodQuery(stDate, edDate, page, rows))
+            .mapNotNull { it.toListEvent("KOPIS_PBLPRFR") }
+
+    fun listFestivalsForBatch(
+        stDate: String,
+        edDate: String,
+        page: Int,
+        rows: Int,
+    ): List<FestivalEvent> =
+        batchRows("prffest", periodQuery(stDate, edDate, page, rows))
+            .mapNotNull { it.toListEvent("KOPIS_PRFFEST") }
+
+    private fun batchRows(
+        path: String,
+        query: Map<String, String>,
+    ): List<Element> {
+        val key = kopisApiProperties.serviceKey.trim()
+        check(key.isNotEmpty()) { "KOPIS API 인증키가 비어 있습니다." }
+        val rows = parseXmlRows(requestXml(path, query + ("service" to key)), "db")
+        val error = rows.firstOrNull { it.text("returncode") != null } ?: return rows
+        val code = error.text("returncode")
+        check(code == NO_DATA_CODE) { "KOPIS 오류 응답. path=$path returncode=$code errmsg=${error.text("errmsg")}" }
+        return emptyList()
+    }
+
     private fun callEndpoint(
         path: String,
         query: Map<String, String>,
-    ): String? {
+    ): String? =
+        runCatching { requestXml(path, query) }
+            .onFailure { log.warn("KOPIS(공연) 호출 실패. path={}, message={}", path, it.message) }
+            .getOrNull()
+
+    private fun requestXml(
+        path: String,
+        query: Map<String, String>,
+    ): String {
         val queryString =
             query.entries.joinToString("&") { (k, v) ->
                 "${UriUtils.encodeQueryParam(k, StandardCharsets.UTF_8)}=${UriUtils.encodeQueryParam(v, StandardCharsets.UTF_8)}"
             }
         val url = "${kopisApiProperties.baseUrl.trimEnd('/')}/$path?$queryString"
-        return runCatching {
+        val body =
             webClient
                 .get()
                 .uri(url)
                 .retrieve()
-                .bodyToMono(String::class.java)
-                .block()
-        }.onFailure {
-            log.warn("KOPIS(공연) 호출 실패. path={}, message={}", path, it.message)
-        }.getOrNull()
+                .onStatus({ it.isError }) { response ->
+                    Mono.error(IllegalStateException("KOPIS 호출 실패. path=$path status=${response.statusCode().value()}"))
+                }.bodyToMono(String::class.java)
+                .onErrorMap(WebClientRequestException::class.java) {
+                    IllegalStateException("KOPIS 연결 실패. path=$path")
+                }.block()
+        return checkNotNull(body) { "KOPIS 응답 본문이 비어 있습니다. path=$path" }
     }
 
     private fun parseRows(
         xml: String,
         rowTag: String,
     ): List<Element> =
-        runCatching {
-            val factory = DocumentBuilderFactory.newInstance()
-            factory.isNamespaceAware = false
-            val builder = factory.newDocumentBuilder()
-            val document = builder.parse(InputSource(StringReader(xml)))
-            val nodes = document.getElementsByTagName(rowTag)
-            (0 until nodes.length).mapNotNull { nodes.item(it) as? Element }
-        }.getOrElse {
-            log.warn("KOPIS(공연) XML 파싱 실패: {}", it.message)
-            emptyList()
-        }
+        runCatching { parseXmlRows(xml, rowTag) }
+            .getOrElse {
+                log.warn("KOPIS(공연) XML 파싱 실패: {}", it.message)
+                emptyList()
+            }
+}
 
-    private fun normalizeDate(raw: String?): String? {
-        val value = raw?.trim().orEmpty()
-        if (value.isBlank()) return null
-        val yyyymmdd = value.replace(".", "").replace("-", "")
-        return if (yyyymmdd.length == 8 && yyyymmdd.all { it.isDigit() }) yyyymmdd else null
-    }
+private const val MAX_LIST_ROWS: Int = 100
+private const val NO_DATA_CODE: String = "04"
+private const val COMPACT_DATE_LENGTH: Int = 8
+
+private fun periodQuery(
+    stDate: String,
+    edDate: String,
+    page: Int,
+    rows: Int,
+): Map<String, String> =
+    mapOf(
+        "stdate" to stDate,
+        "eddate" to edDate,
+        "cpage" to page.coerceAtLeast(1).toString(),
+        "rows" to rows.coerceIn(1, MAX_LIST_ROWS).toString(),
+    )
+
+private fun parseXmlRows(
+    xml: String,
+    rowTag: String,
+): List<Element> {
+    val factory = DocumentBuilderFactory.newInstance()
+    factory.isNamespaceAware = false
+    val document = factory.newDocumentBuilder().parse(InputSource(StringReader(xml)))
+    val nodes = document.getElementsByTagName(rowTag)
+    return (0 until nodes.length).mapNotNull { nodes.item(it) as? Element }
+}
+
+private fun Element.toListEvent(sourceName: String): FestivalEvent? {
+    val id = text("mt20id")
+    val title = text("prfnm")
+    if (id == null || title == null) return null
+    return FestivalEvent(
+        contentId = id,
+        title = title,
+        address = text("fcltynm"),
+        eventStartDate = normalizeDate(text("prfpdfrom")),
+        eventEndDate = normalizeDate(text("prfpdto")),
+        thumbnailImageUrl = text("poster"),
+        imageUrl = text("poster"),
+        mapX = null,
+        mapY = null,
+        phone = null,
+        detailUrl = null,
+        category = text("genrenm"),
+        synopsis = null,
+        source = sourceName,
+    )
+}
+
+private fun normalizeDate(raw: String?): String? {
+    val value = raw?.trim().orEmpty()
+    if (value.isBlank()) return null
+    val yyyymmdd = value.replace(".", "").replace("-", "")
+    return if (yyyymmdd.length == COMPACT_DATE_LENGTH && yyyymmdd.all { it.isDigit() }) yyyymmdd else null
 }
 
 private fun Element.text(tagName: String): String? {

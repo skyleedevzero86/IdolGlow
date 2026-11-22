@@ -46,6 +46,7 @@ data class SurveyFormResponse(
                                 type = q.questionType,
                                 required = q.required,
                                 options = q.options.sortedBy { it.displayOrder }.map { it.optionText },
+                                recommendationSignal = q.recommendationSignal,
                             )
                         },
             )

@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.reservation.infrastructure
 
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
+import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotState
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -18,6 +19,15 @@ interface ReservationSlotJpaRepository : JpaRepository<ReservationSlot, Long> {
     fun findByIdForUpdate(
         @Param("id") id: Long,
     ): ReservationSlot?
+
+    @Query(
+        "select new com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlotState(" +
+            "rs.product.id, rs.isStatusBooked, rs.holdReservationId, rs.holdExpiresAt) " +
+            "from ReservationSlot rs where rs.id = :id",
+    )
+    fun findStateById(
+        @Param("id") id: Long,
+    ): ReservationSlotState?
 
     fun findAllByProductIdOrderByReservationDateAscStartTimeAsc(productId: Long): List<ReservationSlot>
 }

@@ -2,6 +2,8 @@ package com.sleekydz86.idolglow.productpackage.discovery.adapter.graphql
 
 import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlId
 import com.sleekydz86.idolglow.global.adapter.graphql.asGraphQlNumber
+import com.sleekydz86.idolglow.productpackage.discovery.application.RecommendationFallback
+import com.sleekydz86.idolglow.productpackage.discovery.application.RecommendationReason
 import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
 
 data class ProductRankingGraphQlResponse(
@@ -18,6 +20,8 @@ data class ProductRankingGraphQlResponse(
     val reviewCount: Int,
     val matchedTags: List<String>,
     val thumbnailUrl: String?,
+    val reasons: List<RecommendationReason>,
+    val fallback: RecommendationFallback?,
 ) {
     companion object {
         fun from(response: ProductRankingResponse): ProductRankingGraphQlResponse =
@@ -35,6 +39,8 @@ data class ProductRankingGraphQlResponse(
                 reviewCount = response.reviewCount.toInt(),
                 matchedTags = response.matchedTags,
                 thumbnailUrl = response.thumbnailUrl,
+                reasons = response.reasons,
+                fallback = response.fallback,
             )
     }
 }

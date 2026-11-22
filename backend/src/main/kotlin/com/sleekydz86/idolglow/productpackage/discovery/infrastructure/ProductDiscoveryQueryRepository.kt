@@ -125,10 +125,10 @@ class ProductDiscoveryQueryRepository(
                         """
                         select distinct p.id from Product p
                         join p.productTags pt
-                        where pt.tagName in :tags
+                        where lower(pt.tagName) in :tags
                         """.trimIndent(),
                         java.lang.Long::class.java,
-                    ).setParameter("tags", signalTags)
+                    ).setParameter("tags", signalTags.map { it.lowercase() }.distinct())
                     .resultList as List<java.lang.Long>
             acc.addAll(tagIds.map { it.toLong() })
         }

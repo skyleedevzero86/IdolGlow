@@ -2,11 +2,13 @@ package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.sleekydz86.idolglow.eventinfo.application.port.out.FestivalEventExternalQueryPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleCallFailedException
 import com.sleekydz86.idolglow.eventinfo.domain.CodeEntry
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalImage
+import com.sleekydz86.idolglow.eventinfo.domain.TourNearbyPlace
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
@@ -26,6 +28,7 @@ class TourFestivalApiClient(
 ) : FestivalEventExternalQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
     private val requestedServiceLocale = ThreadLocal<String>()
+    private val failedCallsOnThread = ThreadLocal<Int>()
 
     override fun searchFestival(
         eventStartDate: String,
@@ -36,6 +39,7 @@ class TourFestivalApiClient(
         val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
         if (encodedKey.isEmpty()) {
             log.warn("한국관광공사(TourKor) API 서비스키가 비어 있습니다.")
+            markFailedCall()
             return emptyList()
         }
         return fetchList<FestivalItem>(
@@ -60,12 +64,23 @@ class TourFestivalApiClient(
         numOfRows: Int,
     ): List<FestivalEvent> {
         val previous = requestedServiceLocale.get()
+        val previousFailures = failedCallsOnThread.get()
         requestedServiceLocale.set(EventLocale.normalize(locale))
+        failedCallsOnThread.set(0)
         try {
-            return searchFestival(eventStartDate, eventEndDate, pageNo, numOfRows)
+            val events = searchFestival(eventStartDate, eventEndDate, pageNo, numOfRows)
+            if (failedCallsOnThread.get() != 0) {
+                throw TourLocaleCallFailedException("관광 다국어 API 호출이 실패했습니다. locale=$locale pageNo=$pageNo")
+            }
+            return events
         } finally {
             if (previous == null) requestedServiceLocale.remove() else requestedServiceLocale.set(previous)
+            if (previousFailures == null) failedCallsOnThread.remove() else failedCallsOnThread.set(previousFailures)
         }
+    }
+
+    private fun markFailedCall() {
+        failedCallsOnThread.get()?.let { failedCallsOnThread.set(it + 1) }
     }
 
     override fun detailCommon(contentId: String): FestivalCommonDetail? {
@@ -160,6 +175,29 @@ class TourFestivalApiClient(
         ).mapNotNull { it.toDomain() }
     }
 
+    fun locationBasedList(
+        mapX: Double,
+        mapY: Double,
+        radiusMeters: Int,
+        numOfRows: Int,
+    ): List<TourNearbyPlace> {
+        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        if (encodedKey.isEmpty()) return emptyList()
+        return fetchList<NearbyItem>(
+            endpoint = "locationBasedList2",
+            encodedServiceKey = encodedKey,
+            params =
+                mapOf(
+                    "mapX" to mapX.toString(),
+                    "mapY" to mapY.toString(),
+                    "radius" to radiusMeters.toString(),
+                    "arrange" to "E",
+                    "pageNo" to "1",
+                    "numOfRows" to numOfRows.toString(),
+                ),
+        ).mapNotNull { it.toDomain() }
+    }
+
     override fun lDongCodes(
         lDongRegnCd: String?,
         lDongListYn: String,
@@ -211,10 +249,12 @@ class TourFestivalApiClient(
         val response = requestRaw(endpoint, encodedServiceKey, params)
         if (!response.statusCode.is2xxSuccessful) {
             log.warn("관광(축제) API HTTP 오류. endpoint={}, status={}, body={}", endpoint, response.statusCode.value(), response.body.take(300))
+            markFailedCall()
             return emptyList()
         }
         if (response.body.contains("<OpenAPI_ServiceResponse>", ignoreCase = true)) {
             log.warn("관광(축제) API XML 오류 응답. endpoint={}, body={}", endpoint, response.body.take(300))
+            markFailedCall()
             return emptyList()
         }
         val root =
@@ -222,6 +262,7 @@ class TourFestivalApiClient(
                 objectMapper.readTree(response.body)
             }.getOrElse { e ->
                 log.warn("관광(축제) API 파싱 실패. endpoint={}, message={}", endpoint, e.message)
+                markFailedCall()
                 return emptyList()
             }
         val responseNode = root.path("response")
@@ -234,6 +275,7 @@ class TourFestivalApiClient(
                 resultCode,
                 headerNode.path("resultMsg").asText(""),
             )
+            markFailedCall()
             return emptyList()
         }
         return extractItemNodes(responseNode.path("body").path("items")).mapNotNull {
@@ -269,8 +311,8 @@ class TourFestivalApiClient(
                 }.block()
                 ?: RawFestivalResponse(HttpStatusCode.valueOf(502), "")
         }.getOrElse { e ->
-            log.warn("관광 축제 API 호출 실패: {}", e.message)
-            RawFestivalResponse(HttpStatusCode.valueOf(502), e.message ?: "")
+            log.warn("관광 축제 API 호출 실패. endpoint={}, error={}", endpoint, e.javaClass.simpleName)
+            RawFestivalResponse(HttpStatusCode.valueOf(502), "")
         }
     }
 
@@ -300,11 +342,11 @@ class TourFestivalApiClient(
                 "en" -> "EngService2"
                 "ja" -> "JpnService2"
                 "zh" -> "ChsService2"
-                else -> "KorService2"
+                else -> KOREAN_SERVICE
             }
         val korean = koreanServiceBaseUrl()
         val localized = SERVICE_SUFFIX.replace(korean, "/$service")
-        if (localized == korean) {
+        if (localized == korean && service != KOREAN_SERVICE) {
             log.warn("관광 다국어 주소로 바꾸지 못했습니다. locale={}", locale)
         }
         return localized
@@ -316,6 +358,7 @@ class TourFestivalApiClient(
             .replace("/EngService2", "/KorService2")
 
     companion object {
+        private const val KOREAN_SERVICE = "KorService2"
         private val SERVICE_SUFFIX = Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
     }
 
@@ -358,6 +401,21 @@ private fun decodeBasicHtmlEntities(raw: String?): String? =
         ?.replace("&gt;", ">")
         ?.replace("&quot;", "\"")
         ?.replace("&#39;", "'")
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class NearbyItem(
+    val contenttypeid: String? = null,
+    val title: String? = null,
+    val dist: String? = null,
+) {
+    fun toDomain(): TourNearbyPlace? {
+        val type = contenttypeid?.trim()?.takeIf { it.isNotEmpty() }
+        val name = title?.trim()?.takeIf { it.isNotEmpty() }
+        val meters = dist?.toDoubleOrNull()?.toInt()
+        if (type == null || name == null || meters == null) return null
+        return TourNearbyPlace(contentTypeId = type, title = name, distanceMeters = meters)
+    }
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class FestivalItem(

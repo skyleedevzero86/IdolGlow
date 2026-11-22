@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.payment.application
 
+import com.sleekydz86.idolglow.notification.application.AdminNotificationPublisher
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationType
 import com.sleekydz86.idolglow.payment.domain.Payment
@@ -27,6 +28,7 @@ class ReservationPaymentService(
     private val paymentNotificationMailService: PaymentNotificationMailService,
     private val paymentRefundService: PaymentRefundService,
     private val reservationPaymentLock: ReservationPaymentLock,
+    private val adminNotificationPublisher: AdminNotificationPublisher = AdminNotificationPublisher.NONE,
 ) {
     fun requireMockPayment(paymentReference: String) {
         val payment =
@@ -81,6 +83,7 @@ class ReservationPaymentService(
         }
 
         paymentNotificationMailService.sendSucceeded(payment)
+        adminNotificationPublisher.publish(PaymentAdminNotifications.completed(payment.amount, payment.orderId))
 
         return payment
     }

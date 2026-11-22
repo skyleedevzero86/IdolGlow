@@ -22,6 +22,7 @@ fun AdminUpsertSurveyFormRequest.toCommand(): UpsertSurveyFormCommand =
                     type = question.type,
                     required = question.required,
                     options = question.options,
+                    recommendationSignal = question.recommendationSignal,
                 )
             },
     )

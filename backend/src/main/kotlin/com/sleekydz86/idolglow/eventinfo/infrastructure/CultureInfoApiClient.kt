@@ -14,6 +14,7 @@ import java.io.StringReader
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -24,6 +25,21 @@ class CultureInfoApiClient(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val unauthorizedBlockedUntilMillis = AtomicLong(0)
+    private val rateLimitedUntilMillis = AtomicLong(0)
+    private val calendarDayCache = ConcurrentHashMap<String, CachedCalendarDay>()
+    private val pacingLock = Any()
+    private var lastRequestAtMillis = 0L
+    private val failedCallsOnThread: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
+
+    fun listEventsForCalendarDayWithCompleteness(
+        yyyyMMdd: String,
+        pageNo: Int,
+        numOfRows: Int,
+    ): CalendarDayEvents {
+        val failedBefore = failedCallsOnThread.get()
+        val events = listEventsForCalendarDay(yyyyMMdd, pageNo, numOfRows)
+        return CalendarDayEvents(events, complete = failedCallsOnThread.get() == failedBefore)
+    }
 
     fun listEventsForCalendarDay(
         yyyyMMdd: String,
@@ -32,9 +48,38 @@ class CultureInfoApiClient(
         maxRealm2PerServiceTp: Int = 1000,
         maxArea2PerServiceTp: Int = 1000,
     ): List<FestivalEvent> {
+        val cacheKey = "$yyyyMMdd:$pageNo:$numOfRows:$maxRealm2PerServiceTp:$maxArea2PerServiceTp"
+        val now = System.currentTimeMillis()
+        calendarDayCache[cacheKey]?.takeIf { now - it.cachedAtMillis < CALENDAR_DAY_CACHE_TTL.toMillis() }?.let {
+            return it.events
+        }
+        val failedBefore = failedCallsOnThread.get()
+        val events =
+            fetchEventsForCalendarDay(yyyyMMdd, pageNo, numOfRows, maxRealm2PerServiceTp, maxArea2PerServiceTp)
+        if (failedCallsOnThread.get() == failedBefore) {
+            if (calendarDayCache.size >= CALENDAR_DAY_CACHE_MAX_ENTRIES) {
+                calendarDayCache.entries
+                    .minByOrNull { it.value.cachedAtMillis }
+                    ?.let { calendarDayCache.remove(it.key) }
+            }
+            calendarDayCache[cacheKey] = CachedCalendarDay(events, System.currentTimeMillis())
+        }
+        return events
+    }
+
+    private fun fetchEventsForCalendarDay(
+        yyyyMMdd: String,
+        pageNo: Int,
+        numOfRows: Int,
+        maxRealm2PerServiceTp: Int,
+        maxArea2PerServiceTp: Int,
+    ): List<FestivalEvent> {
         val key = resolveEncodedServiceKey(properties.serviceKey)
-        if (key.isEmpty()) return emptyList()
-        val perTp = (numOfRows / SERVICE_TYPES.size).coerceAtLeast(1).coerceAtMost(1000)
+        if (key.isEmpty()) {
+            markFailedCall()
+            return emptyList()
+        }
+        val perTp =(numOfRows / SERVICE_TYPES.size).coerceAtLeast(1).coerceAtMost(1000)
         val dateParam = properties.livelihoodDateParam.trim().ifBlank { "stdDate" }
         val base =
             SERVICE_TYPES.flatMap { tp ->
@@ -81,7 +126,7 @@ class CultureInfoApiClient(
                 "PageNo" to pageNo.coerceAtLeast(1).toString(),
                 "numOfrows" to numOfrows.coerceIn(1, 1000).toString(),
             )
-        val xml = fetchXml(buildCultureUrl("area2", key, params)) ?: return emptyList()
+        val xml = loadXml(buildCultureUrl("area2", key, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 area2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
             return emptyList()
@@ -105,7 +150,7 @@ class CultureInfoApiClient(
                     "PageNo" to "1",
                     "numOfrows" to rows.toString(),
                 )
-            val xml = fetchXml(buildCultureUrl("area2", encodedKey, params)) ?: return@flatMap emptyList()
+            val xml = loadXml(buildCultureUrl("area2", encodedKey, params)) ?: return@flatMap emptyList()
             if (!isResultOk(xml)) {
                 log.debug("문화시설정보 area2 건너뜀. tp={}", tp)
                 return@flatMap emptyList()
@@ -135,7 +180,7 @@ class CultureInfoApiClient(
                 put("numOfrows", numOfrows.coerceIn(1, 1000).toString())
                 if (!realmCode.isNullOrBlank()) put("realmCode", realmCode.trim())
             }
-        val xml = fetchXml(buildCultureUrl("realm2", key, params)) ?: return emptyList()
+        val xml = loadXml(buildCultureUrl("realm2", key, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 realm2 비정상 응답. serviceTp={}, bodyPrefix={}", serviceTp, xml.take(200))
             return emptyList()
@@ -161,7 +206,7 @@ class CultureInfoApiClient(
                         "numOfrows" to perRealmRows.toString(),
                         "realmCode" to code,
                     )
-                val xml = fetchXml(buildCultureUrl("realm2", encodedKey, params)) ?: return@flatMap emptyList()
+                val xml = loadXml(buildCultureUrl("realm2", encodedKey, params)) ?: return@flatMap emptyList()
                 if (!isResultOk(xml)) {
                     log.debug("문화시설정보 realm2 건너뜀. tp={}, realmCode={}", tp, code)
                     return@flatMap emptyList()
@@ -175,15 +220,15 @@ class CultureInfoApiClient(
         val key = resolveEncodedServiceKey(properties.serviceKey)
         if (key.isEmpty()) return null
         val url = buildCultureUrl("detail2", key, mapOf("seq" to seq.trim()))
-        val xml = fetchXml(url) ?: return null
+        val xml = loadXml(url) ?: return null
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 detail2 비정상 응답. seq={}, bodyPrefix={}", seq, xml.take(200))
             return null
         }
         val item = parseItems(xml).firstOrNull() ?: return null
         val m = item.toFieldMap()
-        val title = m["title"].orEmpty().ifBlank { return null }
-        val place = m["place"].orEmpty()
+        val title = EventSourceText.decodeOrNull(m["title"]) ?: return null
+        val place = EventSourceText.decode(m["place"].orEmpty())
         val area = m["area"].orEmpty()
         val sigungu = m["sigungu"].orEmpty()
         val address = listOf(area, sigungu, place).filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }
@@ -225,7 +270,7 @@ class CultureInfoApiClient(
                 put("PageNo", pageNo.toString())
                 put("numOfrows", numOfrows.coerceIn(1, 1000).toString())
             }
-        val xml = fetchXml(buildCultureUrl(operation, encodedKey, params)) ?: return emptyList()
+        val xml = loadXml(buildCultureUrl(operation, encodedKey, params)) ?: return emptyList()
         if (!isResultOk(xml)) {
             log.warn("문화시설정보 {} 비정상 응답. bodyPrefix={}", operation, xml.take(200))
             return emptyList()
@@ -240,8 +285,8 @@ class CultureInfoApiClient(
     ): FestivalEvent? {
         val m = el.toFieldMap()
         val seq = m["seq"]?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val title = m["title"]?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val place = m["place"].orEmpty()
+        val title = EventSourceText.decodeOrNull(m["title"]) ?: return null
+        val place = EventSourceText.decode(m["place"].orEmpty())
         val area = m["area"].orEmpty()
         val sigungu = m["sigungu"].orEmpty()
         val address = listOf(area, sigungu, place).filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }
@@ -271,8 +316,15 @@ class CultureInfoApiClient(
         )
     }
 
+    private fun loadXml(url: String): String? = fetchXml(url).also { if (it == null) markFailedCall() }
+
+    private fun markFailedCall() {
+        failedCallsOnThread.set(failedCallsOnThread.get() + 1)
+    }
+
     private fun fetchXml(url: String): String? {
         if (isUnauthorizedBlocked()) return null
+        if (rateLimitedUntilMillis.get() > System.currentTimeMillis()) return null
 
         val response = requestRaw(url)
         if (response.statusCode.is2xxSuccessful) return response.body
@@ -286,6 +338,14 @@ class CultureInfoApiClient(
                     UNAUTHORIZED_COOLDOWN.toMinutes(),
                 )
             }
+        } else if (response.statusCode.value() == HTTP_TOO_MANY_REQUESTS) {
+            if (markCooldown(rateLimitedUntilMillis, RATE_LIMIT_COOLDOWN)) {
+                log.warn(
+                    "문화시설정보 API 초당 요청 한도 초과. operation={}, status=429. {}초 동안 추가 호출을 생략합니다.",
+                    operation,
+                    RATE_LIMIT_COOLDOWN.toSeconds(),
+                )
+            }
         } else {
             log.warn(
                 "문화시설정보 API 호출 실패. operation={}, status={}, bodyPrefix={}",
@@ -297,8 +357,17 @@ class CultureInfoApiClient(
         return null
     }
 
+    private fun awaitPacing() {
+        synchronized(pacingLock) {
+            val waitMillis = lastRequestAtMillis + MIN_REQUEST_INTERVAL.toMillis() - System.currentTimeMillis()
+            if (waitMillis > 0) Thread.sleep(waitMillis)
+            lastRequestAtMillis = System.currentTimeMillis()
+        }
+    }
+
     private fun requestRaw(url: String): RawCultureResponse =
         runCatching {
+            awaitPacing()
             webClient
                 .get()
                 .uri(URI.create(url))
@@ -397,18 +466,29 @@ class CultureInfoApiClient(
         return true
     }
 
-    private fun markUnauthorizedCooldown(): Boolean {
+    private fun markUnauthorizedCooldown(): Boolean =
+        markCooldown(unauthorizedBlockedUntilMillis, UNAUTHORIZED_COOLDOWN)
+
+    private fun markCooldown(
+        blockedUntilMillis: AtomicLong,
+        cooldown: Duration,
+    ): Boolean {
         val now = System.currentTimeMillis()
-        val blockedUntil = now + UNAUTHORIZED_COOLDOWN.toMillis()
+        val blockedUntil = now + cooldown.toMillis()
         while (true) {
-            val current = unauthorizedBlockedUntilMillis.get()
+            val current = blockedUntilMillis.get()
             if (current > now) return false
-            if (unauthorizedBlockedUntilMillis.compareAndSet(current, blockedUntil)) return true
+            if (blockedUntilMillis.compareAndSet(current, blockedUntil)) return true
         }
     }
 
     companion object {
         private val UNAUTHORIZED_COOLDOWN: Duration = Duration.ofMinutes(5)
+        private val RATE_LIMIT_COOLDOWN: Duration = Duration.ofSeconds(30)
+        private const val HTTP_TOO_MANY_REQUESTS = 429
+        private val CALENDAR_DAY_CACHE_TTL: Duration = Duration.ofMinutes(10)
+        private const val CALENDAR_DAY_CACHE_MAX_ENTRIES = 200
+        private val MIN_REQUEST_INTERVAL: Duration = Duration.ofMillis(70)
         private const val MAX_SERVICE_KEY_DECODE_PASSES = 3
         private val PERCENT_ENCODED_REGEX = Regex("%[0-9A-Fa-f]{2}")
         private val SERVICE_TYPES = listOf("A", "B", "C")
@@ -434,4 +514,14 @@ class CultureInfoApiClient(
 private data class RawCultureResponse(
     val statusCode: HttpStatusCode,
     val body: String,
+)
+
+data class CalendarDayEvents(
+    val events: List<FestivalEvent>,
+    val complete: Boolean,
+)
+
+private data class CachedCalendarDay(
+    val events: List<FestivalEvent>,
+    val cachedAtMillis: Long,
 )

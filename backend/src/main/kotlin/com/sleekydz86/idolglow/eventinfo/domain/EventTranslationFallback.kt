@@ -5,7 +5,7 @@ object EventTranslationFallback {
         requested: String,
         rows: List<EventTranslation>,
     ): EventTranslation? {
-        val visible = rows.filter { it.origin != EventTranslationOrigin.MACHINE }
+        val visible = rows.filter { it.origin.visible }
         return EventLocale.order(requested).firstNotNullOfOrNull { locale ->
             visible.find { it.locale == locale }
         }

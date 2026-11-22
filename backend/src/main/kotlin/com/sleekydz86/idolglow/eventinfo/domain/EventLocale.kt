@@ -31,7 +31,10 @@ object EventLocale {
         }
     }
 
-    fun order(requested: String): List<String> = listOf(normalize(requested), ENGLISH, KOREAN).distinct()
+    fun order(requested: String): List<String> {
+        val locale = normalize(requested)
+        return if (locale == KOREAN) listOf(KOREAN) else listOf(locale, ENGLISH, KOREAN).distinct()
+    }
 
     private const val MAX_LENGTH: Int = 8
 }

@@ -1,6 +1,5 @@
 package com.sleekydz86.idolglow.global.infrastructure.datawarming
 
-import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
 import com.sleekydz86.idolglow.image.domain.Image
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.image.infrastructure.persistence.ImageJpaRepository
@@ -29,6 +28,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Profile
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -37,6 +38,7 @@ import java.time.LocalDateTime
 
 @Profile("local", "dev")
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE - 1)
 class LocalProfileMySqlDataWarmer(
     private val userJpaRepository: UserJpaRepository,
     private val userOAuthJpaRepository: UserOAuthJpaRepository,
@@ -47,17 +49,11 @@ class LocalProfileMySqlDataWarmer(
     private val scheduleJpaRepository: ScheduleJpaRepository,
     private val productReviewJpaRepository: ProductReviewJpaRepository,
     private val imageJpaRepository: ImageJpaRepository,
-    private val jwtProvider: JwtProvider,
 ) : ApplicationRunner {
     private val log = LoggerFactory.getLogger(LocalProfileMySqlDataWarmer::class.java)
 
     @Transactional
     override fun run(args: ApplicationArguments) {
-        val existingUser = userJpaRepository.findById(1L).orElse(null)
-        if (existingUser != null) {
-            logTokenForUser(existingUser)
-        }
-
         if (userJpaRepository.count() > 0) {
             return
         }
@@ -176,7 +172,7 @@ class LocalProfileMySqlDataWarmer(
                 ),
             )
 
-        logTokenForUser(user1)
+        log.info("로컬 테스트 사용자 준비 완료. userId={}", user1.id)
 
         imageJpaRepository.saveAll(
             listOf(
@@ -221,16 +217,6 @@ class LocalProfileMySqlDataWarmer(
                     sortOrder = 0,
                 ),
             ),
-        )
-    }
-
-    private fun logTokenForUser(user: User) {
-        val token = jwtProvider.generateToken(user.id, user.role)
-        log.info(
-            "로컬 테스트 토큰(userId={}): 액세스 토큰={}, 리프레시 토큰={}",
-            user.id,
-            token.accessToken,
-            token.refreshToken,
         )
     }
 }

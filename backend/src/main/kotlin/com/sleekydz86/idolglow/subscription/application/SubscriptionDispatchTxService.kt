@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.subscription.domain.SubscriptionContentType
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchHistory
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipient
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchRecipientStatus
+import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchSkipReason
 import com.sleekydz86.idolglow.subscription.domain.SubscriptionDispatchStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -57,6 +58,18 @@ class SubscriptionDispatchTxService(
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun recordSkipped(
+        dispatchId: Long,
+        email: String,
+        reason: SubscriptionDispatchSkipReason,
+    ) {
+        val existing = subscriptionDispatchRecipientPort.findByDispatchIdAndEmail(dispatchId, email)
+        val row = existing ?: SubscriptionDispatchRecipient.create(dispatchId, email)
+        row.skip(reason)
+        subscriptionDispatchRecipientPort.save(row)
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun finish(historyId: Long) {
         val history =
             subscriptionDispatchHistoryPort.findById(historyId)?.takeIf {
@@ -65,9 +78,10 @@ class SubscriptionDispatchTxService(
         val rows = subscriptionDispatchRecipientPort.findByDispatchId(historyId)
         val success = rows.count { it.status == SubscriptionDispatchRecipientStatus.SENT }.toLong()
         val failure = rows.count { it.status == SubscriptionDispatchRecipientStatus.FAILED }.toLong()
+        val skipped = rows.count { it.status == SubscriptionDispatchRecipientStatus.SKIPPED }.toLong()
         history.complete(
             status = outcome(success, failure),
-            recipientCount = success + failure,
+            recipientCount = success + failure + skipped,
             successCount = success,
             failureCount = failure,
         )

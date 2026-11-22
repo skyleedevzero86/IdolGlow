@@ -67,7 +67,7 @@ class SurveyFormController(
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
 
-    @Operation(summary = "설문 기반 추천 생성")
+    @Operation(summary = "설문 기반 추천 생성 (LLM 문구는 뒤에서 만들고 llmPending으로 알림)")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/current/submissions/{submissionId}/recommendation")
     fun generateRecommendation(
@@ -82,4 +82,25 @@ class SurveyFormController(
                 useLlm = useLlm,
             ),
         )
+
+    @Operation(summary = "설문 기반 추천 조회 (LLM 문구가 준비되면 llmEnhanced=true)")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/current/submissions/{submissionId}/recommendation")
+    fun findRecommendation(
+        @LoginUser userId: Long,
+        @PathVariable submissionId: Long,
+        @RequestParam(defaultValue = "true") useLlm: Boolean,
+    ): ResponseEntity<SurveyRecommendationResponse> = generateRecommendation(userId, submissionId, useLlm)
+
+    @Operation(summary = "내 최신 설문의 추천 조회 (제출 직후 LLM 문구를 미리 만들어 둠)")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/current/submissions/me/latest/recommendation")
+    fun findMyLatestRecommendation(
+        @LoginUser userId: Long,
+        @RequestParam(defaultValue = "true") useLlm: Boolean,
+    ): ResponseEntity<SurveyRecommendationResponse> =
+        surveyRecommendationService
+            .generateLatest(userId, useLlm)
+            ?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.noContent().build()
 }

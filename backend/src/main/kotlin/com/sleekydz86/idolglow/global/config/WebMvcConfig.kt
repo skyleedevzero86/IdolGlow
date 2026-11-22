@@ -26,7 +26,7 @@ class WebMvcConfig(
             localStorageBasePath.trim().takeIf { it.isNotEmpty() }
                 ?: Paths.get(System.getProperty("user.home"), "Desktop", "image").toString()
         registerUploadPath(registry, root, "profile-avatars", "/uploads/profile-avatars/**")
-        registerUploadPath(registry, root, "webzine", "/uploads/webzine/**")
+        registerUploadPath(registry, root, "idolglow", "/uploads/idolglow/**")
     }
 
     private fun registerUploadPath(

@@ -93,8 +93,9 @@ class SiteContentQueryService(
 
         val objectKey =
             when {
-                raw.contains("/webzine/") -> "webzine/${raw.substringAfter("/webzine/").trimStart('/')}"
-                raw.contains("/uploads/webzine/") -> "webzine/${raw.substringAfter("/uploads/webzine/").trimStart('/')}"
+                raw.contains("/uploads/idolglow/") ->
+                    "idolglow/${raw.substringAfter("/uploads/idolglow/").trimStart('/')}"
+                raw.contains("/idolglow/") -> "idolglow/${raw.substringAfterLast("/idolglow/").trimStart('/')}"
                 else -> return raw
             }
 
