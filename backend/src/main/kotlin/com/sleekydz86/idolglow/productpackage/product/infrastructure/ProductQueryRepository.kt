@@ -1,7 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.product.infrastructure
 
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
-import com.sleekydz86.idolglow.productpackage.product.domain.ProductLocation
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductTag
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductLocationSummaryResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
@@ -33,25 +32,12 @@ class ProductQueryRepository(
                     select distinct p from Product p
                     left join fetch p.productOptions po
                     left join fetch po.option o
+                    left join fetch p.productLocation pl
                     where p.id in :ids
                     """.trimIndent(),
                     Product::class.java,
                 ).setParameter("ids", orderedIds)
                 .resultList as List<Product>
-
-        @Suppress("UNCHECKED_CAST")
-        val locationRows =
-            entityManager
-                .createQuery(
-                    """
-                    select pl from ProductLocation pl
-                    join pl.product p
-                    where p.id in :ids
-                    """.trimIndent(),
-                    ProductLocation::class.java,
-                ).setParameter("ids", orderedIds)
-                .resultList as List<ProductLocation>
-        val locationByProductId = locationRows.associateBy { it.product.id }
 
         val tags =
             entityManager
@@ -69,7 +55,7 @@ class ProductQueryRepository(
         val productById = products.associateBy { it.id }
         return orderedIds.mapNotNull { id ->
             val product = productById[id] ?: return@mapNotNull null
-            val loc = locationByProductId[product.id]
+            val loc = product.productLocation
             val distanceMeters =
                 if (nearLatitude != null && nearLongitude != null && loc != null) {
                     GeoDistanceMeters.between(
