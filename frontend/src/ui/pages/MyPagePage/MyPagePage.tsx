@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../auth/AuthContext";
+import { RecommendationMailPanel } from "../../components/RecommendationMailPanel/RecommendationMailPanel";
 import shellStyles from "../AdminMarketingPage/AdminMarketingPage.module.css";
 import { AdminMarketingShell } from "../AdminMarketingPage/AdminMarketingShell";
 import { ADMIN_SNB_GROUPS } from "../AdminMarketingPage/adminNavigation";
@@ -283,6 +284,15 @@ export function MyPagePage() {
           </div>
         </div>
       </section>
+      {accessToken ? (
+        <div className={plainStyles.mailSection}>
+          <RecommendationMailPanel
+            accessToken={accessToken}
+            consentSource="MYPAGE"
+            showBasisOptions
+          />
+        </div>
+      ) : null}
     </AdminMarketingShell>
   );
 }

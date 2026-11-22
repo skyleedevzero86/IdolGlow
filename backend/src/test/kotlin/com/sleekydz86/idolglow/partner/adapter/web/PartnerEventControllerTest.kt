@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.partner.adapter.web
 
+import com.sleekydz86.idolglow.eventinfo.application.EventExternalIdService
+import com.sleekydz86.idolglow.eventinfo.application.EventSessionQueryService
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.global.infrastructure.exception.GlobalExceptionAdvice
@@ -36,6 +38,8 @@ class PartnerEventControllerTest {
     private val masterPort: EventMasterPort =
         mockk { every { findChangedAfter(any(), any(), any(), any()) } returns emptyList() }
     private val translationPort: EventTranslationPort = mockk { every { findByGlobalIdIn(any()) } returns emptyList() }
+    private val externalIdService: EventExternalIdService = mockk { every { idsOf(any()) } returns emptyMap() }
+    private val sessionQueryService: EventSessionQueryService = mockk()
 
     private val mockMvc: MockMvc =
         MockMvcBuilders
@@ -45,6 +49,8 @@ class PartnerEventControllerTest {
                         PartnerAccessService(clientPort, callLogPort, PartnerRateLimiter()),
                         masterPort,
                         translationPort,
+                        externalIdService,
+                        sessionQueryService,
                     ),
                 ),
             ).setControllerAdvice(GlobalExceptionAdvice())
@@ -111,6 +117,28 @@ class PartnerEventControllerTest {
         result
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.errorCode").value("PARTNER_LOCALE_NOT_CONTRACTED"))
+        assertEquals(listOf(400), callLogs.map { it.status })
+    }
+
+    @DisplayName("모르는 외부 ID 체계로 공연을 찾으면 400이고 호출 기록을 남긴다")
+    @Test
+    fun unknownExternalIdSchemeIsBadRequest() {
+        // given
+        등록(파트너())
+
+        // when
+        val result =
+            mockMvc.perform(
+                get("/partner/v1/events/by-external-id")
+                    .header("X-Partner-Key", KEY)
+                    .param("scheme", "TMDB")
+                    .param("id", "123"),
+            )
+
+        // then
+        result
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("알 수 없는 외부 ID 체계입니다. scheme=TMDB"))
         assertEquals(listOf(400), callLogs.map { it.status })
     }
 

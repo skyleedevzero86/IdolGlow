@@ -1,15 +1,21 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
+import { setContentLiked } from '../../../shared/data/contentLikeApi';
 import type { ArticleViewModel, CategoryType } from "../../../domains/article/domain/article.types";
 import styles from './ArticleCard.module.css';
 
+export interface ArticleCardLikeTarget {
+  readonly type: string;
+  readonly key: string;
+  readonly liked: boolean;
+}
+
 interface ArticleCardProps {
   readonly article: ArticleViewModel;
+  readonly linkTo?: string;
+  readonly likeTarget?: ArticleCardLikeTarget;
 }
 
 const getCategoryClass = (category: CategoryType): string => {
@@ -47,16 +53,23 @@ const LinkIcon = () => (
   </svg>
 );
 
-export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { authReady, user } = useAuth();
-  const [isLiked, setIsLiked] = useState(false);
+export const ArticleCard = memo<ArticleCardProps>(({ article, linkTo, likeTarget }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { accessToken, authReady, user } = useAuth();
+  const [isLiked, setIsLiked] = useState(likeTarget?.liked ?? false);
   const [likeCount, setLikeCount] = useState(article.likeCount);
+  const [likePending, setLikePending] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const articleUrl = new URL(`/articles/${article.id}`, window.location.origin).toString();
+  const articlePath = linkTo ?? `/articles/${article.id}`;
+  const articleUrl = new URL(articlePath, window.location.origin).toString();
+  const initialLiked = likeTarget?.liked ?? false;
+
+  useEffect(() => {
+    setIsLiked(initialLiked);
+    setLikeCount(article.likeCount);
+  }, [initialLiked, article.likeCount]);
 
   useEffect(() => {
     if (!shareOpen) return;
@@ -73,16 +86,43 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
   };
 
   const copyArticleUrl = async () => {
-    await navigator.clipboard.writeText(articleUrl);
-    setIsCopied(true);
+    try {
+      await navigator.clipboard.writeText(articleUrl);
+      setIsCopied(true);
+    } catch {
+      setIsCopied(false);
+    }
+  };
+
+  const toggleRemoteLike = async (target: ArticleCardLikeTarget, token: string) => {
+    const nextLiked = !isLiked;
+    const previous = { liked: isLiked, count: likeCount };
+    setLikePending(true);
+    setIsLiked(nextLiked);
+    setLikeCount((count) => Math.max(0, count + (nextLiked ? 1 : -1)));
+    try {
+      const result = await setContentLiked(target.type, target.key, nextLiked, token);
+      setIsLiked(result.liked);
+      setLikeCount(result.likeCount);
+    } catch {
+      setIsLiked(previous.liked);
+      setLikeCount(previous.count);
+    } finally {
+      setLikePending(false);
+    }
   };
 
   const toggleLike = () => {
     if (!authReady) return;
     if (!user) {
-      const query = searchParams.toString();
-      const redirect = encodeURIComponent(`${pathname}${query ? `?${query}` : ''}${window.location.hash}`);
-      router.push(`/?login=1&redirect=${redirect}`);
+      const redirect = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
+      navigate(`/?login=1&redirect=${redirect}`);
+      return;
+    }
+
+    if (likeTarget) {
+      if (likePending || !accessToken) return;
+      void toggleRemoteLike(likeTarget, accessToken);
       return;
     }
 
@@ -96,7 +136,7 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
     <>
     <article className={styles.card}>
       <Link
-        href={`/articles/${article.id}`}
+        to={articlePath}
         className={styles.imageWrapper}
         tabIndex={-1}
         aria-hidden="true"
@@ -123,6 +163,7 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
               className={`${styles.actionButton} ${styles.likeButton} ${isLiked ? styles.liked : ''}`}
               aria-label={isLiked ? '좋아요 취소' : '좋아요'}
               aria-pressed={isLiked}
+              disabled={likePending}
               onClick={toggleLike}
             >
               <HeartIcon />
@@ -141,7 +182,7 @@ export const ArticleCard = memo<ArticleCardProps>(({ article }) => {
 
         <h3 className={styles.title}>
           <Link
-            href={`/articles/${article.id}`}
+            to={articlePath}
             className={styles.titleLink}
           >
             {article.title}

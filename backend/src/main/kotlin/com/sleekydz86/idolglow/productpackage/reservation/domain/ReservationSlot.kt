@@ -68,9 +68,8 @@ class ReservationSlot(
         now: LocalDateTime = LocalDateTime.now(),
     ) {
         clearExpiredHold(now)
-        require(!isStatusBooked) { "이미 예약된 슬롯입니다." }
-        require(this.product.id == productId) { "해당 슬롯은 상품 ID $productId 에 속하지 않습니다." }
-        require(!isHeld(now)) { "다른 예약이 이미 선점한 슬롯입니다." }
+        ReservationSlotState(product.id, isStatusBooked, holdReservationId, holdExpiresAt)
+            .validateAvailability(productId, now)
     }
 
     fun hold(

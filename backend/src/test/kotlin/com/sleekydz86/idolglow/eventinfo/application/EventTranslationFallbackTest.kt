@@ -255,6 +255,9 @@ private class InMemoryEventSourceRefPort : EventSourceRefPort {
 
     override fun findByGlobalId(globalId: String): List<EventSourceRef> = rows.filter { it.globalId == globalId }
 
+    override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventSourceRef> =
+        rows.filter { it.globalId in globalIds }
+
     override fun countByMatchStatus(status: EventMatchStatus): Long = rows.count { it.matchStatus == status }.toLong()
 
     override fun findByMatchStatusIn(statuses: Collection<EventMatchStatus>): List<EventSourceRef> =

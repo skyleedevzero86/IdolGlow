@@ -40,18 +40,19 @@ export function resolveSiteContentImageUrl(
 
   try {
     const parsed = new URL(raw);
-    const fromWebzinePath = parsed.pathname.split('/webzine/')[1];
-    if (fromWebzinePath) {
-      return buildSiteContentAssetUrl(`webzine/${fromWebzinePath.replace(/^\/+/, '')}`);
+    const fromUploadPath = parsed.pathname.split('/uploads/idolglow/')[1];
+    if (fromUploadPath) {
+      return buildSiteContentAssetUrl(`idolglow/${fromUploadPath.replace(/^\/+/, '')}`);
     }
 
-    const fromUploadPath = parsed.pathname.split('/uploads/webzine/')[1];
-    if (fromUploadPath) {
-      return buildSiteContentAssetUrl(`webzine/${fromUploadPath.replace(/^\/+/, '')}`);
+    const markerIndex = parsed.pathname.lastIndexOf('/idolglow/');
+    const fromIdolglowPath = markerIndex >= 0 ? parsed.pathname.slice(markerIndex + '/idolglow/'.length) : '';
+    if (fromIdolglowPath) {
+      return buildSiteContentAssetUrl(`idolglow/${fromIdolglowPath.replace(/^\/+/, '')}`);
     }
   } catch {
-    if (raw.startsWith('/uploads/webzine/')) {
-      return buildSiteContentAssetUrl(`webzine/${raw.replace('/uploads/webzine/', '')}`);
+    if (raw.startsWith('/uploads/idolglow/')) {
+      return buildSiteContentAssetUrl(`idolglow/${raw.replace('/uploads/idolglow/', '')}`);
     }
   }
 

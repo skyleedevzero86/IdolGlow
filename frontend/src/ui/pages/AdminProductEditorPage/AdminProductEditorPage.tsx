@@ -20,8 +20,7 @@ import {
   getDefaultTourBaseYmSeoul,
   parseTourBaseYm,
   SEOUL_DISTRICT_SIGNGU_OPTIONS,
-  TOUR_AREA_OPTIONS,
-} from '../../../shared/data/seoulTourDistrictOptions';
+  TOUR_AREA_OPTIONS, formatTourBaseYmLabel } from '../../../shared/data/seoulTourDistrictOptions';
 import { AdminMarketingShell } from '../AdminMarketingPage/AdminMarketingShell';
 import shellStyles from '../AdminMarketingPage/AdminMarketingPage.module.css';
 import shellToolbar from '../AdminUsersPage/AdminUsersShellToolbar.module.css';
@@ -706,6 +705,11 @@ export function AdminProductEditorPage() {
               ) : null}
               {!attractionLoading && !attractionError && attractionData ? (
                 <>
+                  {attractionData.requestedBaseYm && attractionData.requestedBaseYm !== attractionData.baseYm ? (
+                    <p className={styles.tourSearchPrompt}>
+                      {formatTourBaseYmLabel(attractionData.requestedBaseYm)} 자료가 아직 없어 {formatTourBaseYmLabel(attractionData.baseYm)} 기준으로 보여 드려요.
+                    </p>
+                  ) : null}
                   {attractionData.attractions.length === 0 ? (
                     <p className={styles.empty}>추천 결과가 없습니다. 기준연월·구역을 바꿔 보시거나 잠시 후 다시 시도해 주세요.</p>
                   ) : (

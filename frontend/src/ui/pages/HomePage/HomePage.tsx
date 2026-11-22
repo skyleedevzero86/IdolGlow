@@ -14,7 +14,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner/LoadingSpinner";
 import { NewsletterSubscribeModal } from "../../components/NewsletterSubscribeModal/NewsletterSubscribeModal";
 import { SortFilter } from "../../components/SortFilter/SortFilter";
 import { VolumeSection } from "../../components/VolumeSection/VolumeSection";
-import { useArticlesGroupedByVolume } from "../../hooks/useArticles";
+import { useIdolglowHomeArticles } from "../../hooks/useIdolglowHomeArticles";
 import styles from "./HomePage.module.css";
 
 const EMPTY_HOME_CONTENT: SiteHomeContentResponse = {
@@ -37,10 +37,13 @@ export const HomePage = () => {
     useState<SiteHomeContentResponse>(EMPTY_HOME_CONTENT);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const {
-    data: volumeGroups,
+    groups: volumeGroups,
     loading,
     error,
-  } = useArticlesGroupedByVolume(sortBy);
+    hasNext,
+    loadingMore,
+    loadMore,
+  } = useIdolglowHomeArticles(sortBy);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,17 +128,17 @@ export const HomePage = () => {
 
         <div className={styles.socialBar}>
           <div className={styles.socialBarInner}>
-            <nav className={styles.webzineQuickNav} aria-label="웹진 바로가기">
-              <ul className={`${styles.webzineWrap} ${styles.blue}`}>
+            <nav className={styles.idolglowQuickNav} aria-label="웹진 바로가기">
+              <ul className={`${styles.idolglowWrap} ${styles.blue}`}>
                 <li>
-                  <Link to="/glow" className={styles.webzineLink}>
+                  <Link to="/glow?tab=trend" className={styles.idolglowLink}>
                     트렌드 보기
                   </Link>
                 </li>
                 <li>
                   <button
                     type="button"
-                    className={styles.webzineActionButton}
+                    className={styles.idolglowActionButton}
                     onClick={() => setSubscribeOpen(true)}
                   >
                     구독 신청
@@ -156,22 +159,45 @@ export const HomePage = () => {
           />
 
           {loading ? (
-            <LoadingSpinner text="권호 목록을 불러오는 중..." />
+            <LoadingSpinner text="트렌드 기사를 불러오는 중..." />
           ) : null}
 
-          {error ? (
+          {!loading && error ? (
             <div role="alert">
               <p>
-                권호 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+                트렌드 기사를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
               </p>
             </div>
           ) : null}
 
+          {!loading && !error && volumeGroups.length === 0 ? (
+            <p className={styles.volumeEmpty}>아직 발행된 트렌드 기사가 없습니다.</p>
+          ) : null}
+
           <div>
-            {volumeGroups?.map((group) => (
-              <VolumeSection key={group.volume} volumeGroup={group} />
-            ))}
+            {loading
+              ? null
+              : volumeGroups.map((group) => (
+                  <VolumeSection
+                    key={group.key}
+                    volume={group.volume}
+                    date={group.date}
+                    cards={group.cards}
+                  />
+                ))}
           </div>
+
+          {!loading && hasNext ? (
+            <button
+              type="button"
+              className={styles.volumeMoreButton}
+              disabled={loadingMore}
+              aria-busy={loadingMore}
+              onClick={() => void loadMore()}
+            >
+              {loadingMore ? "불러오는 중..." : "기사 더 보기"}
+            </button>
+          ) : null}
 
           {homeContent.banners.length > 0 ? (
             <section className={styles.bannerSection} aria-label="패밀리사이트">

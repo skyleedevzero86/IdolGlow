@@ -7,9 +7,11 @@ import com.sleekydz86.idolglow.partner.application.PartnerEventFeedService
 import com.sleekydz86.idolglow.partner.application.dto.PartnerEventItem
 import com.sleekydz86.idolglow.partner.application.dto.PartnerEventPage
 import com.sleekydz86.idolglow.partner.application.dto.PartnerFeedQuery
+import com.sleekydz86.idolglow.partner.application.dto.PartnerSession
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
 @Tag(
     name = "파트너 메타 API v1",
@@ -43,6 +46,36 @@ class PartnerEventController(
         @RequestParam(defaultValue = "50") size: Int,
         @Parameter(description = "언어. 계약하지 않은 언어는 400") @RequestParam(required = false) lang: String?,
     ): PartnerEventPage = partnerEventFeedService.feed(key, PartnerFeedQuery(updatedSince, cursor, size, lang))
+
+    @Operation(
+        summary = "외부 ID로 공연 찾기",
+        description = "KOPIS·KTO·SJW·CULTURE는 공급처 원본 ID, WIKIDATA는 Q로 시작하는 위키데이터 ID. 모르는 체계는 400, 없으면 404",
+    )
+    @GetMapping("/events/by-external-id")
+    fun eventByExternalId(
+        @Parameter(description = "파트너 키") @RequestHeader(name = KEY_HEADER, required = false) key: String?,
+        @Parameter(description = "외부 ID 체계. KOPIS, KTO, SJW, CULTURE, WIKIDATA") @RequestParam scheme: String,
+        @Parameter(description = "외부 ID. 예: PF123456, Q12345") @RequestParam id: String,
+        @RequestParam(required = false) lang: String?,
+    ): PartnerEventItem = partnerEventFeedService.eventByExternalId(key, scheme, id, lang)
+
+    @Operation(
+        summary = "공연 회차 목록",
+        description = "대표 공연 아래 회차를 시작 시각 순으로 준다. 기본은 오늘부터 90일, 한 번에 92일까지. 취소된 회차는 status=CANCELLED",
+    )
+    @GetMapping("/events/{globalId}/sessions")
+    fun sessions(
+        @Parameter(description = "파트너 키") @RequestHeader(name = KEY_HEADER, required = false) key: String?,
+        @PathVariable globalId: String,
+        @Parameter(description = "시작일. 예: 2026-12-01")
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        from: LocalDate?,
+        @Parameter(description = "종료일. 예: 2026-12-31")
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        to: LocalDate?,
+    ): List<PartnerSession> = partnerEventFeedService.sessions(key, globalId, from, to)
 
     @Operation(summary = "공연 한 건 조회", description = "병합된 공연은 status=MERGED와 이어받은 mergedInto를 준다")
     @GetMapping("/events/{globalId}")

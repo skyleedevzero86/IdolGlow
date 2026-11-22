@@ -1,0 +1,79 @@
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 32px 0 8px;
+}
+
+.number,
+.active,
+.arrow {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #333333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.number:hover,
+.number:focus-visible {
+  background: #f7f7f5;
+  color: #111111;
+}
+
+.active {
+  border-color: var(--header-bg);
+  background: var(--header-bg);
+  color: #ffffff;
+  cursor: default;
+}
+
+.arrow {
+  border-color: #e8e8e8;
+  background: #ffffff;
+}
+
+.arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.arrow:hover:not(:disabled),
+.arrow:focus-visible:not(:disabled) {
+  border-color: var(--header-bg);
+  background: var(--header-bg);
+  color: #ffffff;
+}
+
+.arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+:global(html[data-theme='dark']) .number,
+:global(html[data-theme='dark']) .arrow {
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .arrow {
+  border-color: #253041;
+  background: transparent;
+}
+
+:global(html[data-theme='dark']) .active {
+  border-color: #f8fafc;
+  background: #f8fafc;
+  color: #111111;
+}

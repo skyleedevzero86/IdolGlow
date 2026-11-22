@@ -1,6 +1,10 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleCallFailedException
 import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleFestivalPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
@@ -10,8 +14,12 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 
 @DisplayName("관광 다국어 수집기의 국문 공연 연결")
@@ -97,6 +105,54 @@ class TourEventTranslationCollectorTest {
         // then
         verify(exactly = 1) { txService.upsertProvider("g-1", "en", "Lantern Festival", null) }
         verify(exactly = 1) { txService.upsertProvider("g-1", "ja", "灯籠祭り", null) }
+    }
+
+    @DisplayName("언어별 API 호출 실패(403 등)는 원인 한 줄만 남기고 스택 트레이스를 찍지 않는다")
+    @Test
+    fun expectedCallFailureLogsWithoutStackTrace() {
+        // given
+        val port = 공급처()
+        every { port.searchFestival("ja", any(), any(), any(), any()) } throws
+            TourLocaleCallFailedException("관광 다국어 API 호출이 실패했습니다. locale=ja pageNo=1")
+
+        // when
+        val logs = 로그와_함께 { 수집기(port).collect(from, to) }
+
+        // then
+        val failure = logs.single { it.formattedMessage.startsWith("관광 다국어 수집에 실패했습니다. locale=ja") }
+        assertEquals(
+            "관광 다국어 수집에 실패했습니다. locale=ja reason=관광 다국어 API 호출이 실패했습니다. locale=ja pageNo=1",
+            failure.formattedMessage,
+        )
+        assertNull(failure.throwableProxy)
+    }
+
+    @DisplayName("예상하지 못한 예외는 원인을 찾을 수 있게 스택 트레이스를 남긴다")
+    @Test
+    fun unexpectedFailureKeepsStackTrace() {
+        // given
+        val port = 공급처()
+        every { port.searchFestival("ja", any(), any(), any(), any()) } throws IllegalArgumentException("파싱 버그")
+
+        // when
+        val logs = 로그와_함께 { 수집기(port).collect(from, to) }
+
+        // then
+        val failure = logs.single { it.formattedMessage.startsWith("관광 다국어 수집에 실패했습니다. locale=ja") }
+        assertNotNull(failure.throwableProxy)
+    }
+
+    private fun 로그와_함께(block: () -> Unit): List<ILoggingEvent> {
+        val appender = ListAppender<ILoggingEvent>()
+        val logger = LoggerFactory.getLogger(TourEventTranslationCollector::class.java) as Logger
+        appender.start()
+        logger.addAppender(appender)
+        try {
+            block()
+            return appender.list.toList()
+        } finally {
+            logger.detachAppender(appender)
+        }
     }
 
     private fun 수집기(port: TourLocaleFestivalPort) = TourEventTranslationCollector(port, refPort, txService)

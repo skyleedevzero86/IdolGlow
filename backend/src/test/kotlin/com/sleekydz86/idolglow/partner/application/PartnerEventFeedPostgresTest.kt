@@ -1,19 +1,29 @@
 package com.sleekydz86.idolglow.partner.application
 
+import com.sleekydz86.idolglow.eventinfo.application.EventExternalIdService
 import com.sleekydz86.idolglow.eventinfo.application.EventMasterMergeHandler
 import com.sleekydz86.idolglow.eventinfo.application.EventTranslationTxService
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
+import com.sleekydz86.idolglow.eventinfo.domain.EventSession
+import com.sleekydz86.idolglow.eventinfo.domain.EventSessionStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
+import com.sleekydz86.idolglow.eventinfo.domain.ExternalIdScheme
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventCollectLogJpaRepository
+import com.sleekydz86.idolglow.eventinfo.infrastructure.EventExternalIdJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
+import com.sleekydz86.idolglow.eventinfo.infrastructure.EventSessionJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventSourceRefJpaRepository
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventTranslationJpaRepository
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.eventinfo.EventExternalIdExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.exception.partner.PartnerExceptionType
 import com.sleekydz86.idolglow.partner.application.dto.PartnerEventPage
+import com.sleekydz86.idolglow.partner.application.dto.PartnerExternalId
 import com.sleekydz86.idolglow.partner.application.dto.PartnerFeedQuery
 import com.sleekydz86.idolglow.partner.infrastructure.PartnerCallLogJpaRepository
 import com.sleekydz86.idolglow.partner.infrastructure.PartnerClientJpaRepository
@@ -24,6 +34,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.support.TransactionTemplate
@@ -32,6 +43,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @DisplayName("파트너 변경분 피드와 글로벌 공연 병합 (Postgres)")
 class PartnerEventFeedPostgresTest : PostgresIntegrationTest() {
@@ -61,11 +74,19 @@ class PartnerEventFeedPostgresTest : PostgresIntegrationTest() {
 
     @Autowired private lateinit var transactionTemplate: TransactionTemplate
 
+    @Autowired private lateinit var eventExternalIdService: EventExternalIdService
+
+    @Autowired private lateinit var eventExternalIdJpaRepository: EventExternalIdJpaRepository
+
+    @Autowired private lateinit var eventSessionJpaRepository: EventSessionJpaRepository
+
     @BeforeEach
     fun clean() {
         partnerCallLogJpaRepository.deleteAllInBatch()
         partnerClientJpaRepository.deleteAllInBatch()
         eventTranslationJpaRepository.deleteAllInBatch()
+        eventExternalIdJpaRepository.deleteAllInBatch()
+        eventSessionJpaRepository.deleteAllInBatch()
         eventSourceRefJpaRepository.deleteAllInBatch()
         eventCollectLogJpaRepository.deleteAllInBatch()
         eventMasterJpaRepository.deleteAllInBatch()
@@ -202,6 +223,153 @@ class PartnerEventFeedPostgresTest : PostgresIntegrationTest() {
             first = false
         } while (page.hasMore)
         return ids
+    }
+
+    @DisplayName("KOPIS 번호와 위키데이터 번호로 같은 공연을 찾고, 응답에 확정된 외부 번호만 담긴다")
+    @Test
+    fun findsEventByExternalIds() {
+        // given
+        공연("gid-a", BASE)
+        원본("KOPIS_PBLPRFR", "PF-A", "gid-a")
+        후보_원본("TOUR_API", "KTO-A", "gid-a")
+        eventExternalIdService.attach("gid-a", ExternalIdScheme.WIKIDATA, "Q12345")
+        val key = 파트너_키()
+
+        // when
+        val byKopis = partnerEventFeedService.eventByExternalId(key, "KOPIS", "PF-A", "en")
+        val byWikidata = partnerEventFeedService.eventByExternalId(key, "wikidata", "Q12345", "en")
+        val missing =
+            assertThrows<CustomException> {
+                partnerEventFeedService.eventByExternalId(key, "KOPIS", "PF-NONE", "en")
+            }
+
+        // then
+        val expected = listOf(PartnerExternalId("KOPIS", "PF-A"), PartnerExternalId("WIKIDATA", "Q12345"))
+        assertEquals("gid-a" to expected, byKopis.globalId to byKopis.externalIds)
+        assertEquals("gid-a", byWikidata.globalId)
+        assertEquals(PartnerExceptionType.EVENT_NOT_FOUND, missing.getExceptionType())
+    }
+
+    @DisplayName("위키데이터 번호는 다른 공연에 다시 붙일 수 없고, 형식이 틀리거나 공급처 번호면 거절한다")
+    @Test
+    fun rejectsInvalidExternalIds() {
+        // given
+        공연("gid-a", BASE)
+        공연("gid-b", BASE)
+        eventExternalIdService.attach("gid-a", ExternalIdScheme.WIKIDATA, "Q12345")
+
+        // when
+        val duplicated =
+            assertThrows<CustomException> {
+                eventExternalIdService.attach("gid-b", ExternalIdScheme.WIKIDATA, "Q12345")
+            }
+        val badFormat =
+            assertThrows<IllegalArgumentException> {
+                eventExternalIdService.attach("gid-b", ExternalIdScheme.WIKIDATA, "12345")
+            }
+        val sourceScheme =
+            assertThrows<IllegalArgumentException> {
+                eventExternalIdService.attach("gid-b", ExternalIdScheme.KOPIS, "PF-B")
+            }
+
+        // then
+        assertEquals(EventExternalIdExceptionType.ALREADY_LINKED, duplicated.getExceptionType())
+        assertEquals("외부 ID 형식이 올바르지 않습니다. scheme=WIKIDATA externalId=12345", badFormat.message)
+        assertEquals("출처에서 자동으로 오는 외부 ID는 직접 붙일 수 없습니다. scheme=KOPIS", sourceScheme.message)
+    }
+
+    @DisplayName("공연을 합치면 위키데이터 번호도 남는 공연으로 옮겨지고, 되돌리면 원래 공연으로 돌아온다")
+    @Test
+    fun mergeMovesWikidataIdAndRevertRestoresIt() {
+        // given
+        공연("gid-old", BASE)
+        공연("gid-new", BASE)
+        eventExternalIdService.attach("gid-old", ExternalIdScheme.WIKIDATA, "Q777")
+        val payload = """{"intoGlobalId":"gid-new"}"""
+        val snapshot = eventMasterMergeHandler.snapshot("gid-old")
+
+        // when
+        transactionTemplate.executeWithoutResult { eventMasterMergeHandler.apply("gid-old", payload) }
+        val afterMerge = eventExternalIdService.resolve(ExternalIdScheme.WIKIDATA, "Q777")
+        transactionTemplate.executeWithoutResult { eventMasterMergeHandler.revert("gid-old", snapshot) }
+        val afterRevert = eventExternalIdService.resolve(ExternalIdScheme.WIKIDATA, "Q777")
+
+        // then
+        assertEquals("gid-new" to "gid-old", afterMerge to afterRevert)
+    }
+
+    @DisplayName("이미 받아 간 공연에 위키데이터 번호를 붙이면 다음 변경분에 다시 나온다")
+    @Test
+    fun newExternalIdAppearsInNextFeed() {
+        // given
+        공연("gid-a", BASE)
+        val key = 파트너_키()
+        val first = partnerEventFeedService.feed(key, PartnerFeedQuery(SINCE, null, 10, "en"))
+        eventExternalIdService.attach("gid-a", ExternalIdScheme.WIKIDATA, "Q999")
+
+        // when
+        val next =
+            try {
+                partnerEventFeedService.clock = Clock.offset(Clock.systemDefaultZone(), Duration.ofSeconds(10))
+                partnerEventFeedService.feed(key, PartnerFeedQuery(null, first.nextCursor, 10, "en"))
+            } finally {
+                partnerEventFeedService.clock = Clock.systemDefaultZone()
+            }
+
+        // then
+        assertEquals(emptyList<PartnerExternalId>(), first.items.single().externalIds)
+        assertEquals(listOf(PartnerExternalId("WIKIDATA", "Q999")), next.items.single().externalIds)
+    }
+
+    @DisplayName("파트너가 대표 공연의 회차를 기간으로 받고, 취소된 회차도 상태와 함께 받으며, 없는 공연은 404")
+    @Test
+    fun partnerReceivesSessions() {
+        // given
+        공연("gid-a", BASE)
+        원본("KOPIS_PBLPRFR", "PF-A", "gid-a")
+        val refId = checkNotNull(eventSourceRefJpaRepository.findBySourceAndSourceId("KOPIS_PBLPRFR", "PF-A")).id
+        val first = OffsetDateTime.of(2026, 12, 5, 19, 0, 0, 0, ZoneOffset.ofHours(9))
+        eventSessionJpaRepository.saveAll(
+            listOf(
+                EventSession(sourceRefId = refId, startsAt = first),
+                EventSession(sourceRefId = refId, startsAt = first.plusDays(7), status = EventSessionStatus.CANCELLED),
+                EventSession(sourceRefId = refId, startsAt = first.plusDays(60)),
+            ),
+        )
+        val key = 파트너_키()
+
+        // when
+        val december =
+            partnerEventFeedService.sessions(key, "gid-a", LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 31))
+        val missing =
+            assertThrows<CustomException> {
+                partnerEventFeedService.sessions(key, "gid-none", LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 31))
+            }
+
+        // then
+        assertEquals(
+            listOf("2026-12-05T19:00+09:00" to "SCHEDULED", "2026-12-12T19:00+09:00" to "CANCELLED"),
+            december.map { it.startsAt.toString() to it.status },
+        )
+        assertEquals(PartnerExceptionType.EVENT_NOT_FOUND, missing.getExceptionType())
+    }
+
+    private fun 후보_원본(
+        source: String,
+        sourceId: String,
+        globalId: String,
+    ) {
+        eventSourceRefJpaRepository.save(
+            EventSourceRef(
+                source = source,
+                sourceId = sourceId,
+                globalId = globalId,
+                matchStatus = EventMatchStatus.CANDIDATE,
+                matchScore = 60,
+                rawHash = "hash-$sourceId",
+                title = "공연 $sourceId",
+            ),
+        )
     }
 
     private fun 파트너_키(): String = partnerAdminService.issue("서울 여행사", listOf("en"), 1000).apiKey

@@ -52,6 +52,12 @@ class EventSourceRef(
     var endDate: LocalDate? = null,
     @Column(length = 255)
     var venue: String? = null,
+    @Column(name = "schedule_guidance", length = 500)
+    var scheduleGuidance: String? = null,
+    @Column(name = "schedule_hash", length = 64)
+    var scheduleHash: String? = null,
+    @Column(name = "session_horizon")
+    var sessionHorizon: LocalDate? = null,
 ) : BaseEntity() {
     fun confirmedGlobalId(): String? = globalId?.takeIf { matchStatus == EventMatchStatus.CONFIRMED }
 
@@ -87,8 +93,20 @@ class EventSourceRef(
         venue = item.venue?.trim()?.take(TITLE_MAX)?.takeIf { it.isNotEmpty() }
     }
 
+    fun needsScheduleFetch(): Boolean = confirmedGlobalId() != null && scheduleHash != rawHash
+
+    fun recordSchedule(
+        guidance: String,
+        horizon: LocalDate,
+    ) {
+        scheduleGuidance = guidance.trim().take(GUIDANCE_MAX)
+        scheduleHash = rawHash
+        sessionHorizon = horizon
+    }
+
     companion object {
         private const val TITLE_MAX: Int = 255
+        private const val GUIDANCE_MAX: Int = 500
 
         fun create(
             source: String,

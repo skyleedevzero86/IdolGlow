@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleCallFailedException
 import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleFestivalPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
@@ -27,8 +28,12 @@ class TourEventTranslationCollector(
         val korean = lazy { loadKorean(from, to) }
         EventTranslationLocales.TARGETS.forEach { locale ->
             val saved = runCatching { collectLocale(locale, from, to, korean) }
-            val error = saved.exceptionOrNull() ?: return@forEach
-            log.warn("관광 다국어 수집에 실패했습니다. locale={}", locale, error)
+            when (val error = saved.exceptionOrNull()) {
+                null -> Unit
+                is TourLocaleCallFailedException ->
+                    log.warn("관광 다국어 수집에 실패했습니다. locale={} reason={}", locale, error.message)
+                else -> log.warn("관광 다국어 수집에 실패했습니다. locale={}", locale, error)
+            }
         }
     }
 

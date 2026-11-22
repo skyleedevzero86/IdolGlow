@@ -29,6 +29,8 @@ const BACKEND_PROXY_PREFIXES = [
   "/options",
   "/surveys",
   "/survey-forms",
+  "/me/recommendation-mail",
+  "/recommendation-mail",
   "/users",
   "/schedules",
   "/notifications",

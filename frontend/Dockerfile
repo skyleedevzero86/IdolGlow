@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# 직접 빌드할 때 사용합니다.
+# docs/idolglow 에서 직접 빌드할 때 사용합니다.
 
 FROM node:22-bookworm-slim AS builder
 

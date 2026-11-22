@@ -86,11 +86,14 @@ export type SpecialDayItem = {
   readonly source: string;
 };
 
-function authHeaders(accessToken: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${accessToken}`,
+export type OptionalAccessToken = string | null | undefined;
+
+function authHeaders(accessToken: OptionalAccessToken): Record<string, string> {
+  const headers: Record<string, string> = {
     "Accept-Language": acceptLanguageHeader(),
   };
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  return headers;
 }
 
 const EVENT_INFO_API_PREFIX = "/mypage/event-info";
@@ -118,7 +121,7 @@ async function fetchEventInfo(path: string, init: RequestInit): Promise<Response
 }
 
 export async function fetchFestivalEventsByDate(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   date: string,
   options?: {
     pageNo?: number;
@@ -190,7 +193,7 @@ export async function fetchCultureCalendarDetail(
 }
 
 export async function fetchCultureRealm2Events(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   options: {
     readonly from: string;
     readonly to: string;
@@ -229,7 +232,7 @@ export async function fetchCultureRealm2Events(
 }
 
 export async function fetchCultureArea2Events(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   options: {
     readonly from: string;
     readonly to: string;
@@ -265,7 +268,7 @@ export async function fetchCultureArea2Events(
   return (await response.json()) as FestivalEventItem[];
 }
 
-export async function fetchCultureSidoReference(accessToken: string): Promise<readonly TourCodeItem[]> {
+export async function fetchCultureSidoReference(accessToken: OptionalAccessToken): Promise<readonly TourCodeItem[]> {
   const response = await fetch(`${getApiBaseUrl()}/mypage/event-info/culture-calendar/areas`, {
     method: "GET",
     credentials: "include",
@@ -278,7 +281,7 @@ export async function fetchCultureSidoReference(accessToken: string): Promise<re
   return (await response.json()) as TourCodeItem[];
 }
 
-export async function fetchCultureRealmCodeReference(accessToken: string): Promise<readonly TourCodeItem[]> {
+export async function fetchCultureRealmCodeReference(accessToken: OptionalAccessToken): Promise<readonly TourCodeItem[]> {
   const response = await fetch(`${getApiBaseUrl()}/mypage/event-info/culture-calendar/realm-code-reference`, {
     method: "GET",
     credentials: "include",
@@ -313,7 +316,7 @@ export async function fetchFestivalImages(
 }
 
 export async function searchFestivalByKeyword(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   keyword: string,
   options?: {
     lDongRegnCd?: string;
@@ -348,7 +351,7 @@ export async function searchFestivalByKeyword(
 }
 
 export async function fetchLDongCodes(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   lDongRegnCd?: string,
   lDongListYn: "Y" | "N" = "N",
 ): Promise<readonly TourCodeItem[]> {
@@ -367,7 +370,7 @@ export async function fetchLDongCodes(
 }
 
 export async function fetchLclsCodes(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   options?: {
     lclsSystm1?: string;
     lclsSystm2?: string;
@@ -394,7 +397,7 @@ export async function fetchLclsCodes(
 }
 
 export async function fetchKopisAreaStats(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   stDate: string,
   edDate: string,
 ): Promise<readonly KopisAreaStatItem[]> {
@@ -452,7 +455,7 @@ export async function fetchSjwPerformanceDetail(
 }
 
 async function fetchSpecialDaysByType(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   endpoint: "holidays" | "rest-days" | "anniversaries",
   solYear: string,
   solMonth: string,
@@ -474,7 +477,7 @@ async function fetchSpecialDaysByType(
 }
 
 export async function fetchSpecialHolidayInfo(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   solYear: string,
   solMonth: string,
 ): Promise<readonly SpecialDayItem[]> {
@@ -482,7 +485,7 @@ export async function fetchSpecialHolidayInfo(
 }
 
 export async function fetchSpecialRestDayInfo(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   solYear: string,
   solMonth: string,
 ): Promise<readonly SpecialDayItem[]> {
@@ -490,7 +493,7 @@ export async function fetchSpecialRestDayInfo(
 }
 
 export async function fetchSpecialAnniversaryInfo(
-  accessToken: string,
+  accessToken: OptionalAccessToken,
   solYear: string,
   solMonth: string,
 ): Promise<readonly SpecialDayItem[]> {

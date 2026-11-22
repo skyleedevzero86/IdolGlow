@@ -145,19 +145,13 @@ export function AdminOpsChangesPage() {
           <h2 className={styles.auditTitle}>반복된 관리자 작업</h2>
           {auditNote ? <p className={styles.error}>{auditNote}</p> : null}
           {auditTop ? (
-            <>
-              <p className={styles.basis}>{auditTop.basis}</p>
-              <ol className={styles.auditList}>
-                {auditTop.actions.map((action) => (
-                  <li key={action.actionCode}>
-                    {action.actionCode} {action.count}회
-                  </li>
-                ))}
-              </ol>
-              <p>
-                자동화 후보 {auditTop.automationActionCode ?? '없음'}. {auditTop.automationReason}
-              </p>
-            </>
+            <ol className={styles.auditList}>
+              {auditTop.actions.map((action) => (
+                <li key={action.actionCode}>
+                  {action.actionCode} {action.count}회
+                </li>
+              ))}
+            </ol>
           ) : null}
         </section>
       ) : null}

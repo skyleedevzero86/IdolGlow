@@ -1,7 +1,5 @@
-'use client';
-
-import Link from 'next/link';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import type { Banner } from "../../../domains/banner/domain/banner.types";
 import styles from './HeroBanner.module.css';
 
@@ -37,7 +35,7 @@ function SlideLink({
   }
 
   return (
-    <Link href={href} className={className}>
+    <Link to={href} className={className}>
       {children}
     </Link>
   );

@@ -1,10 +1,12 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventExternalIdPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventSourceRefPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
+import com.sleekydz86.idolglow.eventinfo.domain.ExternalIdScheme
 import com.sleekydz86.idolglow.ops.application.port.OpsChangeHandler
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
@@ -15,6 +17,7 @@ class EventMasterMergeHandler(
     private val eventSourceRefPort: EventSourceRefPort,
     private val objectMapper: ObjectMapper,
     private val eventMetaOutboxRecorder: EventMetaOutboxRecorder,
+    private val eventExternalIdPort: EventExternalIdPort,
 ) : OpsChangeHandler {
     override val type: String = TYPE
 
@@ -30,7 +33,9 @@ class EventMasterMergeHandler(
     override fun snapshot(target: String): String {
         val from = loadMaster(target)
         val moved = eventSourceRefPort.findByGlobalId(from.globalId).map { "${it.source}|${it.sourceId}" }
-        return objectMapper.writeValueAsString(EventMasterMergeSnapshot(from.globalId, moved))
+        val movedExternalIds =
+            eventExternalIdPort.findByGlobalId(from.globalId).map { "${it.scheme.name}|${it.externalId}" }
+        return objectMapper.writeValueAsString(EventMasterMergeSnapshot(from.globalId, moved, movedExternalIds))
     }
 
     override fun apply(
@@ -44,6 +49,7 @@ class EventMasterMergeHandler(
         eventSourceRefPort.findByGlobalId(from.globalId).forEach {
             it.assignMatch(into.globalId, it.matchStatus, it.matchScore, it.matchedAt)
         }
+        eventExternalIdPort.findByGlobalId(from.globalId).forEach { it.moveTo(into.globalId) }
     }
 
     override fun revert(
@@ -59,6 +65,10 @@ class EventMasterMergeHandler(
             eventSourceRefPort.findBySourceAndSourceId(source, sourceId)?.let {
                 it.assignMatch(snapshot.globalId, it.matchStatus, it.matchScore, it.matchedAt)
             }
+        }
+        snapshot.movedExternalIds.forEach { key ->
+            val (scheme, externalId) = key.split('|', limit = 2)
+            eventExternalIdPort.find(ExternalIdScheme.parse(scheme), externalId)?.moveTo(snapshot.globalId)
         }
     }
 
@@ -92,4 +102,5 @@ class EventMasterMergeHandler(
 data class EventMasterMergeSnapshot(
     val globalId: String = "",
     val movedRefs: List<String> = emptyList(),
+    val movedExternalIds: List<String> = emptyList(),
 )

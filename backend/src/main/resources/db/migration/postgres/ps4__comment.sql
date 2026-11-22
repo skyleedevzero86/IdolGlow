@@ -1818,3 +1818,31 @@ COMMENT ON COLUMN event_meta_dead_letter.failed_at IS '실패 목록에 남긴 �
 COMMENT ON COLUMN event_meta_dead_letter.reprocessed_at IS '관리 API로 다시 처리한 시각. 비어 있으면 아직 안 함';
 
 COMMENT ON INDEX idx_event_meta_dead_letter_pending IS '다시 처리하지 않은 실패 메시지 조회용';
+
+COMMENT ON COLUMN event_collect_log.collected_at_tz IS '수집 시각을 어느 나라 시간인지까지 함께 저장하는 칸. 2단계부터 서버가 옛 칸과 함께 적고, 4단계에서 이 칸을 읽도록 바꾼 뒤, 5단계에서 옛 칸 collected_at을 지운다';
+
+COMMENT ON TABLE event_external_id IS '대표 공연에 관리자가 붙인 국제 표준 번호';
+
+COMMENT ON COLUMN event_external_id.global_id IS '번호를 붙인 대표 공연';
+
+COMMENT ON COLUMN event_external_id.scheme IS '번호 체계. 지금은 WIKIDATA만 직접 붙인다';
+
+COMMENT ON COLUMN event_external_id.external_id IS '그 체계에서 쓰는 번호. 위키데이터는 Q로 시작한다';
+
+COMMENT ON INDEX idx_event_external_id_global IS '공연 하나에 붙은 외부 번호를 찾을 때 쓴다';
+
+COMMENT ON TABLE event_session IS '대표 공연 아래 날짜와 시각 단위 회차';
+
+COMMENT ON COLUMN event_session.source_ref_id IS '회차가 매달린 공급처 원본';
+
+COMMENT ON COLUMN event_session.starts_at IS '회차 시작 시각. 어느 나라 시간인지까지 함께 저장한다';
+
+COMMENT ON COLUMN event_session.status IS '회차 상태. SCHEDULED는 예정, CANCELLED는 취소';
+
+COMMENT ON COLUMN event_source_ref.schedule_guidance IS 'KOPIS 상세의 공연 시간 안내 문장';
+
+COMMENT ON COLUMN event_source_ref.schedule_hash IS '공연 시간 안내를 읽을 때의 원본 내용 지문. 원본이 바뀌면 다시 읽는다';
+
+COMMENT ON COLUMN event_source_ref.session_horizon IS '회차를 어느 날짜까지 만들어 두었는지';
+
+COMMENT ON INDEX idx_event_session_starts IS '회차를 날짜 순서로 찾을 때 쓴다';

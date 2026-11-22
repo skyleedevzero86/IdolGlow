@@ -26,6 +26,7 @@ data class EventMetaSnapshot(
         const val FIELD_VENUE: String = "venue"
         const val FIELD_STATUS: String = "status"
         const val FIELD_TRANSLATION: String = "translation"
+        const val FIELD_SESSIONS: String = "sessions"
         val ALERT_FIELDS: Set<String> = setOf(FIELD_START_DATE, FIELD_END_DATE, FIELD_VENUE, FIELD_STATUS)
     }
 }

@@ -83,6 +83,19 @@ class KopisPerformanceApiClient(
         )
     }
 
+    fun scheduleGuidance(mt20id: String): String {
+        val key = kopisApiProperties.serviceKey.trim()
+        check(key.isNotEmpty()) { "KOPIS API 인증키가 비어 있습니다." }
+        val path = "pblprfr/${UriUtils.encodePath(mt20id.trim(), StandardCharsets.UTF_8)}"
+        val xml = requestXml(path, mapOf("service" to key))
+        val rows =
+            runCatching { parseXmlRows(xml, "db") }
+                .getOrElse { throw IllegalStateException("KOPIS 상세 응답을 읽지 못했습니다. mt20id=$mt20id", it) }
+        val error = rows.firstOrNull { it.text("returncode") != null }
+        check(error == null) { "KOPIS 오류 응답. path=$path returncode=${error?.text("returncode")}" }
+        return rows.firstOrNull()?.text("dtguidance").orEmpty()
+    }
+
     fun listFestivals(
         stDate: String,
         edDate: String,

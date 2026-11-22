@@ -95,6 +95,7 @@ export interface ProductTourAttractionResult {
   readonly areaCode: number;
   readonly signguCode: number;
   readonly baseYm: string;
+  readonly requestedBaseYm?: string;
   readonly attractions: readonly ProductTourAttractionItem[];
 }
 

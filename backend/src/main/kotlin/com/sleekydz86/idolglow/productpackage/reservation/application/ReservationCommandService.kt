@@ -58,6 +58,7 @@ class ReservationCommandService(
 ) {
     fun createReservation(command: CreateReservationCommand): ReservationCreatedResponse {
         val now = LocalDateTime.now()
+        rejectIfSlotAlreadyTaken(command.reservationSlotId, command.productId, now)
         val reservationSlot =
             findReservationTimeSlotByReservationSlotIdWithPessimisticLock(command.reservationSlotId)
         reservationSlot.validateAvailability(command.productId, now)
@@ -296,6 +297,14 @@ class ReservationCommandService(
                 "환불 처리 중입니다. 잠시 후 다시 확인해 주세요."
             }
         throw IllegalArgumentException(message)
+    }
+
+    private fun rejectIfSlotAlreadyTaken(
+        reservationSlotId: Long,
+        productId: Long,
+        now: LocalDateTime,
+    ) {
+        reservationSlotRepository.findStateById(reservationSlotId)?.validateAvailability(productId, now)
     }
 
     private fun findReservationTimeSlotByReservationSlotIdWithPessimisticLock(reservationSlotId: Long): ReservationSlot =

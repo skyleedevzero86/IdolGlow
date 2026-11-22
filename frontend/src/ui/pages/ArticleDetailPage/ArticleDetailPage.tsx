@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ContentComments } from '../../components/ContentComments/ContentComments';
+import { useRecordContentView } from '../../hooks/useContentView';
 import { useArticleDetail, useAdjacentArticles } from '../../hooks/useArticles';
 import { LoadingSpinner } from '../../components/LoadingSpinner/LoadingSpinner';
 import styles from './ArticleDetailPage.module.css';
@@ -9,6 +12,21 @@ export const ArticleDetailPage = () => {
   const { data: article, loading, error } = useArticleDetail(id || '');
 
   const { data: adjacent } = useAdjacentArticles(id || '');
+
+  const articleViewEntry = useMemo(
+    () =>
+      article
+        ? {
+            contentType: 'ARTICLE' as const,
+            contentKey: String(article.id),
+            title: article.title,
+            path: `/articles/${article.id}`,
+            imageUrl: article.thumbnailUrl || null,
+          }
+        : null,
+    [article],
+  );
+  useRecordContentView(articleViewEntry);
 
   if (loading) {
     return (
@@ -96,6 +114,13 @@ export const ArticleDetailPage = () => {
             </div>
           )}
         </nav>
+
+        <ContentComments
+          targetType="ARTICLE"
+          targetKey={String(article.id)}
+          targetTitle={article.title}
+          targetPath={`/articles/${article.id}`}
+        />
       </article>
     </main>
   );

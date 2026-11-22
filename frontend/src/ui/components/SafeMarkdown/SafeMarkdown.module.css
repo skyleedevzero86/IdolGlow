@@ -1,0 +1,174 @@
+.body {
+  color: #333333;
+  font-size: 1rem;
+  line-height: 1.8;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.compact {
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.body :global(p) {
+  margin: 0 0 0.85rem;
+}
+
+.body > :global(*:last-child) {
+  margin-bottom: 0;
+}
+
+.body :global(h1),
+.body :global(h2),
+.body :global(h3),
+.body :global(h4),
+.body :global(h5),
+.body :global(h6) {
+  margin: 1.2rem 0 0.6rem;
+  color: #111111;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.body :global(h1) {
+  font-size: 1.6rem;
+}
+
+.body :global(h2) {
+  font-size: 1.35rem;
+}
+
+.body :global(h3) {
+  font-size: 1.15rem;
+}
+
+.body :global(h4),
+.body :global(h5),
+.body :global(h6) {
+  font-size: 1.02rem;
+}
+
+.compact :global(h1),
+.compact :global(h2),
+.compact :global(h3) {
+  font-size: 1.05rem;
+}
+
+.body :global(ul),
+.body :global(ol) {
+  margin: 0 0 0.85rem;
+  padding-left: 1.25rem;
+}
+
+.body :global(ul) {
+  list-style: disc;
+}
+
+.body :global(li) {
+  margin: 0.2rem 0;
+}
+
+.body :global(blockquote) {
+  margin: 0 0 0.85rem;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 3px solid #111111;
+  color: #111111;
+}
+
+.body :global(blockquote p) {
+  margin: 0;
+}
+
+.body :global(strong) {
+  font-weight: 800;
+}
+
+.body :global(em) {
+  font-style: italic;
+}
+
+.body :global(code) {
+  padding: 0.05rem 0.3rem;
+  background: #f7f7f5;
+  border: 1px solid #eeeeee;
+  font-size: 0.88em;
+}
+
+.body :global(a) {
+  color: #111111;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.body :global(a:hover) {
+  color: var(--header-accent);
+}
+
+.body :global(table) {
+  width: 100%;
+  margin: 0 0 0.85rem;
+  border-collapse: collapse;
+}
+
+.body :global(th),
+.body :global(td) {
+  border: 1px solid #e8e8e8;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+
+.body :global(th) {
+  background: #f7f7f5;
+}
+
+.body :global(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.compact :global(img) {
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.body :global(.idol-glow-image--center) {
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.body :global(.idol-glow-image--right) {
+  display: block;
+  margin-left: auto;
+}
+
+.empty {
+  margin: 0;
+  color: #8b919a;
+  font-size: 0.9rem;
+}
+
+:global(html[data-theme='dark']) .body {
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .body :global(h1),
+:global(html[data-theme='dark']) .body :global(h2),
+:global(html[data-theme='dark']) .body :global(h3),
+:global(html[data-theme='dark']) .body :global(h4),
+:global(html[data-theme='dark']) .body :global(blockquote),
+:global(html[data-theme='dark']) .body :global(a) {
+  color: #f8fafc;
+  border-color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .body :global(code),
+:global(html[data-theme='dark']) .body :global(th) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #253041;
+}
+
+:global(html[data-theme='dark']) .body :global(td) {
+  border-color: #253041;
+}

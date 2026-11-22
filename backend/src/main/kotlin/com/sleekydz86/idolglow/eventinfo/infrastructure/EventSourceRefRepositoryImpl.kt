@@ -24,6 +24,9 @@ class EventSourceRefRepositoryImpl(
     override fun findByGlobalId(globalId: String): List<EventSourceRef> =
         eventSourceRefJpaRepository.findByGlobalId(globalId)
 
+    override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventSourceRef> =
+        if (globalIds.isEmpty()) emptyList() else eventSourceRefJpaRepository.findByGlobalIdIn(globalIds)
+
     override fun countByGlobalId(globalId: String): Long = eventSourceRefJpaRepository.countByGlobalId(globalId)
 
     override fun countByMatchStatus(status: EventMatchStatus): Long =

@@ -15,6 +15,8 @@ import {
   type FestivalEventItem,
   type FestivalImageItem,
 } from "../../../shared/data/festivalInfoApi";
+import { ContentComments } from "../../components/ContentComments/ContentComments";
+import { useRecordContentView } from "../../hooks/useContentView";
 import shellStyles from "../AdminMarketingPage/AdminMarketingPage.module.css";
 import { AdminMarketingShell } from "../AdminMarketingPage/AdminMarketingShell";
 import styles from "./EventInfoDetailPage.module.css";
@@ -464,6 +466,23 @@ export function EventInfoDetailPage() {
   const heroImage = galleryImages[0] ?? null;
   const contentImages = galleryImages.length > 1 ? galleryImages.slice(1, 5) : galleryImages.slice(0, 1);
   const placeLabel = placeLabelFromAddress(address);
+  const eventPath = `/event-info/${encodeURIComponent(source)}/${encodeURIComponent(contentId)}`;
+  const eventKey = `${source}:${contentId}`;
+  const hasEventContent = Boolean(source && contentId && (eventItem || commonDetail));
+  const eventViewEntry = useMemo(
+    () =>
+      hasEventContent && !loading
+        ? {
+            contentType: "EVENT_INFO" as const,
+            contentKey: eventKey,
+            title,
+            path: eventPath,
+            imageUrl: heroImage,
+          }
+        : null,
+    [eventKey, eventPath, hasEventContent, heroImage, loading, title],
+  );
+  useRecordContentView(eventViewEntry);
 
   useEffect(() => {
     if (!authReady) return;
@@ -635,6 +654,15 @@ export function EventInfoDetailPage() {
                 </div>
               ) : null}
             </section>
+
+            {hasEventContent ? (
+              <ContentComments
+                targetType="EVENT_INFO"
+                targetKey={eventKey}
+                targetTitle={title}
+                targetPath={eventPath}
+              />
+            ) : null}
           </article>
         </div>
       </section>

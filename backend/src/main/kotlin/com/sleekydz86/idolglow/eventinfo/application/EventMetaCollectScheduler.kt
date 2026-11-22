@@ -8,12 +8,14 @@ import java.time.LocalDate
 class EventMetaCollectScheduler(
     private val eventMetaCollectService: EventMetaCollectService,
     private val tourEventTranslationCollector: TourEventTranslationCollector,
+    private val eventSessionSyncService: EventSessionSyncService,
 ) {
     @Scheduled(cron = "\${eventinfo.collect.cron:0 0 4 * * *}", zone = "Asia/Seoul")
     fun collectUpcomingPerformances() {
         val today = LocalDate.now()
         val to = today.plusDays(WINDOW_DAYS)
         eventMetaCollectService.collect(today, to)
+        eventSessionSyncService.sync(today)
         tourEventTranslationCollector.collect(today, to)
     }
 

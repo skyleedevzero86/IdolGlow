@@ -1393,3 +1393,109 @@ PREPARE consumed_result_stmt FROM @add_consumed_result;
 EXECUTE consumed_result_stmt;
 
 DEALLOCATE PREPARE consumed_result_stmt;
+
+-- =============================================================================
+-- 서비스를 멈추지 않고 수집 시각 칸 바꾸기 1단계: 새 칸 추가
+-- -----
+-- 목적
+-- - 지금 수집 시각 칸 collected_at에는 몇 시인지만 있고 어느 나라 시간인지는 없다
+-- - 그래서 2026-11-19에 서버를 띄운 방법에 따라 시각이 9시간씩 다르게 저장됐다
+-- - 세계 표준시로 바꿔 저장하는 새 칸 collected_at_tz를 옆에 만들고, 옛 칸은 그대로 둔다
+-- 대상
+-- - 마이에스큐엘 / event_collect_log 표
+-- 주의
+-- - 표 전체를 복사하지 않고 칸 정보만 바꾸는 방식으로 추가한다
+-- - 그 방식이 안 되는 상황이면 표 복사로 넘어가지 않고 그냥 실패한다
+-- - 다른 작업이 이 표를 붙잡고 있으면 5초까지만 기다린다
+-- - 이 칸 종류는 2038년 1월 19일까지의 시각만 담을 수 있다. 수집 기록에는 충분하다
+-- - 지금 돌고 있는 서버는 이 새 칸을 몰라도 아무 문제 없이 그대로 동작한다
+-- - 서버가 새 칸에도 시각을 적기 시작하는 것은 2단계다
+-- 연관
+-- - EventCollectLog, ZeroDowntimeExpandMigrationTest
+-- =============================================================================
+-- 무중단 전환 1단계 시작
+SET SESSION lock_wait_timeout = 5;
+
+SET @add_collected_at_tz := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_collect_log ADD COLUMN collected_at_tz TIMESTAMP(6) NULL COMMENT ''수집 시각을 세계 표준시로 바꿔 저장하는 칸. 2단계부터 서버가 옛 칸과 함께 적고, 5단계에서 옛 칸 collected_at을 지운다'', ALGORITHM=INSTANT',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_collect_log'
+      AND column_name = 'collected_at_tz'
+);
+
+PREPARE collected_at_tz_stmt FROM @add_collected_at_tz;
+
+EXECUTE collected_at_tz_stmt;
+
+DEALLOCATE PREPARE collected_at_tz_stmt;
+
+SET SESSION lock_wait_timeout = DEFAULT;
+-- 무중단 전환 1단계 끝
+
+-- 공연 하나에 붙은 외부 번호를 빨리 찾는다
+CREATE INDEX idx_event_external_id_global
+    ON event_external_id (global_id);
+
+-- 공연 회차를 만들려고 공급처 원본에 공연 시간 안내 문장과 마지막으로 읽은 상태를 적는다
+SET @add_schedule_guidance := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN schedule_guidance VARCHAR(500) NULL COMMENT ''KOPIS 상세의 공연 시간 안내 문장''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'schedule_guidance'
+);
+
+PREPARE schedule_guidance_stmt FROM @add_schedule_guidance;
+
+EXECUTE schedule_guidance_stmt;
+
+DEALLOCATE PREPARE schedule_guidance_stmt;
+
+SET @add_schedule_hash := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN schedule_hash VARCHAR(64) NULL COMMENT ''공연 시간 안내를 읽을 때의 원본 내용 지문. 원본이 바뀌면 다시 읽는다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'schedule_hash'
+);
+
+PREPARE schedule_hash_stmt FROM @add_schedule_hash;
+
+EXECUTE schedule_hash_stmt;
+
+DEALLOCATE PREPARE schedule_hash_stmt;
+
+SET @add_session_horizon := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE event_source_ref ADD COLUMN session_horizon DATE NULL COMMENT ''회차를 어느 날짜까지 만들어 두었는지''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'event_source_ref'
+      AND column_name = 'session_horizon'
+);
+
+PREPARE session_horizon_stmt FROM @add_session_horizon;
+
+EXECUTE session_horizon_stmt;
+
+DEALLOCATE PREPARE session_horizon_stmt;
+
+-- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
+CREATE INDEX idx_event_session_starts
+    ON event_session (starts_at);

@@ -1,8 +1,6 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import type { To } from "react-router-dom";
 import { useAuth } from "../../../auth/AuthContext";
 import {
   changePassword,
@@ -18,10 +16,6 @@ import {
   uploadProfileImage,
 } from "../../../auth/authApi";
 import { NICKNAME_PATTERN } from "../../../lib/nicknameValidation";
-import {
-  GLOW_ALERTS_CHANGED_EVENT,
-  fetchGlowAlertUnreadCount,
-} from "../../../shared/data/glowAlertsApi";
 import { useTheme } from "../../hooks/useTheme";
 import {
   UI_LANG_STORAGE_KEY,
@@ -34,13 +28,14 @@ import {
   writeUiLang,
 } from "../../i18n/uiLangStorage";
 import { HeaderSearchPanel } from "../HeaderSearchPanel/HeaderSearchPanel";
+import { NotificationBell } from "../NotificationBell/NotificationBell";
 import styles from "./Header.module.css";
 
 type NavId = "glow" | "wish" | "events" | "archive";
 
 type NavItemDef = {
   readonly id: NavId;
-  readonly to: string;
+  readonly to: To;
   readonly label: string;
   readonly ariaLabel: string;
 };
@@ -146,19 +141,6 @@ const MoonIcon = () => (
   </svg>
 );
 
-const BellIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-  >
-    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-  </svg>
-);
-
 const GlobeIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -225,11 +207,8 @@ const IconLoginGoogle = () => (
 );
 
 export const Header = () => {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const query = searchParams.toString();
-  const search = query ? `?${query}` : "";
+  const location = useLocation();
+  const navigate = useNavigate();
   const loginTitleId = useId();
   const joinTitleId = useId();
   const pwdTitleId = useId();
@@ -291,7 +270,6 @@ export const Header = () => {
     applyLoginUser,
   } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [unreadAlertCount, setUnreadAlertCount] = useState(0);
 
   const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -315,35 +293,6 @@ export const Header = () => {
     });
   }, []);
 
-  useEffect(() => {
-    let active = true;
-
-    const loadUnreadCount = () => {
-      void fetchGlowAlertUnreadCount(accessToken).then((count) => {
-        if (active) {
-          setUnreadAlertCount(count);
-        }
-      });
-    };
-
-    loadUnreadCount();
-    const handleGlowAlertsChanged = (event: Event) => {
-      const unreadCount = (event as CustomEvent<{ unreadCount?: number }>).detail?.unreadCount;
-      if (typeof unreadCount === "number" && Number.isFinite(unreadCount)) {
-        setUnreadAlertCount(unreadCount);
-        return;
-      }
-      loadUnreadCount();
-    };
-    const timerId = window.setInterval(loadUnreadCount, 60_000);
-    window.addEventListener(GLOW_ALERTS_CHANGED_EVENT, handleGlowAlertsChanged);
-
-    return () => {
-      active = false;
-      window.clearInterval(timerId);
-      window.removeEventListener(GLOW_ALERTS_CHANGED_EVENT, handleGlowAlertsChanged);
-    };
-  }, [accessToken, pathname]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -382,7 +331,7 @@ export const Header = () => {
 
   useEffect(() => {
     if (!authReady) return;
-    if (pathname !== "/mypage") {
+    if (location.pathname !== "/mypage") {
       mypageGuestModalShownRef.current = false;
       return;
     }
@@ -393,10 +342,10 @@ export const Header = () => {
     if (mypageGuestModalShownRef.current) return;
     mypageGuestModalShownRef.current = true;
     openLoginModal();
-  }, [authReady, user, pathname, openLoginModal]);
+  }, [authReady, user, location.pathname, openLoginModal]);
 
   useEffect(() => {
-    const q = new URLSearchParams(search);
+    const q = new URLSearchParams(location.search);
     const shouldOpenLogin = q.get("login") === "1";
     const shouldOpenJoin = q.get("join") === "1" || q.get("view") === "join";
     if (!shouldOpenLogin && !shouldOpenJoin) return;
@@ -409,8 +358,11 @@ export const Header = () => {
     q.delete("join");
     q.delete("view");
     const s = q.toString();
-    router.replace(`${pathname}${s ? `?${s}` : ""}`);
-  }, [pathname, search, router, openJoinModal, openLoginModal]);
+    navigate(
+      { pathname: location.pathname, search: s ? `?${s}` : "" },
+      { replace: true },
+    );
+  }, [location.pathname, location.search, navigate, openJoinModal, openLoginModal]);
 
   const openJoinFromLogin = useCallback(() => {
     setLoginExitTarget("join");
@@ -519,13 +471,13 @@ export const Header = () => {
   }, []);
 
   const resolvePostAuthPath = useCallback(() => {
-    const q = new URLSearchParams(search);
+    const q = new URLSearchParams(location.search);
     const redirect = q.get("redirect");
     if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
       return redirect;
     }
     return "/mypage";
-  }, [search]);
+  }, [location.search]);
 
   const handleLoginSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -560,7 +512,7 @@ export const Header = () => {
         setLoginEmail(saveLoginEmail ? email : "");
         setLoginPassword("");
         setLoginMessage("");
-        router.replace(resolvePostAuthPath());
+        navigate(resolvePostAuthPath(), { replace: true });
       })();
     },
     [
@@ -568,7 +520,7 @@ export const Header = () => {
       loginPassword,
       saveLoginEmail,
       applyAccessToken,
-      router,
+      navigate,
       resolvePostAuthPath,
     ],
   );
@@ -736,7 +688,7 @@ export const Header = () => {
       setJoinSubscribe(false);
       setJoinAvatarFile(null);
       setJoinMessage("");
-      router.replace(resolvePostAuthPath());
+      navigate(resolvePostAuthPath(), { replace: true });
     },
     [
       joinAgreed,
@@ -748,7 +700,7 @@ export const Header = () => {
       applyAccessToken,
       applyLoginUser,
       refreshUser,
-      router,
+      navigate,
       resolvePostAuthPath,
     ],
   );
@@ -838,7 +790,7 @@ export const Header = () => {
         setIsLoginOpen(false);
         setAuthModalView("login");
         setLoginPassword("");
-        router.replace(resolvePostAuthPath());
+        navigate(resolvePostAuthPath(), { replace: true });
       })();
     },
     [
@@ -846,13 +798,13 @@ export const Header = () => {
       forcedNewPasswordConfirm,
       tempPasswordForChange,
       forcedAccessToken,
-      router,
+      navigate,
       resolvePostAuthPath,
     ],
   );
 
   const linkClass = (id: NavId) => {
-    const active = isNavItemActive(pathname, search, id);
+    const active = isNavItemActive(location.pathname, location.search, id);
     return `${styles.navLink} ${active ? styles.navLinkActive : ""}`;
   };
 
@@ -861,7 +813,7 @@ export const Header = () => {
       <header className={styles.header} role="banner">
         <div className={styles.headerTop}>
           <Link
-            href="/"
+            to="/"
             className={styles.logo}
             aria-label="IDOL GLOW 홈으로 이동"
           >
@@ -874,15 +826,15 @@ export const Header = () => {
               <ul className={styles.navList} role="menubar">
                 {NAV_ITEMS.map((item) => (
                   <li key={item.id} className={styles.navItem}>
-                    <Link
-                      href={item.to}
-                      className={linkClass(item.id)}
-                      aria-current={isNavItemActive(pathname, search, item.id) ? "page" : undefined}
+                    <NavLink
+                      to={item.to}
+                      end
+                      className={() => linkClass(item.id)}
                       aria-label={item.ariaLabel}
                       role="menuitem"
                     >
                       {item.label}
-                    </Link>
+                    </NavLink>
                   </li>
                 ))}
               </ul>
@@ -915,7 +867,7 @@ export const Header = () => {
                         로그아웃
                       </button>
                       <Link
-                        href="/mypage"
+                        to="/mypage"
                         role="menuitem"
                         className={styles.userMenuItem}
                         onClick={() => setUserMenuOpen(false)}
@@ -975,23 +927,10 @@ export const Header = () => {
                 {theme === "dark" ? <SunIcon /> : <MoonIcon />}
               </button>
 
-              <button
-                type="button"
-                className={`${styles.iconButton} ${styles.alertButton}`}
-                aria-label={
-                  unreadAlertCount > 0
-                    ? `Glow 알림으로 이동, 읽지 않은 알림 ${unreadAlertCount}개`
-                    : "Glow 알림으로 이동"
-                }
-                onClick={() => router.push("/glow-alerts")}
-              >
-                <BellIcon />
-                {unreadAlertCount > 0 ? (
-                  <span className={styles.alertBadge} aria-hidden="true">
-                    {unreadAlertCount > 99 ? "99+" : unreadAlertCount}
-                  </span>
-                ) : null}
-              </button>
+              <NotificationBell
+                buttonClassName={`${styles.iconButton} ${styles.alertButton}`}
+                badgeClassName={styles.alertBadge}
+              />
 
               <button
                 type="button"
@@ -1022,15 +961,15 @@ export const Header = () => {
           <ul className={styles.mobileNavList}>
             {NAV_ITEMS.map((item) => (
               <li key={item.id} className={styles.navItem}>
-                <Link
-                  href={item.to}
-                  className={linkClass(item.id)}
-                  aria-current={isNavItemActive(pathname, search, item.id) ? "page" : undefined}
+                <NavLink
+                  to={item.to}
+                  end
+                  className={() => linkClass(item.id)}
                   onClick={closeMobileMenu}
                   aria-label={item.ariaLabel}
                 >
                   {item.label}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>
