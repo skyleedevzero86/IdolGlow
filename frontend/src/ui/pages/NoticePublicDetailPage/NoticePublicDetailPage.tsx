@@ -8,7 +8,9 @@ import {
   fetchPublishedNotices,
   recordMbrdDocumentView,
 } from "../../../shared/data/publicNoticesApi";
+import { firstMarkdownImage } from "../../../shared/data/recentViewsStore";
 import { renderIdolGlowMarkdown } from "../../../shared/markdown/idolGlowMarkdown";
+import { useRecordContentView } from "../../hooks/useContentView";
 import styles from "./NoticePublicDetailPage.module.css";
 
 const CATEGORY_LABEL = "Glow 소식";
@@ -312,6 +314,21 @@ export const NoticePublicDetailPage = () => {
     () => renderIdolGlowMarkdown(item?.markdown ?? ""),
     [item?.markdown],
   );
+  const viewEntry = useMemo(
+    () =>
+      item && item.documentId === documentId
+        ? {
+            contentType: "NOTICE" as const,
+            contentKey: item.documentId,
+            title: item.title,
+            path: `/notices/${encodeURIComponent(item.documentId)}`,
+            imageUrl:
+              item.thumbnailImageUrl || firstMarkdownImage(item.markdown),
+          }
+        : null,
+    [documentId, item],
+  );
+  useRecordContentView(viewEntry);
   const tags = visibleTags(item?.tags ?? []);
   const images = item?.attachments.filter(isNoticeImage) ?? [];
   const files = item?.attachments.filter((file) => !isNoticeImage(file)) ?? [];

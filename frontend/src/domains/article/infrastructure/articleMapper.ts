@@ -82,6 +82,7 @@ export const mapEntityToViewModel = (entity: Article): ArticleViewModel => ({
   publishDateFormatted: formatDate(entity.publishDate),
   tags: entity.tags,
   viewCountFormatted: formatCount(entity.viewCount),
+  likeCount: entity.likeCount,
   likeCountFormatted: formatCount(entity.likeCount),
 });
 
