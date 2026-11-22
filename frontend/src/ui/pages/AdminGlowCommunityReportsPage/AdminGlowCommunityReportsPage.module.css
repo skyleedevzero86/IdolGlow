@@ -1,0 +1,251 @@
+.panel {
+  --shell-ink: #111111;
+  --shell-body: #333333;
+  --shell-muted: #8b919a;
+  --shell-line: #eeeeee;
+  --shell-frame: #e8e8e8;
+  --shell-hover-bg: #f7f7f5;
+  --shell-bar-bg: var(--header-bg);
+  --shell-accent: var(--header-accent);
+  padding: 1.35rem;
+  border: 1px solid var(--shell-frame);
+  border-top: 2px solid var(--shell-bar-bg);
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--shell-body);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panelHead h2 {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--shell-accent);
+  color: var(--shell-ink);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.message,
+.error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--shell-frame);
+  border-radius: 0;
+  font-size: 0.88rem;
+}
+
+.message {
+  border-left: 3px solid var(--shell-bar-bg);
+  background: var(--shell-hover-bg);
+  color: var(--shell-ink);
+}
+
+.error {
+  border-color: #f3c2c5;
+  border-left: 3px solid var(--shell-accent);
+  background: #fff5f5;
+  color: #b4151f;
+}
+
+.status {
+  margin: 0;
+  padding: 2.5rem 1rem;
+  color: var(--shell-muted);
+  text-align: center;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.table th {
+  padding: 0.7rem 0.6rem;
+  border-top: 2px solid var(--shell-bar-bg);
+  border-bottom: 1px solid var(--shell-frame);
+  color: var(--shell-ink);
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.85rem 0.6rem;
+  border-bottom: 1px solid var(--shell-line);
+  vertical-align: top;
+}
+
+.table tbody tr:hover {
+  background: var(--shell-hover-bg);
+}
+
+.blindedRow td:first-child {
+  box-shadow: inset 3px 0 0 var(--shell-accent);
+}
+
+.postCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tag {
+  padding: 1px 6px;
+  border: 1px solid var(--shell-bar-bg);
+  color: var(--shell-ink);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.postLink {
+  color: var(--shell-ink);
+  font-weight: 800;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.postLink:hover {
+  color: var(--shell-accent);
+  text-decoration: underline;
+}
+
+.subtle {
+  display: block;
+  color: var(--shell-muted);
+  font-size: 0.75rem;
+}
+
+.countCell {
+  color: var(--shell-accent);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--shell-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  color: var(--shell-accent);
+}
+
+.reasons {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--shell-frame);
+  background: var(--shell-hover-bg);
+  list-style: none;
+}
+
+.reasons li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+}
+
+.reasons time {
+  flex: none;
+  color: var(--shell-muted);
+}
+
+.blindBadge,
+.openBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.blindBadge {
+  background: var(--shell-accent);
+  color: #ffffff;
+}
+
+.openBadge {
+  border: 1px solid var(--shell-frame);
+  color: var(--shell-body);
+}
+
+.ghostButton,
+.dangerButton {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--shell-frame);
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--shell-body);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ghostButton:hover:not(:disabled) {
+  border-color: var(--shell-bar-bg);
+  color: var(--shell-ink);
+}
+
+.dangerButton {
+  border-color: var(--shell-bar-bg);
+  background: var(--shell-bar-bg);
+  color: #ffffff;
+}
+
+.dangerButton:hover:not(:disabled) {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+}
+
+.ghostButton:disabled,
+.dangerButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+:global(html[data-theme='dark']) .panel {
+  --shell-ink: #f8fafc;
+  --shell-body: #cbd5e1;
+  --shell-muted: #94a3b8;
+  --shell-line: #253041;
+  --shell-frame: #253041;
+  --shell-hover-bg: rgba(255, 255, 255, 0.06);
+  --shell-bar-bg: #f8fafc;
+  background: #131a24;
+}
+
+:global(html[data-theme='dark']) .ghostButton,
+:global(html[data-theme='dark']) .dangerButton {
+  background: transparent;
+}
+
+:global(html[data-theme='dark']) .dangerButton {
+  background: #f8fafc;
+  color: #111111;
+}

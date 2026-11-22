@@ -28,6 +28,7 @@ export const ADMIN_SNB_GROUPS: ReadonlyArray<{
       { label: '배너 관리', href: '/admin/banners' },
       { label: '팝업 관리', href: '/admin/popups' },
       { label: '광고 관리', href: '/admin/ads' },
+      { label: '신고 게시물', href: '/admin/glow-community/reports' },
     ],
   },
   {
@@ -64,12 +65,13 @@ export const ADMIN_SNB_GROUPS: ReadonlyArray<{
     id: 'admin-glow-picks',
     title: '나의 정보',
     items: [
-      { label: 'Glow 추천', href: '/admin/glow-recommendation' },
+      { label: 'Glow 추천', href: '/user/glow-recommendation' },
       { label: 'Glow 여행계획', href: '/admin/schedules' },
       { label: '나의 예약', href: '/my-payments' },
       { label: '나의 결제', href: '/my-payments' },
       { label: '나의 이야기', href: '/my-archive' },
       { label: '나의 리뷰', href: '/myreviewsfh' },
+      { label: '나의 설문', href: '/my-survey' },
       { label: '개인정보 변경', href: '/mypage/userInfo' },
     ],
   },

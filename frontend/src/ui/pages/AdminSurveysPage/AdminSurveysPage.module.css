@@ -1010,3 +1010,21 @@
 :global(html[data-theme='dark']) .statValue strong {
   color: #f87171;
 }
+
+.signalWarning {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #fde68a;
+  border-left-width: 3px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+:global(html[data-theme='dark']) .signalWarning {
+  border-color: #92400e;
+  background: #1f1a0e;
+  color: #fcd34d;
+}
