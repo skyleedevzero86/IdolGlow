@@ -4,6 +4,54 @@
 
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 참고했고, 날짜 기준으로 정리했습니다.
 
+## [0.22.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.21.0...v0.22.0) (2026-11-22)
+
+
+### Features
+
+* **#130:** 루트 frontend를 Vite 구성으로 맞추고 GLOW·마이페이지·관리자 화면을 추가 ([ac44c89](https://github.com/skyleedevzero86/IdolGlow/commit/ac44c8962eececb1523fe36fbdf3f5b320d09b88))
+* GLOW 전체 보기와 GLOW 정보 탭을 실제 데이터로 연결 ([6016262](https://github.com/skyleedevzero86/IdolGlow/commit/6016262976b9f371ca72a2c1bf379b0d4ef76621))
+* GLOW 지역사회 게시판 글쓰기·상세·신고 화면을 추가 ([ad4465e](https://github.com/skyleedevzero86/IdolGlow/commit/ad4465e8b4b436195772d1106d8b4857b2d3f46f))
+* GLOW 트렌드 탭을 실제 발행 호와 기사로 변경 ([964e42e](https://github.com/skyleedevzero86/IdolGlow/commit/964e42ebcfbb7b1c49cbd6cfdca528d525964897))
+* k6 부하 스크립트 기본 주소를 localhost로 바꾸고 상품 목록 측정을 단계별로 변경 및 KOPIS 공연 시간 안내의 공휴일 표기 HOL을 읽어 공휴일 회차 ([d6f870a](https://github.com/skyleedevzero86/IdolGlow/commit/d6f870a0974796455d8021670841cd900405c93e))
+* 공연 국제 ID·회차 계층·Elasticsearch 검색과 예약·상품 조회 성능 개선, frontend Vite 전환 추가([#132](https://github.com/skyleedevzero86/IdolGlow/issues/132)) ([a8f70a3](https://github.com/skyleedevzero86/IdolGlow/commit/a8f70a338dd2c2ec026cf40becda69fb9c935c92)), closes [#133](https://github.com/skyleedevzero86/IdolGlow/issues/133)
+* 공연 메타 변경을 Kafka 소비자가 Elasticsearch 검색 색인에 반영하고 공연 검색 API 추가 ([103e127](https://github.com/skyleedevzero86/IdolGlow/commit/103e127b90433ef33a01877067e65917a11a2498))
+* 공연에 KOPIS·위키데이터 같은 국제 표준 ID를 붙이고 파트너가 그 번호로 공연을 찾는 기능 추가 ([832d0e0](https://github.com/skyleedevzero86/IdolGlow/commit/832d0e034fdbef766ebda23bdec5aab200606746))
+* 공통 API 호출·로그인 연장·마크다운 표시·페이지 이동 부품을 추가한다 ([5b373b4](https://github.com/skyleedevzero86/IdolGlow/commit/5b373b427698feb443ec4531919119f6b9fe68b6))
+* 공통 댓글·좋아요·공유와 최근 본 콘텐츠 슬라이드를 추가 ([62167ed](https://github.com/skyleedevzero86/IdolGlow/commit/62167ed77479622a626d9bbc15ff3f4adcd6c0f5))
+* 관리자 구독관리에 구독자·발송 이력·메일 기록 탭을 추가 ([2cef670](https://github.com/skyleedevzero86/IdolGlow/commit/2cef6705750893ea10492ed5042cbd49f62ab1d4))
+* 관리자 신고 게시물·GLOW 추천·설문·상품·운영 변경 화면을 정리 ([5aadf2a](https://github.com/skyleedevzero86/IdolGlow/commit/5aadf2ac298c4fd1d9cd5e2a6224f337ad9edf55))
+* 대표 공연 아래에 날짜·시각 단위 회차를 두는 계층 메타 모델 추가 ([f9764ba](https://github.com/skyleedevzero86/IdolGlow/commit/f9764ba21f958908e84c837a368c4c50be52662e))
+* 마이페이지·나의 리뷰·나의 설문 화면을 정리 ([cb25d35](https://github.com/skyleedevzero86/IdolGlow/commit/cb25d35d2ccac36477c45e0ba0f83c11ffa12199))
+* 무중단 전환 1단계로 수집 기록에 시간대가 있는 수집 시각 칸을 추가 ([9539a91](https://github.com/skyleedevzero86/IdolGlow/commit/9539a9148280682da5bd9d9d1259df226ac8e0fe))
+* 무중단 전환 2단계로 수집 시각을 옛 칸과 새 칸에 함께 저장 ([96d329e](https://github.com/skyleedevzero86/IdolGlow/commit/96d329ef4b58d67aa6a0004b92beb6e5f9f87775))
+* 무중단 전환 3단계로 옛 수집 기록의 시각을 새 칸으로 나눠 옮기는 관리자 작업 추가 ([71de1b0](https://github.com/skyleedevzero86/IdolGlow/commit/71de1b0407ef08eed706a5cd0f36c0be0f267ca4))
+* 새 화면들의 라우트와 헤더·레이아웃을 연결 ([451efe2](https://github.com/skyleedevzero86/IdolGlow/commit/451efe209865d75ff8bf84439d0bb47f0f63f3bc))
+* 알림 종과 상품 추천 메일 구독·수신 거부 화면을 추가 ([96b54e9](https://github.com/skyleedevzero86/IdolGlow/commit/96b54e9d4ce851e870f7c688cf6c5b6e36d391c1))
+* 홈 트렌드 카드와 기사·공지·이벤트·상품 상세를 실제 데이터로 연결 ([9c67b35](https://github.com/skyleedevzero86/IdolGlow/commit/9c67b35e162f47ab7f50d7ec463676f69352aa02))
+
+
+### Bug Fixes
+
+* 수집 시각이 실행 방법에 따라 UTC로 저장되던 문제를 막도록 시간대를 Asia/Seoul로 고정 ([2e92b84](https://github.com/skyleedevzero86/IdolGlow/commit/2e92b84de6eb2ccbc45fb3812bd88d5713ee6abb))
+* 수집 시각이 실행 방법에 따라 UTC로 저장되던 문제를 막도록 시간대를 Asia/Seoul로 고정2 ([927bbd5](https://github.com/skyleedevzero86/IdolGlow/commit/927bbd54f1b277159c0d5c97c1254d77cdeddb52))
+
+
+### Performance
+
+* 상품 목록 조회에서 장소를 상품과 함께 읽어 상품마다 나가던 장소 쿼리를 없앰 ([9be0e93](https://github.com/skyleedevzero86/IdolGlow/commit/9be0e93e3c1f62e890692ce12f091b2694c441a3))
+* 예약 때 슬롯을 잠그기 전에 이미 잡힌 슬롯인지 먼저 확인해 잠금 대기 없이 바로 거절 ([c23df31](https://github.com/skyleedevzero86/IdolGlow/commit/c23df316bb52a09da4ab1321808bdefeb91ab222))
+
+
+### Build
+
+* 루트 frontend 를 Vite + React Router 구성으로 맞춘다 ([3907d0b](https://github.com/skyleedevzero86/IdolGlow/commit/3907d0b3760d75d943f1022fdd774a9522785f25))
+
+
+### Tests
+
+* 같은 슬롯에 100명이 동시에 예약해도 1명만 성공하고 나머지는 모두 선점 거절을 받는지 확인 ([e5d459a](https://github.com/skyleedevzero86/IdolGlow/commit/e5d459a4775b8c1650c5caf0999ab6e26a325b5e))
+
 ## [0.21.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.20.1...v0.21.0) (2026-11-21)
 
 
