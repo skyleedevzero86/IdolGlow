@@ -13,6 +13,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import javax.sql.DataSource
 
 @DisplayName("동시 예약 PostgreSQL")
 class ConcurrentReservationPostgresTest : PostgresIntegrationTest() {
@@ -21,6 +22,9 @@ class ConcurrentReservationPostgresTest : PostgresIntegrationTest() {
 
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
+
+    @Autowired
+    private lateinit var dataSource: DataSource
 
     @DisplayName("같은 슬롯에 10명이 동시에 예약하면 1명만 성공한다")
     @Test
@@ -107,7 +111,34 @@ class ConcurrentReservationPostgresTest : PostgresIntegrationTest() {
         )
     }
 
+    @DisplayName("T-4 이미 선점된 슬롯은 다른 트랜잭션이 슬롯 행을 잠그고 있어도 잠금을 기다리지 않고 바로 '이미 선점'으로 거절한다")
+    @Test
+    fun alreadyHeldSlotIsRejectedWithoutWaitingForRowLock() {
+        // given
+        val slot = fixture.persistOpenSlot()
+        fixture.createReservation(fixture.persistUser().id, slot)
+        val latecomer = fixture.persistUser()
+        dataSource.connection.use { locker ->
+            locker.autoCommit = false
+            locker.prepareStatement("select id from reservation_slots where id = ? for update").use {
+                it.setLong(1, slot.slotId)
+                it.executeQuery().close()
+            }
+
+            // when
+            val startedAt = System.nanoTime()
+            val error = runCatching { fixture.createReservation(latecomer.id, slot) }.exceptionOrNull()
+            val elapsedMillis = (System.nanoTime() - startedAt) / NANOS_PER_MILLI
+            locker.rollback()
+
+            // then
+            assertEquals(EXPECTED_REJECTION, "${error?.javaClass?.simpleName}: ${error?.message}")
+            assertTrue(elapsedMillis < NO_WAIT_LIMIT_MILLIS, "슬롯 잠금을 기다렸다. ${elapsedMillis}ms")
+        }
+    }
+
     companion object {
+        private const val NO_WAIT_LIMIT_MILLIS: Long = 1_000
         private const val HUNDRED: Int = 100
         private const val NANOS_PER_MILLI: Long = 1_000_000
         private const val EXPECTED_REJECTION: String = "IllegalArgumentException: 다른 예약이 이미 선점한 슬롯입니다."

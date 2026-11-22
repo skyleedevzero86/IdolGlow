@@ -5,6 +5,8 @@ interface ReservationSlotRepository {
 
     fun findByIdForUpdate(slotId: Long): ReservationSlot?
 
+    fun findStateById(slotId: Long): ReservationSlotState?
+
     fun save(slot: ReservationSlot): ReservationSlot
 
     fun delete(slot: ReservationSlot)
