@@ -18,7 +18,7 @@
 .badgeDark { background: #111; }
 .badgeBlue { background: #173cff; }
 .badgeMuted { background: #9a9a9a; }
-.empty { padding: 40px 0; color: #666; text-align: center; }
+.empty { display: block; padding: 40px 0; color: #666; text-align: center; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 60px 0 20px; }
 .pagination button { display: grid; width: 26px; height: 26px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: #555; font-size: 13px; background: #fff; }
 .pagination button:hover, .pagination button:focus-visible { color: #173cff; }
@@ -34,6 +34,20 @@
 .selectField select:focus-visible { outline: 2px solid #173cff; outline-offset: 2px; }
 .selectIcon { position: absolute; top: 50%; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: #171717; transform: translateY(-50%); pointer-events: none; }
 .selectIcon::after { position: absolute; top: 6px; left: 7px; width: 6px; height: 6px; border-right: 2px solid #fff; border-bottom: 2px solid #fff; content: ''; transform: rotate(45deg); }
+.volumeHead h3 a { color: inherit; }
+.volumeHead h3 a:hover, .volumeHead h3 a:focus-visible { color: #173cff; }
+.resultSummary { display: block; margin: -6px 0 0; color: #555; font-size: 14px; }
+.retryButton { margin-top: 12px; padding: 8px 18px; border: 2px solid #171717; border-radius: 999px; color: #171717; font-size: 13px; font-weight: 700; background: #fff; cursor: pointer; }
+.retryButton:hover, .retryButton:focus-visible { color: #fff; background: #171717; }
+.searchForm { display: flex; align-items: center; height: 40px; padding: 0 4px 0 16px; border: 2px solid #171717; border-radius: 999px; background: #fff; }
+.searchForm:focus-within { outline: 2px solid #173cff; outline-offset: 2px; }
+.searchForm input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; color: #171717; font-size: 14px; font-weight: 600; background: transparent; outline: none; }
+.searchForm button { flex: none; height: 30px; padding: 0 14px; border: 0; border-radius: 999px; color: #fff; font-size: 13px; font-weight: 700; background: #171717; cursor: pointer; }
+.searchForm button:hover, .searchForm button:focus-visible { background: #173cff; }
+.resetButton { justify-self: center; padding: 4px 8px; border: 0; color: #555; font-size: 13px; text-decoration: underline; background: transparent; cursor: pointer; }
+.resetButton:hover, .resetButton:focus-visible { color: #173cff; }
+.sidebarError { margin: 0; color: #c62828; font-size: 13px; text-align: center; }
+.selectField select:disabled { cursor: default; opacity: .6; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 @media (max-width: 1080px) {
