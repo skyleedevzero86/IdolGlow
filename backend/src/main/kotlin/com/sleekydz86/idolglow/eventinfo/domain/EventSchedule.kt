@@ -8,21 +8,30 @@ import java.time.LocalTime
 data class EventSchedule(
     val times: Map<DayOfWeek, Set<LocalTime>>,
     val skipped: List<String>,
+    val holidayTimes: Set<LocalTime> = emptySet(),
 ) {
     fun expand(
         from: LocalDate,
         to: LocalDate,
+        isHoliday: (LocalDate) -> Boolean = { false },
     ): List<LocalDateTime> {
-        if (from.isAfter(to) || times.isEmpty()) return emptyList()
+        if (from.isAfter(to) || (times.isEmpty() && holidayTimes.isEmpty())) return emptyList()
         return generateSequence(from) { it.plusDays(1) }
             .takeWhile { !it.isAfter(to) }
-            .flatMap { day -> times[day.dayOfWeek].orEmpty().sorted().map { day.atTime(it) } }
+            .flatMap { day -> timesOn(day, isHoliday).sorted().map { day.atTime(it) } }
             .toList()
     }
+
+    private fun timesOn(
+        day: LocalDate,
+        isHoliday: (LocalDate) -> Boolean,
+    ): Set<LocalTime> =
+        if (holidayTimes.isNotEmpty() && isHoliday(day)) holidayTimes else times[day.dayOfWeek].orEmpty()
 
     companion object {
         private val SEGMENT: Regex = Regex("""([^(),]+)\(([^)]*)\)""")
         private val TIME: Regex = Regex("""^([01]?\d|2[0-3]):([0-5]\d)$""")
+        private const val HOLIDAY: String = "HOL"
         private val DAYS: Map<Char, DayOfWeek> =
             mapOf(
                 '월' to DayOfWeek.MONDAY,
@@ -37,18 +46,22 @@ data class EventSchedule(
         fun parse(guidance: String?): EventSchedule {
             val text = guidance?.trim().orEmpty()
             val times = mutableMapOf<DayOfWeek, MutableSet<LocalTime>>()
+            val holidayTimes = mutableSetOf<LocalTime>()
             val skipped = mutableListOf<String>()
             SEGMENT.findAll(text).forEach { match ->
-                val days = days(match.groupValues[1].trim())
+                val name = match.groupValues[1].trim()
+                val days = days(name)
                 val clock = clockTimes(match.groupValues[2])
-                if (days.isEmpty() || clock.isEmpty()) {
-                    skipped += match.value.trim()
-                } else {
-                    days.forEach { times.getOrPut(it) { mutableSetOf() }.addAll(clock) }
+                when {
+                    clock.isEmpty() -> skipped += match.value.trim()
+                    name.equals(HOLIDAY, ignoreCase = true) -> holidayTimes.addAll(clock)
+                    days.isEmpty() -> skipped += match.value.trim()
+                    else -> days.forEach { times.getOrPut(it) { mutableSetOf() }.addAll(clock) }
                 }
             }
-            if (times.isEmpty() && skipped.isEmpty() && text.isNotEmpty()) skipped += text
-            return EventSchedule(times, skipped)
+            val nothingRead = times.isEmpty() && holidayTimes.isEmpty()
+            if (nothingRead && skipped.isEmpty() && text.isNotEmpty()) skipped += text
+            return EventSchedule(times, skipped, holidayTimes)
         }
 
         private fun days(spec: String): List<DayOfWeek> {

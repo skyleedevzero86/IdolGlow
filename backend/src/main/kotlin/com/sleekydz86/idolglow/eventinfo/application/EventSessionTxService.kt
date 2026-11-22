@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
 import com.sleekydz86.idolglow.eventinfo.domain.EventSchedule
 import com.sleekydz86.idolglow.eventinfo.domain.EventSession
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
+import com.sleekydz86.idolglow.eventinfo.domain.KoreanPublicHolidays
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -57,7 +58,7 @@ class EventSessionTxService(
     ): Set<Instant> {
         val from = maxOf(today, ref.startDate ?: today)
         val to = minOf(horizon, ref.endDate ?: horizon)
-        return schedule.expand(from, to).map { it.atZone(zone).toInstant() }.toSet()
+        return schedule.expand(from, to, KoreanPublicHolidays::contains).map { it.atZone(zone).toInstant() }.toSet()
     }
 
     private fun reconcile(

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 @DisplayName("KOPIS 공연 시간 안내 문장 읽기와 회차 펼치기")
@@ -36,15 +37,53 @@ class EventScheduleTest {
         )
     }
 
-    @DisplayName("공휴일 표시와 읽을 수 없는 시각은 건너뛰고 따로 남긴다")
+    @DisplayName("공휴일 표시 HOL은 공휴일 시각으로 읽고, 읽을 수 없는 시각만 건너뛰어 따로 남긴다")
     @Test
-    fun skipsHolidayAndBadTimes() {
+    fun readsHolidayAndSkipsBadTimes() {
         // when
-        val schedule = EventSchedule.parse("수요일(14:00), HOL(15:00), 목요일(오후 3시)")
+        val schedule = EventSchedule.parse("수요일(14:00), HOL(15:00), 목요일(오후 3시), hol(오후)")
 
         // then
         assertEquals(setOf(DayOfWeek.WEDNESDAY), schedule.times.keys)
-        assertEquals(listOf("HOL(15:00)", "목요일(오후 3시)"), schedule.skipped)
+        assertEquals(setOf(LocalTime.of(15, 0)), schedule.holidayTimes)
+        assertEquals(listOf("목요일(오후 3시)", "hol(오후)"), schedule.skipped)
+    }
+
+    @DisplayName("공휴일에는 요일 시각 대신 공휴일 시각으로 회차를 만들고, 공휴일 시각이 없으면 요일 시각을 그대로 쓴다")
+    @Test
+    fun usesHolidayTimesOnPublicHolidays() {
+        // given
+        val withHoliday = EventSchedule.parse("화요일 ~ 금요일(20:00), HOL(14:00,18:00)")
+        val withoutHoliday = EventSchedule.parse("화요일 ~ 금요일(20:00)")
+        val from = LocalDate.of(2026, 12, 24)
+        val to = LocalDate.of(2026, 12, 26)
+
+        // when
+        val sessions = withHoliday.expand(from, to, KoreanPublicHolidays::contains)
+        val plain = withoutHoliday.expand(from, to, KoreanPublicHolidays::contains)
+
+        // then
+        assertEquals(
+            listOf(
+                LocalDateTime.of(2026, 12, 24, 20, 0),
+                LocalDateTime.of(2026, 12, 25, 14, 0),
+                LocalDateTime.of(2026, 12, 25, 18, 0),
+            ),
+            sessions,
+        )
+        assertEquals(listOf(LocalDateTime.of(2026, 12, 24, 20, 0), LocalDateTime.of(2026, 12, 25, 20, 0)), plain)
+    }
+
+    @DisplayName("공휴일 달력은 양력 공휴일과 대체공휴일을 알고, 평일은 공휴일이 아니다")
+    @Test
+    fun knowsSolarAndSubstituteHolidays() {
+        // when
+        val christmas = KoreanPublicHolidays.contains(LocalDate.of(2026, 12, 25))
+        val substitute = KoreanPublicHolidays.contains(LocalDate.of(2027, 12, 27))
+        val weekday = KoreanPublicHolidays.contains(LocalDate.of(2026, 12, 24))
+
+        // then
+        assertEquals(listOf(true, true, false), listOf(christmas, substitute, weekday))
     }
 
     @DisplayName("형식이 전혀 다른 문장은 회차 없이 통째로 건너뛴다")
