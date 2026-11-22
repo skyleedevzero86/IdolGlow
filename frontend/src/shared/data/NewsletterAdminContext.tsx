@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { mockNewsletters, type AdminNewsletterItem } from './mockNewsletters';
 
-const STORAGE_KEY = 'idolglow.acc-webzine.newsletters-admin.v1';
+const STORAGE_KEY = 'idolglow.idolglow.newsletters-admin.v1';
 
 export interface NewsletterAdminInput {
   readonly title: string;

@@ -56,10 +56,153 @@
   background: var(--color-bg-card);
 }
 
-.latestNote {
-  min-height: 5.5rem;
-  padding: 0.85rem 0.4rem;
+.slider {
+  padding: 0.5rem 0.4rem 0.25rem;
+  background: var(--color-bg-card);
+}
+
+.sliderViewport {
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.sliderTrack {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  transition: transform var(--transition-fast);
+}
+
+.slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.sliderControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.15rem;
+  margin-top: 0.4rem;
+}
+
+.sliderButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.sliderButton svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.sliderButton:hover:not(:disabled),
+.sliderButton:focus-visible {
+  border-color: var(--header-accent);
+  color: var(--header-accent);
+}
+
+.sliderButton:focus-visible {
+  outline: 2px solid var(--header-accent);
+  outline-offset: 1px;
+}
+
+.sliderButton:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.sliderIndicator {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.recentItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.recentThumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg-secondary);
+  transition: border-color var(--transition-fast);
+}
+
+.recentImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recentPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  text-align: center;
   word-break: keep-all;
+}
+
+.recentTitle {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.35;
+  word-break: break-all;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.recentItem:hover .recentThumb,
+.recentItem:focus-visible .recentThumb {
+  border-color: var(--header-accent);
+}
+
+.recentItem:hover .recentTitle,
+.recentItem:focus-visible .recentTitle {
+  color: var(--header-accent);
+}
+
+.recentItem:focus-visible {
+  outline: 2px solid var(--header-accent);
+  outline-offset: 2px;
 }
 
 .quickLink {
@@ -173,6 +316,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sliderTrack,
+  .sliderButton,
   .circleLink,
   .totop {
     transition: none;

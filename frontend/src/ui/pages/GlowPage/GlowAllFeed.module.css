@@ -1,0 +1,12 @@
+.placeholder { display: grid; width: 100%; height: 100%; place-items: center; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+.placeholder.trend { background: linear-gradient(135deg, var(--color-category-exchange), #1d2b64); }
+.placeholder.news { background: linear-gradient(135deg, var(--color-category-performance), #3a1c71); }
+.placeholder.recent { background: linear-gradient(135deg, var(--color-category-exhibition), #0f4c5c); }
+.placeholder.local { background: linear-gradient(135deg, #f28c28, #b34700); }
+.status { grid-column: 1 / -1; margin: 0; padding: 48px 12px; color: #666; font-size: 14px; text-align: center; }
+.status.error { color: #c62828; }
+.retryButton { margin-left: 10px; padding: 6px 14px; border: 1px solid #d6d6d6; border-radius: 999px; color: #292929; font-size: 13px; font-weight: 700; background: #fff; }
+.retryButton:hover, .retryButton:focus-visible { border-color: #183cff; color: #183cff; }
+.sideStatus { margin: 0; padding: 24px 4px; color: #666; font-size: 13px; text-align: center; }
+.toast { position: fixed; z-index: 1300; left: 50%; bottom: 36px; padding: 12px 20px; border-radius: 999px; color: #fff; font-size: 14px; font-weight: 700; background: rgba(17,17,17,.9); box-shadow: 0 10px 30px rgba(0,0,0,.22); transform: translateX(-50%); animation: toastIn 180ms ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }

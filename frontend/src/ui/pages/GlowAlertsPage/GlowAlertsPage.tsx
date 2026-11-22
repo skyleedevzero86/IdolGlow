@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   fetchGlowAlerts,
   markGlowAlertRead,
@@ -8,6 +8,7 @@ import {
   type GlowAlertStatus,
 } from '../../../shared/data/glowAlertsApi';
 import { useAuth } from '../../../auth/AuthContext';
+import { fetchNotifications, resolveNotificationLink } from '../../../shared/data/notificationApi';
 import { AdminMarketingShell } from '../AdminMarketingPage/AdminMarketingShell';
 import styles from './GlowAlertsPage.module.css';
 
@@ -34,7 +35,9 @@ function parsePage(raw: string | null): number {
 }
 
 export const GlowAlertsPage = () => {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+  const navigate = useNavigate();
+  const [linkById, setLinkById] = useState<ReadonlyMap<number, string>>(new Map());
   const [searchParams, setSearchParams] = useSearchParams();
   const status = parseStatus(searchParams.get('status'));
   const category = parseCategory(searchParams.get('category'));
@@ -68,6 +71,31 @@ export const GlowAlertsPage = () => {
       active = false;
     };
   }, [accessToken, category, page, query, status]);
+
+  useEffect(() => {
+    if (!accessToken || !user) {
+      setLinkById(new Map());
+      return;
+    }
+    let active = true;
+    fetchNotifications(accessToken)
+      .then(items => {
+        if (!active) return;
+        setLinkById(new Map(items.filter(item => item.link).map(item => [item.id, item.link as string])));
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [accessToken, user]);
+
+  const openAlert = async (alertId: number, unread: boolean) => {
+    await markRead(alertId, unread);
+    const target = resolveNotificationLink(linkById.get(alertId));
+    if (!target) return;
+    if ('internal' in target) navigate(target.internal);
+    else window.location.assign(target.external);
+  };
 
   const totalPages = data?.totalPages ?? 0;
   const visiblePages = useMemo(() => {
@@ -206,9 +234,9 @@ export const GlowAlertsPage = () => {
                   <li key={item.id}>
                     <button
                       type="button"
-                      onClick={() => void markRead(item.id, item.unread)}
-                      aria-label={`${item.senderName} 알림 ${item.unread ? '읽음 처리' : '보기'}`}
-                      disabled={!item.unread}
+                      onClick={() => void openAlert(item.id, item.unread)}
+                      aria-label={`${item.senderName} 알림 ${linkById.has(item.id) ? '열기' : item.unread ? '읽음 처리' : '보기'}`}
+                      disabled={!item.unread && !linkById.has(item.id)}
                       className={`${styles.alertCard} ${item.unread ? styles.alertCardUnread : ''}`}
                     >
                       <span

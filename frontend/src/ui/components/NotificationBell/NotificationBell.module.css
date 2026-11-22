@@ -1,0 +1,178 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.panel {
+  position: absolute;
+  z-index: 1100;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(360px, calc(100vw - 24px));
+  border: 1px solid #e8e8e8;
+  border-top: 2px solid var(--header-bg);
+  border-radius: 0;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+  text-align: left;
+}
+
+.panelHead,
+.panelFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.panelHead {
+  border-bottom: 1px solid #eeeeee;
+}
+
+.panelHead strong {
+  color: #111111;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.panelHead button,
+.panelFoot button {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #8b919a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.panelHead button:hover,
+.panelFoot button:hover {
+  color: var(--header-accent);
+}
+
+.panelFoot {
+  justify-content: center;
+  border-top: 1px solid #eeeeee;
+}
+
+.list {
+  max-height: min(420px, 60vh);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.list li + li {
+  border-top: 1px solid #eeeeee;
+}
+
+.item,
+.itemUnread {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 11px 14px 11px 11px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.itemUnread {
+  border-left-color: var(--header-accent);
+}
+
+.item:hover,
+.itemUnread:hover,
+.item:focus-visible,
+.itemUnread:focus-visible {
+  background: #f7f7f5;
+  outline: none;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #8b919a;
+  font-size: 0.72rem;
+}
+
+.itemLabel {
+  padding: 1px 6px;
+  border: 1px solid #e8e8e8;
+  color: #333333;
+  font-weight: 700;
+}
+
+.itemTitle {
+  color: #111111;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.item .itemTitle {
+  font-weight: 600;
+}
+
+.itemMessage {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #333333;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.status,
+.error {
+  margin: 0;
+  padding: 22px 14px;
+  color: #8b919a;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.error {
+  color: #b4151f;
+}
+
+:global(html[data-theme='dark']) .panel {
+  border-color: #253041;
+  border-top-color: #f8fafc;
+  background: #131a24;
+  color: #cbd5e1;
+}
+
+:global(html[data-theme='dark']) .panelHead,
+:global(html[data-theme='dark']) .panelFoot,
+:global(html[data-theme='dark']) .list li + li {
+  border-color: #253041;
+}
+
+:global(html[data-theme='dark']) .panelHead strong,
+:global(html[data-theme='dark']) .itemTitle {
+  color: #f8fafc;
+}
+
+:global(html[data-theme='dark']) .itemMessage,
+:global(html[data-theme='dark']) .itemLabel {
+  color: #cbd5e1;
+  border-color: #253041;
+}
+
+:global(html[data-theme='dark']) .item:hover,
+:global(html[data-theme='dark']) .itemUnread:hover {
+  background: rgba(255, 255, 255, 0.06);
+}

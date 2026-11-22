@@ -528,3 +528,7 @@
   height: 1rem;
   flex-shrink: 0;
 }
+
+.recommendationSection {
+  margin-top: 1rem;
+}

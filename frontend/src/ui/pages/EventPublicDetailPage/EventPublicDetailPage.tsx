@@ -5,7 +5,9 @@ import {
   fetchPublicEventDetail,
   recordMbrdDocumentView,
 } from "../../../shared/data/publicEventsApi";
+import { firstMarkdownImage } from "../../../shared/data/recentViewsStore";
 import { renderIdolGlowMarkdown } from "../../../shared/markdown/idolGlowMarkdown";
+import { useRecordContentView } from "../../hooks/useContentView";
 import styles from "./EventPublicDetailPage.module.css";
 
 const normalizeTag = (tag: string) => {
@@ -45,6 +47,21 @@ export const EventPublicDetailPage = () => {
     () => renderIdolGlowMarkdown(item?.markdown ?? ""),
     [item?.markdown],
   );
+  const viewEntry = useMemo(
+    () =>
+      item && item.documentId === documentId
+        ? {
+            contentType: "EVENT" as const,
+            contentKey: item.documentId,
+            title: item.title,
+            path: `/events/${encodeURIComponent(item.documentId)}`,
+            imageUrl:
+              item.thumbnailImageUrl || firstMarkdownImage(item.markdown),
+          }
+        : null,
+    [documentId, item],
+  );
+  useRecordContentView(viewEntry);
 
   if (loading)
     return <main className={styles.main}>이벤트를 불러오는 중입니다.</main>;

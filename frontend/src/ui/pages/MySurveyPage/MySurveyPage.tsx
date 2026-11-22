@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import {
   fetchCurrentSurveyForm,
@@ -14,8 +14,10 @@ import {
   USER_SURVEY_CONCEPT_OPTIONS,
   type UserSurveyConceptType,
 } from '../../../shared/data/userSurveyApi';
+import { RecommendationMailPanel } from '../../components/RecommendationMailPanel/RecommendationMailPanel';
 import { MySurveyBoard, tripDatesIncomplete, type SurveyAnswerDraft } from './MySurveyBoard';
 import styles from './MySurveyPage.module.css';
+import { FormRecommendationSection, PersonalizedRecommendationSection } from './SurveyRecommendationSections';
 
 type AnswerDraft = SurveyAnswerDraft;
 
@@ -86,7 +88,6 @@ const answersFromDraft = (form: SurveyFormResponse, stored: SurveyDraftRecord | 
 
 export function MySurveyPage() {
   const { accessToken, authReady, user } = useAuth();
-  const navigate = useNavigate();
   const [form, setForm] = useState<SurveyFormResponse | null>(null);
   const [answers, setAnswers] = useState<Record<number, AnswerDraft>>({});
   const [loading, setLoading] = useState(true);
@@ -94,9 +95,10 @@ export function MySurveyPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ index: number; token: number } | null>(null);
-  const [surveySubmitted] = useState(false);
+  const [surveySubmitted, setSurveySubmitted] = useState(false);
   const [resumeIndex, setResumeIndex] = useState(0);
-  const travelSectionRef = useRef<HTMLElement>(null);
+  const [hasUserSurvey, setHasUserSurvey] = useState(false);
+  const [recoReloadKey, setRecoReloadKey] = useState(0);
   const draftHydrated = useRef(false);
 
   const [travelLoading, setTravelLoading] = useState(true);
@@ -124,6 +126,7 @@ export function MySurveyPage() {
     setTravelError(null);
     try {
       const s = await fetchUserSurvey(accessToken);
+      setHasUserSurvey(Boolean(s));
       if (s) {
         setConcept(s.concept);
         setIdolName(s.idolName);
@@ -191,7 +194,8 @@ export function MySurveyPage() {
           return;
         }
         if (latest) {
-          navigate('/wish', { replace: true });
+          setSurveySubmitted(true);
+          setLoading(false);
           return;
         }
       } catch {
@@ -206,14 +210,7 @@ export function MySurveyPage() {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, authReady, loadForm, navigate]);
-
-  useEffect(() => {
-    if (!surveySubmitted) {
-      return;
-    }
-    travelSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [surveySubmitted]);
+  }, [accessToken, authReady, loadForm]);
 
   const rememberSlide = useCallback((index: number) => {
     setResumeIndex(current => (current === index ? current : index));
@@ -305,7 +302,8 @@ export function MySurveyPage() {
         places,
       });
       setTravelMessage('취향·여행 정보를 저장했습니다.');
-      navigate('/wish');
+      setHasUserSurvey(true);
+      setRecoReloadKey(key => key + 1);
     } catch (err) {
       setTravelError(err instanceof Error ? err.message : '저장에 실패했습니다.');
     } finally {
@@ -352,7 +350,10 @@ export function MySurveyPage() {
       if (user) {
         clearSurveyDraft(user.id, form.id);
       }
-      navigate('/wish', { replace: true });
+      setSurveySubmitted(true);
+      setRecoReloadKey(key => key + 1);
+      setMessage('설문을 제출했습니다. 응답을 반영한 추천을 확인해 보세요.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       setError(e instanceof Error ? e.message : '제출에 실패했습니다.');
     } finally {
@@ -391,7 +392,9 @@ export function MySurveyPage() {
       <div className={styles.page}>
         {error ? <p className={styles.error}>{error}</p> : null}
         {message ? <p className={styles.message}>{message}</p> : null}
-        {loading ? (
+        {surveySubmitted ? (
+          <FormRecommendationSection accessToken={accessToken} reloadKey={recoReloadKey} />
+        ) : loading ? (
           <p className={styles.subtitle}>불러오는 중…</p>
         ) : !form ? (
           <p className={styles.subtitle}>등록된 운영 설문이 없습니다. 관리자가 설문지를 등록하면 이 영역이 표시됩니다.</p>
@@ -410,10 +413,8 @@ export function MySurveyPage() {
           />
         )}
 
-        {surveySubmitted ? (
-          <section ref={travelSectionRef}>
-            <hr className={styles.rule} />
-            <details className={styles.travelDetails} open>
+        <section>
+          <details className={styles.travelDetails} open={!hasUserSurvey || surveySubmitted}>
           <summary>취향·여행 정보 — 컨셉, 아이돌, 기간, 장소</summary>
           {travelError ? <p className={styles.error}>{travelError}</p> : null}
           {travelMessage ? <p className={styles.message}>{travelMessage}</p> : null}
@@ -509,8 +510,17 @@ export function MySurveyPage() {
               </div>
             </form>
           )}
-            </details>
-          </section>
+          </details>
+        </section>
+
+        <PersonalizedRecommendationSection
+          accessToken={accessToken}
+          hasUserSurvey={hasUserSurvey && !travelLoading}
+          reloadKey={recoReloadKey}
+        />
+
+        {hasUserSurvey ? (
+          <RecommendationMailPanel accessToken={accessToken} consentSource="MY_SURVEY" showBasisOptions={false} />
         ) : null}
       </div>
     </main>

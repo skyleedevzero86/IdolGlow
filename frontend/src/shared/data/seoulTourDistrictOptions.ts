@@ -85,3 +85,8 @@ export function formatTourSpotLabel(item: {
   }
   return region;
 }
+
+export function formatTourBaseYmLabel(baseYm: string): string {
+  const matched = /^(\d{4})(\d{2})$/.exec(baseYm);
+  return matched ? `${matched[1]}년 ${Number(matched[2])}월` : baseYm;
+}

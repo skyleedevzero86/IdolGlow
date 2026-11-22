@@ -1,7 +1,5 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   fetchPopularSearchKeywords,
   recordSearchKeyword,
@@ -37,7 +35,7 @@ export type HeaderSearchPanelProps = {
 };
 
 export const HeaderSearchPanel = ({ onClose }: HeaderSearchPanelProps) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [value, setValue] = useState('');
   const [popularTerms, setPopularTerms] = useState<readonly string[]>(FALLBACK_TERMS);
   const [pageIndex, setPageIndex] = useState(0);
@@ -129,9 +127,9 @@ export const HeaderSearchPanel = ({ onClose }: HeaderSearchPanelProps) => {
       if (!q) return;
       void recordSearchKeyword(q);
       onClose();
-      router.push(`/search?q=${encodeURIComponent(q)}`);
+      navigate({ pathname: '/search', search: `?q=${encodeURIComponent(q)}` });
     },
-    [router, onClose],
+    [navigate, onClose],
   );
 
   const handleSubmit = useCallback(

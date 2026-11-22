@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
 
 const SOCIAL_LINKS = [
@@ -37,7 +37,7 @@ export const Footer = () => {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerInner}>
-        <Link href="/" className={styles.logo} aria-label="IDOL GLOW 홈으로 이동">
+        <Link to="/" className={styles.logo} aria-label="IDOL GLOW 홈으로 이동">
           <span>Idol</span>
           <span className={styles.logoAccent}>Glow</span>
         </Link>

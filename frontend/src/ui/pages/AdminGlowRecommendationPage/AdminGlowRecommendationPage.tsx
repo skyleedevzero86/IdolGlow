@@ -14,14 +14,16 @@ import {
   composeTourBaseYm,
   formatTourSpotLabel,
   SEOUL_DISTRICT_SIGNGU_OPTIONS,
-  TOUR_AREA_OPTIONS,
-} from '../../../shared/data/seoulTourDistrictOptions';
+  TOUR_AREA_OPTIONS, formatTourBaseYmLabel } from '../../../shared/data/seoulTourDistrictOptions';
 import { AdminMarketingShell } from '../AdminMarketingPage/AdminMarketingShell';
+import { PersonalizedRecommendationSection } from '../MySurveyPage/SurveyRecommendationSections';
 import shellStyles from '../AdminMarketingPage/AdminMarketingPage.module.css';
 import shellToolbar from '../AdminUsersPage/AdminUsersShellToolbar.module.css';
 import styles from './AdminGlowRecommendationPage.module.css';
 
 const ISO_YMD = /^\d{4}-\d{2}-\d{2}$/;
+const TOUR_FALLBACK_SIZE = 20;
+const DEFAULT_TOUR_SIGNGU_CODE = 11530;
 const TIME_SLOT_OPTIONS = Array.from({ length: 31 }, (_, index) => {
   const totalMinutes = (9 * 60) + (index * 30);
   const hours = Math.floor(totalMinutes / 60);
@@ -69,6 +71,10 @@ function dedupeAttractions(items: readonly ProductTourAttractionItem[]): Product
   return out;
 }
 
+function limitFallbackAttractions(result: ProductTourAttractionResult): ProductTourAttractionResult {
+  return { ...result, attractions: result.attractions.slice(0, TOUR_FALLBACK_SIZE) };
+}
+
 function resolveBaseYmOrNull(year: number | null, month: number | null): string | null {
   if (year == null || month == null) return null;
   return composeTourBaseYm(year, month);
@@ -103,6 +109,8 @@ export function AdminGlowRecommendationPage() {
   const [productTourPicks, setProductTourPicks] = useState<readonly ProductTourAttractionItem[]>([]);
   const [showOnlyRegisteredPicks, setShowOnlyRegisteredPicks] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [tourFallback, setTourFallback] = useState(false);
+  const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
 
   const placeRowIdSeq = useRef(0);
   const nextPlaceRowId = useCallback(() => {
@@ -123,7 +131,7 @@ export function AdminGlowRecommendationPage() {
   }, []);
 
   useEffect(() => {
-    if (!authReady || !accessToken || user?.role !== 'ADMIN') return;
+    if (!authReady || !accessToken || !user) return;
     let cancelled = false;
 
     const load = async () => {
@@ -189,7 +197,7 @@ export function AdminGlowRecommendationPage() {
   }, [accessToken, authReady, user?.role, user?.id, nextPlaceRowId]);
 
   useEffect(() => {
-    if (!authReady || !accessToken || user?.role !== 'ADMIN' || !referenceProductId) {
+    if (!authReady || !accessToken || !user || !referenceProductId) {
       setProductTourPicks([]);
       setShowOnlyRegisteredPicks(false);
       return;
@@ -199,9 +207,8 @@ export function AdminGlowRecommendationPage() {
       try {
         const detail = await fetchAdminProduct(accessToken, referenceProductId);
         if (cancelled) return;
-        const picks = detail.tourAttractionPicks ?? [];
-        setProductTourPicks(picks);
-        setShowOnlyRegisteredPicks(picks.length > 0);
+        setProductTourPicks(detail.tourAttractionPicks ?? []);
+        setShowOnlyRegisteredPicks(false);
       } catch {
         if (!cancelled) {
           setProductTourPicks([]);
@@ -253,11 +260,10 @@ export function AdminGlowRecommendationPage() {
     () => new Set(presetRows.map(row => row.label.trim()).filter(Boolean)),
     [presetRows],
   );
-  const visibleAddressAttractions = useMemo(
-    () => displayedAttractions.filter(item => presetLabelSet.has(formatTourSpotLabel(item).trim())),
-    [displayedAttractions, presetLabelSet],
+  const presetRowsOutsideResults = useMemo(
+    () => presetRows.filter(row => !displayedAttractionLabelSet.has(row.label.trim())),
+    [displayedAttractionLabelSet, presetRows],
   );
-  const shouldShowPresetRows = !attractionData || visibleAddressAttractions.length === 0;
 
   const visiblePickedRows = useMemo(() => {
     if (!hasSearched) {
@@ -275,40 +281,46 @@ export function AdminGlowRecommendationPage() {
   }, [displayedAttractionLabelSet, hasSearched, placeRows, referenceProductId, tourMonth, tourSignguCode, tourYear]);
 
   const handleTourSearch = async () => {
-    if (!authReady || user?.role !== 'ADMIN' || !accessToken) return;
+    if (!authReady || !user || !accessToken) return;
     setHasSearched(true);
+    setAttractionError(null);
+    setAttractionLoading(true);
+    setTourFallback(false);
     const baseYm = resolveBaseYmOrNull(tourYear, tourMonth);
+    const signguCode = tourSignguCode ?? DEFAULT_TOUR_SIGNGU_CODE;
+    const hasConditionFilter = tourSignguCode != null || baseYm != null;
+    const fetchAttractions = (productId: number, size: number) =>
+      fetchProductTourAttractions(accessToken, productId, size, tourAreaCode, signguCode, baseYm ?? undefined);
+    const showFallback = (result: ProductTourAttractionResult) => {
+      setAttractionData(limitFallbackAttractions(result));
+      setTourFallback(true);
+    };
 
-    if (!referenceProductId) {
-      setAttractionError(null);
-      setAttractionLoading(true);
-      try {
+    try {
+      if (!referenceProductId) {
         const details = await Promise.all(products.map(product => fetchAdminProduct(accessToken, product.id)));
-        const picksByProduct = details.map(detail => ({
-          productId: detail.id,
-          picks: detail.tourAttractionPicks ?? [],
-        })).filter(entry => entry.picks.length > 0);
+        const picksByProduct = details
+          .map(detail => ({ productId: detail.id, picks: detail.tourAttractionPicks ?? [] }))
+          .filter(entry => entry.picks.length > 0);
 
         let picks: ProductTourAttractionItem[];
-        const hasConditionFilter = tourSignguCode != null || baseYm != null;
         if (!hasConditionFilter) {
           picks = dedupeAttractions(picksByProduct.flatMap(entry => entry.picks));
         } else {
           const filtered = await Promise.all(
             picksByProduct.map(async entry => {
-              const fromApi = await fetchProductTourAttractions(
-                accessToken,
-                entry.productId,
-                1000,
-                tourAreaCode,
-                tourSignguCode ?? 11530,
-                baseYm ?? undefined,
-              );
+              const fromApi = await fetchAttractions(entry.productId, 1000);
               const allowedCodes = new Set(fromApi.attractions.map(item => item.attractionCode));
               return entry.picks.filter(item => allowedCodes.has(item.attractionCode));
             }),
           );
           picks = dedupeAttractions(filtered.flat());
+        }
+
+        const fallbackProductId = products[0]?.id;
+        if (picks.length === 0 && !showOnlyRegisteredPicks && fallbackProductId != null) {
+          showFallback(await fetchAttractions(fallbackProductId, TOUR_FALLBACK_SIZE));
+          return;
         }
 
         setAttractionData({
@@ -320,84 +332,73 @@ export function AdminGlowRecommendationPage() {
           baseYm: baseYm ?? '',
           attractions: picks,
         });
-      } catch (e) {
-        setAttractionData(null);
-        setAttractionError(e instanceof Error ? e.message : '상품 등록 연계 장소를 불러오지 못했습니다.');
-      } finally {
-        setAttractionLoading(false);
-      }
-      return;
-    }
-    if (hasFixedProductPicks) {
-      setAttractionError(null);
-      setAttractionLoading(true);
-      setAttractionData({
-        productId: referenceProductId,
-        productName: products.find(p => p.id === referenceProductId)?.name ?? '',
-        district: '',
-        areaCode: tourAreaCode,
-        signguCode: tourSignguCode ?? 0,
-        baseYm: baseYm ?? '',
-        attractions: [],
-      });
-      if (tourSignguCode == null && baseYm == null) {
-        setAttractionData(previous => previous ? ({ ...previous, attractions: [...productTourPicks] }) : previous);
-        setAttractionLoading(false);
         return;
       }
-      try {
-        const filtered = await fetchProductTourAttractions(
-          accessToken,
-          referenceProductId,
-          1000,
-          tourAreaCode,
-          tourSignguCode ?? 11530,
-          baseYm ?? undefined,
-        );
+
+      const productName = products.find(p => p.id === referenceProductId)?.name ?? '';
+      if (hasFixedProductPicks) {
+        const base: ProductTourAttractionResult = {
+          productId: referenceProductId,
+          productName,
+          district: '',
+          areaCode: tourAreaCode,
+          signguCode: tourSignguCode ?? 0,
+          baseYm: baseYm ?? '',
+          attractions: [...productTourPicks],
+        };
+        if (!hasConditionFilter) {
+          setAttractionData(base);
+          return;
+        }
+        const filtered = await fetchAttractions(referenceProductId, 1000);
         const allowedCodes = new Set(filtered.attractions.map(item => item.attractionCode));
-        setAttractionData(previous =>
-          previous
-            ? { ...previous, attractions: productTourPicks.filter(item => allowedCodes.has(item.attractionCode)) }
-            : previous,
-        );
-      } catch (e) {
-        setAttractionData(null);
-        setAttractionError(e instanceof Error ? e.message : '추천 관광지 조회에 실패했습니다.');
-      } finally {
-        setAttractionLoading(false);
+        const matched = productTourPicks.filter(item => allowedCodes.has(item.attractionCode));
+        if (matched.length === 0 && !showOnlyRegisteredPicks) {
+          showFallback(filtered);
+          return;
+        }
+        setAttractionData({
+          ...base,
+          baseYm: filtered.baseYm,
+          requestedBaseYm: filtered.requestedBaseYm,
+          attractions: matched,
+        });
+        return;
       }
-      return;
-    }
-    setAttractionLoading(true);
-    setAttractionError(null);
-    try {
-      const response = await fetchProductTourAttractions(
-        accessToken,
-        referenceProductId,
-        1000,
-        tourAreaCode,
-        tourSignguCode ?? 11530,
-        baseYm ?? undefined,
-      );
-      setAttractionData(response);
+
+      if (showOnlyRegisteredPicks) {
+        setAttractionData({
+          productId: referenceProductId,
+          productName,
+          district: '',
+          areaCode: tourAreaCode,
+          signguCode: tourSignguCode ?? 0,
+          baseYm: baseYm ?? '',
+          attractions: [],
+        });
+        return;
+      }
+      showFallback(await fetchAttractions(referenceProductId, TOUR_FALLBACK_SIZE));
     } catch (e) {
       setAttractionData(null);
+      setTourFallback(false);
       setAttractionError(e instanceof Error ? e.message : '추천 관광지 조회에 실패했습니다.');
     } finally {
       setAttractionLoading(false);
     }
   };
 
-  const togglePickAttraction = (item: ProductTourAttractionItem) => {
+  const togglePresetAttraction = (item: ProductTourAttractionItem) => {
     const label = formatTourSpotLabel(item).trim();
     if (!label) return;
-    setPlaceRows(previous => {
-      const idx = previous.findIndex(row => row.label.trim() === label);
-      if (idx >= 0) {
-        return previous.filter((_, i) => i !== idx);
-      }
-      return [...previous, { id: nextPlaceRowId(), label }];
-    });
+    if (presetLabelSet.has(label)) {
+      setPresetRows(previous => previous.filter(row => row.label.trim() !== label));
+      setPlaceRows(previous => previous.filter(row => row.label.trim() !== label));
+      return;
+    }
+    const row = { id: nextPlaceRowId(), label };
+    setPresetRows(previous => [...previous, row]);
+    setPlaceRows(previous => (previous.some(existing => existing.label.trim() === label) ? previous : [...previous, row]));
   };
 
   const applyProductRegisteredPicksToPlaces = () => {
@@ -450,6 +451,7 @@ export function AdminGlowRecommendationPage() {
         setPlaceRows([]);
         setPresetRows([]);
         setMessage('선택한 장소를 모두 비웠습니다.');
+        setRecommendationReloadKey(key => key + 1);
         return;
       }
       const res = await upsertAdminSurvey(accessToken, {
@@ -464,6 +466,7 @@ export function AdminGlowRecommendationPage() {
       setSurveyId(res.id);
       surveyPlacesHydratedKey.current = `${user?.id ?? ''}|${res.id}`;
       setMessage('취향·여행 정보를 저장했습니다.');
+      setRecommendationReloadKey(key => key + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : '저장에 실패했습니다.');
     } finally {
@@ -471,12 +474,12 @@ export function AdminGlowRecommendationPage() {
     }
   };
 
-  if (!authReady) return <main className={shellStyles.page}><div className={shellStyles.loading}>관리자 권한을 확인하는 중입니다.</div></main>;
-  if (!accessToken || user?.role !== 'ADMIN') return <main className={shellStyles.page}><div className={shellStyles.denied}>관리자만 이 화면을 사용할 수 있습니다.</div></main>;
+  if (!authReady) return <main className={shellStyles.page}><div className={shellStyles.loading}>로그인 정보를 확인하는 중입니다.</div></main>;
+  if (!accessToken || !user) return <main className={shellStyles.page}><div className={shellStyles.denied}>로그인한 회원만 이 화면을 사용할 수 있습니다.</div></main>;
 
   return (
     <AdminMarketingShell
-      currentPath="/admin/glow-recommendation"
+      currentPath="/user/glow-recommendation"
       title="Glow추천"
       description=""
       classNames={{
@@ -649,7 +652,7 @@ export function AdminGlowRecommendationPage() {
                     </ul>
                   </div>
                 ) : (
-                  <p className={styles.glowTourInlineNote}>선택한 상품에 등록된 연계 관광지가 없습니다. 상품 편집 화면에서 먼저 등록해 주세요.</p>
+                  <p className={styles.glowTourInlineNote}>이 상품에는 연계 관광지가 없습니다. 추천 조회를 누르면 해당 구의 인기 관광지를 보여 드려요.</p>
                 )}
                 {attractionLoading && <p className={styles.glowTourInlineNote}>추천 관광지 정보를 불러오는 중입니다.</p>}
                 {!attractionLoading && attractionError && <p className={styles.glowTourErrorInline}>{attractionError}</p>}
@@ -674,7 +677,15 @@ export function AdminGlowRecommendationPage() {
 
                 {!attractionLoading && !attractionError && attractionData ? (
                   <>
-                    {!hasFixedProductPicks && attractionData && attractionData.attractions.length > 0 && productTourPicks.length > 0 ? (
+                    {attractionData.requestedBaseYm && attractionData.requestedBaseYm !== attractionData.baseYm ? (
+                      <p className={styles.glowTourSearchPrompt}>
+                        {formatTourBaseYmLabel(attractionData.requestedBaseYm)} 자료가 아직 없어 {formatTourBaseYmLabel(attractionData.baseYm)} 기준으로 보여 드려요.
+                      </p>
+                    ) : null}
+                    {tourFallback ? (
+                      <p className={styles.glowTourInlineNote}>상품에 등록된 연계 장소가 없어 해당 구의 인기 관광지를 보여 드려요</p>
+                    ) : null}
+                    {productTourPicks.length > 0 ? (
                       <label className={styles.glowTourFilterToggle}>
                         <input
                           type="checkbox"
@@ -684,23 +695,24 @@ export function AdminGlowRecommendationPage() {
                         <span>상품에 등록한 연계 장소만 목록에 표시</span>
                       </label>
                     ) : null}
-                    {visibleAddressAttractions.length === 0 ? (
+                    {displayedAttractions.length === 0 ? (
                       <p className={styles.glowTourInlineNote}>
-                        {!hasFixedProductPicks && showOnlyRegisteredPicks
+                        {showOnlyRegisteredPicks
                           ? '등록된 연계 장소가 현재 검색 조건 결과에 없습니다. 지역·년월을 바꾸거나 «등록 장소만»을 끄고 다시 조회해 보세요.'
                           : '추천 결과가 없습니다. 조건을 바꿔 다시 시도해 주세요.'}
                       </p>
                     ) : (
                       <ul className={styles.glowTourAddressList}>
-                        {visibleAddressAttractions.map(item => {
+                        {displayedAttractions.map(item => {
                           const label = formatTourSpotLabel(item).trim();
                           const selected = presetLabelSet.has(label);
                           return (
-                            <li key={item.attractionCode}>
+                            <li key={item.attractionCode || label}>
                               <button
                                 type="button"
                                 className={`${styles.glowTourAddressButton} ${selected ? styles.glowTourAddressButtonActive : ''}`}
-                                onClick={() => cancelPresetRowByLabel(label)}
+                                aria-pressed={selected}
+                                onClick={() => togglePresetAttraction(item)}
                               >
                                 {label}
                               </button>
@@ -712,9 +724,9 @@ export function AdminGlowRecommendationPage() {
                   </>
                 ) : null}
 
-                {shouldShowPresetRows && presetRows.length > 0 ? (
+                {presetRowsOutsideResults.length > 0 ? (
                   <ul className={styles.glowTourAddressList}>
-                    {presetRows.map(row => (
+                    {presetRowsOutsideResults.map(row => (
                       <li key={`preset-${row.id}`}>
                         <button
                           type="button"
@@ -735,6 +747,14 @@ export function AdminGlowRecommendationPage() {
             <div className={styles.actionBar}><button type="submit" className={styles.submitButton} disabled={saving || loading}>{saving ? '저장 중…' : '취향·여행 저장'}</button></div>
           </form>
         </div>
+        <PersonalizedRecommendationSection
+          accessToken={accessToken}
+          hasUserSurvey={surveyId != null}
+          reloadKey={recommendationReloadKey}
+          title="내 취향 추천 상품"
+          emptyMessage="취향·여행을 저장하면 추천을 볼 수 있어요"
+          className={styles.recommendationSection}
+        />
       </div>
     </AdminMarketingShell>
   );

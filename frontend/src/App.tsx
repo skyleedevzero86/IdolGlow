@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { Layout } from "./ui/components/Layout/Layout";
 import {
@@ -12,6 +12,7 @@ import { AdminBannersPage } from "./ui/pages/AdminBannersPage/AdminBannersPage";
 import { AdminEventDetailPage } from "./ui/pages/AdminEventDetailPage/AdminEventDetailPage";
 import { AdminEventEditorPage } from "./ui/pages/AdminEventEditorPage/AdminEventEditorPage";
 import { AdminEventsPage } from "./ui/pages/AdminEventsPage/AdminEventsPage";
+import { AdminGlowCommunityReportsPage } from "./ui/pages/AdminGlowCommunityReportsPage/AdminGlowCommunityReportsPage";
 import { AdminGlowRecommendationPage } from "./ui/pages/AdminGlowRecommendationPage/AdminGlowRecommendationPage";
 import { AdminIssueArticleEditorPage } from "./ui/pages/AdminIssueArticleEditorPage/AdminIssueArticleEditorPage";
 import { AdminIssueArticlePage } from "./ui/pages/AdminIssueArticlePage/AdminIssueArticlePage";
@@ -36,6 +37,8 @@ import { AdminReviewsPage } from "./ui/pages/AdminReviewsPage/AdminReviewsPage";
 import { AdminSchedulesPage } from "./ui/pages/AdminSchedulesPage/AdminSchedulesPage";
 import { AdminServerStatusPage } from "./ui/pages/AdminServerStatusPage/AdminServerStatusPage";
 import { AdminSlotsPage } from "./ui/pages/AdminSlotsPage/AdminSlotsPage";
+import { AdminMailLogDetailPage } from "./ui/pages/AdminSubscriptionsPage/AdminMailLogDetailPage";
+import { AdminSubscriptionDispatchDetailPage } from "./ui/pages/AdminSubscriptionsPage/AdminSubscriptionDispatchDetailPage";
 import { AdminSubscriptionsPage } from "./ui/pages/AdminSubscriptionsPage/AdminSubscriptionsPage";
 import {
   AdminSurveyEditorPage,
@@ -57,6 +60,7 @@ import { EventsPage } from "./ui/pages/EventsPage/EventsPage";
 import { ExchangeRatePage } from "./ui/pages/ExchangeRatePage/ExchangeRatePage";
 import { GlowAlertsPage } from "./ui/pages/GlowAlertsPage/GlowAlertsPage";
 import { GlowMapPage } from "./ui/pages/GlowMapPage/GlowMapPage";
+import { GlowCommunityRedirect } from "./ui/pages/GlowPage/GlowCommunityRedirect";
 import { GlowPage } from "./ui/pages/GlowPage/GlowPage";
 import { GlowWeatherPage } from "./ui/pages/GlowWeatherPage/GlowWeatherPage";
 import { HomePage } from "./ui/pages/HomePage/HomePage";
@@ -70,6 +74,7 @@ import { MyUserInfoPage } from "./ui/pages/MyUserInfoPage/MyUserInfoPage";
 import { NoticePublicDetailPage } from "./ui/pages/NoticePublicDetailPage/NoticePublicDetailPage";
 import { NoticesPage } from "./ui/pages/NoticesPage/NoticesPage";
 import { ProductPublicDetailPage } from "./ui/pages/ProductPublicDetailPage/ProductPublicDetailPage";
+import { RecommendationMailUnsubscribePage } from "./ui/pages/RecommendationMailUnsubscribePage/RecommendationMailUnsubscribePage";
 import { SubwayPage } from "./ui/pages/SubwayPage/SubwayPage";
 import { WishPage } from "./ui/pages/WishPage/WishPage";
 
@@ -88,6 +93,10 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="wish" element={<WishPage />} />
             <Route path="glow" element={<GlowPage />} />
+            <Route
+              path="glow/community/:postId"
+              element={<GlowCommunityRedirect />}
+            />
             <Route path="events" element={<EventsPage />} />
             <Route
               path="events/:documentId"
@@ -104,10 +113,22 @@ function App() {
             <Route path="articles" element={<ArticleListPage />} />
             <Route path="articles/:id" element={<ArticleDetailPage />} />
             <Route path="search" element={<IntegratedSearchPage />} />
+            <Route
+              path="recommendation-mail/unsubscribe"
+              element={<RecommendationMailUnsubscribePage />}
+            />
             <Route element={<RequireAuth />}>
               <Route path="mypage" element={<MyPagePage />} />
               <Route path="mypage/userInfo" element={<MyUserInfoPage />} />
               <Route path="my-survey" element={<MySurveyPage />} />
+              <Route
+                path="user/glow-recommendation"
+                element={<AdminGlowRecommendationPage />}
+              />
+              <Route
+                path="admin/glow-recommendation"
+                element={<Navigate to="/user/glow-recommendation" replace />}
+              />
               <Route path="my-payments" element={<MyPaymentsPage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="billing/success" element={<BillingSuccessPage />} />
@@ -192,10 +213,6 @@ function App() {
                 path="admin/surveys/:surveyId/edit"
                 element={<AdminSurveyEditorPage />}
               />
-              <Route
-                path="admin/glow-recommendation"
-                element={<AdminGlowRecommendationPage />}
-              />
               <Route path="admin/notices" element={<AdminNoticesPage />} />
               <Route
                 path="admin/notices/new"
@@ -226,12 +243,24 @@ function App() {
                 path="admin/subscriptions"
                 element={<AdminSubscriptionsPage />}
               />
+              <Route
+                path="admin/subscriptions/dispatches/:dispatchId"
+                element={<AdminSubscriptionDispatchDetailPage />}
+              />
+              <Route
+                path="admin/subscriptions/mail-logs/:mailLogId"
+                element={<AdminMailLogDetailPage />}
+              />
               <Route path="admin/users" element={<AdminUsersPage />} />
               <Route
                 path="admin/auth-verifications"
                 element={<AdminAuthVerificationPage />}
               />
               <Route path="admin/reviews" element={<AdminReviewsPage />} />
+              <Route
+                path="admin/glow-community/reports"
+                element={<AdminGlowCommunityReportsPage />}
+              />
               <Route
                 path="admin/server-status"
                 element={<AdminServerStatusPage />}
