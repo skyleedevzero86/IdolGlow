@@ -36,6 +36,19 @@ IdolGlow 의 릴리스별 주요 변경, 그 변경이 해결한 문제, 확인�
 
 ---
 
+## [0.22.1](https://github.com/skyleedevzero86/IdolGlow/compare/v0.22.0...v0.22.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* 병합 때 남은 충돌 표시를 지우고 정리본으로 되돌림 ([22d807d](https://github.com/skyleedevzero86/IdolGlow/commit/22d807d25cbdd19cde08deeea0a920c1d0f9d2ae))
+
+
+### Documentation
+
+* 릴리스 기록을 문제·해결·확인 중심으로 다시 정리 ([c4a18ce](https://github.com/skyleedevzero86/IdolGlow/commit/c4a18ce599915bd74e11e0475c17bd4047cae768))
+* 릴리스 기록을 문제·해결·확인 중심으로 다시 정리 ([#135](https://github.com/skyleedevzero86/IdolGlow/issues/135)) ([eb915c9](https://github.com/skyleedevzero86/IdolGlow/commit/eb915c9d8e9017ed58a84e96d3bacc652505a7fa))
+
 ## [0.22.0](https://github.com/skyleedevzero86/IdolGlow/compare/v0.21.0...v0.22.0) — 공연 검색·회차 모델, 예약·상품 조회 성능 (2026-11-23)
 
 공연 메타를 국제 표준 ID·회차 단위로 넓히고, 부하 측정으로 찾은 병목 두 곳을 고쳤습니다.
