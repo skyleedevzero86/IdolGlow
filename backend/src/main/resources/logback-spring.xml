@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <conversionRule conversionWord="m" class="com.sleekydz86.idolglow.global.infrastructure.logging.MaskingMessageConverter"/>
+    <conversionRule conversionWord="msg" class="com.sleekydz86.idolglow.global.infrastructure.logging.MaskingMessageConverter"/>
+    <conversionRule conversionWord="message" class="com.sleekydz86.idolglow.global.infrastructure.logging.MaskingMessageConverter"/>
+    <conversionRule conversionWord="wEx" class="com.sleekydz86.idolglow.global.infrastructure.logging.MaskingThrowableProxyConverter"/>
+
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
