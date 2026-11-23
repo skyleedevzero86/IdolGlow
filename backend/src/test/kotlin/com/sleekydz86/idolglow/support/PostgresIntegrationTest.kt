@@ -27,6 +27,7 @@ abstract class PostgresIntegrationTest {
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
             registry.add("spring.jpa.properties.hibernate.dialect") { "org.hibernate.dialect.PostgreSQLDialect" }
+            registry.add("spring.jpa.hibernate.ddl-auto") { "create" }
             registry.add("spring.datasource.hikari.maximum-pool-size") { "30" }
             registry.add("spring.datasource.hikari.minimum-idle") { "2" }
             registry.add("spring.datasource.hikari.idle-timeout") { "10000" }

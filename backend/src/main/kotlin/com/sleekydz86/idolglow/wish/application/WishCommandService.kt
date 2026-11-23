@@ -29,12 +29,12 @@ class WishCommandService(
         val existing = wishRepository.findByUserIdAndProductId(userId, productId)
 
         return if (existing != null) {
-            wishRepository.delete(existing)
             productAggregateCounter.changeWishCount(productId, -1L)
+            wishRepository.delete(existing)
             WishToggleResponse(existing.id, false)
         } else {
-            val saved = wishRepository.save(Wish(user = user, product = product))
             productAggregateCounter.changeWishCount(productId, 1L)
+            val saved = wishRepository.save(Wish(user = user, product = product))
             WishToggleResponse(saved.id, true)
         }
     }

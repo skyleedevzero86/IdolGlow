@@ -295,11 +295,11 @@ class ProductSearchQueryRepository(
 
     private fun escapeLike(raw: String): String =
         raw
-            .replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
+            .replace("$LIKE_ESCAPE_CHAR", "$LIKE_ESCAPE_CHAR$LIKE_ESCAPE_CHAR")
+            .replace("%", "$LIKE_ESCAPE_CHAR%")
+            .replace("_", "${LIKE_ESCAPE_CHAR}_")
 
     companion object {
-        private const val LIKE_ESCAPE_CHAR = '\\'
+        private const val LIKE_ESCAPE_CHAR = '!'
     }
 }

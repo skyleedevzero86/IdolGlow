@@ -46,13 +46,18 @@ class ProductAggregateSortTest {
         val ids = checkNotNull(transactionTemplate.execute { scenario.seed() })
 
         // when
-        val popularity = productSearchQueryRepository.findOrderedProductIds(scenario.criteria(ProductSort.POPULARITY))
-        val rating = productSearchQueryRepository.findOrderedProductIds(scenario.criteria(ProductSort.RATING))
-        val reviewCount = productSearchQueryRepository.findOrderedProductIds(scenario.criteria(ProductSort.REVIEW_COUNT))
+        val popularity = ordered(scenario, ProductSort.POPULARITY)
+        val rating = ordered(scenario, ProductSort.RATING)
+        val reviewCount = ordered(scenario, ProductSort.REVIEW_COUNT)
 
         // then
         assertEquals(ProductAggregateSortScenario.POPULARITY_ORDER.map(ids::getValue), popularity)
         assertEquals(ProductAggregateSortScenario.RATING_ORDER.map(ids::getValue), rating)
         assertEquals(ProductAggregateSortScenario.REVIEW_COUNT_ORDER.map(ids::getValue), reviewCount)
     }
+
+    private fun ordered(
+        scenario: ProductAggregateSortScenario,
+        sort: ProductSort,
+    ): List<Long> = productSearchQueryRepository.findOrderedProductIds(scenario.criteria(sort))
 }

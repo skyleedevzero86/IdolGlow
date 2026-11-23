@@ -24,13 +24,22 @@ class ProductAggregateSortScenario(
     val keyword: String = "aggsort${UUID.randomUUID().toString().take(8)}"
 
     fun seed(): Map<String, Long> {
-        val users = (1..3).map { userJpaRepository.save(User.of(email = "$keyword$it@idolglow.test")) }
+        val users =
+            (1..3).map {
+                val nickname = "s${keyword.takeLast(8)}$it"
+                userJpaRepository.save(User.of(email = "$keyword$it@idolglow.test", nickname = nickname))
+            }
         val products =
             PRODUCT_SPECS.associate { spec ->
-                val product = productJpaRepository.saveAndFlush(Product(name = "$keyword ${spec.label}", description = "집계 정렬 시험"))
+                val product =
+                    productJpaRepository.saveAndFlush(Product(name = "$keyword ${spec.label}", description = "정렬 시험"))
                 users.take(spec.wishes).forEach { wishJpaRepository.save(Wish(user = it, product = product)) }
-                spec.visibleRatings.forEachIndexed { index, rating -> review(product, users[index], rating, hidden = false) }
-                spec.hiddenRatings.forEachIndexed { index, rating -> review(product, users[2 - index], rating, hidden = true) }
+                spec.visibleRatings.forEachIndexed { index, rating ->
+                    review(product, users[index], rating, hidden = false)
+                }
+                spec.hiddenRatings.forEachIndexed { index, rating ->
+                    review(product, users[2 - index], rating, hidden = true)
+                }
                 productAggregateCounter.changeWishCount(product.id, spec.wishes.toLong())
                 productAggregateCounter.changeReviewAggregate(
                     product.id,

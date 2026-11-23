@@ -56,8 +56,8 @@ class ProductReviewCommandService(
                 reservationId = reservation.id,
             )
 
+        productAggregateCounter.applyReviewChange(product.id, ReviewContribution.NONE, review.contribution())
         val productReview = productReviewRepository.save(review)
-        productAggregateCounter.applyReviewChange(product.id, ReviewContribution.NONE, productReview.contribution())
         storeImages(productReview.id, images)
         return productReview
     }

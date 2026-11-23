@@ -32,7 +32,8 @@ class ProductAggregateMigrationTest {
                 assertEquals(Triple(0L, 0L, 0L), beforeBackfill)
                 assertEquals(Triple(2L, 2L, 8L), aggregates(connection))
                 assertThrows<SQLException> { execute(connection, NEGATIVE_UPDATE) }
-                assertEquals(1L, count(connection, "select count(*) from pg_indexes where indexname = 'idx_products_popularity'"))
+                val indexes = count(connection, "select count(*) from pg_indexes where indexname = '$POPULARITY_INDEX'")
+                assertEquals(1L, indexes)
             }
         }
     }
@@ -59,7 +60,8 @@ class ProductAggregateMigrationTest {
                     count(
                         connection,
                         "select count(distinct index_name) from information_schema.statistics " +
-                            "where table_schema = database() and table_name = 'products' and index_name = 'idx_products_popularity'",
+                            "where table_schema = database() and table_name = 'products' " +
+                            "and index_name = '$POPULARITY_INDEX'",
                     )
                 assertEquals(1L, indexes)
             }
@@ -95,7 +97,8 @@ class ProductAggregateMigrationTest {
         hidden: Boolean,
     ): String =
         "insert into product_reviews (product_id, user_id, rating, content, hidden_at, created_at, updated_at) " +
-            "select p.id, u.id, $rating, '별점 $rating', ${if (hidden) "current_timestamp" else "null"}, current_timestamp, current_timestamp " +
+            "select p.id, u.id, $rating, '별점 $rating', ${if (hidden) "current_timestamp" else "null"}, " +
+            "current_timestamp, current_timestamp " +
             "from users u, products p where u.email = 'agg$user@idolglow.test' and p.name = '$PRODUCT_NAME'"
 
     private fun aggregates(connection: Connection): Triple<Long, Long, Long> =
@@ -158,6 +161,8 @@ class ProductAggregateMigrationTest {
         private const val PRODUCT_NAME: String = "집계 시험 상품"
         private const val BACKFILL_START: String = "-- 상품 집계 채우기 시작"
         private const val BACKFILL_END: String = "-- 상품 집계 채우기 끝"
-        private const val NEGATIVE_UPDATE: String = "update products set wish_count = wish_count - 3 where name = '$PRODUCT_NAME'"
+        private const val POPULARITY_INDEX: String = "idx_products_popularity"
+        private const val NEGATIVE_UPDATE: String =
+            "update products set wish_count = wish_count - 3 where name = '$PRODUCT_NAME'"
     }
 }

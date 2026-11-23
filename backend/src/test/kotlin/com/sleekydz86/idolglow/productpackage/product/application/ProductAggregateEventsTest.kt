@@ -94,9 +94,9 @@ class ProductAggregateEventsTest {
         val hidden = review(product, user(2), rating = 1, hidden = true)
 
         // when
-        productReviewCommandService.updateReview(UpdateProductReviewCommand(product.id, visible.id, visible.userId, 2, "고친 리뷰"))
+        changeRating(product, visible, 2)
         val afterVisible = aggregates(product.id)
-        productReviewCommandService.updateReview(UpdateProductReviewCommand(product.id, hidden.id, hidden.userId, 4, "고친 리뷰"))
+        changeRating(product, hidden, 4)
         val afterHidden = aggregates(product.id)
 
         // then
@@ -181,8 +181,9 @@ class ProductAggregateEventsTest {
         wishEventListener.handleWishDelete(WishDeleteEvent(WishAggregateType.USER, leaving.id))
 
         // then
-        assertEquals(listOf(Triple(1L, 0L, 0L), Triple(0L, 0L, 0L)), listOf(aggregates(first.id), aggregates(second.id)))
-        assertEquals(listOf(recount(first.id), recount(second.id)), listOf(aggregates(first.id), aggregates(second.id)))
+        val counted = listOf(aggregates(first.id), aggregates(second.id))
+        assertEquals(listOf(Triple(1L, 0L, 0L), Triple(0L, 0L, 0L)), counted)
+        assertEquals(listOf(recount(first.id), recount(second.id)), counted)
     }
 
     @DisplayName("상품을 읽어 둔 사이 다른 트랜잭션이 찜해도, 그 상품을 고쳐 저장할 때 찜 수가 덮어써지지 않는다")
@@ -208,7 +209,17 @@ class ProductAggregateEventsTest {
         assertEquals("고친 상품 $token", productJpaRepository.findById(product.id).orElseThrow().name)
     }
 
-    private fun product(): Product = productJpaRepository.saveAndFlush(Product(name = "집계 $token", description = "집계 사건 시험"))
+    private fun product(): Product =
+        productJpaRepository.saveAndFlush(Product(name = "집계 $token", description = "집계 사건 시험"))
+
+    private fun changeRating(
+        product: Product,
+        review: ProductReview,
+        rating: Int,
+    ) {
+        val command = UpdateProductReviewCommand(product.id, review.id, review.userId, rating, "고친 리뷰")
+        productReviewCommandService.updateReview(command)
+    }
 
     private fun user(index: Int): User =
         userJpaRepository.findByEmail("agg$token$index@idolglow.test")
@@ -222,7 +233,8 @@ class ProductAggregateEventsTest {
     ): ProductReview =
         checkNotNull(
             transactionTemplate.execute {
-                val review = ProductReview.of(product = product, userId = user.id, ratingScore = rating, content = "별점 $rating")
+                val review =
+                    ProductReview.of(product = product, userId = user.id, ratingScore = rating, content = "별점 $rating")
                 if (hidden) review.hide(LocalDateTime.now(), "시험 숨김")
                 val saved = productReviewJpaRepository.save(review)
                 if (!hidden) productAggregateCounter.changeReviewAggregate(product.id, 1L, rating.toLong())

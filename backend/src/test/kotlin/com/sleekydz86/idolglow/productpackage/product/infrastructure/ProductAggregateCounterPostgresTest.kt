@@ -40,7 +40,11 @@ class ProductAggregateCounterPostgresTest : PostgresIntegrationTest() {
     fun concurrentWishesKeepCountExact() {
         // given
         val product = productJpaRepository.saveAndFlush(Product(name = "동시 찜 $token", description = "동시성 시험"))
-        val users = (1..USERS).map { userJpaRepository.save(User.of(email = "race$token$it@idolglow.test")) }
+        val users =
+            (1..USERS).map {
+                val nickname = "r${token.take(6)}$it"
+                userJpaRepository.save(User.of(email = "race$token$it@idolglow.test", nickname = nickname))
+            }
         val start = CountDownLatch(1)
         val executor = Executors.newFixedThreadPool(USERS)
 
@@ -57,7 +61,8 @@ class ProductAggregateCounterPostgresTest : PostgresIntegrationTest() {
         executor.shutdown()
 
         // then
-        val wishRows = jdbcTemplate.queryForObject("select count(*) from wishes where product_id = ?", Long::class.java, product.id)
+        val wishRows =
+            jdbcTemplate.queryForObject(WISH_ROWS_SQL, Long::class.java, product.id)
         assertEquals(USERS.toLong(), wishRows)
         assertEquals(USERS.toLong(), wishCount(product.id))
     }
@@ -85,5 +90,6 @@ class ProductAggregateCounterPostgresTest : PostgresIntegrationTest() {
     companion object {
         private const val USERS: Int = 20
         private const val WAIT_SECONDS: Long = 30
+        private const val WISH_ROWS_SQL: String = "select count(*) from wishes where product_id = ?"
     }
 }

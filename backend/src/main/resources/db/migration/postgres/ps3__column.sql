@@ -975,7 +975,7 @@ COMMENT ON COLUMN subscription_dispatch_histories.content_type IS '콘텐츠 유
 
 COMMENT ON COLUMN admin_audit_logs.target_type IS '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
 
--- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+-- 공연 매칭 후보 CANDIDATE 는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
 UPDATE event_source_ref
 SET global_id = NULL
 WHERE match_status = 'CANDIDATE'
@@ -984,13 +984,13 @@ WHERE match_status = 'CANDIDATE'
 -- 콘텐츠 번역 처리 대기열 조회
 CREATE INDEX IF NOT EXISTS idx_content_translation_due ON content_translation (status, next_attempt_at);
 
--- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+-- 파트너 변경분 피드. 수정 시각, 글로벌 ID 순서로 커서를 넘긴다
 CREATE INDEX IF NOT EXISTS idx_event_master_updated_global ON event_master (updated_at, global_id);
 
 -- 파트너별 최근 호출 조회
 CREATE INDEX IF NOT EXISTS idx_partner_call_log_partner_called ON partner_call_log (partner_id, called_at);
 
--- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 공급처가 &lt; 같은 HTML 기호로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
 -- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
 UPDATE event_master
 SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
@@ -1098,7 +1098,7 @@ ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS session_horizon date;
 CREATE INDEX IF NOT EXISTS idx_event_session_starts ON event_session (starts_at);
 
 -- =============================================================================
--- 상품 집계 칸 (찜 수·공개 리뷰 수·공개 별점 합계)
+-- 상품 집계 칸 - 찜 수·공개 리뷰 수·공개 별점 합계
 -- -----
 -- 목적
 -- - 인기순·별점순·리뷰 많은 순 정렬이 상품마다 찜·리뷰를 다시 세지 않고 상품 표의 숫자만 읽게 한다
@@ -1136,7 +1136,7 @@ SET wish_count   = (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id),
     rating_sum   = COALESCE((SELECT SUM(r.rating) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL), 0);
 -- 상품 집계 채우기 끝
 
--- 인기순 정렬(찜 수, 평균 별점, 공개 리뷰 수, ID)을 정렬 없이 앞에서부터 읽는다. 평균 별점 식은 정렬 SQL 과 글자까지 같아야 쓰인다
+-- 인기순 정렬을 찜 수, 평균 별점, 공개 리뷰 수, ID 순서로 정렬 없이 앞에서부터 읽는다. 평균 별점 식은 정렬 SQL 과 글자까지 같아야 쓰인다
 CREATE INDEX IF NOT EXISTS idx_products_popularity
     ON products (
         wish_count DESC,
