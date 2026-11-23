@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationLocales
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCoordinateMatch
+import com.sleekydz86.idolglow.eventinfo.domain.FestivalNameMatch
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -47,12 +48,14 @@ class TourEventTranslationCollector(
         val counts = events.groupingBy { store(locale, it, korean) }.eachCount()
         val byContentId = counts[LinkMethod.CONTENT_ID] ?: 0
         val byCoordinate = counts[LinkMethod.COORDINATE] ?: 0
+        val byName = counts[LinkMethod.NAME] ?: 0
         log.info(
-            "관광 다국어 수집. locale={} linked={} byContentId={} byCoordinate={} skipped={}",
+            "관광 다국어 수집. locale={} linked={} byContentId={} byCoordinate={} byName={} skipped={}",
             locale,
-            byContentId + byCoordinate,
+            byContentId + byCoordinate + byName,
             byContentId,
             byCoordinate,
+            byName,
             counts[LinkMethod.SKIPPED] ?: 0,
         )
     }
@@ -124,10 +127,14 @@ class TourEventTranslationCollector(
     ): Link? {
         val direct = eventSourceRefPort.findBySourceAndSourceId(TOUR_SOURCE, event.contentId)
         if (direct != null) return Link(direct, LinkMethod.CONTENT_ID)
-        return FestivalCoordinateMatch.findSingle(event, korean.value)?.let { match ->
-            Link(eventSourceRefPort.findBySourceAndSourceId(TOUR_SOURCE, match.contentId), LinkMethod.COORDINATE)
-        }
+        FestivalCoordinateMatch.findSingle(event, korean.value)?.let { return linkTo(it, LinkMethod.COORDINATE) }
+        return FestivalNameMatch.findSingle(event, korean.value)?.let { linkTo(it, LinkMethod.NAME) }
     }
+
+    private fun linkTo(
+        match: FestivalEvent,
+        method: LinkMethod,
+    ): Link = Link(eventSourceRefPort.findBySourceAndSourceId(TOUR_SOURCE, match.contentId), method)
 
     private fun skipReason(
         title: String,
@@ -140,7 +147,7 @@ class TourEventTranslationCollector(
             else -> "NOT_CONFIRMED:${link.ref.matchStatus}"
         }
 
-    private enum class LinkMethod { CONTENT_ID, COORDINATE, SKIPPED }
+    private enum class LinkMethod { CONTENT_ID, COORDINATE, NAME, SKIPPED }
 
     private data class Link(
         val ref: EventSourceRef?,

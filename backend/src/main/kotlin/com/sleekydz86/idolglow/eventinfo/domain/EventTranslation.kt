@@ -28,24 +28,35 @@ class EventTranslation(
     val globalId: String,
     @Column(nullable = false, length = 8)
     val locale: String,
+    title: String,
+    synopsis: String? = null,
+    origin: EventTranslationOrigin,
+) : BaseEntity() {
     @Column(nullable = false, length = 255)
-    var title: String,
+    var title: String = title
+        protected set
+
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "synopsis")
-    var synopsis: String? = null,
+    var synopsis: String? = synopsis
+        protected set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    val origin: EventTranslationOrigin,
-) : BaseEntity() {
-    fun replaceProviderText(
+    var origin: EventTranslationOrigin = origin
+        protected set
+
+    fun offer(
+        incoming: EventTranslationOrigin,
         title: String,
         synopsis: String?,
-    ) {
-        require(origin == EventTranslationOrigin.PROVIDER) {
-            "공급처 번역만 갱신할 수 있습니다. locale=$locale origin=$origin"
-        }
+    ): Boolean {
+        if (!incoming.canReplace(origin)) return false
+        if (incoming == origin && this.title == title && this.synopsis == synopsis) return false
+        this.origin = incoming
         this.title = title
         this.synopsis = synopsis
+        return true
     }
 
     companion object {
@@ -56,15 +67,56 @@ class EventTranslation(
             locale: String,
             title: String,
             synopsis: String?,
+        ): EventTranslation =
+            create(globalId, EventLocale.normalize(locale), title.trim().take(TITLE_MAX), normalizeSynopsis(synopsis), EventTranslationOrigin.PROVIDER)
+
+        fun machine(
+            globalId: String,
+            locale: String,
+            title: String,
+        ): EventTranslation = create(globalId, targetLocale(locale), requireWithinMax(title.trim(), locale), null, EventTranslationOrigin.MACHINE)
+
+        fun manual(
+            globalId: String,
+            locale: String,
+            title: String,
+        ): EventTranslation = create(globalId, targetLocale(locale), requireWithinMax(title.trim(), locale), null, EventTranslationOrigin.MANUAL)
+
+        private fun targetLocale(locale: String): String {
+            val normalized = EventLocale.normalize(locale)
+            require(normalized in EventTranslationLocales.TARGETS) {
+                "번역 언어는 en, ja, zh 중 하나여야 합니다. locale=$normalized"
+            }
+            return normalized
+        }
+
+        fun requireWithinMax(
+            title: String,
+            locale: String,
+        ): String {
+            require(title.codePointCount(0, title.length) <= TITLE_MAX) {
+                "공연 번역 제목은 ${TITLE_MAX}자 이하여야 합니다. locale=$locale"
+            }
+            return title
+        }
+
+        fun normalizeSynopsis(synopsis: String?): String? = synopsis?.trim()?.takeIf { it.isNotEmpty() }
+
+        private fun create(
+            globalId: String,
+            locale: String,
+            title: String,
+            synopsis: String?,
+            origin: EventTranslationOrigin,
         ): EventTranslation {
             require(globalId.isNotBlank()) { "글로벌 공연 ID는 비울 수 없습니다." }
             require(title.isNotBlank()) { "공연 번역 제목은 비울 수 없습니다. locale=$locale" }
             return EventTranslation(
                 globalId = globalId.trim(),
-                locale = EventLocale.normalize(locale),
-                title = title.trim().take(TITLE_MAX),
-                synopsis = synopsis?.trim()?.takeIf { it.isNotEmpty() },
-                origin = EventTranslationOrigin.PROVIDER,
+                locale = locale,
+                title = title,
+                synopsis = synopsis,
+                origin = origin,
             )
         }
     }

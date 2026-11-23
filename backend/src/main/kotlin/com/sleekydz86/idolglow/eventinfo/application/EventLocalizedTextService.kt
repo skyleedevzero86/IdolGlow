@@ -37,7 +37,7 @@ class EventLocalizedTextService(
                 requested ?: EventLocale.KOREAN,
                 eventTranslationPort.findByGlobalId(master.globalId),
             )
-        return picked?.let { EventLocalizedText(it.title, it.synopsis, it.locale) }
+        return picked?.let { EventLocalizedText(it.title, it.synopsis, it.locale, it.origin) }
             ?: EventLocalizedText(master.title, null, EventLocale.KOREAN)
     }
 
@@ -67,6 +67,6 @@ class EventLocalizedTextService(
         val fallback = EventLocalizedText(item.title, item.synopsis, EventLocale.KOREAN)
         val globalId = refs[item.source to item.sourceId]?.confirmedGlobalId()
         val picked = globalId?.let { EventTranslationFallback.pick(requested, translations[it].orEmpty()) }
-        return picked?.let { EventLocalizedText(it.title, it.synopsis, it.locale) } ?: fallback
+        return picked?.let { EventLocalizedText(it.title, it.synopsis, it.locale, it.origin) } ?: fallback
     }
 }

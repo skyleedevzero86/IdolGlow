@@ -17,6 +17,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -67,6 +68,26 @@ class TourEventTranslationCollectorTest {
 
         // then
         verify(exactly = 1) { txService.upsertProvider("g-pohang", "en", "Pohang Fireworks Festival", null) }
+    }
+
+    @DisplayName("contentId·좌표로 못 찾아도 제목 괄호 속 한국어 이름이 같은 국문 축제가 1건이면 연결하고 byName으로 센다")
+    @Test
+    fun linksByKoreanNameWhenCoordinateMissing() {
+        // given
+        refs["3395188"] = 참조("3395188", "g-lantern", EventMatchStatus.CONFIRMED)
+        val port =
+            공급처(
+                ja = listOf(축제("2786391", "ソウルランタンフェスティバル（서울빛초롱축제）")),
+                ko = listOf(축제("3395188", "서울빛초롱축제"), 축제("1111111", "부산크리스마스트리문화축제")),
+            )
+
+        // when
+        val logs = 로그와_함께 { 수집기(port).collect(from, to) }
+
+        // then
+        verify(exactly = 1) { txService.upsertProvider("g-lantern", "ja", "ソウルランタンフェスティバル（서울빛초롱축제）", null) }
+        val summary = logs.map { it.formattedMessage }.single { it.contains("locale=ja") && it.contains("linked=") }
+        assertTrue(summary.contains("linked=1") && summary.contains("byName=1"), summary)
     }
 
     @DisplayName("좌표로 찾은 국문 공연이 아직 후보면 연결하지 않는다")

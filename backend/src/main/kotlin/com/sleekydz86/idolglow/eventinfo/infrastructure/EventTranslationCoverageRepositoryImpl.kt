@@ -14,14 +14,14 @@ class EventTranslationCoverageRepositoryImpl(
     override fun countActive(): Long = repository.countByStatus(EventMasterStatus.ACTIVE)
 
     override fun countVisible(locale: String): Long =
-        repository.countWithOrigin(EventMasterStatus.ACTIVE, locale, EventTranslationOrigin.VISIBLE)
+        repository.countWithOrigin(EventMasterStatus.ACTIVE, locale, EventTranslationOrigin.REVIEWED)
 
     override fun countMachineOnly(locale: String): Long =
         repository.countHiddenOnly(
             EventMasterStatus.ACTIVE,
             locale,
-            EventTranslationOrigin.HIDDEN,
-            EventTranslationOrigin.VISIBLE,
+            listOf(EventTranslationOrigin.MACHINE),
+            EventTranslationOrigin.REVIEWED,
         )
 
     override fun countMissing(locale: String): Long = repository.countWithoutLocale(EventMasterStatus.ACTIVE, locale)

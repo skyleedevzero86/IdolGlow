@@ -48,26 +48,22 @@ class EventTranslationFallbackTest {
     }
 
     @Test
-    fun machineOriginIsNotServed() {
+    fun machineTranslationInRequestedLanguageComesBeforeEnglishProvider() {
+        // given
         val translations = InMemoryEventTranslationPort()
-        translations.save(
-            EventTranslation(
-                globalId = "g-1",
-                locale = "ja",
-                title = "機械翻訳",
-                synopsis = null,
-                origin = EventTranslationOrigin.MACHINE,
-            ),
-        )
+        translations.save(EventTranslation.machine("g-1", "ja", "機械翻訳（한국어 제목）"))
         translations.save(EventTranslation.provider("g-1", "en", "English title", null))
         val masters = InMemoryEventMasterPort()
         masters.save(master("g-1", "한국어 제목"))
         val service = EventLocalizedTextService(translations, InMemoryEventSourceRefPort(), masters)
 
+        // when
         val resolved = service.title("g-1", "ja")
 
-        assertEquals("en", resolved?.locale)
-        assertEquals("English title", resolved?.title)
+        // then
+        assertEquals("ja", resolved?.locale)
+        assertEquals("機械翻訳（한국어 제목）", resolved?.title)
+        assertEquals(EventTranslationOrigin.MACHINE, resolved?.origin)
     }
 
     @Test
