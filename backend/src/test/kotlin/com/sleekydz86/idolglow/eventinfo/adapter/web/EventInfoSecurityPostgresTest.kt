@@ -42,7 +42,13 @@ class EventInfoSecurityPostgresTest : PostgresIntegrationTest() {
             )
 
         // when
-        val statuses = publicPaths.associateWith { path -> mockMvc.perform(get(path)).andReturn().response.status }
+        val statuses =
+            publicPaths.associateWith { path ->
+                mockMvc
+                    .perform(get(path))
+                    .andReturn()
+                    .response.status
+            }
 
         // then
         statuses.forEach { (path, status) ->
@@ -62,7 +68,13 @@ class EventInfoSecurityPostgresTest : PostgresIntegrationTest() {
             )
 
         // when
-        val statuses = detailPaths.map { path -> mockMvc.perform(get(path)).andReturn().response.status }
+        val statuses =
+            detailPaths.map { path ->
+                mockMvc
+                    .perform(get(path))
+                    .andReturn()
+                    .response.status
+            }
 
         // then
         statuses.forEach { status -> assertEquals(UNAUTHORIZED, status) }

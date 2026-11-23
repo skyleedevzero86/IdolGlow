@@ -20,14 +20,20 @@ class CohereRerankAdapter(
     private val settings: GroundedRemoteSettings,
     private val guard: GroundedCallGuard,
 ) : RerankPort {
-    override fun rerank(query: String, hits: List<GroundedSearchHit>): List<GroundedSearchHit> {
+    override fun rerank(
+        query: String,
+        hits: List<GroundedSearchHit>,
+    ): List<GroundedSearchHit> {
         if (hits.isEmpty()) {
             return hits
         }
         return ranked(query, hits)
     }
 
-    private fun ranked(query: String, hits: List<GroundedSearchHit>): List<GroundedSearchHit> {
+    private fun ranked(
+        query: String,
+        hits: List<GroundedSearchHit>,
+    ): List<GroundedSearchHit> {
         if (!ready()) {
             throw ResponseStatusException(HttpStatus.BAD_GATEWAY, "근거 검색 재정렬 설정이 없습니다. 키를 확인해 주세요.")
         }
@@ -37,7 +43,10 @@ class CohereRerankAdapter(
         }
     }
 
-    private fun post(query: String, hits: List<GroundedSearchHit>): String =
+    private fun post(
+        query: String,
+        hits: List<GroundedSearchHit>,
+    ): String =
         webClient
             .post()
             .uri("${settings.text(BASE_URL).trimEnd('/')}/v2/rerank")
@@ -50,7 +59,10 @@ class CohereRerankAdapter(
             .block()
             ?: throw ResponseStatusException(HttpStatus.BAD_GATEWAY, "근거 검색 재정렬 응답이 비어 있습니다.")
 
-    private fun order(hits: List<GroundedSearchHit>, body: String): List<GroundedSearchHit> {
+    private fun order(
+        hits: List<GroundedSearchHit>,
+        body: String,
+    ): List<GroundedSearchHit> {
         val results = objectMapper.readTree(body).path("results")
         if (!results.isArray || results.isEmpty) {
             return hits

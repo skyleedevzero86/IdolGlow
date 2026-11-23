@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.wish.application
 
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductAggregateCounter
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
@@ -17,6 +18,7 @@ class WishCommandService(
     private val userRepository: UserRepository,
     private val productRepository: ProductRepository,
     private val wishRepository: WishRepository,
+    private val productAggregateCounter: ProductAggregateCounter,
 ) {
     fun toggle(
         userId: Long,
@@ -28,9 +30,11 @@ class WishCommandService(
 
         return if (existing != null) {
             wishRepository.delete(existing)
+            productAggregateCounter.changeWishCount(productId, -1L)
             WishToggleResponse(existing.id, false)
         } else {
             val saved = wishRepository.save(Wish(user = user, product = product))
+            productAggregateCounter.changeWishCount(productId, 1L)
             WishToggleResponse(saved.id, true)
         }
     }

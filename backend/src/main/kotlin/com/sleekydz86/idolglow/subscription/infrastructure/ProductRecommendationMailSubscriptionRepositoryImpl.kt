@@ -19,9 +19,7 @@ class ProductRecommendationMailSubscriptionRepositoryImpl(
     override fun findAllActive(): List<ProductRecommendationMailSubscription> =
         productRecommendationMailSubscriptionJpaRepository.findAllByActiveTrueOrderByIdAsc()
 
-    override fun findAllConsentReminderDue(
-        lastNoticeAtOrBefore: LocalDateTime,
-    ): List<ProductRecommendationMailSubscription> =
+    override fun findAllConsentReminderDue(lastNoticeAtOrBefore: LocalDateTime): List<ProductRecommendationMailSubscription> =
         productRecommendationMailSubscriptionJpaRepository.findAllConsentReminderDue(lastNoticeAtOrBefore)
 
     override fun save(subscription: ProductRecommendationMailSubscription): ProductRecommendationMailSubscription =

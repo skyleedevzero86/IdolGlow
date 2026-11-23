@@ -90,7 +90,11 @@ class EventSourceRef(
         title = item.title.trim().take(TITLE_MAX)
         startDate = item.startDate
         endDate = item.endDate
-        venue = item.venue?.trim()?.take(TITLE_MAX)?.takeIf { it.isNotEmpty() }
+        venue =
+            item.venue
+                ?.trim()
+                ?.take(TITLE_MAX)
+                ?.takeIf { it.isNotEmpty() }
     }
 
     fun needsScheduleFetch(): Boolean = confirmedGlobalId() != null && scheduleHash != rawHash

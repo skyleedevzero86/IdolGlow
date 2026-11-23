@@ -135,7 +135,12 @@ class ContentApiPostgresTest : PostgresIntegrationTest() {
     private fun asMember(member: User) = user(member.id.toString()).roles("USER")
 
     private fun member(): User {
-        val suffix = UUID.randomUUID().toString().replace("-", "").take(8)
+        val suffix =
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
         return userJpaRepository.save(User(email = "ca$suffix@test.com", nickname = Nickname.of("a$suffix")))
     }
 }

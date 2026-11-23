@@ -16,7 +16,10 @@ class GroundedAnthropicGateway(
     private val settings: GroundedRemoteSettings,
     private val guard: GroundedCallGuard,
 ) {
-    fun complete(system: String, user: String): String? {
+    fun complete(
+        system: String,
+        user: String,
+    ): String? {
         if (!ready()) {
             return null
         }
@@ -24,7 +27,10 @@ class GroundedAnthropicGateway(
         return text(body)
     }
 
-    private fun post(system: String, user: String): String =
+    private fun post(
+        system: String,
+        user: String,
+    ): String =
         webClient
             .post()
             .uri("${settings.text(BASE_URL).trimEnd('/')}/v1/messages")
@@ -45,7 +51,12 @@ class GroundedAnthropicGateway(
             ?: throw ResponseStatusException(HttpStatus.BAD_GATEWAY, "근거 검색 언어 모델 응답이 비어 있습니다.")
 
     private fun text(body: String): String =
-        objectMapper.readTree(body).path("content").path(0).path("text").asText()
+        objectMapper
+            .readTree(body)
+            .path("content")
+            .path(0)
+            .path("text")
+            .asText()
 
     private fun ready(): Boolean = settings.text(ENABLED).toBoolean() && settings.text(API_KEY).isNotBlank()
 

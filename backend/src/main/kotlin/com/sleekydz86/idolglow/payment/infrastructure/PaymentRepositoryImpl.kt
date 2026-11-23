@@ -3,9 +3,9 @@ package com.sleekydz86.idolglow.payment.infrastructure
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
-import java.time.LocalDateTime
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 class PaymentRepositoryImpl(
@@ -27,8 +27,7 @@ class PaymentRepositoryImpl(
 
     override fun findByOrderIdForUpdate(orderId: String): Payment? = paymentJpaRepository.findByOrderIdForUpdate(orderId)
 
-    override fun findByIdempotencyKey(idempotencyKey: String): Payment? =
-        paymentJpaRepository.findByIdempotencyKey(idempotencyKey)
+    override fun findByIdempotencyKey(idempotencyKey: String): Payment? = paymentJpaRepository.findByIdempotencyKey(idempotencyKey)
 
     override fun findByIdempotencyKeyForUpdate(idempotencyKey: String): Payment? =
         paymentJpaRepository.findByIdempotencyKeyForUpdate(idempotencyKey)

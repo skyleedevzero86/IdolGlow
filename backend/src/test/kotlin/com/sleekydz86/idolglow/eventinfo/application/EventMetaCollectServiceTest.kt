@@ -24,7 +24,6 @@ class EventMetaCollectServiceTest {
     @DisplayName("공급처가 모두 받으면 SUCCESS와 건수를 기록한다")
     @Test
     fun recordsSuccessWhenBatchIsComplete() {
-
         // given
         준비()
         val service = 서비스(고정_공급처(CollectedBatch(listOf(공연("1"), 공연("2")))))
@@ -39,7 +38,6 @@ class EventMetaCollectServiceTest {
     @DisplayName("일부 호출이 빠지면 받은 건수는 저장하고 PARTIAL과 사유를 기록한다")
     @Test
     fun recordsPartialWhenBatchIsIncomplete() {
-
         // given
         준비()
         val service = 서비스(고정_공급처(CollectedBatch(listOf(공연("1")), "30일 중 3일 누락")))
@@ -55,7 +53,6 @@ class EventMetaCollectServiceTest {
     @DisplayName("공급처 호출이 예외로 끝나면 FAILED와 원인을 기록한다")
     @Test
     fun recordsFailedWhenBatchThrows() {
-
         // given
         준비()
         val failing =

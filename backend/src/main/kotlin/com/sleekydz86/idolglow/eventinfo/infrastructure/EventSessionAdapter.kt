@@ -91,13 +91,11 @@ class EventSessionAdapter(
     override fun findScheduleFetchTargets(
         source: String,
         limit: Int,
-    ): List<EventSourceRef> =
-        targetRepository.findFetchTargets(source, EventMatchStatus.CONFIRMED, PageRequest.of(0, limit))
+    ): List<EventSourceRef> = targetRepository.findFetchTargets(source, EventMatchStatus.CONFIRMED, PageRequest.of(0, limit))
 
     override fun findSessionRefreshTargets(
         source: String,
         horizon: LocalDate,
         limit: Int,
-    ): List<EventSourceRef> =
-        targetRepository.findRefreshTargets(source, EventMatchStatus.CONFIRMED, horizon, PageRequest.of(0, limit))
+    ): List<EventSourceRef> = targetRepository.findRefreshTargets(source, EventMatchStatus.CONFIRMED, horizon, PageRequest.of(0, limit))
 }

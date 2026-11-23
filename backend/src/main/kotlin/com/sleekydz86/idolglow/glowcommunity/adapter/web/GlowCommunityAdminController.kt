@@ -31,8 +31,7 @@ class GlowCommunityAdminController(
     fun findReports(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): OffsetPageResult<GlowCommunityReportedPostResult> =
-        glowCommunityAdminUseCase.findReportedPosts(OffsetPageRequest.of(page, size))
+    ): OffsetPageResult<GlowCommunityReportedPostResult> = glowCommunityAdminUseCase.findReportedPosts(OffsetPageRequest.of(page, size))
 
     @Operation(summary = "게시글 블라인드")
     @SecurityRequirement(name = "bearerAuth")

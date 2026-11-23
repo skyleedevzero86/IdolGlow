@@ -21,8 +21,7 @@ class TossPaymentClientConfig(
     fun sharedRequestFactory(): TossTimeoutRequestFactory =
         requestFactory(tossPaymentProperties.connectTimeoutMs, tossPaymentProperties.readTimeoutMs)
 
-    fun billingRequestFactory(): TossTimeoutRequestFactory =
-        requestFactory(tossPaymentProperties.connectTimeoutMs, billingReadTimeout())
+    fun billingRequestFactory(): TossTimeoutRequestFactory = requestFactory(tossPaymentProperties.connectTimeoutMs, billingReadTimeout())
 
     private fun billingReadTimeout(): Int = billingReadTimeoutMs.coerceAtLeast(MIN_BILLING_READ_TIMEOUT_MS)
 

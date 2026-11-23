@@ -16,7 +16,11 @@ class GroundedOpenAiGateway(
     private val settings: GroundedRemoteSettings,
     private val guard: GroundedCallGuard,
 ) {
-    fun complete(system: String, user: String, json: Boolean): String? {
+    fun complete(
+        system: String,
+        user: String,
+        json: Boolean,
+    ): String? {
         if (!ready()) {
             return null
         }
@@ -24,7 +28,11 @@ class GroundedOpenAiGateway(
         return text(body)
     }
 
-    private fun post(system: String, user: String, json: Boolean): String {
+    private fun post(
+        system: String,
+        user: String,
+        json: Boolean,
+    ): String {
         val format = if (json) GroundedResponseFormat("json_object") else null
         return webClient
             .post()
@@ -45,7 +53,13 @@ class GroundedOpenAiGateway(
     }
 
     private fun text(body: String): String =
-        objectMapper.readTree(body).path("choices").path(0).path("message").path("content").asText()
+        objectMapper
+            .readTree(body)
+            .path("choices")
+            .path(0)
+            .path("message")
+            .path("content")
+            .asText()
 
     private fun ready(): Boolean = settings.text(ENABLED).toBoolean() && settings.text(API_KEY).isNotBlank()
 

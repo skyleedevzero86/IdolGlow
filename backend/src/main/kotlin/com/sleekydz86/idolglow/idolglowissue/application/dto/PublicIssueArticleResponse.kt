@@ -43,7 +43,11 @@ data class PublicIssueArticleResponse(
                 summary = article.summary,
                 heroImageUrl = article.heroImageUrl,
                 cardImageUrl = article.cardImageUrl,
-                galleryImageUrls = article.galleryImages.sortedBy { it.displayOrder }.map { it.imageUrl }.distinct(),
+                galleryImageUrls =
+                    article.galleryImages
+                        .sortedBy { it.displayOrder }
+                        .map { it.imageUrl }
+                        .distinct(),
                 category = article.category.code,
                 categoryLabel = article.category.label,
                 formatLabel = article.formatLabel,

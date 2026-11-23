@@ -12,7 +12,6 @@ class ScheduleIcsWriterTest {
     @DisplayName("ics 본문에 uid 요약 알람 정보가 포함된다")
     @Test
     fun icsContainsUidSummaryAndAlarm() {
-
         // given
         val schedule =
             ScheduleResponse(

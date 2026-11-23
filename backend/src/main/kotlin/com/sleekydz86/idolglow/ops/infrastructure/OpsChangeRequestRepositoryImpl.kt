@@ -8,8 +8,7 @@ import org.springframework.stereotype.Repository
 class OpsChangeRequestRepositoryImpl(
     private val opsChangeRequestJpaRepository: OpsChangeRequestJpaRepository,
 ) : OpsChangeRequestPort {
-    override fun save(request: OpsChangeRequest): OpsChangeRequest =
-        opsChangeRequestJpaRepository.saveAndFlush(request)
+    override fun save(request: OpsChangeRequest): OpsChangeRequest = opsChangeRequestJpaRepository.saveAndFlush(request)
 
     override fun findByIdForUpdate(id: Long): OpsChangeRequest? = opsChangeRequestJpaRepository.findByIdForUpdate(id)
 

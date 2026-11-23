@@ -111,6 +111,5 @@ object SurveyWrittenExportBuilder {
             ?.trim()
             .orEmpty()
 
-    private fun writtenTypeLabel(type: SurveyQuestionType): String =
-        if (type == SurveyQuestionType.SHORT_TEXT) "단답형" else "장문형"
+    private fun writtenTypeLabel(type: SurveyQuestionType): String = if (type == SurveyQuestionType.SHORT_TEXT) "단답형" else "장문형"
 }

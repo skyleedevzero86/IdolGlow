@@ -1096,3 +1096,51 @@ ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS session_horizon date;
 
 -- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
 CREATE INDEX IF NOT EXISTS idx_event_session_starts ON event_session (starts_at);
+
+-- =============================================================================
+-- 상품 집계 칸 (찜 수·공개 리뷰 수·공개 별점 합계)
+-- -----
+-- 목적
+-- - 인기순·별점순·리뷰 많은 순 정렬이 상품마다 찜·리뷰를 다시 세지 않고 상품 표의 숫자만 읽게 한다
+-- 대상
+-- - 포스트그레스 / products 표
+-- 주의
+-- - 숫자는 찜·리뷰를 바꾸는 트랜잭션 안에서 서버가 칸 = 칸 + 변화량 으로만 바꾼다
+-- - 공개 리뷰는 hidden_at 이 비어 있는 리뷰다. 숨긴 리뷰는 수와 합계에 넣지 않는다
+-- - 기본값이 있는 칸 추가는 기존 행을 다시 쓰지 않지만, 아래 채우기 UPDATE 는 상품 행을 모두 다시 쓴다
+-- - 이미 만들어진 DB 에는 이 파일이 다시 돌지 않으므로 같은 문장을 따로 실행해야 한다
+-- 연관
+-- - Product, ProductAggregateCounter, ProductSearchQueryRepository, docs/spec/product-aggregate-sort.md
+-- =============================================================================
+ALTER TABLE products ADD COLUMN IF NOT EXISTS wish_count BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS review_count BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS rating_sum BIGINT NOT NULL DEFAULT 0;
+
+-- 집계 숫자가 0 밑으로 내려가면 그 트랜잭션을 실패시켜 어긋남을 드러낸다
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_products_aggregate_non_negative') THEN
+        ALTER TABLE products
+            ADD CONSTRAINT chk_products_aggregate_non_negative
+                CHECK (wish_count >= 0 AND review_count >= 0 AND rating_sum >= 0);
+    END IF;
+END $$;
+
+-- 기존 찜·공개 리뷰로 집계 숫자를 채운다
+-- 상품 집계 채우기 시작
+UPDATE products p
+SET wish_count   = (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id),
+    review_count = (SELECT COUNT(*) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL),
+    rating_sum   = COALESCE((SELECT SUM(r.rating) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL), 0);
+-- 상품 집계 채우기 끝
+
+-- 인기순 정렬(찜 수, 평균 별점, 공개 리뷰 수, ID)을 정렬 없이 앞에서부터 읽는다. 평균 별점 식은 정렬 SQL 과 글자까지 같아야 쓰인다
+CREATE INDEX IF NOT EXISTS idx_products_popularity
+    ON products (
+        wish_count DESC,
+        (CASE WHEN review_count = 0 THEN 0 ELSE CAST(rating_sum AS DOUBLE PRECISION) / review_count END) DESC,
+        review_count DESC,
+        id DESC
+    );

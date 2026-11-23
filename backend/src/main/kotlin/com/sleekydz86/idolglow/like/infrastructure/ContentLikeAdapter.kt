@@ -26,8 +26,7 @@ class ContentLikeAdapter(
         contentLikeJpaRepository.deleteByUserAndTarget(userId, target.type, target.key)
     }
 
-    override fun count(target: LikeTarget): Long =
-        contentLikeJpaRepository.countByTargetTypeAndTargetKey(target.type, target.key)
+    override fun count(target: LikeTarget): Long = contentLikeJpaRepository.countByTargetTypeAndTargetKey(target.type, target.key)
 
     override fun countByKeys(
         type: LikeTargetType,
@@ -43,6 +42,5 @@ class ContentLikeAdapter(
         userId: Long,
         type: LikeTargetType,
         keys: Collection<String>,
-    ): Set<String> =
-        if (keys.isEmpty()) emptySet() else contentLikeJpaRepository.findLikedKeys(userId, type, keys).toSet()
+    ): Set<String> = if (keys.isEmpty()) emptySet() else contentLikeJpaRepository.findLikedKeys(userId, type, keys).toSet()
 }

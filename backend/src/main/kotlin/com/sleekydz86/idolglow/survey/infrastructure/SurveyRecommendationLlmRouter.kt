@@ -33,7 +33,8 @@ class SurveyRecommendationLlmRouter(
             ) ?: return null
         val source = (answerHighlights + attractions.map { it.name } + reasonSummaries).joinToString(" ").lowercase()
         val codes = attractions.map { it.attractionCode }.toSet()
-        return validator.parse(result.text)
+        return validator
+            .parse(result.text)
             ?.let { it.copy(attractionReasons = it.attractionReasons.filterKeys(codes::contains)) }
             ?.takeIf { validator.grounded(it, source) }
             .also { if (it == null) logDropped(result.provider, result.text) }

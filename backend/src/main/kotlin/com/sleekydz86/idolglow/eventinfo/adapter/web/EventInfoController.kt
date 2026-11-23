@@ -9,9 +9,9 @@ import com.sleekydz86.idolglow.eventinfo.adapter.web.dto.SpecialDayInfoResponse
 import com.sleekydz86.idolglow.eventinfo.application.EventLocalizedTextService
 import com.sleekydz86.idolglow.eventinfo.application.port.incoming.FestivalEventQueryUseCase
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
-import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocalizedText
 import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
+import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.infrastructure.CultureInfoApiClient
 import com.sleekydz86.idolglow.eventinfo.infrastructure.KopisPerformanceApiClient
 import com.sleekydz86.idolglow.eventinfo.infrastructure.SeoulSjwPerformApiClient
@@ -82,29 +82,30 @@ class EventInfoController(
             } else {
                 emptyList()
             }
-        return (tourEvents + sjwEvents + kopisEvents + cultureCalendarEvents).map { event ->
-            FestivalEventResponse(
-                contentId = event.contentId,
-                title = event.title,
-                address = event.address,
-                eventStartDate = event.eventStartDate,
-                eventEndDate = event.eventEndDate,
-                thumbnailImageUrl = event.thumbnailImageUrl,
-                imageUrl = event.imageUrl,
-                mapX = event.mapX,
-                mapY = event.mapY,
-                phone = event.phone,
-                detailUrl = event.detailUrl,
-                category = event.category,
-                synopsis = event.synopsis,
-                source = event.source,
-                cast = event.cast,
-                runningTime = event.runningTime,
-                age = event.age,
-                bookingPlaces = event.bookingPlaces,
-                introImageUrls = event.introImageUrls,
-            )
-        }.inRequestedLanguage()
+        return (tourEvents + sjwEvents + kopisEvents + cultureCalendarEvents)
+            .map { event ->
+                FestivalEventResponse(
+                    contentId = event.contentId,
+                    title = event.title,
+                    address = event.address,
+                    eventStartDate = event.eventStartDate,
+                    eventEndDate = event.eventEndDate,
+                    thumbnailImageUrl = event.thumbnailImageUrl,
+                    imageUrl = event.imageUrl,
+                    mapX = event.mapX,
+                    mapY = event.mapY,
+                    phone = event.phone,
+                    detailUrl = event.detailUrl,
+                    category = event.category,
+                    synopsis = event.synopsis,
+                    source = event.source,
+                    cast = event.cast,
+                    runningTime = event.runningTime,
+                    age = event.age,
+                    bookingPlaces = event.bookingPlaces,
+                    introImageUrls = event.introImageUrls,
+                )
+            }.inRequestedLanguage()
     }
 
     private fun cultureCalendarEvents(
@@ -142,7 +143,8 @@ class EventInfoController(
                 rows = numOfRows,
                 signguCode = signgucode,
                 prfState = prfstate,
-            ).map(::toFestivalResponse).inRequestedLanguage()
+            ).map(::toFestivalResponse)
+            .inRequestedLanguage()
     }
 
     @Operation(summary = "KOPIS 공연 상세 조회")
@@ -173,7 +175,8 @@ class EventInfoController(
                 edDate = yyyymmdd,
                 page = pageNo,
                 rows = numOfRows,
-            ).map(::toFestivalResponse).inRequestedLanguage()
+            ).map(::toFestivalResponse)
+            .inRequestedLanguage()
     }
 
     @Operation(summary = "KOPIS 지역 통계 조회", description = "stDate~edDate 구간 최대 31일.")
@@ -242,31 +245,32 @@ class EventInfoController(
     fun sjwList(
         @RequestParam(required = false, defaultValue = "1") pageNo: Int,
         @RequestParam(required = false, defaultValue = "20") numOfRows: Int,
-    ): List<FestivalEventResponse> {
-        return seoulSjwPerformApiClient.list(pageNo, numOfRows).map { event ->
-            FestivalEventResponse(
-                contentId = event.contentId,
-                title = event.title,
-                address = event.address,
-                eventStartDate = event.eventStartDate,
-                eventEndDate = event.eventEndDate,
-                thumbnailImageUrl = event.thumbnailImageUrl,
-                imageUrl = event.imageUrl,
-                mapX = event.mapX,
-                mapY = event.mapY,
-                phone = event.phone,
-                detailUrl = event.detailUrl,
-                category = event.category,
-                synopsis = event.synopsis,
-                source = event.source,
-                cast = event.cast,
-                runningTime = event.runningTime,
-                age = event.age,
-                bookingPlaces = event.bookingPlaces,
-                introImageUrls = event.introImageUrls,
-            )
-        }.inRequestedLanguage()
-    }
+    ): List<FestivalEventResponse> =
+        seoulSjwPerformApiClient
+            .list(pageNo, numOfRows)
+            .map { event ->
+                FestivalEventResponse(
+                    contentId = event.contentId,
+                    title = event.title,
+                    address = event.address,
+                    eventStartDate = event.eventStartDate,
+                    eventEndDate = event.eventEndDate,
+                    thumbnailImageUrl = event.thumbnailImageUrl,
+                    imageUrl = event.imageUrl,
+                    mapX = event.mapX,
+                    mapY = event.mapY,
+                    phone = event.phone,
+                    detailUrl = event.detailUrl,
+                    category = event.category,
+                    synopsis = event.synopsis,
+                    source = event.source,
+                    cast = event.cast,
+                    runningTime = event.runningTime,
+                    age = event.age,
+                    bookingPlaces = event.bookingPlaces,
+                    introImageUrls = event.introImageUrls,
+                )
+            }.inRequestedLanguage()
 
     @Operation(summary = "서울문화재단 공연 상세 조회")
     @SecurityRequirement(name = "bearerAuth")
@@ -359,8 +363,8 @@ class EventInfoController(
         @RequestParam(name = "lclsSystm1", required = false) lclsSystm1: String?,
         @RequestParam(name = "lclsSystm2", required = false) lclsSystm2: String?,
         @RequestParam(name = "lclsSystm3", required = false) lclsSystm3: String?,
-    ): List<FestivalEventResponse> {
-        return festivalEventQueryUseCase
+    ): List<FestivalEventResponse> =
+        festivalEventQueryUseCase
             .searchKeyword(
                 keyword = keyword,
                 pageNo = pageNo,
@@ -393,7 +397,6 @@ class EventInfoController(
                     introImageUrls = event.introImageUrls,
                 )
             }.inRequestedLanguage()
-    }
 
     @Operation(summary = "법정동 코드 조회")
     @SecurityRequirement(name = "bearerAuth")
@@ -401,8 +404,8 @@ class EventInfoController(
     fun lDongCodes(
         @RequestParam(name = "lDongRegnCd", required = false) lDongRegnCd: String?,
         @RequestParam(name = "lDongListYn", required = false, defaultValue = "N") lDongListYn: String,
-    ): List<CodeEntryResponse> {
-        return festivalEventQueryUseCase.lDongCodes(lDongRegnCd, lDongListYn).map {
+    ): List<CodeEntryResponse> =
+        festivalEventQueryUseCase.lDongCodes(lDongRegnCd, lDongListYn).map {
             CodeEntryResponse(
                 code = it.code,
                 name = it.name,
@@ -419,7 +422,6 @@ class EventInfoController(
                 lclsSystm3Nm = it.lclsSystm3Nm,
             )
         }
-    }
 
     @Operation(summary = "행사 분류 코드 조회")
     @SecurityRequirement(name = "bearerAuth")
@@ -429,8 +431,8 @@ class EventInfoController(
         @RequestParam(name = "lclsSystm2", required = false) lclsSystm2: String?,
         @RequestParam(name = "lclsSystm3", required = false) lclsSystm3: String?,
         @RequestParam(name = "lclsSystmListYn", required = false, defaultValue = "N") lclsSystmListYn: String,
-    ): List<CodeEntryResponse> {
-        return festivalEventQueryUseCase
+    ): List<CodeEntryResponse> =
+        festivalEventQueryUseCase
             .lclsCodes(
                 lclsSystm1 = lclsSystm1,
                 lclsSystm2 = lclsSystm2,
@@ -453,7 +455,6 @@ class EventInfoController(
                     lclsSystm3Nm = it.lclsSystm3Nm,
                 )
             }
-    }
 
     @Operation(summary = "문화정보 캘린더 상세 조회")
     @SecurityRequirement(name = "bearerAuth")
@@ -484,12 +485,10 @@ class EventInfoController(
     @Operation(summary = "문화정보 지역(시·도) 참조 목록")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/areas")
-    fun cultureCalendarAreas(
-    ): List<CodeEntryResponse> {
-        return KOREAN_SIDO_REFERENCE.mapIndexed { idx, name ->
+    fun cultureCalendarAreas(): List<CodeEntryResponse> =
+        KOREAN_SIDO_REFERENCE.mapIndexed { idx, name ->
             toCultureCodeEntry(idx + 1, name, name)
         }
-    }
 
     @Operation(summary = "문화정보 분야별 행사 조회", description = "serviceTp: A(전체), B(무료), C(유료). from~to yyyyMMdd.")
     @SecurityRequirement(name = "bearerAuth")
@@ -517,7 +516,8 @@ class EventInfoController(
                 sortStdr = sortStdr,
                 pageNo = pageNo,
                 numOfrows = numOfrows,
-            ).map(::toFestivalResponse).inRequestedLanguage()
+            ).map(::toFestivalResponse)
+            .inRequestedLanguage()
     }
 
     @Operation(summary = "문화정보 지역별 행사 조회", description = "serviceTp: A(전체), B(무료), C(유료). from~to yyyyMMdd.")
@@ -544,18 +544,17 @@ class EventInfoController(
                 sortStdr = sortStdr,
                 pageNo = pageNo,
                 numOfrows = numOfrows,
-            ).map(::toFestivalResponse).inRequestedLanguage()
+            ).map(::toFestivalResponse)
+            .inRequestedLanguage()
     }
 
     @Operation(summary = "문화정보 분야 코드 참조 목록")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/culture-calendar/realm-code-reference")
-    fun cultureCalendarRealmCodeReference(
-    ): List<CodeEntryResponse> {
-        return REALM_CODE_REFERENCE.mapIndexed { idx, (code, name) ->
+    fun cultureCalendarRealmCodeReference(): List<CodeEntryResponse> =
+        REALM_CODE_REFERENCE.mapIndexed { idx, (code, name) ->
             toCultureCodeEntry(idx + 1, code, name)
         }
-    }
 
     private fun toCultureCodeEntry(
         rnum: Int,
@@ -694,11 +693,9 @@ class EventInfoController(
     private fun withResolvedText(
         response: FestivalEventResponse,
         text: EventLocalizedText,
-    ): FestivalEventResponse =
-        response.copy(title = text.title, synopsis = text.synopsis, resolvedLocale = text.locale)
+    ): FestivalEventResponse = response.copy(title = text.title, synopsis = text.synopsis, resolvedLocale = text.locale)
 
-    private fun FestivalEventResponse.inRequestedLanguage(): FestivalEventResponse =
-        listOf(this).inRequestedLanguage().first()
+    private fun FestivalEventResponse.inRequestedLanguage(): FestivalEventResponse = listOf(this).inRequestedLanguage().first()
 
     private fun daysBetween(
         start: String,

@@ -171,9 +171,10 @@ class TossBillingReconcileSchedulerPostgresTest : PostgresIntegrationTest() {
             statusRemote(200, "DONE", null, totalAmount = 1)
 
         // when
-        val logs = captureLogs {
-            scheduler.reconcilePendingBillingAttempts(agedNow())
-        }
+        val logs =
+            captureLogs {
+                scheduler.reconcilePendingBillingAttempts(agedNow())
+            }
 
         // then
         assertStillPending(seeded)
@@ -246,9 +247,10 @@ class TossBillingReconcileSchedulerPostgresTest : PostgresIntegrationTest() {
         every { tossPaymentsApiClient.getPaymentByOrderId(seeded.tossOrderId) } returns TossApiResponse(500, null, null)
 
         // when
-        val logs = captureLogs {
-            scheduler.reconcilePendingBillingAttempts(agedNow())
-        }
+        val logs =
+            captureLogs {
+                scheduler.reconcilePendingBillingAttempts(agedNow())
+            }
 
         // then
         assertStillPending(seeded)
@@ -505,7 +507,12 @@ class TossBillingReconcileSchedulerPostgresTest : PostgresIntegrationTest() {
         due: LocalDateTime,
         oneOff: Boolean,
     ): SeededAttempt {
-        val token = UUID.randomUUID().toString().replace("-", "").take(8)
+        val token =
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
         val user =
             userJpaRepository.save(
                 User(email = "br$token@test.com", nickname = Nickname.of("r$token")),

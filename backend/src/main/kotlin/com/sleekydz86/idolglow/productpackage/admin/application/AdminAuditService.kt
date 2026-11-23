@@ -48,9 +48,10 @@ class AdminAuditService(
         val local = environment.activeProfiles.any { it.equals(LOCAL_PROFILE, ignoreCase = true) }
         return AdminAuditTopActionsResponse(
             basis = AdminAuditAutomation.basis(local),
-            actions = ranked.mapIndexed { index, row ->
-                AdminAuditTopActionRow(rank = index + 1, actionCode = row.actionCode, count = row.actionCount)
-            },
+            actions =
+                ranked.mapIndexed { index, row ->
+                    AdminAuditTopActionRow(rank = index + 1, actionCode = row.actionCode, count = row.actionCount)
+                },
             automationActionCode = choice.actionCode,
             automationReason = choice.reason,
         )

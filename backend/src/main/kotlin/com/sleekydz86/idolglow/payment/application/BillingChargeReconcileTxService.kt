@@ -102,7 +102,11 @@ class BillingChargeReconcileTxService(
         if (remote.httpStatus == HTTP_NOT_FOUND) {
             return "토스에 주문이 없습니다."
         }
-        val status = remote.json?.path("status")?.asText(null)?.trim()
+        val status =
+            remote.json
+                ?.path("status")
+                ?.asText(null)
+                ?.trim()
         return remote.json?.path("message")?.asText(null) ?: "토스 결제가 $status 상태입니다."
     }
 

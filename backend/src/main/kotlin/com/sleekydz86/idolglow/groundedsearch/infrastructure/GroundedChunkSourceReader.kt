@@ -74,11 +74,9 @@ class GroundedChunkSourceReader(
         return GroundedChunkDraft(sourceType, sourceId, linkKey, content)
     }
 
-    private fun products(): List<Product> =
-        entityManager.createQuery("select p from Product p", Product::class.java).resultList
+    private fun products(): List<Product> = entityManager.createQuery("select p from Product p", Product::class.java).resultList
 
-    private fun options(): List<Option> =
-        entityManager.createQuery("select o from Option o", Option::class.java).resultList
+    private fun options(): List<Option> = entityManager.createQuery("select o from Option o", Option::class.java).resultList
 
     private fun articles(): List<IdolGlowArticle> =
         entityManager

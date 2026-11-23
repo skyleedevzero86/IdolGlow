@@ -7,7 +7,6 @@ data class GroundedValidationResponse(
     val rejectReason: String?,
 ) {
     companion object {
-        fun from(verdict: GroundedVerdict): GroundedValidationResponse =
-            GroundedValidationResponse(verdict.accepted, verdict.rejectReason)
+        fun from(verdict: GroundedVerdict): GroundedValidationResponse = GroundedValidationResponse(verdict.accepted, verdict.rejectReason)
     }
 }

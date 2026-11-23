@@ -9,9 +9,13 @@ import org.springframework.stereotype.Component
 
 @Component
 @Profile("test")
-class FakeGroundedLlm : ConditionExtractPort, AnswerGeneratePort {
+class FakeGroundedLlm :
+    ConditionExtractPort,
+    AnswerGeneratePort {
     override fun extract(query: String): GroundedConditionDraft = GroundedConditionDraft()
 
-    override fun answer(query: String, citations: List<GroundedCitationPrompt>): String =
-        citations.joinToString(" ") { "[${it.label}]" }
+    override fun answer(
+        query: String,
+        citations: List<GroundedCitationPrompt>,
+    ): String = citations.joinToString(" ") { "[${it.label}]" }
 }

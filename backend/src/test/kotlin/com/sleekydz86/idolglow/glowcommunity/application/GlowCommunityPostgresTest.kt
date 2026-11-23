@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.glowcommunity.application
 
-import com.sleekydz86.idolglow.comment.application.dto.CreateContentCommentCommand
 import com.sleekydz86.idolglow.comment.application.dto.ContentCommentViewer
+import com.sleekydz86.idolglow.comment.application.dto.CreateContentCommentCommand
 import com.sleekydz86.idolglow.comment.application.port.`in`.ContentCommentUseCase
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.glowcommunity.GlowCommunityExceptionType
@@ -347,12 +347,23 @@ class GlowCommunityPostgresTest : PostgresIntegrationTest() {
         )!!
 
     private fun member(role: UserRole = UserRole.USER): User {
-        val suffix = UUID.randomUUID().toString().replace("-", "").take(8)
+        val suffix =
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
         val user = User(email = "gc$suffix@test.com", nickname = Nickname.of("g$suffix"), role = role)
         return userJpaRepository.save(user)
     }
 
     private fun rejected(action: () -> Unit): CustomException = assertThrows(CustomException::class.java) { action() }
 
-    private fun token(): String = "t" + UUID.randomUUID().toString().replace("-", "").take(8)
+    private fun token(): String =
+        "t" +
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
 }

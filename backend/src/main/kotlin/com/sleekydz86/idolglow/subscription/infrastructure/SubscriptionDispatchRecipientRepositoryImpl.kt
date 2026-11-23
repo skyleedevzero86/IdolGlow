@@ -18,8 +18,7 @@ class SubscriptionDispatchRecipientRepositoryImpl(
     override fun findByDispatchIdAndEmail(
         dispatchId: Long,
         email: String,
-    ): SubscriptionDispatchRecipient? =
-        subscriptionDispatchRecipientJpaRepository.findByDispatchIdAndEmail(dispatchId, email)
+    ): SubscriptionDispatchRecipient? = subscriptionDispatchRecipientJpaRepository.findByDispatchIdAndEmail(dispatchId, email)
 
     override fun countByDispatchIds(dispatchIds: Collection<Long>): Map<Long, SubscriptionDispatchRecipientCounts> {
         if (dispatchIds.isEmpty()) return emptyMap()

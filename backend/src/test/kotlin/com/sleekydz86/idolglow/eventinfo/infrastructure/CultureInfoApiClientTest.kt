@@ -20,7 +20,6 @@ class CultureInfoApiClientTest {
     @DisplayName("이미 인코딩된 공공데이터 서비스키를 그대로 유지한다")
     @Test
     fun keepsAlreadyEncodedServiceKey() {
-
         // given
         val capturedUri = AtomicReference<URI>()
         val client =
@@ -48,7 +47,6 @@ class CultureInfoApiClientTest {
     @DisplayName("원본 공공데이터 서비스키를 한 번만 인코딩한다")
     @Test
     fun encodesRawServiceKeyOnce() {
-
         // given
         val capturedUri = AtomicReference<URI>()
         val client =
@@ -76,7 +74,6 @@ class CultureInfoApiClientTest {
     @DisplayName("이중 인코딩된 공공데이터 서비스키를 정규화한다")
     @Test
     fun normalizesDoubleEncodedServiceKey() {
-
         // given
         val capturedUri = AtomicReference<URI>()
         val client =
@@ -104,7 +101,6 @@ class CultureInfoApiClientTest {
     @DisplayName("하루치 호출이 모두 성공하면 완전한 결과로 표시한다")
     @Test
     fun marksCalendarDayCompleteWhenAllCallsSucceed() {
-
         // given
         val client = 요청Uri를_캡처하는_클라이언트(AtomicReference(), serviceKey = "abc")
 
@@ -119,7 +115,6 @@ class CultureInfoApiClientTest {
     @DisplayName("요청 한도 초과로 호출이 빠지면 불완전한 결과로 표시한다")
     @Test
     fun marksCalendarDayIncompleteWhenRateLimited() {
-
         // given
         val client = 상태코드만_돌려주는_클라이언트(HttpStatus.TOO_MANY_REQUESTS)
 
@@ -134,7 +129,6 @@ class CultureInfoApiClientTest {
     @DisplayName("서비스키가 비어 있으면 불완전한 결과로 표시한다")
     @Test
     fun marksCalendarDayIncompleteWhenServiceKeyIsBlank() {
-
         // given
         val client = 요청Uri를_캡처하는_클라이언트(AtomicReference(), serviceKey = "")
 

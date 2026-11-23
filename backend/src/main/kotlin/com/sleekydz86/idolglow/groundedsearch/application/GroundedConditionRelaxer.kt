@@ -34,7 +34,9 @@ class GroundedConditionRelaxer(
         return GroundedScope(ids, catalogPort.optionOwners(ids), relaxed, filter.dateFrom, filter.dateTo, false)
     }
 
-    private enum class Step(val label: String) {
+    private enum class Step(
+        val label: String,
+    ) {
         DATE("날짜") {
             override fun loosen(filter: GroundedFilter): GroundedFilter = filter.widenDates()
         },
@@ -43,8 +45,7 @@ class GroundedConditionRelaxer(
                 if (filter.maxBudget == null) filter else filter.copy(maxBudget = null)
         },
         REGION("지역") {
-            override fun loosen(filter: GroundedFilter): GroundedFilter =
-                if (filter.region == null) filter else filter.copy(region = null)
+            override fun loosen(filter: GroundedFilter): GroundedFilter = if (filter.region == null) filter else filter.copy(region = null)
         },
         ;
 

@@ -30,7 +30,6 @@ class AuthenticatedPrincipalResolverTest {
     @DisplayName("global jwt 주체 userId 를 해석한다")
     @Test
     fun resolvesUserIdFromGlobalJwt() {
-
         // given
         setAuthentication(
             UsernamePasswordAuthenticationToken(
@@ -53,7 +52,6 @@ class AuthenticatedPrincipalResolverTest {
     @DisplayName("이메일 주체는 user 테이블에서 userId 를 조회한다")
     @Test
     fun resolvesUserIdFromEmailSubject() {
-
         // given
         every { userRepository.findByEmail("member@example.com") } returns user(id = 7L, email = "member@example.com")
         setAuthentication(
@@ -76,7 +74,6 @@ class AuthenticatedPrincipalResolverTest {
     @DisplayName("매핑되지 않은 이메일 주체는 userId 조회에 실패한다")
     @Test
     fun failsWhenEmailSubjectIsUnmapped() {
-
         // given
         every { userRepository.findByEmail("unknown@example.com") } returns null
         setAuthentication(

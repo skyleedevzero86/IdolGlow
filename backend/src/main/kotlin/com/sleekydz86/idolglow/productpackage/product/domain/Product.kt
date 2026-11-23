@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.productpackage.option.domain.Option
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import jakarta.persistence.CascadeType
+import jakarta.persistence.CheckConstraint
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -14,13 +15,22 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Transient
+import org.hibernate.annotations.ColumnDefault
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.collections.asSequence
 
 @Entity
-@Table(name = "products")
+@Table(
+    name = "products",
+    check = [
+        CheckConstraint(
+            name = "chk_products_aggregate_non_negative",
+            constraint = "wish_count >= 0 AND review_count >= 0 AND rating_sum >= 0",
+        ),
+    ],
+)
 class Product(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,6 +56,21 @@ class Product(
     @Column(name = "recommendation_score", nullable = false)
     var recommendationScore: Int = 0,
 ) : BaseEntity() {
+    @Column(name = "wish_count", nullable = false, insertable = false, updatable = false)
+    @ColumnDefault("0")
+    var wishCount: Long = 0L
+        protected set
+
+    @Column(name = "review_count", nullable = false, insertable = false, updatable = false)
+    @ColumnDefault("0")
+    var reviewCount: Long = 0L
+        protected set
+
+    @Column(name = "rating_sum", nullable = false, insertable = false, updatable = false)
+    @ColumnDefault("0")
+    var ratingSum: Long = 0L
+        protected set
+
     @get:Transient
     val optionsMinPrice: BigDecimal
         get() =

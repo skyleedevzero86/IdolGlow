@@ -18,12 +18,15 @@ class GroundedCatalogQuery(
 
     fun regionIds(region: String): Set<Long> = jpql.longIds(REGION, mapOf("region" to jpql.like(region)))
 
-    fun categoryIds(category: String): Set<Long> =
-        jpql.longIds(CATEGORY, mapOf("category" to jpql.like(category.lowercase())))
+    fun categoryIds(category: String): Set<Long> = jpql.longIds(CATEGORY, mapOf("category" to jpql.like(category.lowercase())))
 
     fun budgetIds(maxBudget: BigDecimal): Set<Long> = budget.ids(maxBudget)
 
-    fun slotProductIds(ids: Set<Long>, from: LocalDate, to: LocalDate): Set<Long> {
+    fun slotProductIds(
+        ids: Set<Long>,
+        from: LocalDate,
+        to: LocalDate,
+    ): Set<Long> {
         if (ids.isEmpty()) {
             return emptySet()
         }
@@ -42,7 +45,11 @@ class GroundedCatalogQuery(
     fun options(ids: Set<Long>): List<ProductOption> =
         listed("select po from ProductOption po join fetch po.option where po.product.id in :ids", ids)
 
-    fun slots(ids: Set<Long>, from: LocalDate?, to: LocalDate?): List<ReservationSlot> {
+    fun slots(
+        ids: Set<Long>,
+        from: LocalDate?,
+        to: LocalDate?,
+    ): List<ReservationSlot> {
         if (ids.isEmpty()) {
             return emptyList()
         }
@@ -55,8 +62,10 @@ class GroundedCatalogQuery(
         return jpql.listed(sql, params)
     }
 
-    private fun <T> listed(sql: String, ids: Set<Long>): List<T> =
-        if (ids.isEmpty()) emptyList() else jpql.listed(sql, mapOf("ids" to ids))
+    private fun <T> listed(
+        sql: String,
+        ids: Set<Long>,
+    ): List<T> = if (ids.isEmpty()) emptyList() else jpql.listed(sql, mapOf("ids" to ids))
 
     private companion object {
         private const val AVAILABLE =

@@ -1499,3 +1499,108 @@ DEALLOCATE PREPARE session_horizon_stmt;
 -- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
 CREATE INDEX idx_event_session_starts
     ON event_session (starts_at);
+
+-- =============================================================================
+-- 상품 집계 칸 (찜 수·공개 리뷰 수·공개 별점 합계)
+-- -----
+-- 목적
+-- - 인기순·별점순·리뷰 많은 순 정렬이 상품마다 찜·리뷰를 다시 세지 않고 상품 표의 숫자만 읽게 한다
+-- 대상
+-- - MySQL / products 표
+-- 주의
+-- - 숫자는 찜·리뷰를 바꾸는 트랜잭션 안에서 서버가 칸 = 칸 + 변화량 으로만 바꾼다
+-- - 공개 리뷰는 hidden_at 이 비어 있는 리뷰다. 숨긴 리뷰는 수와 합계에 넣지 않는다
+-- - 아래 채우기 UPDATE 는 상품 행을 모두 다시 쓴다
+-- - 이미 만들어진 DB 에는 이 파일이 다시 돌지 않으므로 같은 문장을 따로 실행해야 한다
+-- 연관
+-- - Product, ProductAggregateCounter, ProductSearchQueryRepository, docs/spec/product-aggregate-sort.md
+-- =============================================================================
+SET @add_wish_count := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN wish_count BIGINT NOT NULL DEFAULT 0 COMMENT ''이 상품을 찜한 수. 찜 추가·취소·회원 탈퇴 때 서버가 함께 바꾼다. 0 이상''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'wish_count'
+);
+
+PREPARE wish_count_stmt FROM @add_wish_count;
+
+EXECUTE wish_count_stmt;
+
+DEALLOCATE PREPARE wish_count_stmt;
+
+SET @add_review_count := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN review_count BIGINT NOT NULL DEFAULT 0 COMMENT ''숨기지 않은 리뷰 수. 리뷰 작성·삭제·숨김·숨김 해제 때 서버가 함께 바꾼다. 0 이상''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'review_count'
+);
+
+PREPARE review_count_stmt FROM @add_review_count;
+
+EXECUTE review_count_stmt;
+
+DEALLOCATE PREPARE review_count_stmt;
+
+SET @add_rating_sum := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN rating_sum BIGINT NOT NULL DEFAULT 0 COMMENT ''숨기지 않은 리뷰 별점(1~5)의 합. 평균 별점은 rating_sum / review_count 로 계산한다. 0 이상''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'rating_sum'
+);
+
+PREPARE rating_sum_stmt FROM @add_rating_sum;
+
+EXECUTE rating_sum_stmt;
+
+DEALLOCATE PREPARE rating_sum_stmt;
+
+-- 집계 숫자가 0 밑으로 내려가면 그 트랜잭션을 실패시켜 어긋남을 드러낸다
+SET @add_aggregate_check := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD CONSTRAINT chk_products_aggregate_non_negative CHECK (wish_count >= 0 AND review_count >= 0 AND rating_sum >= 0)',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND constraint_name = 'chk_products_aggregate_non_negative'
+);
+
+PREPARE aggregate_check_stmt FROM @add_aggregate_check;
+
+EXECUTE aggregate_check_stmt;
+
+DEALLOCATE PREPARE aggregate_check_stmt;
+
+-- 기존 찜·공개 리뷰로 집계 숫자를 채운다
+-- 상품 집계 채우기 시작
+UPDATE products p
+SET p.wish_count   = (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id),
+    p.review_count = (SELECT COUNT(*) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL),
+    p.rating_sum   = COALESCE((SELECT SUM(r.rating) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL), 0);
+-- 상품 집계 채우기 끝
+
+-- 인기순 정렬(찜 수, 평균 별점, 공개 리뷰 수, ID)을 정렬 없이 앞에서부터 읽는다. 평균 별점 식은 정렬 SQL 과 글자까지 같아야 쓰인다
+CREATE INDEX idx_products_popularity
+    ON products (
+        wish_count DESC,
+        ((CASE WHEN review_count = 0 THEN 0 ELSE CAST(rating_sum AS DOUBLE) / review_count END)) DESC,
+        review_count DESC,
+        id DESC
+    );

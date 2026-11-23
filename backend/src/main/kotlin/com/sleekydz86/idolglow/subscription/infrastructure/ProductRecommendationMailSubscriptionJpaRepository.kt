@@ -10,8 +10,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
-interface ProductRecommendationMailSubscriptionJpaRepository :
-    JpaRepository<ProductRecommendationMailSubscription, Long> {
+interface ProductRecommendationMailSubscriptionJpaRepository : JpaRepository<ProductRecommendationMailSubscription, Long> {
     fun findByUserId(userId: Long): ProductRecommendationMailSubscription?
 
     fun findAllByActiveTrueOrderByIdAsc(): List<ProductRecommendationMailSubscription>

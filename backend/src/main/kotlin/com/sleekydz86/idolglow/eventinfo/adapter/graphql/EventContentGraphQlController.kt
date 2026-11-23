@@ -15,8 +15,7 @@ class EventContentGraphQlController(
     @QueryMapping
     fun eventContent(
         @Argument globalId: String,
-    ): EventContentGraphQl? =
-        eventLocalizedTextService.title(globalId, null)?.let { EventContentGraphQl(globalId.trim()) }
+    ): EventContentGraphQl? = eventLocalizedTextService.title(globalId, null)?.let { EventContentGraphQl(globalId.trim()) }
 
     @SchemaMapping(typeName = "EventContent", field = "title")
     fun title(

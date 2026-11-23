@@ -23,7 +23,6 @@ class LocalSeedUserPasswordInitializerTest {
     @DisplayName("환경 변수가 비어 있으면 아무것도 바꾸지 않는다")
     @Test
     fun doesNothingWhenPasswordIsBlank() {
-
         // given
         val initializer = LocalSeedUserPasswordInitializer(userJpaRepository, passwordEncoder, "")
 
@@ -38,7 +37,6 @@ class LocalSeedUserPasswordInitializerTest {
     @DisplayName("환경 변수가 있으면 테스트 사용자 비밀번호를 해시로 저장한다")
     @Test
     fun storesHashedPasswordWhenProvided() {
-
         // given
         val user = User.of(email = "alice@example.com", nickname = "alice01", role = UserRole.ADMIN)
         every { userJpaRepository.findById(1L) } returns Optional.of(user)
@@ -59,7 +57,6 @@ class LocalSeedUserPasswordInitializerTest {
     @DisplayName("이미 같은 비밀번호면 다시 저장하지 않는다")
     @Test
     fun skipsWhenPasswordAlreadyMatches() {
-
         // given
         val user = User.of(email = "alice@example.com", nickname = "alice01")
         user.applyEncodedPasswordChange(requireNotNull(passwordEncoder.encode("local-test-pw")))
@@ -78,7 +75,6 @@ class LocalSeedUserPasswordInitializerTest {
     @DisplayName("테스트 사용자가 없으면 저장하지 않는다")
     @Test
     fun skipsWhenSeedUserMissing() {
-
         // given
         every { userJpaRepository.findById(1L) } returns Optional.empty()
         val initializer = LocalSeedUserPasswordInitializer(userJpaRepository, passwordEncoder, "local-test-pw")

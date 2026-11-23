@@ -139,14 +139,16 @@ class BillingChargeOutsideTxPostgresTest : PostgresIntegrationTest() {
             release.await(10, TimeUnit.SECONDS)
             cardRejected()
         }
-        val first = Thread {
-            runCatching { executor.chargeSubscription(seeded.subscriptionId, due) }
-            finished.incrementAndGet()
-        }
-        val second = Thread {
-            runCatching { executor.chargeSubscription(seeded.subscriptionId, due) }
-            finished.incrementAndGet()
-        }
+        val first =
+            Thread {
+                runCatching { executor.chargeSubscription(seeded.subscriptionId, due) }
+                finished.incrementAndGet()
+            }
+        val second =
+            Thread {
+                runCatching { executor.chargeSubscription(seeded.subscriptionId, due) }
+                finished.incrementAndGet()
+            }
 
         first.start()
         second.start()
@@ -271,7 +273,12 @@ class BillingChargeOutsideTxPostgresTest : PostgresIntegrationTest() {
     }
 
     private fun persistActiveSubscription(due: LocalDateTime): Long {
-        val token = UUID.randomUUID().toString().replace("-", "").take(8)
+        val token =
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
         val user =
             userJpaRepository.save(
                 User(

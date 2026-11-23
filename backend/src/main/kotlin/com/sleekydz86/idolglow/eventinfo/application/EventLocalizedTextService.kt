@@ -47,8 +47,7 @@ class EventLocalizedTextService(
             .findBySourceInAndSourceIdIn(
                 items.map { it.source }.distinct(),
                 items.map { it.sourceId }.distinct(),
-            )
-            .filter { (it.source to it.sourceId) in wanted }
+            ).filter { (it.source to it.sourceId) in wanted }
             .associateBy { it.source to it.sourceId }
     }
 

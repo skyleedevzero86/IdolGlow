@@ -1846,3 +1846,11 @@ COMMENT ON COLUMN event_source_ref.schedule_hash IS '공연 시간 안내를 읽
 COMMENT ON COLUMN event_source_ref.session_horizon IS '회차를 어느 날짜까지 만들어 두었는지';
 
 COMMENT ON INDEX idx_event_session_starts IS '회차를 날짜 순서로 찾을 때 쓴다';
+
+COMMENT ON COLUMN products.wish_count IS '이 상품을 찜한 수. 찜 추가·취소·회원 탈퇴 때 서버가 함께 바꾼다. 0 이상';
+
+COMMENT ON COLUMN products.review_count IS '숨기지 않은 리뷰 수. 리뷰 작성·삭제·숨김·숨김 해제 때 서버가 함께 바꾼다. 0 이상';
+
+COMMENT ON COLUMN products.rating_sum IS '숨기지 않은 리뷰 별점(1~5)의 합. 평균 별점은 rating_sum / review_count 로 계산한다. 0 이상';
+
+COMMENT ON INDEX idx_products_popularity IS '상품 인기순 정렬(찜 수, 평균 별점, 리뷰 수, ID)에 쓴다';

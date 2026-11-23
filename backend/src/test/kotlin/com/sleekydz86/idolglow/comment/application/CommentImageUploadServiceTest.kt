@@ -68,6 +68,5 @@ class CommentImageUploadServiceTest {
         assertEquals("이미지 형식과 파일 형식이 일치하지 않습니다.", mismatchError.message)
     }
 
-    private fun rejected(action: () -> Unit): IllegalArgumentException =
-        assertThrows(IllegalArgumentException::class.java) { action() }
+    private fun rejected(action: () -> Unit): IllegalArgumentException = assertThrows(IllegalArgumentException::class.java) { action() }
 }

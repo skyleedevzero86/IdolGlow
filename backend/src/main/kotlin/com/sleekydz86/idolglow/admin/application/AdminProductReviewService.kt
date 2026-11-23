@@ -6,6 +6,8 @@ import com.sleekydz86.idolglow.image.domain.ImageRepository
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductAggregateCounter
+import com.sleekydz86.idolglow.review.application.applyReviewChange
 import com.sleekydz86.idolglow.review.application.dto.ProductReviewImageResponse
 import com.sleekydz86.idolglow.review.domain.ProductReview
 import com.sleekydz86.idolglow.review.infrastructure.ProductReviewJpaRepository
@@ -26,6 +28,7 @@ class AdminProductReviewService(
     private val productReviewJpaRepository: ProductReviewJpaRepository,
     private val imageRepository: ImageRepository,
     private val adminAuditService: AdminAuditService,
+    private val productAggregateCounter: ProductAggregateCounter,
 ) {
     fun findReviews(
         keyword: String?,
@@ -82,8 +85,10 @@ class AdminProductReviewService(
                 .orElseThrow { EntityNotFoundException("리뷰를 찾을 수 없습니다. reviewId=$reviewId") }
         val trimmed = reason?.trim().orEmpty()
         val resolved = trimmed.ifBlank { "관리자 비공개 처리" }
+        val before = review.contribution()
         review.hide(LocalDateTime.now(ZoneOffset.UTC), resolved)
         val saved = productReviewJpaRepository.save(review)
+        productAggregateCounter.applyReviewChange(saved.product.id, before, saved.contribution())
         adminAuditService.log("REVIEW_HIDE", "PRODUCT_REVIEW", saved.id, "reason=${saved.hiddenReason}")
         return toSummaryResponse(saved)
     }
@@ -94,8 +99,10 @@ class AdminProductReviewService(
             productReviewJpaRepository
                 .findById(reviewId)
                 .orElseThrow { EntityNotFoundException("리뷰를 찾을 수 없습니다. reviewId=$reviewId") }
+        val before = review.contribution()
         review.unhide()
         val saved = productReviewJpaRepository.save(review)
+        productAggregateCounter.applyReviewChange(saved.product.id, before, saved.contribution())
         adminAuditService.log("REVIEW_UNHIDE", "PRODUCT_REVIEW", saved.id, null)
         return toSummaryResponse(saved)
     }

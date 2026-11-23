@@ -18,7 +18,10 @@ class GroundedChunkIndexStore(
     private val embeddingRepository: RagChunkEmbeddingJpaRepository,
 ) : GroundedChunkIndexPort {
     @Transactional
-    override fun prepare(drafts: List<GroundedChunkDraft>, model: String): GroundedPrepareResult {
+    override fun prepare(
+        drafts: List<GroundedChunkDraft>,
+        model: String,
+    ): GroundedPrepareResult {
         val existing = chunkRepository.findAll().associateBy { it.sourceType to it.sourceId }.toMutableMap()
         val embeddings = embeddingRepository.findAll().associateBy { it.chunkId }
         val toEmbed = mutableListOf<GroundedChunkToEmbed>()
@@ -35,7 +38,11 @@ class GroundedChunkIndexStore(
     }
 
     @Transactional
-    override fun saveEmbeddings(rows: List<GroundedChunkToEmbed>, vectors: List<FloatArray>, model: String) {
+    override fun saveEmbeddings(
+        rows: List<GroundedChunkToEmbed>,
+        vectors: List<FloatArray>,
+        model: String,
+    ) {
         require(rows.size == vectors.size) { "임베딩 개수가 문단 개수와 다릅니다." }
         rows.zip(vectors).forEach { (row, vector) -> saveOne(row, vector, model) }
     }
@@ -71,7 +78,10 @@ class GroundedChunkIndexStore(
         return found
     }
 
-    private fun newChunk(draft: GroundedChunkDraft, hash: String): RagChunk =
+    private fun newChunk(
+        draft: GroundedChunkDraft,
+        hash: String,
+    ): RagChunk =
         RagChunk(
             sourceType = draft.sourceType,
             sourceId = draft.sourceId,
@@ -80,14 +90,22 @@ class GroundedChunkIndexStore(
             contentHash = hash,
         )
 
-    private fun sameEmbedding(embedding: RagChunkEmbedding?, model: String, hash: String): Boolean {
+    private fun sameEmbedding(
+        embedding: RagChunkEmbedding?,
+        model: String,
+        hash: String,
+    ): Boolean {
         if (embedding == null) {
             return false
         }
         return embedding.model == model && embedding.contentHash == hash
     }
 
-    private fun saveOne(row: GroundedChunkToEmbed, vector: FloatArray, model: String) {
+    private fun saveOne(
+        row: GroundedChunkToEmbed,
+        vector: FloatArray,
+        model: String,
+    ) {
         val found = embeddingRepository.findByChunkId(row.chunkId)
         if (found == null) {
             embeddingRepository.save(newEmbedding(row, vector, model))
@@ -96,7 +114,11 @@ class GroundedChunkIndexStore(
         found.replace(model, vector, row.contentHash)
     }
 
-    private fun newEmbedding(row: GroundedChunkToEmbed, vector: FloatArray, model: String): RagChunkEmbedding =
+    private fun newEmbedding(
+        row: GroundedChunkToEmbed,
+        vector: FloatArray,
+        model: String,
+    ): RagChunkEmbedding =
         RagChunkEmbedding(
             chunkId = row.chunkId,
             model = model,

@@ -56,7 +56,6 @@ class PasswordRecoveryServiceTest {
     @DisplayName("비밀번호가 일치하면 로그인 토큰을 발급한다")
     @Test
     fun issuesLoginTokenWhenPasswordMatches() {
-
         // given
         val rawPassword = "ValidPass!234"
         val user =
@@ -84,7 +83,6 @@ class PasswordRecoveryServiceTest {
     @DisplayName("비밀번호가 틀리면 인증에 실패한다")
     @Test
     fun failsAuthenticationWhenPasswordMismatches() {
-
         // given
         val user =
             User(

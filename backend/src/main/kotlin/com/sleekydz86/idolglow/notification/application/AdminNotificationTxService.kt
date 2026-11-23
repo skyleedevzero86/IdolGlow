@@ -17,7 +17,8 @@ class AdminNotificationTxService(
     fun notifyAdmins(event: AdminNotificationRequestedEvent): Int =
         adminRecipientPort
             .findAdminUserIds()
-            .filterNot { adminId -> event.deduplicateByLink && alreadyNotified(adminId, event) }.count { adminId ->
+            .filterNot { adminId -> event.deduplicateByLink && alreadyNotified(adminId, event) }
+            .count { adminId ->
                 notificationCommandService.create(
                     userId = adminId,
                     type = event.type,

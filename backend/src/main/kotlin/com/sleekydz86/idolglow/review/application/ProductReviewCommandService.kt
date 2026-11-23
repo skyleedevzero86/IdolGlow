@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.review.application
 import com.sleekydz86.idolglow.image.application.ImageEventPublisher
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductAggregateCounter
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationRepository
@@ -12,6 +13,7 @@ import com.sleekydz86.idolglow.review.application.dto.ReviewImageFile
 import com.sleekydz86.idolglow.review.application.dto.UpdateProductReviewCommand
 import com.sleekydz86.idolglow.review.domain.ProductReview
 import com.sleekydz86.idolglow.review.domain.ProductReviewRepository
+import com.sleekydz86.idolglow.review.domain.ReviewContribution
 import com.sleekydz86.idolglow.review.domain.ReviewRating
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
@@ -26,6 +28,7 @@ class ProductReviewCommandService(
     private val productReviewRepository: ProductReviewRepository,
     private val reservationRepository: ReservationRepository,
     private val imageEventPublisher: ImageEventPublisher,
+    private val productAggregateCounter: ProductAggregateCounter,
 ) {
     fun createReview(
         command: CreateProductReviewCommand,
@@ -54,6 +57,7 @@ class ProductReviewCommandService(
             )
 
         val productReview = productReviewRepository.save(review)
+        productAggregateCounter.applyReviewChange(product.id, ReviewContribution.NONE, productReview.contribution())
         storeImages(productReview.id, images)
         return productReview
     }
@@ -92,10 +96,12 @@ class ProductReviewCommandService(
     ): ProductReview {
         val review = findProductByReviewId(command.reviewId)
         review.validateOwner(userId = command.userId, productId = command.productId)
+        val before = review.contribution()
         review.changeReview(
             rating = ReviewRating.of(command.rating),
             content = command.content,
         )
+        productAggregateCounter.applyReviewChange(command.productId, before, review.contribution())
 
         images?.let {
             deleteImages(review.id)
@@ -117,6 +123,7 @@ class ProductReviewCommandService(
         review.validateOwner(userId = userId, productId = productId)
         deleteImages(reviewId)
         productReviewRepository.delete(review)
+        productAggregateCounter.applyReviewChange(productId, review.contribution(), ReviewContribution.NONE)
     }
 
     private fun storeImages(

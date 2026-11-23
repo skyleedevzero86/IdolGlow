@@ -16,7 +16,10 @@ class GroundedRemoteSettings(
 
     fun rerankTimeout(): Duration = seconds(RERANK_TIMEOUT, "근거 검색 재정렬 제한 시간이 없습니다.")
 
-    private fun seconds(key: String, message: String): Duration {
+    private fun seconds(
+        key: String,
+        message: String,
+    ): Duration {
         val value = environment.getProperty(key, Long::class.java)
         if (value == null || value <= 0L) {
             throw ResponseStatusException(HttpStatus.BAD_GATEWAY, message)

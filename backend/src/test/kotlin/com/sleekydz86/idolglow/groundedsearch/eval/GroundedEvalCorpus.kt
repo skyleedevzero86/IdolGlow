@@ -28,7 +28,10 @@ object GroundedEvalCorpus {
     private fun sources(cases: List<GroundedEvalCase>): List<GroundedEvalSource> =
         cases.flatMap { it.sources }.distinctBy { GroundedGoldenParser.sourceKey(it.type, it.id) }
 
-    private fun save(source: GroundedEvalSource, chunks: RagChunkJpaRepository): RagChunk =
+    private fun save(
+        source: GroundedEvalSource,
+        chunks: RagChunkJpaRepository,
+    ): RagChunk =
         chunks.saveAndFlush(
             RagChunk(
                 sourceType = source.type,
@@ -53,7 +56,11 @@ object GroundedEvalCorpus {
         }
     }
 
-    private fun row(chunk: RagChunk, vector: FloatArray, model: String): RagChunkEmbedding =
+    private fun row(
+        chunk: RagChunk,
+        vector: FloatArray,
+        model: String,
+    ): RagChunkEmbedding =
         RagChunkEmbedding(
             chunkId = chunk.id,
             model = model,
