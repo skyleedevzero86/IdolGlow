@@ -56,7 +56,7 @@ class Product(
     @Column(name = "recommendation_score", nullable = false)
     var recommendationScore: Int = 0,
 ) : BaseEntity() {
-    @Column(name = "wish_count", nullable = false, insertable = false)
+    @Column(name = "wish_count", nullable = false, insertable = false, updatable = false)
     @ColumnDefault("0")
     var wishCount: Long = 0L
         protected set
