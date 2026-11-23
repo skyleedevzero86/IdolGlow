@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.TourLocaleCallFailedException
+import com.sleekydz86.idolglow.global.config.TourApiProperties
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.AfterEach
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets
 class TourFestivalApiClientTest {
     private val server: HttpServer = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     private val requestedPaths = mutableListOf<String>()
+    private val requestedQueries = mutableListOf<String>()
 
     @AfterEach
     fun stopServer() {
@@ -72,6 +74,39 @@ class TourFestivalApiClientTest {
         assertTrue(requestedPaths.single().endsWith("/EngService2/searchFestival2"))
     }
 
+    @DisplayName("일문·중문 조회는 관광 지역 허브 키로 부르고, 국문·영문 조회는 국문 서비스 키로 부른다")
+    @Test
+    fun japaneseAndChineseUseTourApiServiceKey() {
+        // given
+        응답을_돌려주는_서버(축제_응답("1037621", "축제"))
+        val client = 클라이언트(languageKey = "language-key")
+
+        // when
+        listOf("ja", "zh", "en").forEach { client.searchFestivalInLocale(it, "20261120", "20261220", 1, 10) }
+        client.searchFestival("20261120", "20261220", pageNo = 1, numOfRows = 10)
+
+        // then
+        val usedKeys = requestedQueries.map(::serviceKeyOf)
+        assertEquals(listOf("language-key", "language-key", "test-key", "test-key"), usedKeys)
+    }
+
+    @DisplayName("관광 지역 허브 키가 비어 있으면 일문 조회도 국문 서비스 키로 부른다")
+    @Test
+    fun japaneseFallsBackToKoreanKeyWhenTourApiKeyIsBlank() {
+        // given
+        응답을_돌려주는_서버(축제_응답("1037621", "축제"))
+        val client = 클라이언트(languageKey = " ")
+
+        // when
+        client.searchFestivalInLocale("ja", "20261120", "20261220", pageNo = 1, numOfRows = 10)
+
+        // then
+        assertEquals(listOf("test-key"), requestedQueries.map(::serviceKeyOf))
+    }
+
+    private fun serviceKeyOf(query: String): String =
+        query.split('&').first { it.startsWith("serviceKey=") }.substringAfter('=')
+
     private fun 응답을_돌려주는_서버(
         body: String,
         status: Int = 200,
@@ -79,6 +114,7 @@ class TourFestivalApiClientTest {
         val bytes = body.toByteArray(StandardCharsets.UTF_8)
         server.createContext("/") { exchange ->
             requestedPaths += exchange.requestURI.path
+            requestedQueries += exchange.requestURI.rawQuery
             exchange.responseHeaders.add("Content-Type", "application/json; charset=UTF-8")
             exchange.sendResponseHeaders(status, bytes.size.toLong())
             exchange.responseBody.use { it.write(bytes) }
@@ -86,7 +122,7 @@ class TourFestivalApiClientTest {
         server.start()
     }
 
-    private fun 클라이언트(): TourFestivalApiClient =
+    private fun 클라이언트(languageKey: String = ""): TourFestivalApiClient =
         TourFestivalApiClient(
             webClient = WebClient.builder().build(),
             objectMapper = ObjectMapper(),
@@ -95,6 +131,7 @@ class TourFestivalApiClientTest {
                     baseUrl = "http://127.0.0.1:${server.address.port}/B551011/KorService2",
                     serviceKey = "test-key",
                 ),
+            tourApiProperties = TourApiProperties(serviceKey = languageKey),
         )
 
     private fun 축제_응답(
