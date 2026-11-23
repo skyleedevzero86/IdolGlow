@@ -139,7 +139,8 @@ class TossBillingReconcileScheduler(
         }
     }
 
-    private fun failureTitle(subscriptionId: Long?): String = if (subscriptionId != null) "Glow Pass 결제 실패" else "결제 실패"
+    private fun failureTitle(subscriptionId: Long?): String =
+        if (subscriptionId != null) "Glow Pass 결제 실패" else "결제 실패"
 
     private fun failureBody(
         subscriptionId: Long?,

@@ -392,5 +392,7 @@ private class FailingPerformanceSource(
     override fun fetch(
         from: LocalDate,
         to: LocalDate,
-    ): List<CollectedPerformance> = throw IllegalStateException("세종문화회관 인증키가 유효하지 않습니다.")
+    ): List<CollectedPerformance> {
+        throw IllegalStateException("세종문화회관 인증키가 유효하지 않습니다.")
+    }
 }

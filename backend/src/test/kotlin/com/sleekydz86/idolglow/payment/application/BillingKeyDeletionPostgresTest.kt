@@ -408,12 +408,7 @@ class BillingKeyDeletionPostgresTest : PostgresIntegrationTest() {
         billingKey: String,
         withSubscription: Boolean,
     ): SeededCard {
-        val token =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val token = UUID.randomUUID().toString().replace("-", "").take(8)
         val user =
             userJpaRepository.save(
                 User(email = "del$token@test.com", nickname = Nickname.of("d$token")),
@@ -519,8 +514,7 @@ class BillingKeyDeletionPostgresTest : PostgresIntegrationTest() {
         methodRepository.findDeletionRetryIds(
             TossBillingKeyDeletionStatus.DELETE_PENDING,
             now.minusMinutes(1),
-            org.springframework.data.domain.PageRequest
-                .of(0, 100),
+            org.springframework.data.domain.PageRequest.of(0, 100),
         )
 
     private fun deletedBody(

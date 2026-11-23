@@ -26,5 +26,6 @@ class TossBillingOneOffChargeController(
     fun charge(
         @LoginUser userId: Long,
         @Valid @RequestBody request: ChargeTossBillingRequest,
-    ): ResponseEntity<TossBillingChargeResponse> = ResponseEntity.ok(tossBillingService.chargeNow(userId, request))
+    ): ResponseEntity<TossBillingChargeResponse> =
+        ResponseEntity.ok(tossBillingService.chargeNow(userId, request))
 }

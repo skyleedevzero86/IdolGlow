@@ -134,7 +134,8 @@ class TranslationTxService(
         return if (next == TranslationStatus.VISIBLE) OUTCOME_VISIBLE else OUTCOME_REVIEW
     }
 
-    private fun retryLabel(status: TranslationStatus): String = if (status == TranslationStatus.FAILED) OUTCOME_FAILED else OUTCOME_RETRY
+    private fun retryLabel(status: TranslationStatus): String =
+        if (status == TranslationStatus.FAILED) OUTCOME_FAILED else OUTCOME_RETRY
 
     private fun count(label: String) {
         meterRegistry.counter(PROCESSED_METRIC, "outcome", label).increment()

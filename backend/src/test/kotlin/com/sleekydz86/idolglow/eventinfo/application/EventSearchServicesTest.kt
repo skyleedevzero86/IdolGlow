@@ -107,7 +107,8 @@ class EventSearchServicesTest {
     private fun 번역(
         locale: String,
         title: String,
-    ): EventTranslation = EventTranslation(globalId = "gid-a", locale = locale, title = title, origin = EventTranslationOrigin.PROVIDER)
+    ): EventTranslation =
+        EventTranslation(globalId = "gid-a", locale = locale, title = title, origin = EventTranslationOrigin.PROVIDER)
 
     private fun 결과(globalId: String): EventSearchHit =
         EventSearchHit(globalId, "서울 공연", mapOf("en" to "Seoul Concert"), "세종문화회관", null, null)

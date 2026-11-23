@@ -6,11 +6,7 @@ import java.math.BigDecimal
 object GroundedEvalScore {
     fun cutoff(): Int = (2 shl 1) + 1
 
-    fun recallAt(
-        ranked: List<String>,
-        expected: Set<String>,
-        cutoff: Int,
-    ): Double {
+    fun recallAt(ranked: List<String>, expected: Set<String>, cutoff: Int): Double {
         if (expected.isEmpty()) {
             return 0.toDouble()
         }
@@ -18,10 +14,7 @@ object GroundedEvalScore {
         return hit.toDouble() / expected.size.toDouble()
     }
 
-    fun reciprocalRank(
-        ranked: List<String>,
-        expected: Set<String>,
-    ): Double {
+    fun reciprocalRank(ranked: List<String>, expected: Set<String>): Double {
         val index = ranked.indexOfFirst { it in expected }
         if (index < 0) {
             return 0.toDouble()
@@ -36,10 +29,7 @@ object GroundedEvalScore {
         return values.sum() / values.size.toDouble()
     }
 
-    fun same(
-        actual: GroundedChecked,
-        expected: GroundedChecked,
-    ): Map<String, Boolean> =
+    fun same(actual: GroundedChecked, expected: GroundedChecked): Map<String, Boolean> =
         mapOf(
             "region" to (actual.region == expected.region),
             "dateFrom" to (actual.dateFrom == expected.dateFrom),
@@ -49,10 +39,7 @@ object GroundedEvalScore {
             "people" to (actual.people == expected.people),
         )
 
-    private fun sameMoney(
-        actual: BigDecimal?,
-        expected: BigDecimal?,
-    ): Boolean {
+    private fun sameMoney(actual: BigDecimal?, expected: BigDecimal?): Boolean {
         if (actual == null || expected == null) {
             return actual == null && expected == null
         }

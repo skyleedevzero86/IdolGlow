@@ -124,11 +124,10 @@ class LlmGatewayTest {
                     .build(),
             )
         var localCalls = 0
-        val local =
-            FakeProvider("local", false) {
-                localCalls++
-                throw IllegalStateException("down")
-            }
+        val local = FakeProvider("local", false) {
+            localCalls++
+            throw IllegalStateException("down")
+        }
         val openai = FakeProvider("openai", true) { "answer" }
         val props = LlmGatewayProperties(externalEnabled = true, chains = mapOf("subway" to listOf("local", "openai")))
         val gateway = gateway(listOf(local, openai), props, breakers)

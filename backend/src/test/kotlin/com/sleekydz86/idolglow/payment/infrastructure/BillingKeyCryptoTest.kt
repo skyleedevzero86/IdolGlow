@@ -37,3 +37,4 @@ class BillingKeyCryptoTest {
         assertEquals(BillingKeyCrypto.sha256Hex(plain), BillingKeyCrypto.sha256Hex(plain))
     }
 }
+

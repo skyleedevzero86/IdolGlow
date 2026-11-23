@@ -107,7 +107,8 @@ class GlowCommunitySchemaMigrationTest {
         connection
             .prepareStatement(
                 "insert into users (email, nickname, role) values (concat(?, '@example.com'), ?, 'USER') returning id",
-            ).apply {
+            )
+            .apply {
                 setString(1, nickname)
                 setString(2, nickname)
             }.executeQuery()
@@ -180,50 +181,18 @@ class GlowCommunitySchemaMigrationTest {
         private const val CHECK_VIOLATION = "23514"
         private val POST_COLUMNS =
             listOf(
-                "id",
-                "user_id",
-                "tag",
-                "title",
-                "content_markdown",
-                "like_count",
-                "comment_count",
-                "report_count",
-                "last_reported_at",
-                "blinded",
-                "blinded_at",
-                "blind_reason",
-                "deleted_at",
-                "created_at",
-                "updated_at",
+                "id", "user_id", "tag", "title", "content_markdown", "like_count", "comment_count", "report_count",
+                "last_reported_at", "blinded", "blinded_at", "blind_reason", "deleted_at", "created_at", "updated_at",
             )
         private val COMMENT_COLUMNS =
             listOf(
-                "id",
-                "user_id",
-                "target_type",
-                "target_key",
-                "target_title",
-                "target_path",
-                "content_markdown",
-                "parent_id",
-                "root_id",
-                "depth",
-                "deleted_at",
-                "created_at",
-                "updated_at",
+                "id", "user_id", "target_type", "target_key", "target_title", "target_path", "content_markdown",
+                "parent_id", "root_id", "depth", "deleted_at", "created_at", "updated_at",
             )
         private val VIEW_COLUMNS =
             listOf(
-                "id",
-                "user_id",
-                "content_type",
-                "content_key",
-                "title",
-                "path",
-                "image_url",
-                "viewed_at",
-                "created_at",
-                "updated_at",
+                "id", "user_id", "content_type", "content_key", "title", "path",
+                "image_url", "viewed_at", "created_at", "updated_at",
             )
         private val NEW_NOTIFICATION_TYPES =
             listOf("COMMENT_ON_MY_POST", "REPLY_TO_MY_COMMENT", "ADMIN_POST_REPORTED", "ADMIN_PAYMENT_ISSUE")

@@ -10,10 +10,7 @@ class InMemoryVectorSearchAdapter(
     private val embeddingRepository: RagChunkEmbeddingJpaRepository,
 ) : VectorSearchPort {
     @Transactional(readOnly = true)
-    override fun search(
-        vector: FloatArray,
-        limit: Int,
-    ): List<Long> =
+    override fun search(vector: FloatArray, limit: Int): List<Long> =
         embeddingRepository
             .findAll()
             .map { embedding ->

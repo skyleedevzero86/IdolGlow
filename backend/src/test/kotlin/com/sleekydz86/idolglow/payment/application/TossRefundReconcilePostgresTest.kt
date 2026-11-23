@@ -243,9 +243,7 @@ class TossRefundReconcilePostgresTest : PostgresIntegrationTest() {
         jdbcTemplate.update("update payments set payment_key = ? where id = ?", paymentKey, created.payment.paymentId)
         jdbcTemplate.update(
             "update reservations set visit_date = ? where id = ?",
-            java.time.LocalDate
-                .now()
-                .plusDays(30),
+            java.time.LocalDate.now().plusDays(30),
             created.id,
         )
         reservationPaymentService.handlePaymentSucceeded(created.payment.paymentReference)

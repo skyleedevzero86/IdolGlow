@@ -11,6 +11,7 @@ class GroundedConditionCheckTest {
     @Test
     @DisplayName("틀린 추출 조건은 무시한다")
     fun invalidExtractedConditionIsIgnored() {
+
         // given
         val draft =
             GroundedConditionDraft(

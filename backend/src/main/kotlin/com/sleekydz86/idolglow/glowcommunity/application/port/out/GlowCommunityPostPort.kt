@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.glowcommunity.application.port.out
 
 import com.sleekydz86.idolglow.global.support.OffsetPageRequest
-import com.sleekydz86.idolglow.global.support.OffsetSlice
 import com.sleekydz86.idolglow.glowcommunity.application.dto.GlowCommunityPostSearchQuery
+import com.sleekydz86.idolglow.global.support.OffsetSlice
 import com.sleekydz86.idolglow.glowcommunity.application.dto.GlowCommunityViewer
 import com.sleekydz86.idolglow.glowcommunity.domain.GlowCommunityPost
 

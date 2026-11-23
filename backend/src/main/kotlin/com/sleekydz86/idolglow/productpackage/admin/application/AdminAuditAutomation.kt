@@ -6,15 +6,15 @@ data class AdminAuditAutomationChoice(
 )
 
 object AdminAuditAutomation {
-    private val keptByPerson =
-        setOf(
-            "OPS_CHANGE_APPROVE",
-            "OPS_CHANGE_APPLY",
-            "OPS_CHANGE_REVERT",
-            "OPS_CHANGE_REJECT",
-        )
+    private val keptByPerson = setOf(
+        "OPS_CHANGE_APPROVE",
+        "OPS_CHANGE_APPLY",
+        "OPS_CHANGE_REVERT",
+        "OPS_CHANGE_REJECT",
+    )
 
-    fun basis(localProfile: Boolean): String = if (localProfile) "로컬 데이터 기준" else "운영 데이터 기준"
+    fun basis(localProfile: Boolean): String =
+        if (localProfile) "로컬 데이터 기준" else "운영 데이터 기준"
 
     fun choose(actions: List<String>): AdminAuditAutomationChoice {
         if (actions.isEmpty()) {

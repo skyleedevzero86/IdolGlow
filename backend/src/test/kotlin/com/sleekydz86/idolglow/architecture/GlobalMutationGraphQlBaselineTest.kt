@@ -12,6 +12,7 @@ class GlobalMutationGraphQlBaselineTest {
     @DisplayName("global 모듈 graphql 에 도메인 mutation 핸들러가 없다")
     @Test
     fun globalGraphqlHasNoDomainMutations() {
+
         // given
         val sourceRoot = 메인코틀린소스루트()
 

@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationCommandService
 import com.sleekydz86.idolglow.productpackage.reservation.application.ReservationExpirationScheduler
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.ReservationCreatedResponse
@@ -13,7 +14,6 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStat
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
 import com.sleekydz86.idolglow.support.PostgresReservationFixture
 import io.mockk.every
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull

@@ -208,7 +208,8 @@ class Payment(
         status = if (next >= amount) PaymentStatus.REFUNDED else PaymentStatus.PARTIAL_CANCELED
     }
 
-    private fun isOpenForGatewayOutcome(): Boolean = status == PaymentStatus.PENDING || status == PaymentStatus.CONFIRMING
+    private fun isOpenForGatewayOutcome(): Boolean =
+        status == PaymentStatus.PENDING || status == PaymentStatus.CONFIRMING
 
     companion object {
         fun createMock(

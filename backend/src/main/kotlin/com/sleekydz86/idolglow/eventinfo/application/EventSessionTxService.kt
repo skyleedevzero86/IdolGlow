@@ -72,11 +72,7 @@ class EventSessionTxService(
         val revived = existing.filter { it.startsAt.toInstant() in desired }.count { it.reschedule() }
         val added = (desired - known).sorted()
         eventSessionPort.saveAll(added.map { newSession(ref, it) })
-        val previous =
-            ref.sessionHorizon
-                ?.plusDays(1)
-                ?.atStartOfDay(zone)
-                ?.toInstant()
+        val previous = ref.sessionHorizon?.plusDays(1)?.atStartOfDay(zone)?.toInstant()
         val addedInsideOld = if (previous == null) added.size else added.count { it < previous }
         return EventSessionSyncResult(added.size, cancelled, revived, cancelled + revived + addedInsideOld > 0)
     }

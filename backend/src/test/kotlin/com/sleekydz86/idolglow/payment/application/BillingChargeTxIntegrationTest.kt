@@ -271,7 +271,8 @@ class BillingChargeTxIntegrationTest {
         due: LocalDateTime,
     ): TossBillingCharge = chargeRepository.findByOrderId(BillingChargeExecutor.periodOrderId(subscriptionId, due))!!
 
-    private fun latestAttempt(charge: TossBillingCharge) = attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)!!
+    private fun latestAttempt(charge: TossBillingCharge) =
+        attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)!!
 
     private fun doneLookup(amount: Long): TossApiResponse {
         val body =

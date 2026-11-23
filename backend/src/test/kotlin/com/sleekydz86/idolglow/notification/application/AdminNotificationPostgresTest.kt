@@ -123,12 +123,7 @@ class AdminNotificationPostgresTest : PostgresIntegrationTest() {
         }
 
     private fun member(role: UserRole): User {
-        val suffix =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val suffix = UUID.randomUUID().toString().replace("-", "").take(8)
         val user = User(email = "an$suffix@test.com", nickname = Nickname.of("n$suffix"), role = role)
         return userJpaRepository.save(user)
     }

@@ -12,6 +12,7 @@ class ControllerDirectRepositoryBaselineTest {
     @DisplayName("controller가 repository를 직접 참조하는 건수가 기준값을 초과하지 않는다")
     @Test
     fun controllerDirectRepositoryCountStaysWithinBaseline() {
+
         // given
         val sourceRoot = 메인코틀린소스루트()
 

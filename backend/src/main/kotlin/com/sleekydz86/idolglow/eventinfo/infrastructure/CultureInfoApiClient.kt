@@ -79,7 +79,7 @@ class CultureInfoApiClient(
             markFailedCall()
             return emptyList()
         }
-        val perTp = (numOfRows / SERVICE_TYPES.size).coerceAtLeast(1).coerceAtMost(1000)
+        val perTp =(numOfRows / SERVICE_TYPES.size).coerceAtLeast(1).coerceAtMost(1000)
         val dateParam = properties.livelihoodDateParam.trim().ifBlank { "stdDate" }
         val base =
             SERVICE_TYPES.flatMap { tp ->
@@ -466,7 +466,8 @@ class CultureInfoApiClient(
         return true
     }
 
-    private fun markUnauthorizedCooldown(): Boolean = markCooldown(unauthorizedBlockedUntilMillis, UNAUTHORIZED_COOLDOWN)
+    private fun markUnauthorizedCooldown(): Boolean =
+        markCooldown(unauthorizedBlockedUntilMillis, UNAUTHORIZED_COOLDOWN)
 
     private fun markCooldown(
         blockedUntilMillis: AtomicLong,

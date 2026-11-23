@@ -9,12 +9,7 @@ object EventLocale {
         acceptLanguage: String?,
     ): String {
         val query = lang?.trim()?.takeIf { it.isNotEmpty() }
-        val header =
-            acceptLanguage
-                ?.substringBefore(',')
-                ?.substringBefore(';')
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() }
+        val header = acceptLanguage?.substringBefore(',')?.substringBefore(';')?.trim()?.takeIf { it.isNotEmpty() }
         return normalize(query ?: header)
     }
 

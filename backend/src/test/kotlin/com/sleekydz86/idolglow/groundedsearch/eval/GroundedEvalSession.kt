@@ -65,20 +65,14 @@ class GroundedEvalSession(
         )
     }
 
-    private fun keyword(
-        question: String,
-        chunks: Map<Long, RagChunk>,
-    ): List<String> = keys(keywordSearchPort.search(question, GroundedSearchLimits.keywordLimit()), chunks)
+    private fun keyword(question: String, chunks: Map<Long, RagChunk>): List<String> =
+        keys(keywordSearchPort.search(question, GroundedSearchLimits.keywordLimit()), chunks)
 
-    private fun vector(
-        question: String,
-        chunks: Map<Long, RagChunk>,
-    ): List<String> = keys(vectorSearchPort.search(queryVector(question), GroundedSearchLimits.vectorLimit()), chunks)
+    private fun vector(question: String, chunks: Map<Long, RagChunk>): List<String> =
+        keys(vectorSearchPort.search(queryVector(question), GroundedSearchLimits.vectorLimit()), chunks)
 
-    private fun hybrid(
-        question: String,
-        chunks: Map<Long, RagChunk>,
-    ): List<String> = keys(fuse(question).map { it.chunkId }, chunks)
+    private fun hybrid(question: String, chunks: Map<Long, RagChunk>): List<String> =
+        keys(fuse(question).map { it.chunkId }, chunks)
 
     private fun reranked(question: String): List<String> =
         rerankPort.rerank(question, hitPort.read(fuse(question))).map {
@@ -96,10 +90,7 @@ class GroundedEvalSession(
         )
     }
 
-    private fun keys(
-        ids: List<Long>,
-        chunks: Map<Long, RagChunk>,
-    ): List<String> =
+    private fun keys(ids: List<Long>, chunks: Map<Long, RagChunk>): List<String> =
         ids.mapNotNull { id ->
             chunks[id]?.let { GroundedGoldenParser.sourceKey(it.sourceType, it.sourceId) }
         }
@@ -112,5 +103,6 @@ class GroundedEvalSession(
         return vector
     }
 
-    private fun checked(question: String): GroundedChecked = GroundedConditionCheck.accept(extractPort.extract(question))
+    private fun checked(question: String): GroundedChecked =
+        GroundedConditionCheck.accept(extractPort.extract(question))
 }

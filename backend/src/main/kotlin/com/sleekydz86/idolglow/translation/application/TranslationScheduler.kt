@@ -59,7 +59,8 @@ class TranslationScheduler(
     fun refreshMetrics() {
         runCatching {
             rows.forEach { (status, value) -> value.set(contentTranslationPort.countByStatus(status, null)) }
-        }.onFailure { log.warn("번역 지표 갱신에 실패했습니다.", it) }
+        }
+            .onFailure { log.warn("번역 지표 갱신에 실패했습니다.", it) }
     }
 
     fun rows(status: TranslationStatus): Long? = rows[status]?.get()

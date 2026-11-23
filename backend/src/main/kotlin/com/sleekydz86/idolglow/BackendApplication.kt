@@ -24,10 +24,10 @@ import com.sleekydz86.idolglow.global.config.SubwayProperties
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
 import com.sleekydz86.idolglow.global.config.TourApiProperties
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
+import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.global.llm.LangfuseProperties
 import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
 import com.sleekydz86.idolglow.global.llm.LocalLlmProperties
-import com.sleekydz86.idolglow.platform.auth.config.PlatformAuthProperties
 import com.sleekydz86.idolglow.translation.application.TranslationProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties

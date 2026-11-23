@@ -37,6 +37,7 @@ class GraphQlMutationBehaviorTest {
     @DisplayName("인증 없이 toggleWish 호출시 오류를 반환한다")
     @Test
     fun toggleWishWithoutAuthReturnsError() {
+
         // given
         val query =
             """
@@ -62,6 +63,7 @@ class GraphQlMutationBehaviorTest {
     @DisplayName("인증된 toggleWish 호출은 존재하지 않는 상품이면 오류를 반환한다")
     @Test
     fun toggleWishForMissingProductReturnsError() {
+
         // given
         val token = jwtProvider.generateToken(userId = 999_999L, role = UserRole.USER)
         val query =

@@ -22,7 +22,7 @@ class GlowPassMembershipQueryTest {
     fun activeSubscriptionIsMember() {
         // given
         every { subscriptionRepository.findByUserIdAndPlanCode(1L, "MONTHLY") } returns
-            // when
+        // when
             subscription(TossBillingSubscriptionStatus.ACTIVE, LocalDateTime.of(2026, 11, 1, 0, 0))
 
         // then
@@ -34,7 +34,7 @@ class GlowPassMembershipQueryTest {
     fun pausedSubscriptionIsNotMember() {
         // given
         every { subscriptionRepository.findByUserIdAndPlanCode(1L, "MONTHLY") } returns
-            // when
+        // when
             subscription(TossBillingSubscriptionStatus.PAUSED, LocalDateTime.of(2026, 11, 1, 0, 0))
 
         // then

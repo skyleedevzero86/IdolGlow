@@ -399,9 +399,10 @@ class TossBillingService(
             true
         }.getOrDefault(false)
 
-    private fun resolveDefaultMethod(userId: Long): TossBillingMethod? =
-        methodRepository.findByUserIdAndActiveTrueAndIsDefaultTrue(userId)
+    private fun resolveDefaultMethod(userId: Long): TossBillingMethod? {
+        return methodRepository.findByUserIdAndActiveTrueAndIsDefaultTrue(userId)
             ?: methodRepository.findAllByUserIdAndActiveTrueOrderByIsDefaultDescIdDesc(userId).firstOrNull()
+    }
 
     private fun requireEnabled() {
         require(tossPaymentProperties.enabled) { "토스 결제가 비활성화되어 있습니다. payment.toss.enabled=true 로 설정하세요." }

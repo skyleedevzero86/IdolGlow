@@ -153,12 +153,7 @@ class ContentViewPostgresTest : PostgresIntegrationTest() {
     ) = contentViewUseCase.record(RecordContentViewCommand(user.id, type, key, "제목", "/contents/$key", imageUrl))
 
     private fun member(): User {
-        val suffix =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val suffix = UUID.randomUUID().toString().replace("-", "").take(8)
         return userJpaRepository.save(User(email = "cv$suffix@test.com", nickname = Nickname.of("v$suffix")))
     }
 }

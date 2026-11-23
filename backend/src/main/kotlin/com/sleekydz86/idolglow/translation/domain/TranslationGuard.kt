@@ -64,9 +64,7 @@ object TranslationGuard {
             }
             checkField(input, field, original, translated, hard, soft)
         }
-        input.translated.keys
-            .filter { it !in input.source }
-            .forEach { hard += "unknown_field:$it" }
+        input.translated.keys.filter { it !in input.source }.forEach { hard += "unknown_field:$it" }
         return GuardResult(hard.distinct(), soft.distinct())
     }
 

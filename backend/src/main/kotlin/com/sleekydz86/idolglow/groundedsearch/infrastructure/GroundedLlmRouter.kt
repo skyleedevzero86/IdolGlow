@@ -16,21 +16,14 @@ class GroundedLlmRouter(
     private val anthropic: GroundedAnthropicGateway,
     private val settings: GroundedRemoteSettings,
     private val objectMapper: ObjectMapper,
-) : ConditionExtractPort,
-    AnswerGeneratePort {
+) : ConditionExtractPort, AnswerGeneratePort {
     override fun extract(query: String): GroundedConditionDraft =
         parse(complete(GroundedLlmPrompts.EXTRACT_SYSTEM, GroundedLlmPrompts.extractUser(query), true))
 
-    override fun answer(
-        query: String,
-        citations: List<GroundedCitationPrompt>,
-    ): String? = complete(GroundedLlmPrompts.ANSWER_SYSTEM, GroundedLlmPrompts.answerUser(query, citations), false)
+    override fun answer(query: String, citations: List<GroundedCitationPrompt>): String? =
+        complete(GroundedLlmPrompts.ANSWER_SYSTEM, GroundedLlmPrompts.answerUser(query, citations), false)
 
-    private fun complete(
-        system: String,
-        user: String,
-        json: Boolean,
-    ): String? =
+    private fun complete(system: String, user: String, json: Boolean): String? =
         when (settings.text(PROVIDER).lowercase()) {
             "anthropic", "claude" -> anthropic.complete(system, user)
             "openai", "gpt" -> openAi.complete(system, user, json)
@@ -53,23 +46,10 @@ class GroundedLlmRouter(
     }
 
     private fun strip(raw: String): String =
-        raw
-            .trim()
-            .removePrefix("```json")
-            .removePrefix("```")
-            .removeSuffix("```")
-            .trim()
+        raw.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
 
-    private fun textOf(
-        node: JsonNode,
-        field: String,
-    ): String? =
-        node
-            .path(field)
-            .takeUnless { it.isMissingNode || it.isNull }
-            ?.asText()
-            ?.trim()
-            ?.ifBlank { null }
+    private fun textOf(node: JsonNode, field: String): String? =
+        node.path(field).takeUnless { it.isMissingNode || it.isNull }?.asText()?.trim()?.ifBlank { null }
 
     private companion object {
         private const val PROVIDER = "app.grounded-search.llm.provider"

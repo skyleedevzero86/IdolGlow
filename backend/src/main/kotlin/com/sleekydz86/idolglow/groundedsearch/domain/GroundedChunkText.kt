@@ -21,5 +21,6 @@ object GroundedChunkText {
 
     fun fromSection(section: IdolGlowArticleSection): String = join(section.heading, section.body)
 
-    private fun join(vararg parts: String?): String = parts.mapNotNull { it?.trim() }.filter { it.isNotEmpty() }.joinToString("\n")
+    private fun join(vararg parts: String?): String =
+        parts.mapNotNull { it?.trim() }.filter { it.isNotEmpty() }.joinToString("\n")
 }

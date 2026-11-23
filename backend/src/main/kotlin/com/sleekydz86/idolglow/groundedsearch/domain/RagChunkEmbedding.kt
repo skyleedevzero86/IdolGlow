@@ -33,11 +33,7 @@ class RagChunkEmbedding(
     @Column(name = "content_hash", nullable = false, length = 64)
     var contentHash: String,
 ) {
-    fun replace(
-        model: String,
-        vector: FloatArray,
-        contentHash: String,
-    ) {
+    fun replace(model: String, vector: FloatArray, contentHash: String) {
         this.model = model
         this.dims = vector.size
         this.vectorBytes = GroundedVectorCodec.encode(vector)

@@ -72,7 +72,8 @@ class OpenAiGroundedEmbeddingClient(
         throw ResponseStatusException(HttpStatus.BAD_GATEWAY, "근거 검색 임베딩 호출에 실패했습니다.", error)
     }
 
-    private fun ready(): Boolean = environment.getProperty(ENABLED_KEY, Boolean::class.java, false) && apiKey().isNotBlank()
+    private fun ready(): Boolean =
+        environment.getProperty(ENABLED_KEY, Boolean::class.java, false) && apiKey().isNotBlank()
 
     private fun apiKey(): String = environment.getProperty(API_KEY).orEmpty().trim()
 

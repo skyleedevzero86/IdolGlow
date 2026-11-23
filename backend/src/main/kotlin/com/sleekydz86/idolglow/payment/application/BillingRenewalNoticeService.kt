@@ -90,9 +90,7 @@ class BillingRenewalNoticeService(
               <p style="margin:0 0 12px;">${escapeHtml(plan)}</p>
               <p style="margin:0 0 20px;">계속 이용할지, 이번 기간만 쓰고 끝낼지 아래에서 고를 수 있어요.</p>
               <p style="margin:0 0 20px;">
-                <a href="${escapeHtml(
-                link,
-            )}" style="display:inline-block;padding:12px 20px;background:#e94560;color:#fff;text-decoration:none;font-weight:700;">연장 여부 선택하기</a>
+                <a href="${escapeHtml(link)}" style="display:inline-block;padding:12px 20px;background:#e94560;color:#fff;text-decoration:none;font-weight:700;">연장 여부 선택하기</a>
               </p>
               <p style="margin:0;color:#8888a0;font-size:13px;">따로 고르지 않으면 지금 설정대로 진행됩니다.</p>
             </body>

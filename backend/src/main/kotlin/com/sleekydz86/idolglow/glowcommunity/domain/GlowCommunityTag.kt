@@ -12,7 +12,8 @@ enum class GlowCommunityTag(
     TRAVEL("travel", "나의 여행 계획"),
     ;
 
-    private fun matches(value: String): Boolean = code.equals(value, ignoreCase = true) || name.equals(value, ignoreCase = true)
+    private fun matches(value: String): Boolean =
+        code.equals(value, ignoreCase = true) || name.equals(value, ignoreCase = true)
 
     companion object {
         fun fromCode(raw: String): GlowCommunityTag {

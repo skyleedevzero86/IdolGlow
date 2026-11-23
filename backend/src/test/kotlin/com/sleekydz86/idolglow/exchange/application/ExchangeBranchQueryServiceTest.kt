@@ -36,6 +36,7 @@ class ExchangeBranchQueryServiceTest {
     @DisplayName("경로 조회 api 가 없으면 데모 이동 시간을 사용한다")
     @Test
     fun usesDemoTravelTimeWithoutRouteApi() {
+
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
@@ -51,6 +52,7 @@ class ExchangeBranchQueryServiceTest {
     @DisplayName("지점 데이터가 부족하면 템플릿 지점으로 보충한다")
     @Test
     fun fillsMissingBranchesFromTemplate() {
+
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
@@ -81,6 +83,7 @@ class ExchangeBranchQueryServiceTest {
     @DisplayName("db 지점이 없으면 공식 환율로 전체 지점 목록을 생성한다")
     @Test
     fun buildsAllBranchesFromOfficialRates() {
+
         // given
         val jpyRows = 엔화_템플릿_지점목록()
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns jpyRows
@@ -117,6 +120,7 @@ class ExchangeBranchQueryServiceTest {
     @DisplayName("경로 조회 api 결과가 있으면 해당 값을 사용한다")
     @Test
     fun usesRouteApiResultWhenPresent() {
+
         // given
         every { exchangeBranchJpaRepository.findByCurrencyOrderBySortOrderAsc("JPY") } returns
             listOf(

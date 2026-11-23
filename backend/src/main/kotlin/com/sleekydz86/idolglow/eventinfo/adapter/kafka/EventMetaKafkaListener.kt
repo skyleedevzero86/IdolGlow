@@ -63,12 +63,7 @@ class EventMetaKafkaListener(
     private fun header(
         record: ConsumerRecord<String, String>,
         name: String,
-    ): String? =
-        record
-            .headers()
-            .lastHeader(name)
-            ?.value()
-            ?.toString(Charsets.UTF_8)
+    ): String? = record.headers().lastHeader(name)?.value()?.toString(Charsets.UTF_8)
 
     private fun read(payload: String): EventMetaMessage = objectMapper.readValue(payload, EventMetaMessage::class.java)
 

@@ -9,9 +9,5 @@ interface GroundedCatalogPort {
 
     fun optionOwners(productIds: Set<Long>): Map<Long, Long>
 
-    fun facts(
-        productIds: Set<Long>,
-        dateFrom: LocalDate?,
-        dateTo: LocalDate?,
-    ): List<GroundedProductFacts>
+    fun facts(productIds: Set<Long>, dateFrom: LocalDate?, dateTo: LocalDate?): List<GroundedProductFacts>
 }
