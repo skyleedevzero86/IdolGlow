@@ -51,8 +51,8 @@ class EventTranslation(
         title: String,
         synopsis: String?,
     ): Boolean {
-        if (!incoming.canReplace(origin)) return false
-        if (incoming == origin && this.title == title && this.synopsis == synopsis) return false
+        val unchanged = incoming == origin && this.title == title && this.synopsis == synopsis
+        if (!incoming.canReplace(origin) || unchanged) return false
         this.origin = incoming
         this.title = title
         this.synopsis = synopsis
@@ -68,19 +68,35 @@ class EventTranslation(
             title: String,
             synopsis: String?,
         ): EventTranslation =
-            create(globalId, EventLocale.normalize(locale), title.trim().take(TITLE_MAX), normalizeSynopsis(synopsis), EventTranslationOrigin.PROVIDER)
+            create(
+                globalId = globalId,
+                locale = EventLocale.normalize(locale),
+                title = title.trim().take(TITLE_MAX),
+                synopsis = normalizeSynopsis(synopsis),
+                origin = EventTranslationOrigin.PROVIDER,
+            )
 
         fun machine(
             globalId: String,
             locale: String,
             title: String,
-        ): EventTranslation = create(globalId, targetLocale(locale), requireWithinMax(title.trim(), locale), null, EventTranslationOrigin.MACHINE)
+        ): EventTranslation = createTargeted(globalId, locale, title, EventTranslationOrigin.MACHINE)
 
         fun manual(
             globalId: String,
             locale: String,
             title: String,
-        ): EventTranslation = create(globalId, targetLocale(locale), requireWithinMax(title.trim(), locale), null, EventTranslationOrigin.MANUAL)
+        ): EventTranslation = createTargeted(globalId, locale, title, EventTranslationOrigin.MANUAL)
+
+        private fun createTargeted(
+            globalId: String,
+            locale: String,
+            title: String,
+            origin: EventTranslationOrigin,
+        ): EventTranslation {
+            val normalizedLocale = targetLocale(locale)
+            return create(globalId, normalizedLocale, requireWithinMax(title.trim(), locale), null, origin)
+        }
 
         private fun targetLocale(locale: String): String {
             val normalized = EventLocale.normalize(locale)

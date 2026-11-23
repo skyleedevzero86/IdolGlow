@@ -124,12 +124,12 @@ class TourEventTranslationCollector(
     private fun resolve(
         event: FestivalEvent,
         korean: Lazy<List<FestivalEvent>>,
-    ): Link? {
-        val direct = eventSourceRefPort.findBySourceAndSourceId(TOUR_SOURCE, event.contentId)
-        if (direct != null) return Link(direct, LinkMethod.CONTENT_ID)
-        FestivalCoordinateMatch.findSingle(event, korean.value)?.let { return linkTo(it, LinkMethod.COORDINATE) }
-        return FestivalNameMatch.findSingle(event, korean.value)?.let { linkTo(it, LinkMethod.NAME) }
-    }
+    ): Link? =
+        eventSourceRefPort
+            .findBySourceAndSourceId(TOUR_SOURCE, event.contentId)
+            ?.let { Link(it, LinkMethod.CONTENT_ID) }
+            ?: FestivalCoordinateMatch.findSingle(event, korean.value)?.let { linkTo(it, LinkMethod.COORDINATE) }
+            ?: FestivalNameMatch.findSingle(event, korean.value)?.let { linkTo(it, LinkMethod.NAME) }
 
     private fun linkTo(
         match: FestivalEvent,
