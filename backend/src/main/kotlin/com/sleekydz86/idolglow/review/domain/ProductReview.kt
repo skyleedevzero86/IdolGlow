@@ -52,8 +52,7 @@ class ProductReview(
 
     fun isHidden(): Boolean = hiddenAt != null
 
-    fun contribution(): ReviewContribution =
-        if (isHidden()) ReviewContribution.NONE else ReviewContribution(1L, rating.value.toLong())
+    fun contribution(): ReviewContribution = if (isHidden()) ReviewContribution.NONE else ReviewContribution(1L, rating.value.toLong())
 
     fun validateOwner(
         userId: Long,

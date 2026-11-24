@@ -10,7 +10,6 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationStatus
 import io.mockk.every
-import tools.jackson.databind.ObjectMapper
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 
 @DisplayName("토스 결제 승인")

@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -53,6 +54,17 @@ class User(
     @Column(name = "temporary_password_issued_at")
     var temporaryPasswordIssuedAt: LocalDateTime? = null,
 ) {
+    @Column(name = "joined_at", updatable = false)
+    var joinedAt: LocalDateTime? = null
+        protected set
+
+    @PrePersist
+    fun assignJoinedAt() {
+        if (joinedAt == null) {
+            joinedAt = LocalDateTime.now()
+        }
+    }
+
     fun updateLastLoginTime(now: LocalDateTime = LocalDateTime.now()) {
         lastLoginAt = now
     }

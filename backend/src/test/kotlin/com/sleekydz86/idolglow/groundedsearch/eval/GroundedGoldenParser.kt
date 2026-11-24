@@ -31,7 +31,10 @@ object GroundedGoldenParser {
         )
     }
 
-    fun sourceKey(type: RagSourceType, id: Long): String = "${type.name}:$id"
+    fun sourceKey(
+        type: RagSourceType,
+        id: Long,
+    ): String = "${type.name}:$id"
 
     private fun expected(node: JsonNode): GroundedChecked =
         GroundedChecked(
@@ -58,10 +61,15 @@ object GroundedGoldenParser {
             content = required(node, "content"),
         )
 
-    private fun required(node: JsonNode, field: String): String =
-        optional(node, field) ?: throw IllegalArgumentException("평가 항목에 $field 가 없습니다.")
+    private fun required(
+        node: JsonNode,
+        field: String,
+    ): String = optional(node, field) ?: throw IllegalArgumentException("평가 항목에 $field 가 없습니다.")
 
-    private fun optional(node: JsonNode, field: String): String? {
+    private fun optional(
+        node: JsonNode,
+        field: String,
+    ): String? {
         val child = node.path(field)
         if (child.isMissingNode || child.isNull) {
             return null
@@ -69,14 +77,12 @@ object GroundedGoldenParser {
         return child.asText().trim().ifEmpty { null }
     }
 
-    private fun money(raw: String): BigDecimal =
-        raw.toBigDecimalOrNull() ?: throw IllegalArgumentException("예산은 숫자여야 합니다. value=$raw")
+    private fun money(raw: String): BigDecimal = raw.toBigDecimalOrNull() ?: throw IllegalArgumentException("예산은 숫자여야 합니다. value=$raw")
 
     private fun day(raw: String): LocalDate =
         runCatching { LocalDate.parse(raw) }.getOrElse {
             throw IllegalArgumentException("날짜는 yyyy-MM-dd 여야 합니다. value=$raw")
         }
 
-    private fun count(raw: String): Int =
-        raw.toIntOrNull() ?: throw IllegalArgumentException("인원은 정수여야 합니다. value=$raw")
+    private fun count(raw: String): Int = raw.toIntOrNull() ?: throw IllegalArgumentException("인원은 정수여야 합니다. value=$raw")
 }

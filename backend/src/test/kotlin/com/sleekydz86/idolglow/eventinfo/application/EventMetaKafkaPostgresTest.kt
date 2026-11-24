@@ -1,8 +1,8 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
-import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.eventinfo.infrastructure.EventMasterJpaRepository
@@ -140,11 +140,12 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
     fun deadLetterIsReprocessedByAdmin() {
         // given
         val globalId = 공연_변경()
-        val createdEventId = jdbcTemplate.queryForObject(
-            "select event_id from event_outbox where aggregate_id = ?",
-            String::class.java,
-            globalId,
-        )!!
+        val createdEventId =
+            jdbcTemplate.queryForObject(
+                "select event_id from event_outbox where aggregate_id = ?",
+                String::class.java,
+                globalId,
+            )!!
         eventOutboxRelay.relayOnce()
         처리될_때까지(createdEventId)
 
@@ -451,13 +452,21 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         }
 
     private fun 멈춤() {
-        DockerClientFactory.instance().client().pauseContainerCmd(kafka.containerId).exec()
+        DockerClientFactory
+            .instance()
+            .client()
+            .pauseContainerCmd(kafka.containerId)
+            .exec()
         paused = true
     }
 
     private fun 재개() {
         if (!paused) return
-        DockerClientFactory.instance().client().unpauseContainerCmd(kafka.containerId).exec()
+        DockerClientFactory
+            .instance()
+            .client()
+            .unpauseContainerCmd(kafka.containerId)
+            .exec()
         paused = false
     }
 

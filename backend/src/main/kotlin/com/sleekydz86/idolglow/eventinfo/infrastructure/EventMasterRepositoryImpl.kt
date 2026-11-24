@@ -23,8 +23,7 @@ class EventMasterRepositoryImpl(
         globalId: String,
         until: LocalDateTime,
         limit: Int,
-    ): List<EventMaster> =
-        eventMasterJpaRepository.findChangedAfter(updatedAt, globalId, until, PageRequest.of(0, limit))
+    ): List<EventMaster> = eventMasterJpaRepository.findChangedAfter(updatedAt, globalId, until, PageRequest.of(0, limit))
 
     override fun count(): Long = eventMasterJpaRepository.count()
 }

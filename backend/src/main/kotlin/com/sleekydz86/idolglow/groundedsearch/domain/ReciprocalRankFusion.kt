@@ -18,8 +18,7 @@ object ReciprocalRankFusion {
             .take(limit)
     }
 
-    private fun ranks(ids: List<Long>): Map<Long, Int> =
-        ids.mapIndexed { index, id -> id to index + 1 }.toMap()
+    private fun ranks(ids: List<Long>): Map<Long, Int> = ids.mapIndexed { index, id -> id to index + 1 }.toMap()
 
     private fun fused(
         chunkId: Long,
@@ -28,5 +27,8 @@ object ReciprocalRankFusion {
         k: Int,
     ): FusedRank = FusedRank(chunkId, keywordRank, vectorRank, score(keywordRank, k) + score(vectorRank, k))
 
-    private fun score(rank: Int?, k: Int): Double = rank?.let { 1.0 / (k + it) } ?: 0.0
+    private fun score(
+        rank: Int?,
+        k: Int,
+    ): Double = rank?.let { 1.0 / (k + it) } ?: 0.0
 }

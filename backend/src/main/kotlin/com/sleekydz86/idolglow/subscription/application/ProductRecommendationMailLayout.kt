@@ -45,8 +45,7 @@ internal object ProductRecommendationMailLayout {
         "<h1 style=\"margin:0;font-size:22px;line-height:1.4;font-weight:800;color:$INK;" +
             "letter-spacing:-0.02em;\">$textHtml</h1>"
 
-    fun paragraph(textHtml: String): String =
-        "<p style=\"margin:10px 0 0;font-size:14px;line-height:1.8;color:$BODY;\">$textHtml</p>"
+    fun paragraph(textHtml: String): String = "<p style=\"margin:10px 0 0;font-size:14px;line-height:1.8;color:$BODY;\">$textHtml</p>"
 
     fun highlight(linesHtml: List<String>): String =
         buildString {
@@ -73,6 +72,5 @@ internal object ProductRecommendationMailLayout {
         labelHtml: String,
     ): String = "<a href=\"$hrefHtml\" style=\"color:$ACCENT;font-weight:700;text-decoration:underline;\">$labelHtml</a>"
 
-    fun footnote(textHtml: String): String =
-        "<p style=\"margin:0;font-size:12px;line-height:1.8;color:$SUBTLE;\">$textHtml</p>"
+    fun footnote(textHtml: String): String = "<p style=\"margin:0;font-size:12px;line-height:1.8;color:$SUBTLE;\">$textHtml</p>"
 }

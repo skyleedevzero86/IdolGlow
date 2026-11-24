@@ -81,8 +81,7 @@ class EventInterestStatusPostgresTest : PostgresIntegrationTest() {
             },
         )
 
-    private fun 사용자(): User =
-        userJpaRepository.save(User.of(email = "status${UUID.randomUUID().toString().take(8)}@idolglow.test"))
+    private fun 사용자(): User = userJpaRepository.save(User.of(email = "status${UUID.randomUUID().toString().take(8)}@idolglow.test"))
 
     private fun 공연(): String {
         val globalId = UUID.randomUUID().toString()

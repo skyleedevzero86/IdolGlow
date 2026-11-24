@@ -30,7 +30,6 @@ class GraphQlSchemaSmokeTest {
     @DisplayName("health 쿼리가 정상 응답을 반환한다")
     @Test
     fun healthQueryReturnsOk() {
-
         // given
         val query = """{"query":"{ health }"}"""
 
@@ -55,7 +54,6 @@ class GraphQlSchemaSmokeTest {
     @DisplayName("핵심 mutation 필드가 스키마에 등록되어 있다")
     @Test
     fun coreMutationFieldsAreRegistered() {
-
         // given
         val query =
             """

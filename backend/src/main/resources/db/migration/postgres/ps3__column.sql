@@ -1144,3 +1144,24 @@ CREATE INDEX IF NOT EXISTS idx_products_popularity
         review_count DESC,
         id DESC
     );
+
+-- 회원 가입 시각. 이 칸을 더하기 전에 가입한 회원은 비워 둔다
+ALTER TABLE users ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP(6) NULL;
+
+-- 최근 가입 회원과 기간별 신규 가입 수를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_users_joined_at ON users (joined_at);
+
+-- 신규 방문자 수를 날짜로 셀 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_visitors_first_visit ON site_visitors (first_visit_date);
+
+-- 오래 오지 않은 방문자를 지울 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_visitors_last_visit ON site_visitors (last_visit_date);
+
+-- 날짜별 방문자 수를 세고 오래된 줄을 지울 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_daily_visits_date ON site_daily_visits (visit_date);
+
+-- 회원의 방문한 날 수를 셀 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_daily_visits_user_date ON site_daily_visits (user_id, visit_date);
+
+-- 기간별 서버 점검 기록을 찾고 오래된 줄을 지울 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_server_metric_snapshots_measured ON server_metric_snapshots (measured_at);

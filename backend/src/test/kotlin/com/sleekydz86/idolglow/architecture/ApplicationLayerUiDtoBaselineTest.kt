@@ -12,7 +12,6 @@ class ApplicationLayerUiDtoBaselineTest {
     @DisplayName("application 계층의 ui dto 참조 건수가 기준값을 초과하지 않는다")
     @Test
     fun applicationLayerUiDtoCountStaysWithinBaseline() {
-
         // given
         val sourceRoot = 메인코틀린소스루트()
 

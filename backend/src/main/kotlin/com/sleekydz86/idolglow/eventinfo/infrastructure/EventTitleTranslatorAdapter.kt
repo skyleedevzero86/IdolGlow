@@ -14,8 +14,7 @@ class EventTitleTranslatorAdapter(
 ) : EventTitleTranslatorPort {
     override fun available(): Boolean = engine.available()
 
-    override fun glossary(locale: String): List<TranslationGlossaryTerm> =
-        glossaryPort.findAll().filter { it.appliesTo(locale) }
+    override fun glossary(locale: String): List<TranslationGlossaryTerm> = glossaryPort.findAll().filter { it.appliesTo(locale) }
 
     override fun translate(
         locale: String,

@@ -1,7 +1,7 @@
 package com.sleekydz86.idolglow.eventinfo.domain
 
-import java.security.MessageDigest
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 
 object EventPerformanceHasher {
     fun hash(item: CollectedPerformance): String {

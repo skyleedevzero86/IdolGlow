@@ -35,8 +35,7 @@ data class EventMatchFacts(
 }
 
 object EventSourceComparison {
-    fun side(ref: EventSourceRef): EventMatchSide =
-        EventMatchSide(ref.title, ref.startDate, ref.endDate, ref.venue, ref.sourceId)
+    fun side(ref: EventSourceRef): EventMatchSide = EventMatchSide(ref.title, ref.startDate, ref.endDate, ref.venue, ref.sourceId)
 
     fun side(master: EventMaster): EventMatchSide =
         EventMatchSide(master.title, master.startDate, master.endDate, master.venue, master.globalId)

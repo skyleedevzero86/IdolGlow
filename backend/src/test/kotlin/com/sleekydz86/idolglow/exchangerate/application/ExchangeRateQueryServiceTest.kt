@@ -17,7 +17,6 @@ class ExchangeRateQueryServiceTest {
     @DisplayName("조회일 데이터가 있으면 해당 일자 환율을 반환한다")
     @Test
     fun returnsRateForRequestedDate() {
-
         // given
         val searchDate = LocalDate.of(2026, 4, 24)
         val expected =
@@ -36,7 +35,6 @@ class ExchangeRateQueryServiceTest {
     @DisplayName("조회일 데이터가 없으면 이전 영업일 환율을 조회한다")
     @Test
     fun fallsBackToPreviousBusinessDay() {
-
         // given
         val monday = LocalDate.of(2026, 4, 27)
         val friday = LocalDate.of(2026, 4, 24)
@@ -57,7 +55,6 @@ class ExchangeRateQueryServiceTest {
     @DisplayName("이전 영업일에도 없으면 계속 과거로 조회한다")
     @Test
     fun keepsLookingFurtherBack() {
-
         // given
         val monday = LocalDate.of(2026, 5, 11)
         val friday = LocalDate.of(2026, 5, 8)

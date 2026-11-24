@@ -132,7 +132,11 @@ class ReservationSlotConflictApiPostgresTest : PostgresIntegrationTest() {
         val result = reserve(fixture.persistUser(), slot)
 
         // then
-        val created = result.andExpect(status().isCreated).andReturn().response.contentAsString
+        val created =
+            result
+                .andExpect(status().isCreated)
+                .andReturn()
+                .response.contentAsString
         val newId = Regex("\"id\":(\\d+)").find(created)!!.groupValues[1].toLong()
         assertEquals(SlotState(booked = false, holdReservationId = newId), slotState(slot))
     }

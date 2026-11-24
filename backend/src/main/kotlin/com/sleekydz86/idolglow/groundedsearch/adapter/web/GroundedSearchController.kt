@@ -21,13 +21,16 @@ class GroundedSearchController(
 ) {
     @Operation(summary = "근거 문단 검색", description = "키워드와 임베딩을 합친 상위 문단")
     @GetMapping("/api/grounded-search")
-    fun search(@RequestParam q: String): ResponseEntity<List<GroundedSearchHitResponse>> =
+    fun search(
+        @RequestParam q: String,
+    ): ResponseEntity<List<GroundedSearchHitResponse>> =
         ResponseEntity.ok(groundedSearchService.search(q).map(GroundedSearchHitResponse::from))
 
     @Operation(summary = "근거 답변", description = "조건 추출, 상품 필터, 재정렬, 인용 검증 결과")
     @GetMapping("/api/grounded-search/answer")
-    fun answer(@RequestParam q: String): ResponseEntity<GroundedAnswerResponse> =
-        ResponseEntity.ok(GroundedAnswerResponse.from(groundedAnswerService.answer(q)))
+    fun answer(
+        @RequestParam q: String,
+    ): ResponseEntity<GroundedAnswerResponse> = ResponseEntity.ok(GroundedAnswerResponse.from(groundedAnswerService.answer(q)))
 
     @Operation(summary = "근거 문단 색인", description = "본문 해시가 바뀐 문단만 다시 임베딩한다")
     @PreAuthorize("hasRole('ADMIN')")

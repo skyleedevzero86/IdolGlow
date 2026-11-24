@@ -56,7 +56,6 @@ class GroundedSearchEvalLiveTest {
     @Test
     @DisplayName("키가 있으면 MySQL에서 검색 방식별 점수를 측정한다")
     fun measuresWhenApiKeyPresent() {
-
         // given
         val cases = GroundedGoldenSet.cases()
         val probes = GroundedGoldenSet.probes()

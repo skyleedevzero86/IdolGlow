@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.adapter.web
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
+import com.sleekydz86.idolglow.global.support.ClientIp
 import com.sleekydz86.idolglow.user.auth.adapter.web.request.SignupRequest
 import com.sleekydz86.idolglow.user.auth.application.SignupService
 import com.sleekydz86.idolglow.user.auth.application.SignupVerificationService
@@ -163,16 +164,7 @@ class SignupController(
         return ResponseEntity.ok(AccessTokenResponse.from(tokenResponse))
     }
 
-    private fun resolveClientIp(request: HttpServletRequest): String {
-        val forwarded =
-            request
-                .getHeader("X-Forwarded-For")
-                ?.split(",")
-                ?.firstOrNull()
-                ?.trim()
-        if (!forwarded.isNullOrBlank()) return forwarded
-        return request.remoteAddr ?: "unknown"
-    }
+    private fun resolveClientIp(request: HttpServletRequest): String = ClientIp.of(request)
 
     private fun resolvePublicBaseUrl(request: HttpServletRequest): String {
         val scheme = request.scheme ?: "http"

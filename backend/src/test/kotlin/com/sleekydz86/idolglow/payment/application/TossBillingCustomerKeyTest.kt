@@ -7,7 +7,6 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJp
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingCustomerJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingDueClaimRepository
-import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import io.mockk.every

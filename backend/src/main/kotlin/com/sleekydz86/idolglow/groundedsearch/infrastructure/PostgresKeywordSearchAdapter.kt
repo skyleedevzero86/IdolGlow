@@ -12,7 +12,10 @@ class PostgresKeywordSearchAdapter(
     private val entityManager: EntityManager,
 ) : KeywordSearchPort {
     @Transactional(readOnly = true)
-    override fun search(query: String, limit: Int): List<Long> {
+    override fun search(
+        query: String,
+        limit: Int,
+    ): List<Long> {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) {
             return emptyList()

@@ -12,5 +12,8 @@ import org.springframework.stereotype.Component
     matchIfMissing = true,
 )
 class NoOpRerankAdapter : RerankPort {
-    override fun rerank(query: String, hits: List<GroundedSearchHit>): List<GroundedSearchHit> = hits
+    override fun rerank(
+        query: String,
+        hits: List<GroundedSearchHit>,
+    ): List<GroundedSearchHit> = hits
 }

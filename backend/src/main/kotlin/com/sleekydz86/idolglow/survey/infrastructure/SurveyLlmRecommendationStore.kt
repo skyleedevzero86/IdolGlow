@@ -80,8 +80,7 @@ class SurveyLlmRecommendationStore(
 
     private fun boundedMap(): LinkedHashMap<Long, LlmSurveyRecommendation> =
         object : LinkedHashMap<Long, LlmSurveyRecommendation>() {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, LlmSurveyRecommendation>?): Boolean =
-                size > MAX_RESULTS
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, LlmSurveyRecommendation>?): Boolean = size > MAX_RESULTS
         }
 
     private data class SurveyLlmInput(

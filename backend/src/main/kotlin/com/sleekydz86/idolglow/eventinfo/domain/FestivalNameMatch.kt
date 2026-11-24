@@ -12,8 +12,7 @@ object FestivalNameMatch {
             .singleOrNull()
     }
 
-    private fun hasPeriod(event: FestivalEvent): Boolean =
-        !event.eventStartDate.isNullOrBlank() && !event.eventEndDate.isNullOrBlank()
+    private fun hasPeriod(event: FestivalEvent): Boolean = !event.eventStartDate.isNullOrBlank() && !event.eventEndDate.isNullOrBlank()
 
     private fun overlaps(
         first: FestivalEvent,

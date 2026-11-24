@@ -176,7 +176,13 @@ class IdolGlowPublicPostgresTest : PostgresIntegrationTest() {
             )
 
         // when
-        val statuses = paths.associateWith { path -> mockMvc.perform(get(path)).andReturn().response.status }
+        val statuses =
+            paths.associateWith { path ->
+                mockMvc
+                    .perform(get(path))
+                    .andReturn()
+                    .response.status
+            }
 
         // then
         statuses.forEach { (path, status) -> assertEquals(NOT_FOUND, status, path) }

@@ -25,7 +25,10 @@ object GroundedConditionCheck {
         )
     }
 
-    private fun region(raw: String?, ignored: MutableList<String>): String? {
+    private fun region(
+        raw: String?,
+        ignored: MutableList<String>,
+    ): String? {
         val value = text(raw)
         val known = value != null && SeoulDistrictTourCodeMapper.signguCodeOf(value) != null
         if (value != null && !known) {
@@ -34,7 +37,11 @@ object GroundedConditionCheck {
         return if (known) value else null
     }
 
-    private fun dates(fromRaw: String?, toRaw: String?, ignored: MutableList<String>): Pair<LocalDate, LocalDate>? {
+    private fun dates(
+        fromRaw: String?,
+        toRaw: String?,
+        ignored: MutableList<String>,
+    ): Pair<LocalDate, LocalDate>? {
         val from = parse(fromRaw)
         val to = parse(toRaw)
         val start = if (!provided(fromRaw, toRaw) || rejected(fromRaw, toRaw, from, to)) null else from ?: to
@@ -44,24 +51,43 @@ object GroundedConditionCheck {
         return start?.let { it to (to ?: it) }
     }
 
-    private fun provided(fromRaw: String?, toRaw: String?): Boolean = text(fromRaw) != null || text(toRaw) != null
+    private fun provided(
+        fromRaw: String?,
+        toRaw: String?,
+    ): Boolean = text(fromRaw) != null || text(toRaw) != null
 
-    private fun rejected(fromRaw: String?, toRaw: String?, from: LocalDate?, to: LocalDate?): Boolean {
+    private fun rejected(
+        fromRaw: String?,
+        toRaw: String?,
+        from: LocalDate?,
+        to: LocalDate?,
+    ): Boolean {
         val fromBad = text(fromRaw) != null && from == null
         val toBad = text(toRaw) != null && to == null
         return fromBad || toBad || reversed(from, to)
     }
 
-    private fun reversed(from: LocalDate?, to: LocalDate?): Boolean {
+    private fun reversed(
+        from: LocalDate?,
+        to: LocalDate?,
+    ): Boolean {
         if (from == null || to == null) {
             return false
         }
         return from.isAfter(to)
     }
 
-    private fun budget(raw: String?, ignored: MutableList<String>): BigDecimal? {
+    private fun budget(
+        raw: String?,
+        ignored: MutableList<String>,
+    ): BigDecimal? {
         val value = text(raw)
-        val amount = value?.replace(",", "")?.removeSuffix("원")?.trim()?.toBigDecimalOrNull()
+        val amount =
+            value
+                ?.replace(",", "")
+                ?.removeSuffix("원")
+                ?.trim()
+                ?.toBigDecimalOrNull()
         val accepted = amount != null && amount >= BigDecimal.ZERO
         if (value != null && !accepted) {
             ignored += "예산"
@@ -69,7 +95,10 @@ object GroundedConditionCheck {
         return if (accepted) amount else null
     }
 
-    private fun people(raw: String?, ignored: MutableList<String>): Int? {
+    private fun people(
+        raw: String?,
+        ignored: MutableList<String>,
+    ): Int? {
         val value = text(raw)
         val count = value?.toIntOrNull()
         val accepted = count != null && count >= 1

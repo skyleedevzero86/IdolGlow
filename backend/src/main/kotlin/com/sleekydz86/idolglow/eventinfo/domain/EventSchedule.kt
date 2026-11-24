@@ -25,8 +25,7 @@ data class EventSchedule(
     private fun timesOn(
         day: LocalDate,
         isHoliday: (LocalDate) -> Boolean,
-    ): Set<LocalTime> =
-        if (holidayTimes.isNotEmpty() && isHoliday(day)) holidayTimes else times[day.dayOfWeek].orEmpty()
+    ): Set<LocalTime> = if (holidayTimes.isNotEmpty() && isHoliday(day)) holidayTimes else times[day.dayOfWeek].orEmpty()
 
     companion object {
         private val SEGMENT: Regex = Regex("""([^(),]+)\(([^)]*)\)""")

@@ -58,7 +58,12 @@ class BillingKeyDeletionService(
     }
 
     fun acceptBillingDeleted(data: JsonNode) {
-        val billingKey = data.path("billingKey").asText(null)?.trim()?.takeIf { it.isNotEmpty() }
+        val billingKey =
+            data
+                .path("billingKey")
+                .asText(null)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
         if (billingKey == null) {
             log.warn("빌링키 삭제 웹훅에 billingKey가 없습니다.")
             return

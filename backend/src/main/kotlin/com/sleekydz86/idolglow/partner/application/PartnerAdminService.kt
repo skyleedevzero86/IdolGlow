@@ -44,6 +44,5 @@ class PartnerAdminService(
         return client.toSummary()
     }
 
-    private fun PartnerClient.toSummary(): PartnerSummary =
-        PartnerSummary(id, name, contractedLocales(), rateLimitPerMinute, enabled)
+    private fun PartnerClient.toSummary(): PartnerSummary = PartnerSummary(id, name, contractedLocales(), rateLimitPerMinute, enabled)
 }

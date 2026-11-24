@@ -23,8 +23,7 @@ class UnsubscribeTokenService(
         key = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), ALGORITHM)
     }
 
-    fun issue(subscription: ProductRecommendationMailSubscription): String =
-        issue(subscription.id, subscription.tokenVersion)
+    fun issue(subscription: ProductRecommendationMailSubscription): String = issue(subscription.id, subscription.tokenVersion)
 
     fun issue(
         subscriptionId: Long,

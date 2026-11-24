@@ -23,7 +23,6 @@ class GlowAlertQueryServiceTest {
     @DisplayName("게스트 알림 조회는 페이지 메타데이터를 반환한다")
     @Test
     fun guestAlertQueryReturnsPageMetadata() {
-
         // given
 
         // when
@@ -39,7 +38,6 @@ class GlowAlertQueryServiceTest {
     @DisplayName("게스트 알림 읽음 처리를 지원한다")
     @Test
     fun guestAlertReadIsSupported() {
-
         // given
 
         // when
@@ -52,7 +50,6 @@ class GlowAlertQueryServiceTest {
     @DisplayName("로그인 사용자는 저장소 알림을 조회한다")
     @Test
     fun loggedInUserReadsStoredAlerts() {
-
         // given
         every { notificationRepository.findVisibleByUserId(99L, any()) } returns emptyList()
         every { notificationRepository.countUnreadVisibleByUserId(99L, any()) } returns 0L

@@ -342,7 +342,12 @@ class ContentCommentPostgresTest : PostgresIntegrationTest() {
         jdbcTemplate.queryForList("select type, link, message from notifications where user_id = ? order by id", userId)
 
     private fun member(role: UserRole = UserRole.USER): User {
-        val suffix = UUID.randomUUID().toString().replace("-", "").take(8)
+        val suffix =
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
         val user = User(email = "cc$suffix@test.com", nickname = Nickname.of("c$suffix"), role = role)
         return userJpaRepository.save(user)
     }
@@ -355,8 +360,7 @@ class ContentCommentPostgresTest : PostgresIntegrationTest() {
     ): ContentCommentResult =
         create(user, ContentTargetType.GLOW_COMMUNITY_POST, postId.toString(), content, parentId, "/glow?post=$postId")
 
-    private fun invalid(action: () -> Unit): IllegalArgumentException =
-        assertThrows(IllegalArgumentException::class.java) { action() }
+    private fun invalid(action: () -> Unit): IllegalArgumentException = assertThrows(IllegalArgumentException::class.java) { action() }
 
     private fun denied(action: () -> Unit): CustomException = assertThrows(CustomException::class.java) { action() }
 

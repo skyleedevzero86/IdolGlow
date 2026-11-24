@@ -39,8 +39,7 @@ class IdolGlowPublicService(
 
     override fun findFilters(): PublicIssueFilterResponse = PublicIssueFilterResponse.from(publishedIssues())
 
-    override fun findIssue(issueSlug: String): PublicIssueDetailResponse =
-        PublicIssueDetailResponse.from(getPublishedIssue(issueSlug))
+    override fun findIssue(issueSlug: String): PublicIssueDetailResponse = PublicIssueDetailResponse.from(getPublishedIssue(issueSlug))
 
     override fun findArticle(
         issueSlug: String,

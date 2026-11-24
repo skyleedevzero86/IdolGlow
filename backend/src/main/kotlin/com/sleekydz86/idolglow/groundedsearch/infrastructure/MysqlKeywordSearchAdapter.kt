@@ -12,7 +12,10 @@ class MysqlKeywordSearchAdapter(
     private val entityManager: EntityManager,
 ) : KeywordSearchPort {
     @Transactional(readOnly = true)
-    override fun search(query: String, limit: Int): List<Long> {
+    override fun search(
+        query: String,
+        limit: Int,
+    ): List<Long> {
         val trimmed = booleanQuery(query)
         if (trimmed.isEmpty()) {
             return emptyList()

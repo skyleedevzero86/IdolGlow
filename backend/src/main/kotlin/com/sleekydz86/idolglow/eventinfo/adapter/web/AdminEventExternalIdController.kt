@@ -28,8 +28,7 @@ class AdminEventExternalIdController(
     @GetMapping
     fun list(
         @PathVariable globalId: String,
-    ): ResponseEntity<List<ExternalIdView>> =
-        ResponseEntity.ok(eventExternalIdService.idsOf(listOf(globalId))[globalId].orEmpty())
+    ): ResponseEntity<List<ExternalIdView>> = ResponseEntity.ok(eventExternalIdService.idsOf(listOf(globalId))[globalId].orEmpty())
 
     @Operation(
         summary = "외부 ID 붙이기",

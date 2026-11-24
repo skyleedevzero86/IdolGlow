@@ -26,7 +26,11 @@ class GroundedCatalogReader(
     override fun optionOwners(productIds: Set<Long>): Map<Long, Long> = query.optionOwners(productIds)
 
     @Transactional(readOnly = true)
-    override fun facts(productIds: Set<Long>, dateFrom: LocalDate?, dateTo: LocalDate?): List<GroundedProductFacts> {
+    override fun facts(
+        productIds: Set<Long>,
+        dateFrom: LocalDate?,
+        dateTo: LocalDate?,
+    ): List<GroundedProductFacts> {
         if (productIds.isEmpty()) {
             return emptyList()
         }

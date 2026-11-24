@@ -1641,3 +1641,41 @@ PREPARE survey_visit_end_stmt FROM @add_survey_visit_end;
 EXECUTE survey_visit_end_stmt;
 
 DEALLOCATE PREPARE survey_visit_end_stmt;
+
+-- 회원 가입 시각. 이 칸을 더하기 전에 가입한 회원은 비워 둔다
+SET @add_users_joined_at := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE users ADD COLUMN joined_at TIMESTAMP(6) NULL COMMENT ''회원 가입 시각. 처음 저장할 때 정하고 바꾸지 않는다. 이 칸이 생기기 전 가입한 회원은 비어 있고 신규 가입 집계에서 빠진다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'joined_at'
+);
+
+PREPARE users_joined_at_stmt FROM @add_users_joined_at;
+
+EXECUTE users_joined_at_stmt;
+
+DEALLOCATE PREPARE users_joined_at_stmt;
+
+-- 최근 가입 회원과 기간별 신규 가입 수를 찾을 때 쓴다
+SET @add_users_joined_at_index := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'CREATE INDEX idx_users_joined_at ON users (joined_at)',
+        'SELECT 1'
+    )
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND index_name = 'idx_users_joined_at'
+);
+
+PREPARE users_joined_at_index_stmt FROM @add_users_joined_at_index;
+
+EXECUTE users_joined_at_index_stmt;
+
+DEALLOCATE PREPARE users_joined_at_index_stmt;

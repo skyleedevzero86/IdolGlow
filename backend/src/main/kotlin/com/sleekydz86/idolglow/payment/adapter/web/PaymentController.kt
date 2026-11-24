@@ -30,7 +30,6 @@ class PaymentController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
-
     @Operation(summary = "모의 결제 웹훅 처리", description = "테스트용 결제 상태 변경 웹훅을 받아 예약 결제 상태를 갱신합니다.")
     @ApiResponses(
         value = [

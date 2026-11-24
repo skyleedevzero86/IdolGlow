@@ -1666,3 +1666,70 @@ CREATE TABLE IF NOT EXISTS event_session (
     constraint fk_event_session_source_ref foreign key (source_ref_id) references event_source_ref (id),
     constraint ck_event_session_status check (status in ('SCHEDULED', 'CANCELLED'))
 ) comment='대표 공연 아래 날짜와 시각 단위 회차';
+
+-- =============================================================================
+-- 사이트 방문 기록: 방문자와 하루 방문
+-- -----
+-- 목적
+-- - 마이페이지 대시보드에서 오늘 방문자, 신규 방문자, 최근 7일 추이, 회원의 방문한 날 수를 센다
+-- - 로그인하지 않은 방문자도 서버가 준 무작위 식별값 쿠키 ig_vid 로 하루 한 번만 센다
+-- 대상
+-- - 마이에스큐엘 / site_visitors, site_daily_visits
+-- 주의
+-- - 같은 방문자의 같은 서울 날짜는 한 줄만 있다
+-- - IP 는 그날 첫 요청 값만 남기고 90일 뒤 줄과 함께 지운다
+-- - 365일 동안 오지 않은 방문자는 지운다
+-- 연관
+-- - SiteVisitor, SiteDailyVisit, SiteVisitService, SiteVisitTxService, SiteVisitQueryService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS site_visitors (
+    visitor_id varchar(36) primary key comment '방문자 식별값. 쿠키 ig_vid 에 담은 소문자 UUID 36자. 사람을 알아보는 정보와 이어지지 않는다',
+    first_visit_date date not null comment '처음 방문한 서울 날짜. 바꾸지 않는다. 신규 방문자 판단에 쓴다',
+    last_visit_date date not null comment '마지막으로 방문한 서울 날짜. 365일 지나면 이 줄을 지운다',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    index idx_site_visitors_first_visit (first_visit_date),
+    index idx_site_visitors_last_visit (last_visit_date)
+) comment='사이트 방문자. 서버가 준 무작위 식별값 하나가 한 줄이다';
+
+CREATE TABLE IF NOT EXISTS site_daily_visits (
+    id bigint auto_increment primary key,
+    visitor_id varchar(36) not null comment '방문자 식별값',
+    visit_date date not null comment '방문한 서울 날짜',
+    user_id bigint null comment '그날 로그인 상태로 들어온 회원 번호. 처음 채운 값은 바꾸지 않는다. 비로그인 방문이면 비어 있다',
+    ip_address varchar(45) null comment '그날 처음 들어온 요청의 IP. 믿는 프록시가 넘긴 값만 따른다. IPv6 까지 45자',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_site_daily_visits_visitor_date unique (visitor_id, visit_date),
+    index idx_site_daily_visits_date (visit_date),
+    index idx_site_daily_visits_user_date (user_id, visit_date)
+) comment='하루 방문. 방문자 하나의 서울 날짜 하루가 한 줄이다. 90일 지나면 지운다';
+
+-- =============================================================================
+-- 서버 점검 기록: 5분마다 남기는 서버 상태
+-- -----
+-- 목적
+-- - 마이페이지 대시보드의 응답시간 추이, 가용성, 성공률을 보여 준다
+-- 대상
+-- - 마이에스큐엘 / server_metric_snapshots
+-- 주의
+-- - 여러 서버 가운데 한 대만 5분마다 한 줄을 남긴다
+-- - 7일이 지난 줄은 지운다
+-- - HTTP 응답 수는 그 서버가 직전 점검 뒤 받은 응답 수다
+-- 연관
+-- - ServerMetricSnapshot, ServerMetricSnapshotScheduler, ServerMetricQueryService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS server_metric_snapshots (
+    id bigint auto_increment primary key,
+    measured_at timestamp(6) not null comment '점검한 시각',
+    overall_status varchar(20) not null comment '전체 상태. UP, DEGRADED, DOWN',
+    db_status varchar(20) not null comment '데이터베이스 상태. UP, DOWN',
+    db_response_ms bigint null comment '데이터베이스 연결 확인에 걸린 밀리초',
+    minio_status varchar(20) not null comment 'MinIO 상태. UP, DOWN, NOT_CONFIGURED',
+    minio_response_ms bigint null comment 'MinIO 버킷 확인에 걸린 밀리초. 설정이 없으면 비어 있다',
+    http_request_count bigint not null default 0 comment '직전 점검 뒤 이 서버가 보낸 HTTP 응답 수',
+    http_error_count bigint not null default 0 comment '그 가운데 상태 코드 500 이상 응답 수',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    index idx_server_metric_snapshots_measured (measured_at)
+) comment='5분마다 남기는 서버 점검 기록. 7일 지나면 지운다';

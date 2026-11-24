@@ -25,7 +25,6 @@ class SeoulSjwPerformApiClientTest {
     @DisplayName("응답이 기본 버퍼 한도 256KB보다 커도 공연 목록을 모두 읽는다")
     @Test
     fun readsResponseLargerThanDefaultBuffer() {
-
         // given
         val body = 공연_목록_응답(rowCount = 100, synopsisLength = 4_000)
         응답을_돌려주는_서버(body)
@@ -43,7 +42,6 @@ class SeoulSjwPerformApiClientTest {
     @DisplayName("수집 배치용 조회는 인증키 오류 응답을 예외로 알린다")
     @Test
     fun listForBatchThrowsOnInvalidKeyResponse() {
-
         // given
         응답을_돌려주는_서버(INVALID_KEY_RESPONSE)
         val client = 클라이언트()
@@ -58,7 +56,6 @@ class SeoulSjwPerformApiClientTest {
     @DisplayName("수집 배치용 조회는 서버 오류를 예외로 알린다")
     @Test
     fun listForBatchThrowsOnServerError() {
-
         // given
         응답을_돌려주는_서버("", status = 500)
         val client = 클라이언트()
@@ -73,7 +70,6 @@ class SeoulSjwPerformApiClientTest {
     @DisplayName("화면용 조회는 인증키 오류 응답이어도 빈 목록을 돌려준다")
     @Test
     fun listReturnsEmptyOnInvalidKeyResponse() {
-
         // given
         응답을_돌려주는_서버(INVALID_KEY_RESPONSE)
         val client = 클라이언트()
@@ -88,7 +84,6 @@ class SeoulSjwPerformApiClientTest {
     @DisplayName("수집 배치용 조회는 정상 응답이면 공연 목록을 돌려준다")
     @Test
     fun listForBatchReturnsEventsOnSuccess() {
-
         // given
         응답을_돌려주는_서버(공연_목록_응답(rowCount = 3, synopsisLength = 10))
         val client = 클라이언트()

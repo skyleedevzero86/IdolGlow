@@ -34,68 +34,59 @@ class TossBillingController(
     fun cancelCharge(
         @LoginUser userId: Long,
         @PathVariable chargeId: Long,
-    ): ResponseEntity<TossBillingChargeResponse> =
-        ResponseEntity.ok(billingChargeCancelService.cancel(userId, chargeId, null))
+    ): ResponseEntity<TossBillingChargeResponse> = ResponseEntity.ok(billingChargeCancelService.cancel(userId, chargeId, null))
 
     @Operation(summary = "빌링 클라이언트 설정 조회")
     @GetMapping("/client-config")
     fun clientConfig(
         @LoginUser userId: Long,
-    ): ResponseEntity<TossBillingClientConfigResponse> =
-        ResponseEntity.ok(tossBillingService.clientConfig(userId))
+    ): ResponseEntity<TossBillingClientConfigResponse> = ResponseEntity.ok(tossBillingService.clientConfig(userId))
 
     @Operation(summary = "내 빌링 현황 조회")
     @GetMapping("/overview")
     fun overview(
         @LoginUser userId: Long,
-    ): ResponseEntity<TossBillingOverviewResponse> =
-        ResponseEntity.ok(tossBillingService.overview(userId))
+    ): ResponseEntity<TossBillingOverviewResponse> = ResponseEntity.ok(tossBillingService.overview(userId))
 
     @Operation(summary = "빌링키 발급")
     @PostMapping("/issue")
     fun issue(
         @LoginUser userId: Long,
         @Valid @RequestBody request: IssueTossBillingKeyRequest,
-    ): ResponseEntity<TossBillingMethodResponse> =
-        ResponseEntity.ok(tossBillingService.issueBillingKey(userId, request))
+    ): ResponseEntity<TossBillingMethodResponse> = ResponseEntity.ok(tossBillingService.issueBillingKey(userId, request))
 
     @Operation(summary = "기본 결제수단 변경")
     @PostMapping("/methods/{methodId}/default")
     fun setDefaultMethod(
         @LoginUser userId: Long,
         @PathVariable methodId: Long,
-    ): ResponseEntity<TossBillingMethodResponse> =
-        ResponseEntity.ok(tossBillingService.setDefaultMethod(userId, methodId))
+    ): ResponseEntity<TossBillingMethodResponse> = ResponseEntity.ok(tossBillingService.setDefaultMethod(userId, methodId))
 
     @Operation(summary = "결제수단 비활성")
     @PostMapping("/methods/{methodId}/deactivate")
     fun deactivateMethod(
         @LoginUser userId: Long,
         @PathVariable methodId: Long,
-    ): ResponseEntity<TossBillingMethodResponse> =
-        ResponseEntity.ok(tossBillingService.deactivateMethod(userId, methodId))
+    ): ResponseEntity<TossBillingMethodResponse> = ResponseEntity.ok(tossBillingService.deactivateMethod(userId, methodId))
 
     @Operation(summary = "월간 구독 시작")
     @PostMapping("/subscriptions/start")
     fun startSubscription(
         @LoginUser userId: Long,
         @Valid @RequestBody request: StartTossBillingSubscriptionRequest,
-    ): ResponseEntity<TossBillingSubscriptionResponse> =
-        ResponseEntity.ok(tossBillingService.startSubscription(userId, request))
+    ): ResponseEntity<TossBillingSubscriptionResponse> = ResponseEntity.ok(tossBillingService.startSubscription(userId, request))
 
     @Operation(summary = "월간 구독 해지 예약")
     @PostMapping("/subscriptions/cancel")
     fun cancelSubscription(
         @LoginUser userId: Long,
-    ): ResponseEntity<TossBillingSubscriptionResponse> =
-        ResponseEntity.ok(tossBillingService.cancelSubscription(userId))
+    ): ResponseEntity<TossBillingSubscriptionResponse> = ResponseEntity.ok(tossBillingService.cancelSubscription(userId))
 
     @Operation(summary = "월간 구독 해지 철회")
     @PostMapping("/subscriptions/withdraw-cancel")
     fun withdrawCancelSubscription(
         @LoginUser userId: Long,
-    ): ResponseEntity<TossBillingSubscriptionResponse> =
-        ResponseEntity.ok(tossBillingService.withdrawCancelSubscription(userId))
+    ): ResponseEntity<TossBillingSubscriptionResponse> = ResponseEntity.ok(tossBillingService.withdrawCancelSubscription(userId))
 
     @Operation(summary = "실패 회차를 선택한 카드로 재결제")
     @PostMapping("/charges/{chargeId}/retry")
@@ -103,6 +94,5 @@ class TossBillingController(
         @LoginUser userId: Long,
         @PathVariable chargeId: Long,
         @Valid @RequestBody request: RetryTossBillingChargeRequest,
-    ): ResponseEntity<TossBillingChargeResponse> =
-        ResponseEntity.ok(tossBillingService.retryFailedCharge(userId, chargeId, request))
+    ): ResponseEntity<TossBillingChargeResponse> = ResponseEntity.ok(tossBillingService.retryFailedCharge(userId, chargeId, request))
 }

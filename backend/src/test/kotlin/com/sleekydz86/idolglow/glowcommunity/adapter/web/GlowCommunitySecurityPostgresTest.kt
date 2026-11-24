@@ -117,7 +117,12 @@ class GlowCommunitySecurityPostgresTest : PostgresIntegrationTest() {
     }
 
     private fun member(): User {
-        val suffix = UUID.randomUUID().toString().replace("-", "").take(8)
+        val suffix =
+            UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                .take(8)
         return userJpaRepository.save(User(email = "sc$suffix@test.com", nickname = Nickname.of("s$suffix")))
     }
 }

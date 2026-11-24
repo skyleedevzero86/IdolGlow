@@ -7,8 +7,8 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationLocales
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalCoordinateMatch
-import com.sleekydz86.idolglow.eventinfo.domain.FestivalNameMatch
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
+import com.sleekydz86.idolglow.eventinfo.domain.FestivalNameMatch
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate

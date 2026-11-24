@@ -33,7 +33,6 @@ class PasswordLoginSecurityPostgresTest : PostgresIntegrationTest() {
     @DisplayName("비밀번호 로그인은 토큰 없이 요청하면 보안 설정이 아니라 입력값 검사가 응답한다")
     @Test
     fun passwordLoginIsReachableWithoutToken() {
-
         // given
         val request =
             post("/auth/password/login")
@@ -41,7 +40,11 @@ class PasswordLoginSecurityPostgresTest : PostgresIntegrationTest() {
                 .content("""{"email":"","password":""}""")
 
         // when
-        val status = mockMvc.perform(request).andReturn().response.status
+        val status =
+            mockMvc
+                .perform(request)
+                .andReturn()
+                .response.status
 
         // then
         assertEquals(BAD_REQUEST, status)
@@ -50,7 +53,6 @@ class PasswordLoginSecurityPostgresTest : PostgresIntegrationTest() {
     @DisplayName("비밀번호 로그인은 없는 계정이면 서비스가 401로 응답한다")
     @Test
     fun passwordLoginRejectsUnknownAccount() {
-
         // given
         val request =
             post("/auth/password/login")
@@ -58,7 +60,11 @@ class PasswordLoginSecurityPostgresTest : PostgresIntegrationTest() {
                 .content("""{"email":"nobody@example.com","password":"wrong-password"}""")
 
         // when
-        val status = mockMvc.perform(request).andReturn().response.status
+        val status =
+            mockMvc
+                .perform(request)
+                .andReturn()
+                .response.status
 
         // then
         assertEquals(UNAUTHORIZED, status)
@@ -67,7 +73,6 @@ class PasswordLoginSecurityPostgresTest : PostgresIntegrationTest() {
     @DisplayName("임시 비밀번호 발급은 이번 변경과 관계없이 로그인을 요구한다")
     @Test
     fun temporaryPasswordStillRequiresLogin() {
-
         // given
         val request =
             post("/auth/password/temporary")
@@ -75,7 +80,11 @@ class PasswordLoginSecurityPostgresTest : PostgresIntegrationTest() {
                 .content("""{"email":"nobody@example.com"}""")
 
         // when
-        val status = mockMvc.perform(request).andReturn().response.status
+        val status =
+            mockMvc
+                .perform(request)
+                .andReturn()
+                .response.status
 
         // then
         assertEquals(UNAUTHORIZED, status)

@@ -35,8 +35,7 @@ class LocalSeedUserPasswordInitializer(
         }
     }
 
-    private fun isAlreadySet(user: User): Boolean =
-        user.passwordHash?.let { passwordEncoder.matches(seedUserPassword, it) } == true
+    private fun isAlreadySet(user: User): Boolean = user.passwordHash?.let { passwordEncoder.matches(seedUserPassword, it) } == true
 
     private fun applyPassword(user: User) {
         val encoded = requireNotNull(passwordEncoder.encode(seedUserPassword)) { "비밀번호 인코딩에 실패했습니다." }

@@ -7,9 +7,9 @@ import com.sleekydz86.idolglow.groundedsearch.application.port.GroundedRetrieveP
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedAnswer
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedAnswerCheck
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedChecked
-import com.sleekydz86.idolglow.groundedsearch.domain.GroundedProductFacts
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedCitationPrompt
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedConditionCheck
+import com.sleekydz86.idolglow.groundedsearch.domain.GroundedProductFacts
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedRetrieval
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedScope
 import com.sleekydz86.idolglow.groundedsearch.domain.GroundedSearchHit
@@ -73,7 +73,10 @@ class GroundedAnswerService(
         return GroundedAnswerCheck.judge(answerPort.answer(query, citations), citations.size, products)
     }
 
-    private fun spoken(verdict: GroundedVerdict, askConfirm: Boolean): String? {
+    private fun spoken(
+        verdict: GroundedVerdict,
+        askConfirm: Boolean,
+    ): String? {
         if (!verdict.accepted) {
             return null
         }
@@ -86,10 +89,15 @@ class GroundedAnswerService(
             GroundedCitationPrompt("C${index + 1}", hit.chunkId, hit.linkKey, hit.content)
         }
 
-    private fun productIds(hits: List<GroundedSearchHit>, scope: GroundedScope): Set<Long> =
-        hits.mapNotNull { owner(it, scope) }.toSet()
+    private fun productIds(
+        hits: List<GroundedSearchHit>,
+        scope: GroundedScope,
+    ): Set<Long> = hits.mapNotNull { owner(it, scope) }.toSet()
 
-    private fun owner(hit: GroundedSearchHit, scope: GroundedScope): Long? =
+    private fun owner(
+        hit: GroundedSearchHit,
+        scope: GroundedScope,
+    ): Long? =
         when (hit.sourceType) {
             RagSourceType.PRODUCT -> hit.sourceId
             RagSourceType.OPTION -> scope.optionToProduct[hit.sourceId]

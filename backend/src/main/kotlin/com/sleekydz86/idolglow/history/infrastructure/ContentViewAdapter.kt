@@ -17,8 +17,7 @@ class ContentViewAdapter(
         userId: Long,
         contentType: ContentTargetType,
         contentKey: String,
-    ): UserContentView? =
-        userContentViewJpaRepository.findByUserIdAndContentTypeAndContentKey(userId, contentType, contentKey)
+    ): UserContentView? = userContentViewJpaRepository.findByUserIdAndContentTypeAndContentKey(userId, contentType, contentKey)
 
     override fun save(view: UserContentView): UserContentView = userContentViewJpaRepository.save(view)
 

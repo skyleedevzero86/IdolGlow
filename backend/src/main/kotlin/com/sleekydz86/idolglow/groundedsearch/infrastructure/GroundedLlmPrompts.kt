@@ -11,7 +11,10 @@ object GroundedLlmPrompts {
 
     fun extractUser(query: String): String = query
 
-    fun answerUser(query: String, citations: List<GroundedCitationPrompt>): String =
+    fun answerUser(
+        query: String,
+        citations: List<GroundedCitationPrompt>,
+    ): String =
         buildString {
             appendLine(query)
             citations.forEach { citation ->

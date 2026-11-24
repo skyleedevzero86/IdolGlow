@@ -13,7 +13,6 @@ class GroundedEvalScoreTest {
     @Test
     @DisplayName("상위 구간 안의 정답 출처만 Recall에 센다")
     fun recallAtFiveCountsExpectedSourcesInsideCutoff() {
-
         // given
         val ranked = listOf("PRODUCT:1", "PRODUCT:2", "PRODUCT:3")
         val expected = setOf("PRODUCT:1", "PRODUCT:3")
@@ -28,7 +27,6 @@ class GroundedEvalScoreTest {
     @Test
     @DisplayName("첫 정답 순위의 역수를 쓴다")
     fun reciprocalRankUsesFirstExpectedHit() {
-
         // given
         val ranked = listOf("PRODUCT:1", "PRODUCT:2", "PRODUCT:3")
 
@@ -42,7 +40,6 @@ class GroundedEvalScoreTest {
     @Test
     @DisplayName("골든셋 예시는 10개이고 한국어와 영어가 섞여 있다")
     fun goldenFileHasTenExamples() {
-
         // given
         val cases = GroundedGoldenSet.cases()
 
@@ -59,7 +56,6 @@ class GroundedEvalScoreTest {
     @Test
     @DisplayName("가격이나 날짜가 틀린 답은 거절한다")
     fun wrongPriceAndDateAreRejected() {
-
         // given
         val probes = GroundedGoldenSet.probes()
 
@@ -73,7 +69,6 @@ class GroundedEvalScoreTest {
     @Test
     @DisplayName("조건 필드가 같으면 맞다고 센다")
     fun sameConditionFieldsMatch() {
-
         // given
         val expected = checked("50000")
         val actual = checked("50000.00")

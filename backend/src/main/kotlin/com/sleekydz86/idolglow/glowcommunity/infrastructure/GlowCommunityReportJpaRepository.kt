@@ -10,4 +10,6 @@ interface GlowCommunityReportJpaRepository : JpaRepository<GlowCommunityReport, 
     ): Boolean
 
     fun findAllByPostIdIn(postIds: Collection<Long>): List<GlowCommunityReport>
+
+    fun countByUserId(userId: Long): Long
 }

@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.user.auth.adapter.web
 
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
+import com.sleekydz86.idolglow.global.support.ClientIp
 import com.sleekydz86.idolglow.user.auth.adapter.web.dto.PasswordLoginResponse
 import com.sleekydz86.idolglow.user.auth.adapter.web.dto.TemporaryPasswordResponse
 import com.sleekydz86.idolglow.user.auth.adapter.web.request.PasswordLoginRequest
@@ -91,14 +92,7 @@ class AuthController(
         @Valid @RequestBody request: TemporaryPasswordRequest,
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<TemporaryPasswordResponse> {
-        val forwardedFor = httpServletRequest.getHeader("X-Forwarded-For")
-        val ip =
-            forwardedFor
-                ?.split(",")
-                ?.firstOrNull()
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
-                ?: httpServletRequest.remoteAddr.orEmpty().ifBlank { "unknown" }
+        val ip = ClientIp.of(httpServletRequest)
         val sent = passwordRecoveryService.issueTemporaryPassword(request.email, ip)
         val message =
             if (sent) {
@@ -114,14 +108,7 @@ class AuthController(
         @Valid @RequestBody request: TemporaryPasswordRequest,
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<TemporaryPasswordResponse> {
-        val forwardedFor = httpServletRequest.getHeader("X-Forwarded-For")
-        val ip =
-            forwardedFor
-                ?.split(",")
-                ?.firstOrNull()
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
-                ?: httpServletRequest.remoteAddr.orEmpty().ifBlank { "unknown" }
+        val ip = ClientIp.of(httpServletRequest)
         val sent = passwordRecoveryService.sendAccountIdReminder(request.email, ip)
         val message =
             if (sent) {

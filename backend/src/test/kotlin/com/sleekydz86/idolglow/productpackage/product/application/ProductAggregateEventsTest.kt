@@ -209,8 +209,7 @@ class ProductAggregateEventsTest {
         assertEquals("고친 상품 $token", productJpaRepository.findById(product.id).orElseThrow().name)
     }
 
-    private fun product(): Product =
-        productJpaRepository.saveAndFlush(Product(name = "집계 $token", description = "집계 사건 시험"))
+    private fun product(): Product = productJpaRepository.saveAndFlush(Product(name = "집계 $token", description = "집계 사건 시험"))
 
     private fun changeRating(
         product: Product,

@@ -225,11 +225,9 @@ private class InMemoryEventTranslationPort : EventTranslationPort {
         locale: String,
     ): EventTranslation? = rows[globalId to locale]
 
-    override fun findByGlobalId(globalId: String): List<EventTranslation> =
-        rows.values.filter { it.globalId == globalId }
+    override fun findByGlobalId(globalId: String): List<EventTranslation> = rows.values.filter { it.globalId == globalId }
 
-    override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventTranslation> =
-        rows.values.filter { it.globalId in globalIds }
+    override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventTranslation> = rows.values.filter { it.globalId in globalIds }
 
     override fun findUntranslatedFestivals(
         source: String,
@@ -263,8 +261,7 @@ private class InMemoryEventSourceRefPort : EventSourceRefPort {
 
     override fun findByGlobalId(globalId: String): List<EventSourceRef> = rows.filter { it.globalId == globalId }
 
-    override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventSourceRef> =
-        rows.filter { it.globalId in globalIds }
+    override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventSourceRef> = rows.filter { it.globalId in globalIds }
 
     override fun countByMatchStatus(status: EventMatchStatus): Long = rows.count { it.matchStatus == status }.toLong()
 

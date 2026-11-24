@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.platform.auth.adapter.web
 
 import com.sleekydz86.idolglow.admin.authverification.application.AuthVerificationAuditService
+import com.sleekydz86.idolglow.global.support.ClientIp
 import com.sleekydz86.idolglow.platform.auth.adapter.web.http.ApiResponse
 import com.sleekydz86.idolglow.platform.auth.application.AccountRecoveryService
 import com.sleekydz86.idolglow.platform.auth.application.AuthenticationService
@@ -86,14 +87,5 @@ class PlatformAuthController(
     ): ResponseEntity<ApiResponse<AccountRecoveryResponse>> =
         ResponseEntity.ok(ApiResponse.success(accountRecoveryService.resetPassword(request)))
 
-    private fun resolveClientIp(request: HttpServletRequest): String {
-        val forwarded =
-            request
-                .getHeader("X-Forwarded-For")
-                ?.split(",")
-                ?.firstOrNull()
-                ?.trim()
-        if (!forwarded.isNullOrBlank()) return forwarded
-        return request.remoteAddr ?: "unknown"
-    }
+    private fun resolveClientIp(request: HttpServletRequest): String = ClientIp.of(request)
 }

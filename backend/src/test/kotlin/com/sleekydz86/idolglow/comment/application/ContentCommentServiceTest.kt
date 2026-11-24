@@ -52,7 +52,13 @@ class ContentCommentServiceTest {
         // then
         assertEquals(listOf(1L, 2L), result.items.map { it.id })
         assertEquals(listOf(4L, 3L), result.items[0].replies.map { it.id })
-        assertEquals(listOf(5L), result.items[0].replies[0].replies.map { it.id })
+        assertEquals(
+            listOf(5L),
+            result.items[0]
+                .replies[0]
+                .replies
+                .map { it.id },
+        )
         assertEquals(listOf(6L), result.items[1].replies.map { it.id })
         assertEquals(true, result.items[0].mine)
         verify(exactly = 1) { port.findRepliesByRootIds(any()) }
@@ -79,7 +85,13 @@ class ContentCommentServiceTest {
             )
 
         // then
-        assertEquals(emptyList<Long>(), result.items.single().replies.map { it.id })
+        assertEquals(
+            emptyList<Long>(),
+            result.items
+                .single()
+                .replies
+                .map { it.id },
+        )
     }
 
     private fun comment(

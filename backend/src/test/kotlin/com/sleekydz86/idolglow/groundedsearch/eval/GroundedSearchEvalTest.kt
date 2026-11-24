@@ -12,7 +12,6 @@ class GroundedSearchEvalTest {
     @Test
     @DisplayName("API 키가 없으면 검색 점수를 만들지 않는다")
     fun skipsWhenApiKeyMissing() {
-
         // given
         val cases = GroundedGoldenSet.cases()
         val probes = GroundedGoldenSet.probes()
@@ -23,12 +22,13 @@ class GroundedSearchEvalTest {
                 database = null,
                 skippedReason = "OPENAI_API_KEY가 없어 검색과 조건 추출은 측정하지 않았습니다.",
                 modes = emptyList(),
-                skippedModes = listOf(
-                    GroundedEvalReport.KEYWORD,
-                    GroundedEvalReport.VECTOR,
-                    GroundedEvalReport.HYBRID,
-                    GroundedEvalReport.RERANK,
-                ),
+                skippedModes =
+                    listOf(
+                        GroundedEvalReport.KEYWORD,
+                        GroundedEvalReport.VECTOR,
+                        GroundedEvalReport.HYBRID,
+                        GroundedEvalReport.RERANK,
+                    ),
                 fieldRates = null,
                 rejected = GroundedEvalValidation.rejectedCount(probes),
                 probeCount = probes.size,

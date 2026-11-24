@@ -22,4 +22,3 @@ class HealthCheckControllerTest {
         assertEquals("정상", controller.healthCheck().body)
     }
 }
-

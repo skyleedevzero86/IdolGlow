@@ -41,8 +41,7 @@ class ContentTranslationAdapter(
     override fun findByTargets(
         type: TranslationContentType,
         keys: Collection<String>,
-    ): List<ContentTranslation> =
-        if (keys.isEmpty()) emptyList() else repository.findByContentTypeAndContentKeyIn(type, keys)
+    ): List<ContentTranslation> = if (keys.isEmpty()) emptyList() else repository.findByContentTypeAndContentKeyIn(type, keys)
 
     override fun findDue(
         now: LocalDateTime,
@@ -53,8 +52,7 @@ class ContentTranslationAdapter(
         type: TranslationContentType,
         afterId: Long,
         limit: Int,
-    ): List<ContentTranslation> =
-        repository.findByContentTypeAndIdGreaterThanOrderByIdAsc(type, afterId, PageRequest.of(0, limit))
+    ): List<ContentTranslation> = repository.findByContentTypeAndIdGreaterThanOrderByIdAsc(type, afterId, PageRequest.of(0, limit))
 
     override fun findByStatus(
         status: TranslationStatus,
@@ -73,8 +71,7 @@ class ContentTranslationAdapter(
     override fun countByStatus(
         status: TranslationStatus,
         type: TranslationContentType?,
-    ): Long =
-        if (type == null) repository.countByStatus(status) else repository.countByStatusAndContentType(status, type)
+    ): Long = if (type == null) repository.countByStatus(status) else repository.countByStatusAndContentType(status, type)
 
     override fun summary(): List<TranslationCount> =
         repository.summarize().map { TranslationCount(it.getType(), it.getLocale(), it.getStatus(), it.getTotal()) }

@@ -39,7 +39,6 @@ class GroundedAnswerPostgresTest : PostgresIntegrationTest() {
     @Test
     @DisplayName("예약된 슬롯은 가능한 시간으로 나오지 않는다")
     fun soldOutSlotNeverShownAsAvailable() {
-
         // given
         jdbcTemplate.execute("create extension if not exists pg_trgm")
         val product = productRepository.save(Product(name = "매진 확인 상품", description = "설명", basePrice = BigDecimal.ONE))
@@ -76,13 +75,19 @@ class GroundedAnswerPostgresTest : PostgresIntegrationTest() {
         assertTrue(slots.any { it.start == openStart })
     }
 
-    private fun saveBooked(product: Product, day: LocalDate, start: LocalTime, now: LocalDateTime) {
-        val slot = ReservationSlot(
-            product = product,
-            reservationDate = day,
-            startTime = start,
-            endTime = start.plusHours(1),
-        )
+    private fun saveBooked(
+        product: Product,
+        day: LocalDate,
+        start: LocalTime,
+        now: LocalDateTime,
+    ) {
+        val slot =
+            ReservationSlot(
+                product = product,
+                reservationDate = day,
+                startTime = start,
+                endTime = start.plusHours(1),
+            )
         slot.hold(1L, now.plusHours(2), now)
         slot.confirmBooking(1L, now)
         slotRepository.saveAndFlush(slot)

@@ -73,6 +73,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
                 auth.requestMatchers(HttpMethod.POST, "/search-keywords", "/api/translations/lookup").permitAll()
+                auth.requestMatchers(HttpMethod.POST, "/visits").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/api/grounded-search", "/api/grounded-search/answer").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
