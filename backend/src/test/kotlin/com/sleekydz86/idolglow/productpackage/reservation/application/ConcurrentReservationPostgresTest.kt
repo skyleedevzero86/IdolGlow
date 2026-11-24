@@ -141,6 +141,6 @@ class ConcurrentReservationPostgresTest : PostgresIntegrationTest() {
         private const val NO_WAIT_LIMIT_MILLIS: Long = 1_000
         private const val HUNDRED: Int = 100
         private const val NANOS_PER_MILLI: Long = 1_000_000
-        private const val EXPECTED_REJECTION: String = "IllegalArgumentException: 다른 예약이 이미 선점한 슬롯입니다."
+        private const val EXPECTED_REJECTION: String = "CustomException: [RESERVATION_SLOT_HELD]: 다른 예약이 이미 선점한 슬롯입니다."
     }
 }

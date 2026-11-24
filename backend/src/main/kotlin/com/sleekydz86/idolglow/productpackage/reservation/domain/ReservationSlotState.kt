@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.reservation.domain
 
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.reservation.ReservationExceptionType
 import java.time.LocalDateTime
 
 data class ReservationSlotState(
@@ -12,9 +14,9 @@ data class ReservationSlotState(
         productId: Long,
         now: LocalDateTime,
     ) {
-        require(!isBooked) { "이미 예약된 슬롯입니다." }
+        if (isBooked) throw CustomException(ReservationExceptionType.SLOT_ALREADY_BOOKED)
         require(this.productId == productId) { "해당 슬롯은 상품 ID $productId 에 속하지 않습니다." }
-        require(!isHeld(now)) { "다른 예약이 이미 선점한 슬롯입니다." }
+        if (isHeld(now)) throw CustomException(ReservationExceptionType.SLOT_HELD)
     }
 
     private fun isHeld(now: LocalDateTime): Boolean = holdReservationId != null && holdExpiresAt?.isAfter(now) == true

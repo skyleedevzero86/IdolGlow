@@ -38,6 +38,11 @@ interface ReservationApi {
                 description = "잘못된 요청",
                 content = [Content(schema = Schema(hidden = true))],
             ),
+            ApiResponse(
+                responseCode = "409",
+                description = "슬롯이 이미 예약됨(RESERVATION_SLOT_ALREADY_BOOKED) 또는 다른 예약이 선점 중(RESERVATION_SLOT_HELD)",
+                content = [Content(schema = Schema(hidden = true))],
+            ),
         ],
     )
     fun createReservation(
