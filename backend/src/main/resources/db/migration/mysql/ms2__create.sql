@@ -1240,6 +1240,36 @@ CREATE TABLE IF NOT EXISTS event_translation (
         foreign key (global_id) references event_master (global_id)
 ) comment='공연 언어별 제목·소개';
 
+-- =============================================================================
+-- 공연 AI 제목 번역 실패 기록
+-- -----
+-- 목적
+-- - AI 제목 번역이 검사에 걸리거나 응답이 없던 공연을 언어별로 남긴다
+-- - 다음 실행에서 실패한 공연을 처음 시도하는 공연 뒤로 보낸다
+-- 대상
+-- - 마이에스큐엘 / event_translation_attempt
+-- 주의
+-- - global_id, locale 은 언어당 한 행
+-- - 같은 공연·언어에 번역 행이 저장되면 출처와 상관없이 이 행을 지운다
+-- 연관
+-- - EventMachineTitleService, EventTranslationTxService
+-- =============================================================================
+
+-- 공연 AI 제목 번역 실패 기록. 실패할 때마다 횟수를 늘리고 마지막 실패를 덮어쓴다.
+CREATE TABLE IF NOT EXISTS event_translation_attempt (
+    id bigint auto_increment primary key,
+    global_id varchar(36) not null comment '글로벌 공연 ID',
+    locale varchar(8) not null comment '언어 코드. en, ja, zh',
+    fail_count int not null comment '연속 실패 횟수. 번역 행이 저장되면 기록째 지운다',
+    last_reason varchar(200) not null comment '마지막 실패 이유. 검사 코드를 쉼표로 이은 값, 응답이 없으면 NO_RESPONSE. 200자까지',
+    last_failed_at timestamp(6) not null comment '마지막 실패 시각. 실패한 공연끼리 오래된 순서로 다시 시도한다',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막으로 바꾼 시각',
+    constraint uk_event_translation_attempt_global_locale unique (global_id, locale),
+    constraint fk_event_translation_attempt_master
+        foreign key (global_id) references event_master (global_id)
+) comment='공연 AI 제목 번역 실패 기록';
+
 -- 운영 변경 한 건. 적용 시점에 이전 상태를 남기고 되돌리기에서 복구한다.
 CREATE TABLE IF NOT EXISTS ops_change_request (
     id bigint auto_increment primary key,

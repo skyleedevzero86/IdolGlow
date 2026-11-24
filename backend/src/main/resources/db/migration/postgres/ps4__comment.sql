@@ -1579,6 +1579,20 @@ COMMENT ON COLUMN event_translation.origin IS '출처. PROVIDER, MANUAL, MACHINE
 
 COMMENT ON COLUMN event_translation.updated_at IS '마지막으로 번역을 바꾼 시각';
 
+COMMENT ON TABLE event_translation_attempt IS '공연 AI 제목 번역 실패 기록';
+
+COMMENT ON COLUMN event_translation_attempt.global_id IS '글로벌 공연 ID';
+
+COMMENT ON COLUMN event_translation_attempt.locale IS '언어 코드. en, ja, zh';
+
+COMMENT ON COLUMN event_translation_attempt.fail_count IS '연속 실패 횟수. 번역 행이 저장되면 기록째 지운다';
+
+COMMENT ON COLUMN event_translation_attempt.last_reason IS '마지막 실패 이유. 검사 코드를 쉼표로 이은 값, 응답이 없으면 NO_RESPONSE. 200자까지';
+
+COMMENT ON COLUMN event_translation_attempt.last_failed_at IS '마지막 실패 시각. 실패한 공연끼리 오래된 순서로 다시 시도한다';
+
+COMMENT ON COLUMN event_translation_attempt.updated_at IS '마지막으로 바꾼 시각';
+
 COMMENT ON COLUMN users.role IS '권한 역할. USER 일반, ADMIN 관리자, OPERATOR 운영 변경 요청, APPROVER 승인';
 
 COMMENT ON TABLE ops_change_request IS '운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';

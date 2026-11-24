@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow
 
+import com.sleekydz86.idolglow.eventinfo.application.EventMachineTitleProperties
 import com.sleekydz86.idolglow.eventinfo.application.EventMetaStreamProperties
 import com.sleekydz86.idolglow.eventinfo.application.EventSearchProperties
 import com.sleekydz86.idolglow.global.config.AppCalendarProperties
@@ -59,6 +60,7 @@ import org.springframework.cache.annotation.EnableCaching
     KopisApiProperties::class,
     EventMetaStreamProperties::class,
     EventSearchProperties::class,
+    EventMachineTitleProperties::class,
     NaverDirectionsProperties::class,
     ExchangeAirportHubProperties::class,
     SubwayProperties::class,

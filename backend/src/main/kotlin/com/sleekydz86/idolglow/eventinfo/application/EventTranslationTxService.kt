@@ -1,10 +1,12 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventMasterPort
+import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationAttemptPort
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaChangeType
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
+import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationAttempt
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -16,6 +18,7 @@ class EventTranslationTxService(
     private val eventTranslationPort: EventTranslationPort,
     private val eventMasterPort: EventMasterPort,
     private val eventMetaOutboxRecorder: EventMetaOutboxRecorder,
+    private val eventTranslationAttemptPort: EventTranslationAttemptPort,
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun upsertProvider(
@@ -35,6 +38,18 @@ class EventTranslationTxService(
         title: String,
     ): Boolean = store(EventTranslation.machine(globalId, locale, title))
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun recordMachineFailure(
+        globalId: String,
+        locale: String,
+        reason: String,
+    ) {
+        val now = LocalDateTime.now()
+        val existing = eventTranslationAttemptPort.find(globalId, locale)
+        existing?.recordFailure(reason, now)
+        eventTranslationAttemptPort.save(existing ?: EventTranslationAttempt.first(globalId, locale, reason, now))
+    }
+
     @Transactional
     fun saveManual(
         globalId: String,
@@ -53,6 +68,7 @@ class EventTranslationTxService(
         val changed = existing?.offer(candidate.origin, candidate.title, candidate.synopsis) ?: true
         if (!changed) return false
         eventTranslationPort.save(existing ?: candidate)
+        eventTranslationAttemptPort.delete(candidate.globalId, candidate.locale)
         recordChange(candidate.globalId)
         return true
     }

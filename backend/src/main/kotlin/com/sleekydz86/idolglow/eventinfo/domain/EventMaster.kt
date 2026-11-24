@@ -42,7 +42,7 @@ class EventMaster(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: EventMasterStatus,
-    @Column(name = "merged_into", length = 36)
+    @Column(name = "`merged_into`", length = 36)
     var mergedInto: String? = null,
     @Column(name = "meta_version", nullable = false)
     var metaVersion: Long = 0,
