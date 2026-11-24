@@ -1646,7 +1646,7 @@ DEALLOCATE PREPARE survey_visit_end_stmt;
 SET @add_users_joined_at := (
     SELECT IF(
         COUNT(*) = 0,
-        'ALTER TABLE users ADD COLUMN joined_at TIMESTAMP(6) NULL COMMENT ''회원 가입 시각. 처음 저장할 때 정하고 바꾸지 않는다. 이 칸이 생기기 전 가입한 회원은 비어 있고 신규 가입 집계에서 빠진다''',
+        'ALTER TABLE users ADD COLUMN joined_at DATETIME(6) NULL COMMENT ''회원 가입 시각. 처음 저장할 때 정하고 바꾸지 않는다. 이 칸이 생기기 전 가입한 회원은 비어 있고 신규 가입 집계에서 빠진다''',
         'SELECT 1'
     )
     FROM information_schema.columns

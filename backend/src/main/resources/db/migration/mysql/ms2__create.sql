@@ -1717,11 +1717,11 @@ CREATE TABLE IF NOT EXISTS site_daily_visits (
 -- - 7일이 지난 줄은 지운다
 -- - HTTP 응답 수는 그 서버가 직전 점검 뒤 받은 응답 수다
 -- 연관
--- - ServerMetricSnapshot, ServerMetricSnapshotScheduler, ServerMetricQueryService
+-- - ServerMetricSnapshot, DashboardScheduler, ServerMetricRecorder, ServerMetricQueryService
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS server_metric_snapshots (
     id bigint auto_increment primary key,
-    measured_at timestamp(6) not null comment '점검한 시각',
+    measured_at datetime(6) not null comment '점검한 시각',
     overall_status varchar(20) not null comment '전체 상태. UP, DEGRADED, DOWN',
     db_status varchar(20) not null comment '데이터베이스 상태. UP, DOWN',
     db_response_ms bigint null comment '데이터베이스 연결 확인에 걸린 밀리초',

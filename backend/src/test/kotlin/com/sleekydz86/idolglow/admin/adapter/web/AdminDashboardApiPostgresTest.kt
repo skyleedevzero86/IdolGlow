@@ -195,7 +195,7 @@ class AdminDashboardApiPostgresTest : PostgresIntegrationTest() {
 
     @DisplayName("최근 가입 회원 개수는 1~20으로 맞추고, 없거나 숫자가 아니면 8이다")
     @ParameterizedTest
-    @CsvSource("0,1", "-5,1", "21,20", "abc,8", "'',8", "' 3 ',3")
+    @CsvSource("0,1", "-5,1", "21,20", "abc,8", "'',8", "' 3 ',3", "99999999999,20", "-99999999999,1")
     fun clampsRecentMemberLimit(
         raw: String,
         expected: Int,
@@ -214,7 +214,7 @@ class AdminDashboardApiPostgresTest : PostgresIntegrationTest() {
 
     @DisplayName("서버 상태 추이 기간은 1~168시간으로 맞추고, 없거나 숫자가 아니면 24시간이다")
     @ParameterizedTest
-    @CsvSource("0,1", "169,168", "abc,24", "'',24", "72,72")
+    @CsvSource("0,1", "169,168", "abc,24", "'',24", "72,72", "99999999999,168", "-99999999999,1")
     fun clampsServerMetricHours(
         raw: String,
         expected: Int,
