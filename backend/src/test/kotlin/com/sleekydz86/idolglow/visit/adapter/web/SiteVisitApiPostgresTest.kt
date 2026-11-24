@@ -7,6 +7,7 @@ import com.sleekydz86.idolglow.glowcommunity.infrastructure.GlowCommunityReportJ
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
 import com.sleekydz86.idolglow.support.PostgresReservationFixture
 import com.sleekydz86.idolglow.visit.application.SiteVisitRetentionService
+import com.sleekydz86.idolglow.visit.application.SiteVisitService
 import com.sleekydz86.idolglow.visit.application.SiteVisitTxService
 import com.sleekydz86.idolglow.visit.domain.VisitorId
 import jakarta.servlet.http.Cookie
@@ -53,6 +54,8 @@ class SiteVisitApiPostgresTest : PostgresIntegrationTest() {
     @Autowired private lateinit var siteVisitTxService: SiteVisitTxService
 
     @Autowired private lateinit var retentionService: SiteVisitRetentionService
+
+    @Autowired private lateinit var siteVisitService: SiteVisitService
 
     @Autowired private lateinit var reportRepository: GlowCommunityReportJpaRepository
 
@@ -227,6 +230,39 @@ class SiteVisitApiPostgresTest : PostgresIntegrationTest() {
 
         // then
         assertEquals(List(threads) { 204 }, statuses)
+        assertEquals(1, countVisitors(visitorId))
+        assertEquals(1, countDailyVisits(visitorId, today))
+    }
+
+    @DisplayName("서비스를 동시에 10번 불러도 저장 충돌을 다시 읽어 넘기므로 예외가 하나도 없다")
+    @Test
+    fun serviceRetriesConflictWithoutFailure() {
+        // given
+        val visitorId = UUID.randomUUID().toString()
+        val threads = 10
+        val ready = CountDownLatch(threads)
+        val start = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(threads)
+
+        // when
+        val failures =
+            (1..threads)
+                .map {
+                    pool.submit(
+                        Callable {
+                            ready.countDown()
+                            start.await()
+                            runCatching { siteVisitService.record(visitorId, null, "203.0.113.9") }.exceptionOrNull()
+                        },
+                    )
+                }.also {
+                    ready.await()
+                    start.countDown()
+                }.mapNotNull { it.get(30, TimeUnit.SECONDS) }
+        pool.shutdown()
+
+        // then
+        assertEquals(emptyList<Throwable>(), failures)
         assertEquals(1, countVisitors(visitorId))
         assertEquals(1, countDailyVisits(visitorId, today))
     }
