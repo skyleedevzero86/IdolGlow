@@ -26,10 +26,7 @@ class GroundedSearchService(
 ) : GroundedRetrievePort {
     fun search(query: String): List<GroundedSearchHit> = retrieve(query, GroundedScope.unfiltered()).hits
 
-    override fun retrieve(
-        query: String,
-        scope: GroundedScope,
-    ): GroundedRetrieval {
+    override fun retrieve(query: String, scope: GroundedScope): GroundedRetrieval {
         val trimmed = query.trim()
         require(trimmed.isNotEmpty()) { "검색어는 비어 있을 수 없습니다." }
         val keywordIds = keywordSearchPort.search(trimmed, GroundedSearchLimits.keywordLimit())
@@ -45,18 +42,12 @@ class GroundedSearchService(
         return GroundedRetrieval(hits, keywordIds, vectorIds, fused)
     }
 
-    private fun keep(
-        hit: GroundedSearchHit,
-        scope: GroundedScope,
-    ): Boolean {
+    private fun keep(hit: GroundedSearchHit, scope: GroundedScope): Boolean {
         val ids = scope.productIds ?: return true
         return owner(hit, scope) in ids
     }
 
-    private fun owner(
-        hit: GroundedSearchHit,
-        scope: GroundedScope,
-    ): Long? =
+    private fun owner(hit: GroundedSearchHit, scope: GroundedScope): Long? =
         when (hit.sourceType) {
             RagSourceType.PRODUCT -> hit.sourceId
             RagSourceType.OPTION -> scope.optionToProduct[hit.sourceId]

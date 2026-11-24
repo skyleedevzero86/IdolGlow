@@ -104,7 +104,8 @@ class TourFestivalApiClientTest {
         assertEquals(listOf("test-key"), requestedQueries.map(::serviceKeyOf))
     }
 
-    private fun serviceKeyOf(query: String): String = query.split('&').first { it.startsWith("serviceKey=") }.substringAfter('=')
+    private fun serviceKeyOf(query: String): String =
+        query.split('&').first { it.startsWith("serviceKey=") }.substringAfter('=')
 
     private fun 응답을_돌려주는_서버(
         body: String,

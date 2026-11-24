@@ -82,7 +82,8 @@ class GlowCommunityController(
         @LoginUser userId: Long,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): OffsetPageResult<GlowCommunityPostResult> = glowCommunityPostQueryUseCase.findMyPosts(userId, OffsetPageRequest.of(page, size))
+    ): OffsetPageResult<GlowCommunityPostResult> =
+        glowCommunityPostQueryUseCase.findMyPosts(userId, OffsetPageRequest.of(page, size))
 
     @Operation(summary = "게시글 작성")
     @PostMapping("/posts")

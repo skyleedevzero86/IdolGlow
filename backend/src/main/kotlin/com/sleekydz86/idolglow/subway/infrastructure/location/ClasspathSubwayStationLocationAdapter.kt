@@ -32,12 +32,7 @@ class ClasspathSubwayStationLocationAdapter : SubwayStationLocationPort {
     }
 
     private fun parseRow(line: String): Pair<String, SubwayStationLocation>? {
-        val cols =
-            line
-                .trim()
-                .removePrefix("\"")
-                .removeSuffix("\"")
-                .split("\",\"")
+        val cols = line.trim().removePrefix("\"").removeSuffix("\"").split("\",\"")
         val latitude = cols.getOrNull(LATITUDE)?.toDoubleOrNull()
         val longitude = cols.getOrNull(LONGITUDE)?.toDoubleOrNull()
         if (latitude == null || longitude == null) {

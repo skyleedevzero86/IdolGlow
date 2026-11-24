@@ -224,12 +224,7 @@ class OpsChangeRequestPostgresTest : PostgresIntegrationTest() {
             ?: throw IllegalStateException("공연 공급처 원본이 없습니다. sourceId=${ref.sourceId}")
 
     private fun user(role: UserRole): User {
-        val token =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val token = UUID.randomUUID().toString().replace("-", "").take(8)
         return userJpaRepository.save(User.of("ops$token@test.com", "u$token", role))
     }
 

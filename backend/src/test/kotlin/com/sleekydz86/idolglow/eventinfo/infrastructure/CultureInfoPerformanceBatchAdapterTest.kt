@@ -21,6 +21,7 @@ class CultureInfoPerformanceBatchAdapterTest {
     @DisplayName("모든 날짜를 받으면 누락 사유가 없다")
     @Test
     fun hasNoReasonWhenAllDaysComplete() {
+
         // given
         하루_결과("20261119", complete = true, "1")
         하루_결과("20261120", complete = true, "2")
@@ -37,6 +38,7 @@ class CultureInfoPerformanceBatchAdapterTest {
     @DisplayName("일부 날짜가 빠지면 받은 공연은 두고 누락 날짜 수를 사유로 남긴다")
     @Test
     fun keepsItemsAndReportsIncompleteDays() {
+
         // given
         하루_결과("20261119", complete = true, "1")
         하루_결과("20261120", complete = false)
@@ -53,6 +55,7 @@ class CultureInfoPerformanceBatchAdapterTest {
     @DisplayName("모든 날짜에 빠진 호출이 있어도 받은 공연이 있으면 저장하고 누락 사유를 남긴다")
     @Test
     fun keepsItemsWhenEveryDayPartlyIncomplete() {
+
         // given
         하루_결과("20261119", complete = false, "1")
         하루_결과("20261120", complete = false, "2")
@@ -69,6 +72,7 @@ class CultureInfoPerformanceBatchAdapterTest {
     @DisplayName("모든 날짜가 빠지고 받은 공연도 없으면 예외로 알린다")
     @Test
     fun throwsWhenEveryDayIncomplete() {
+
         // given
         하루_결과("20261119", complete = false)
         하루_결과("20261120", complete = false)

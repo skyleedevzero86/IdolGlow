@@ -28,9 +28,13 @@ class RevenueQueryAdapter(
     override fun findActiveBillingAmounts(): List<BillingAmount> =
         entityManager
             .createQuery(
-                "SELECT new com.sleekydz86.idolglow.payment.application.port.out.BillingAmount(s.amount, s.cycleMonths) " +
+                "SELECT new $BILLING_AMOUNT_CLASS(s.amount, s.cycleMonths) " +
                     "FROM TossBillingSubscription s WHERE s.status = :status",
                 BillingAmount::class.java,
             ).setParameter("status", TossBillingSubscriptionStatus.ACTIVE)
             .resultList
+
+    companion object {
+        private val BILLING_AMOUNT_CLASS: String = BillingAmount::class.java.name
+    }
 }

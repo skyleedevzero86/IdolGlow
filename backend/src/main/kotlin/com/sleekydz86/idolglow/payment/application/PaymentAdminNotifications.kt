@@ -25,7 +25,8 @@ object PaymentAdminNotifications {
             link = ADMIN_PAYMENTS_LINK,
         )
 
-    fun completed(charge: TossBillingCharge): AdminNotificationRequestedEvent = completed(BigDecimal.valueOf(charge.amount), charge.orderId)
+    fun completed(charge: TossBillingCharge): AdminNotificationRequestedEvent =
+        completed(BigDecimal.valueOf(charge.amount), charge.orderId)
 
     fun issue(
         alert: StuckPaymentAlert,
@@ -39,5 +40,6 @@ object PaymentAdminNotifications {
             deduplicateByLink = true,
         )
 
-    private fun formatAmount(amount: BigDecimal): String = DecimalFormat("#,###").format(amount.setScale(0, RoundingMode.DOWN))
+    private fun formatAmount(amount: BigDecimal): String =
+        DecimalFormat("#,###").format(amount.setScale(0, RoundingMode.DOWN))
 }

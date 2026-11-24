@@ -12,10 +12,7 @@ class LikeKeywordSearchAdapter(
     private val entityManager: EntityManager,
 ) : KeywordSearchPort {
     @Transactional(readOnly = true)
-    override fun search(
-        query: String,
-        limit: Int,
-    ): List<Long> {
+    override fun search(query: String, limit: Int): List<Long> {
         val trimmed = query.replace("%", "").replace("_", "").trim()
         if (trimmed.isEmpty()) {
             return emptyList()

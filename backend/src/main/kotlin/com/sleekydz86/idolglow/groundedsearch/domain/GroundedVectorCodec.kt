@@ -11,18 +11,12 @@ object GroundedVectorCodec {
         return buffer.array()
     }
 
-    fun decode(
-        bytes: ByteArray,
-        dims: Int,
-    ): FloatArray {
+    fun decode(bytes: ByteArray, dims: Int): FloatArray {
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
         return FloatArray(dims) { buffer.float }
     }
 
-    fun cosine(
-        left: FloatArray,
-        right: FloatArray,
-    ): Double {
+    fun cosine(left: FloatArray, right: FloatArray): Double {
         val size = minOf(left.size, right.size)
         var dot = 0.0
         var leftNorm = 0.0

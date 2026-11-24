@@ -12,6 +12,7 @@ class ApplicationContextTest {
     @DisplayName("스프링 컨텍스트가 정상적으로 로드된다")
     @Test
     fun loadsSpringContext() {
+
         // given
 
         // when

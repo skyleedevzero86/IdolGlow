@@ -33,6 +33,7 @@ class RevenueQueryService(
     }
 
     companion object {
-        fun monthlyAmount(billing: BillingAmount): Long = Math.floorDiv(billing.amount, billing.cycleMonths.coerceAtLeast(1).toLong())
+        fun monthlyAmount(billing: BillingAmount): Long =
+            Math.floorDiv(billing.amount, billing.cycleMonths.coerceAtLeast(1).toLong())
     }
 }

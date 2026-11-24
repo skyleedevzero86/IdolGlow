@@ -11,14 +11,16 @@ import java.time.LocalDate
 class EventTranslationRepositoryImpl(
     private val eventTranslationJpaRepository: EventTranslationJpaRepository,
 ) : EventTranslationPort {
-    override fun save(translation: EventTranslation): EventTranslation = eventTranslationJpaRepository.saveAndFlush(translation)
+    override fun save(translation: EventTranslation): EventTranslation =
+        eventTranslationJpaRepository.saveAndFlush(translation)
 
     override fun findByGlobalIdAndLocale(
         globalId: String,
         locale: String,
     ): EventTranslation? = eventTranslationJpaRepository.findByGlobalIdAndLocale(globalId, locale)
 
-    override fun findByGlobalId(globalId: String): List<EventTranslation> = eventTranslationJpaRepository.findByGlobalId(globalId)
+    override fun findByGlobalId(globalId: String): List<EventTranslation> =
+        eventTranslationJpaRepository.findByGlobalId(globalId)
 
     override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventTranslation> =
         eventTranslationJpaRepository.findByGlobalIdIn(globalIds)

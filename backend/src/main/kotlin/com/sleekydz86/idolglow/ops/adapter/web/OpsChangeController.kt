@@ -26,7 +26,8 @@ class OpsChangeController(
     @Operation(summary = "운영 변경 목록", description = "최근 요청 50건")
     @PreAuthorize("hasAnyRole('OPERATOR','APPROVER','ADMIN')")
     @GetMapping
-    fun list(): ResponseEntity<List<OpsChangeResponse>> = ResponseEntity.ok(opsChangeCommandService.findRecent().map { it.toResponse() })
+    fun list(): ResponseEntity<List<OpsChangeResponse>> =
+        ResponseEntity.ok(opsChangeCommandService.findRecent().map { it.toResponse() })
 
     @Operation(summary = "운영 변경 요청", description = "OPERATOR 또는 ADMIN. 요청자와 승인자는 달라야 한다")
     @PreAuthorize("hasAnyRole('OPERATOR','ADMIN')")

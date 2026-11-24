@@ -129,10 +129,7 @@ class GroundedSearchPostgresTest : PostgresIntegrationTest() {
         )
     }
 
-    private fun saveVector(
-        chunk: RagChunk,
-        vector: FloatArray,
-    ) {
+    private fun saveVector(chunk: RagChunk, vector: FloatArray) {
         embeddingRepository.saveAndFlush(
             RagChunkEmbedding(
                 chunkId = chunk.id,

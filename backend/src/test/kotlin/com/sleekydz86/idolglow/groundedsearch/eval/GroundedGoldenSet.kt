@@ -9,10 +9,6 @@ object GroundedGoldenSet {
         val stream =
             GroundedGoldenSet::class.java.classLoader.getResourceAsStream(path)
                 ?: throw IllegalArgumentException("평가 파일을 찾을 수 없습니다. path=$path")
-        return stream
-            .bufferedReader()
-            .readLines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+        return stream.bufferedReader().readLines().map { it.trim() }.filter { it.isNotEmpty() }
     }
 }

@@ -5,14 +5,8 @@ object GroundedLinkKey {
 
     fun option(id: Long): String = "option/$id"
 
-    fun article(
-        issueSlug: String,
-        articleSlug: String,
-    ): String = "idolglow/$issueSlug/$articleSlug"
+    fun article(issueSlug: String, articleSlug: String): String = "idolglow/$issueSlug/$articleSlug"
 
-    fun section(
-        issueSlug: String,
-        articleSlug: String,
-        sectionId: Long,
-    ): String = "idolglow/$issueSlug/$articleSlug#section-$sectionId"
+    fun section(issueSlug: String, articleSlug: String, sectionId: Long): String =
+        "idolglow/$issueSlug/$articleSlug#section-$sectionId"
 }

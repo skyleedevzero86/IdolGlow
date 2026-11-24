@@ -76,7 +76,8 @@ class AdminDashboardApiPostgresTest : PostgresIntegrationTest() {
                 .webAppContextSetup(context)
                 .apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
-        dashboardTime.clock = Clock.fixed(today.atTime(10, 0).atZone(IdolGlowDateTimes.ZONE).toInstant(), IdolGlowDateTimes.ZONE)
+        dashboardTime.clock =
+            Clock.fixed(today.atTime(10, 0).atZone(IdolGlowDateTimes.ZONE).toInstant(), IdolGlowDateTimes.ZONE)
         dashboardTime.storageZone = IdolGlowDateTimes.ZONE
     }
 
@@ -256,7 +257,8 @@ class AdminDashboardApiPostgresTest : PostgresIntegrationTest() {
 
     private fun elements(array: JsonNode): List<JsonNode> = (0 until array.size()).map { array.get(it) }
 
-    private fun admin(request: MockHttpServletRequestBuilder): MockHttpServletRequestBuilder = request.with(user("1").roles("ADMIN"))
+    private fun admin(request: MockHttpServletRequestBuilder): MockHttpServletRequestBuilder =
+        request.with(user("1").roles("ADMIN"))
 
     private fun joinedAt(
         user: User,

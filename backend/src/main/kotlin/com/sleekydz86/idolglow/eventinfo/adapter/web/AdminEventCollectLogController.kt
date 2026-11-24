@@ -25,5 +25,6 @@ class AdminEventCollectLogController(
     @PostMapping("/time-zone-backfill")
     fun backfill(
         @RequestParam(defaultValue = "1000") batchSize: Int,
-    ): ResponseEntity<TimeZoneBackfillResult> = ResponseEntity.ok(eventCollectLogTimeZoneBackfillService.backfill(batchSize))
+    ): ResponseEntity<TimeZoneBackfillResult> =
+        ResponseEntity.ok(eventCollectLogTimeZoneBackfillService.backfill(batchSize))
 }

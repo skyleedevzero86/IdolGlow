@@ -47,7 +47,8 @@ class TossBillingCharge(
     @Column(name = "canceled_at")
     var canceledAt: LocalDateTime? = null,
 ) : BaseEntity() {
-    fun cancelDeadline(): LocalDateTime? = approvedAt?.takeIf { status == TossBillingChargeStatus.DONE }?.plusDays(CANCEL_WINDOW_DAYS)
+    fun cancelDeadline(): LocalDateTime? =
+        approvedAt?.takeIf { status == TossBillingChargeStatus.DONE }?.plusDays(CANCEL_WINDOW_DAYS)
 
     fun assertCancelable(now: LocalDateTime) {
         require(status == TossBillingChargeStatus.DONE && paymentKey != null) {

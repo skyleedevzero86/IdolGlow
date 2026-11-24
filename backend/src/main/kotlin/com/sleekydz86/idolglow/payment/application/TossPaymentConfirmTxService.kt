@@ -24,7 +24,6 @@ class TossPaymentConfirmTxService(
     private val paymentLogCommandService: PaymentLogCommandService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-
     fun prepareConfirm(
         userId: Long,
         orderId: String,

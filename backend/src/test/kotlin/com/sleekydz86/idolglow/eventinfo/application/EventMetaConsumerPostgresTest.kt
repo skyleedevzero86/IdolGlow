@@ -1,9 +1,9 @@
 package com.sleekydz86.idolglow.eventinfo.application
 
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
+import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
-import com.sleekydz86.idolglow.eventinfo.domain.EventMetaApplyResult
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaMessage
 import com.sleekydz86.idolglow.eventinfo.domain.EventMetaSnapshot
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef

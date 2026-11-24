@@ -20,6 +20,7 @@ class PaymentGraphQlController(
     @Value("\${payment.mock.webhook-secret}")
     private val webhookSecret: String,
 ) {
+
     @MutationMapping
     fun mockPaymentWebhook(
         @Argument secret: String,

@@ -3,7 +3,6 @@ package com.sleekydz86.idolglow.bnr.infrastructure
 import com.sleekydz86.idolglow.bnr.domain.BnrItem
 import com.sleekydz86.idolglow.bnr.domain.BnrListCriteria
 import com.sleekydz86.idolglow.bnr.domain.BnrRepository
-import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.sdom.infrastructure.SdomEntity
 import jakarta.persistence.EntityManager
 import jakarta.persistence.criteria.CriteriaBuilder
@@ -14,6 +13,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import java.time.LocalDateTime
 
 @Repository

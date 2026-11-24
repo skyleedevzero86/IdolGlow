@@ -85,11 +85,10 @@ class InfrastructureProbe(
     }
 
     fun minioStatus(): AdminInfrastructureStatusResult {
-        if (!minioStorageProperties.enabled || minioClient == null) {
+        val client = minioClient
+        if (!minioStorageProperties.enabled || client == null) {
             return minioNotConfigured("설정에서 MinIO가 비활성화되어 있습니다.")
         }
-
-        val client = minioClient ?: return minioNotConfigured("MinIO 클라이언트 빈을 사용할 수 없습니다.")
         val startedAt = System.nanoTime()
 
         return runCatching {
@@ -207,7 +206,7 @@ class InfrastructureProbe(
                     ?.measure()
                     ?.firstOrNull()
                     ?.value
-            }?.let { round(it * 100.0) / 100.0 }
+            }?.let { round(it * TWO_DECIMALS) / TWO_DECIMALS }
 
     private fun currentProperty(
         name: String,
@@ -217,4 +216,8 @@ class InfrastructureProbe(
     private fun formatMetricValue(value: Double?): String = value?.toString() ?: "-"
 
     private fun elapsedMillis(startedAt: Long): Long = Duration.ofNanos(System.nanoTime() - startedAt).toMillis()
+
+    companion object {
+        private const val TWO_DECIMALS: Double = 100.0
+    }
 }

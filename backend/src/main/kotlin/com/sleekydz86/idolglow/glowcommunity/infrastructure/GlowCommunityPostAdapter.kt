@@ -18,9 +18,11 @@ class GlowCommunityPostAdapter(
 ) : GlowCommunityPostPort {
     override fun save(post: GlowCommunityPost): GlowCommunityPost = glowCommunityPostJpaRepository.save(post)
 
-    override fun findActiveById(postId: Long): GlowCommunityPost? = glowCommunityPostJpaRepository.findActiveById(postId)
+    override fun findActiveById(postId: Long): GlowCommunityPost? =
+        glowCommunityPostJpaRepository.findActiveById(postId)
 
-    override fun findActiveByIdForUpdate(postId: Long): GlowCommunityPost? = glowCommunityPostJpaRepository.findActiveByIdForUpdate(postId)
+    override fun findActiveByIdForUpdate(postId: Long): GlowCommunityPost? =
+        glowCommunityPostJpaRepository.findActiveByIdForUpdate(postId)
 
     override fun findAllByIds(postIds: Collection<Long>): List<GlowCommunityPost> =
         if (postIds.isEmpty()) emptyList() else glowCommunityPostJpaRepository.findAllById(postIds)

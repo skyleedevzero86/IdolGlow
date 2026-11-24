@@ -72,8 +72,7 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/search-keywords", "/api/translations/lookup").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/visits").permitAll()
+                auth.requestMatchers(HttpMethod.POST, *PUBLIC_POST).permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/api/grounded-search", "/api/grounded-search/answer").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
@@ -226,6 +225,13 @@ class SecurityConfig(
                 "/v3/api-docs/**",
                 "/v3/api-docs.yaml",
                 "/swagger-ui.html",
+            )
+
+        private val PUBLIC_POST =
+            arrayOf(
+                "/search-keywords",
+                "/api/translations/lookup",
+                "/visits",
             )
 
         private val PERMIT_LIST =

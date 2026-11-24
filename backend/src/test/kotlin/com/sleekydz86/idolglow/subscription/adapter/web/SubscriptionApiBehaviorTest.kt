@@ -30,6 +30,7 @@ class SubscriptionApiBehaviorTest {
     @DisplayName("이메일 구독 API가 신규 구독을 등록한다")
     @Test
     fun registersSubscriptionViaApi() {
+
         // given
         val body =
             """

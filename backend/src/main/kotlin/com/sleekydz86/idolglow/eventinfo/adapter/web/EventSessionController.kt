@@ -29,5 +29,6 @@ class EventSessionController(
         @Parameter(description = "공급처 원본 ID") @RequestParam sourceId: String,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) to: LocalDate?,
-    ): ResponseEntity<EventSessionsOfSource> = ResponseEntity.ok(eventSessionQueryService.sessionsOfSource(source, sourceId, from, to))
+    ): ResponseEntity<EventSessionsOfSource> =
+        ResponseEntity.ok(eventSessionQueryService.sessionsOfSource(source, sourceId, from, to))
 }

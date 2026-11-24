@@ -79,12 +79,7 @@ class BillingNotificationRollbackPostgresTest : PostgresIntegrationTest() {
     }
 
     private fun persistActiveSubscription(due: LocalDateTime): Long {
-        val token =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val token = UUID.randomUUID().toString().replace("-", "").take(8)
         val user =
             userJpaRepository.save(
                 User(

@@ -54,9 +54,11 @@ class GlowCommunityCommentTargetPolicy(
 
     override fun titleOf(targetKey: String): String? = activePost(targetKey)?.title
 
-    private fun activePost(targetKey: String): GlowCommunityPost? = postIdOf(targetKey)?.let(glowCommunityPostPort::findActiveById)
+    private fun activePost(targetKey: String): GlowCommunityPost? =
+        postIdOf(targetKey)?.let(glowCommunityPostPort::findActiveById)
 
-    private fun lockedPost(targetKey: String): GlowCommunityPost? = postIdOf(targetKey)?.let(glowCommunityPostPort::findActiveByIdForUpdate)
+    private fun lockedPost(targetKey: String): GlowCommunityPost? =
+        postIdOf(targetKey)?.let(glowCommunityPostPort::findActiveByIdForUpdate)
 
     private fun postIdOf(targetKey: String): Long? = targetKey.trim().toLongOrNull()
 }

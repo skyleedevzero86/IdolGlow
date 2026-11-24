@@ -3,12 +3,12 @@ package com.sleekydz86.idolglow.payment.infrastructure
 import com.sleekydz86.idolglow.payment.domain.Payment
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import jakarta.persistence.LockModeType
+import java.time.LocalDateTime
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import java.time.LocalDateTime
 
 interface PaymentJpaRepository : JpaRepository<Payment, Long> {
     fun findByPaymentReference(paymentReference: String): Payment?

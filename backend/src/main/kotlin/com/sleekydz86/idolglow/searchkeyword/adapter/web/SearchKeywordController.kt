@@ -24,7 +24,8 @@ class SearchKeywordController(
     @GetMapping("/popular")
     fun popular(
         @RequestParam(defaultValue = "6") limit: Int,
-    ): ResponseEntity<List<PopularSearchKeywordResponse>> = ResponseEntity.ok(searchKeywordService.findPopular(limit))
+    ): ResponseEntity<List<PopularSearchKeywordResponse>> =
+        ResponseEntity.ok(searchKeywordService.findPopular(limit))
 
     @Operation(summary = "검색어 기록")
     @PostMapping

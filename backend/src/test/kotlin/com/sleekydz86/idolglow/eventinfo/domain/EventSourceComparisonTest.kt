@@ -11,6 +11,7 @@ class EventSourceComparisonTest {
     @DisplayName("부제만 다르고 장소와 기간이 같으면 같은 공연이다")
     @Test
     fun subtitleWithSameVenueAndPeriodIsSameShow() {
+
         // given
         val facts =
             facts(
@@ -36,6 +37,7 @@ class EventSourceComparisonTest {
     @DisplayName("장소가 다르면 같은 공연이 아니다")
     @Test
     fun differentVenueIsNotSameShow() {
+
         // given
         val facts =
             facts(
@@ -61,6 +63,7 @@ class EventSourceComparisonTest {
     @DisplayName("기간이 겹치지 않으면 같은 공연이 아니다")
     @Test
     fun differentPeriodIsNotSameShow() {
+
         // given
         val nextYear = SAME_START.plusYears(1)
         val facts =
@@ -87,6 +90,7 @@ class EventSourceComparisonTest {
     @DisplayName("틀린 제안은 맞음 수에서 빼고 승인 전 문구로 센다")
     @Test
     fun summaryCountsWrongProposalsThatStayUnapplied() {
+
         // given
         val score = EventMatchProposalScore(total = 2, correct = 1, wrong = 1)
 

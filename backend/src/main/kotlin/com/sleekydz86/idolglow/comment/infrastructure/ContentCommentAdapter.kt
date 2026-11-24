@@ -15,7 +15,8 @@ class ContentCommentAdapter(
 ) : ContentCommentPort {
     override fun save(comment: ContentComment): ContentComment = contentCommentJpaRepository.save(comment)
 
-    override fun findById(commentId: Long): ContentComment? = contentCommentJpaRepository.findById(commentId).orElse(null)
+    override fun findById(commentId: Long): ContentComment? =
+        contentCommentJpaRepository.findById(commentId).orElse(null)
 
     override fun findAllByIds(commentIds: Collection<Long>): List<ContentComment> =
         if (commentIds.isEmpty()) emptyList() else contentCommentJpaRepository.findAllById(commentIds)

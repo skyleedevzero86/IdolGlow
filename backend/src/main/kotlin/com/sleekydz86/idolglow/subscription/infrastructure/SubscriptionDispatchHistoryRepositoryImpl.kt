@@ -48,7 +48,8 @@ class SubscriptionDispatchHistoryRepositoryImpl(
             dispatchChannel = SubscriptionDispatchChannel.EMAIL,
         )
 
-    override fun findById(id: Long): SubscriptionDispatchHistory? = subscriptionDispatchHistoryJpaRepository.findById(id).orElse(null)
+    override fun findById(id: Long): SubscriptionDispatchHistory? =
+        subscriptionDispatchHistoryJpaRepository.findById(id).orElse(null)
 
     override fun claimResume(
         id: Long,

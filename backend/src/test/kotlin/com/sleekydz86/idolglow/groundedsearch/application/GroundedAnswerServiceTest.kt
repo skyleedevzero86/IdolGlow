@@ -27,6 +27,7 @@ class GroundedAnswerServiceTest {
     @Test
     @DisplayName("결과가 없으면 푼 조건을 보여 준다")
     fun relaxedConditionIsShownWhenNoResult() {
+
         // given
         val day = LocalDate.now()
         val catalog = RecordingCatalog(listOf(emptySet(), emptySet(), emptySet(), setOf(1L)))
@@ -47,6 +48,7 @@ class GroundedAnswerServiceTest {
     @Test
     @DisplayName("답의 가격이 옵션과 다르면 거절한다")
     fun answerRejectedWhenPriceDiffersFromOption() {
+
         // given
         val facts =
             GroundedProductFacts(
@@ -76,6 +78,7 @@ class GroundedAnswerServiceTest {
     @Test
     @DisplayName("인용 번호는 넘긴 문단 안에 있어야 한다")
     fun citationMustBeRetrievedChunk() {
+
         // given
         val service =
             service(
@@ -97,6 +100,7 @@ class GroundedAnswerServiceTest {
     @Test
     @DisplayName("검색 점수가 낮으면 근거를 찾지 못했다고 한다")
     fun noAnswerWhenRetrievalScoreLow() {
+
         // given
         val service =
             service(
@@ -134,49 +138,37 @@ class GroundedAnswerServiceTest {
     private fun valid(day: LocalDate): GroundedConditionDraft =
         GroundedConditionDraft(region = "강남구", dateFrom = day.toString(), dateTo = day.toString(), maxBudget = "1")
 
-    private fun emptyRetrieval(): GroundedRetrieval = GroundedRetrieval(emptyList(), emptyList(), emptyList(), emptyList())
+    private fun emptyRetrieval(): GroundedRetrieval =
+        GroundedRetrieval(emptyList(), emptyList(), emptyList(), emptyList())
 
-    private fun hitRetrieval(): GroundedRetrieval = GroundedRetrieval(listOf(hit(1.toDouble())), listOf(1L), listOf(1L), emptyList())
+    private fun hitRetrieval(): GroundedRetrieval =
+        GroundedRetrieval(listOf(hit(1.toDouble())), listOf(1L), listOf(1L), emptyList())
 
-    private fun lowRetrieval(): GroundedRetrieval = GroundedRetrieval(listOf(hit(0.toDouble())), listOf(1L), emptyList(), emptyList())
+    private fun lowRetrieval(): GroundedRetrieval =
+        GroundedRetrieval(listOf(hit(0.toDouble())), listOf(1L), emptyList(), emptyList())
 
-    private fun hit(score: Double): GroundedSearchHit = GroundedSearchHit(1L, RagSourceType.PRODUCT, 1L, "product/1", "메이크업", 1, 1, score)
+    private fun hit(score: Double): GroundedSearchHit =
+        GroundedSearchHit(1L, RagSourceType.PRODUCT, 1L, "product/1", "메이크업", 1, 1, score)
 }
 
-private class FixedExtract(
-    private val draft: GroundedConditionDraft,
-) : ConditionExtractPort {
+private class FixedExtract(private val draft: GroundedConditionDraft) : ConditionExtractPort {
     override fun extract(query: String): GroundedConditionDraft = draft
 }
 
-private class FixedAnswer(
-    private val text: String,
-) : AnswerGeneratePort {
-    override fun answer(
-        query: String,
-        citations: List<GroundedCitationPrompt>,
-    ): String = text
+private class FixedAnswer(private val text: String) : AnswerGeneratePort {
+    override fun answer(query: String, citations: List<GroundedCitationPrompt>): String = text
 }
 
 private class ThrowingAnswer : AnswerGeneratePort {
-    override fun answer(
-        query: String,
-        citations: List<GroundedCitationPrompt>,
-    ): String = error("점수가 낮으면 답변을 호출하지 않아야 합니다.")
+    override fun answer(query: String, citations: List<GroundedCitationPrompt>): String =
+        error("점수가 낮으면 답변을 호출하지 않아야 합니다.")
 }
 
-private class FixedRetrieve(
-    private val retrieval: GroundedRetrieval,
-) : GroundedRetrievePort {
-    override fun retrieve(
-        query: String,
-        scope: GroundedScope,
-    ): GroundedRetrieval = retrieval
+private class FixedRetrieve(private val retrieval: GroundedRetrieval) : GroundedRetrievePort {
+    override fun retrieve(query: String, scope: GroundedScope): GroundedRetrieval = retrieval
 }
 
-private class FactCatalog(
-    private val rows: List<GroundedProductFacts>,
-) : GroundedCatalogPort {
+private class FactCatalog(private val rows: List<GroundedProductFacts>) : GroundedCatalogPort {
     override fun match(filter: GroundedFilter): Set<Long> = emptySet()
 
     override fun optionOwners(productIds: Set<Long>): Map<Long, Long> = emptyMap()
@@ -188,9 +180,7 @@ private class FactCatalog(
     ): List<GroundedProductFacts> = rows
 }
 
-private class RecordingCatalog(
-    private val matches: List<Set<Long>>,
-) : GroundedCatalogPort {
+private class RecordingCatalog(private val matches: List<Set<Long>>) : GroundedCatalogPort {
     val seen = mutableListOf<GroundedFilter>()
     private var index = 0
 

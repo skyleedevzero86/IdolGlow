@@ -187,8 +187,9 @@ class SiteVisitApiPostgresTest : PostgresIntegrationTest() {
         mockMvc.perform(post("/visits").cookie(Cookie(VisitorId.COOKIE_NAME, visitorId)))
 
         // when
-        mockMvc.perform(post("/visits").cookie(Cookie(VisitorId.COOKIE_NAME, visitorId)).with(user("501").roles("USER")))
-        mockMvc.perform(post("/visits").cookie(Cookie(VisitorId.COOKIE_NAME, visitorId)).with(user("502").roles("USER")))
+        val cookie = Cookie(VisitorId.COOKIE_NAME, visitorId)
+        mockMvc.perform(post("/visits").cookie(cookie).with(user("501").roles("USER")))
+        mockMvc.perform(post("/visits").cookie(cookie).with(user("502").roles("USER")))
 
         // then
         assertEquals(501L, dailyUserId(visitorId, today))
@@ -291,7 +292,8 @@ class SiteVisitApiPostgresTest : PostgresIntegrationTest() {
     }
 
     private fun useToday(date: LocalDate) {
-        dashboardTime.clock = Clock.fixed(date.atTime(12, 0).atZone(IdolGlowDateTimes.ZONE).toInstant(), IdolGlowDateTimes.ZONE)
+        dashboardTime.clock =
+            Clock.fixed(date.atTime(12, 0).atZone(IdolGlowDateTimes.ZONE).toInstant(), IdolGlowDateTimes.ZONE)
     }
 
     private fun visitFrom(
@@ -311,7 +313,11 @@ class SiteVisitApiPostgresTest : PostgresIntegrationTest() {
         requireNotNull(result.response.getCookie(VisitorId.COOKIE_NAME)?.value) { "ig_vid 쿠키가 없다" }
 
     private fun countVisitors(visitorId: String): Int =
-        jdbcTemplate.queryForObject("select count(*) from site_visitors where visitor_id = ?", Int::class.java, visitorId) ?: 0
+        jdbcTemplate.queryForObject(
+            "select count(*) from site_visitors where visitor_id = ?",
+            Int::class.java,
+            visitorId,
+        ) ?: 0
 
     private fun countDailyVisits(
         visitorId: String,

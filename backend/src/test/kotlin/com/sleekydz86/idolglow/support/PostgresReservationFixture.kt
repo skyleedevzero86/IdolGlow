@@ -37,12 +37,7 @@ class PostgresReservationFixture(
     }
 
     fun persistUser(): User {
-        val token =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val token = UUID.randomUUID().toString().replace("-", "").take(8)
         return userJpaRepository.save(
             User(
                 email = "u$token@test.com",

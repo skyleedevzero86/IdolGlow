@@ -56,12 +56,7 @@ object BillingKeyCrypto {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
         val encrypted = cipher.doFinal(plain.toByteArray(StandardCharsets.UTF_8))
-        val packed =
-            ByteBuffer
-                .allocate(iv.size + encrypted.size)
-                .put(iv)
-                .put(encrypted)
-                .array()
+        val packed = ByteBuffer.allocate(iv.size + encrypted.size).put(iv).put(encrypted).array()
         return PREFIX + Base64.getEncoder().encodeToString(packed)
     }
 

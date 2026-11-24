@@ -11,6 +11,7 @@ class JpaEmbeddableConstructorTest {
     @DisplayName("닉네임 임베디드 타입은 기본 생성자를 제공한다")
     @Test
     fun nicknameEmbeddableHasDefaultConstructor() {
+
         // given
 
         // when
@@ -23,6 +24,7 @@ class JpaEmbeddableConstructorTest {
     @DisplayName("리뷰 평점 임베디드 타입은 기본 생성자를 제공한다")
     @Test
     fun reviewRatingEmbeddableHasDefaultConstructor() {
+
         // given
 
         // when

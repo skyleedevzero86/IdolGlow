@@ -9,6 +9,7 @@ data class GroundedRrfResponse(
     val score: Double,
 ) {
     companion object {
-        fun from(rank: FusedRank): GroundedRrfResponse = GroundedRrfResponse(rank.chunkId, rank.keywordRank, rank.vectorRank, rank.score)
+        fun from(rank: FusedRank): GroundedRrfResponse =
+            GroundedRrfResponse(rank.chunkId, rank.keywordRank, rank.vectorRank, rank.score)
     }
 }

@@ -60,6 +60,7 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
     @DisplayName("일반 사용자는 충돌 목록을 볼 수 없다")
     @Test
     fun userCannotListConflicts() {
+
         // given
         val member = user(UserRole.USER)
         authenticate(member)
@@ -77,6 +78,7 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
     @DisplayName("에이전트 제안은 사람이 적용하기 전에는 요청 상태로 남는다")
     @Test
     fun agentProposalsStayRequestedUntilAPersonApplies() {
+
         // given
         val token = UUID.randomUUID().toString().take(8)
         val same = "sin-$token"
@@ -204,12 +206,7 @@ class EventMatchProposalPostgresTest : PostgresIntegrationTest() {
     }
 
     private fun user(role: UserRole): User {
-        val token =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val token = UUID.randomUUID().toString().replace("-", "").take(8)
         return userJpaRepository.save(User.of("match$token@test.com", "m$token", role))
     }
 

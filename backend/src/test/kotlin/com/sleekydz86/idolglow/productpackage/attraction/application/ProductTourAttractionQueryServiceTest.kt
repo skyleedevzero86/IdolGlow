@@ -32,12 +32,7 @@ class ProductTourAttractionQueryServiceTest {
         assertEquals("202610", result.baseYm)
         assertEquals("202611", result.requestedBaseYm)
         assertEquals(listOf("하늘공원"), result.attractions.map { it.name })
-        assertTrue(
-            result.attractions
-                .single()
-                .reason
-                .contains("202610"),
-        )
+        assertTrue(result.attractions.single().reason.contains("202610"))
     }
 
     @DisplayName("요청한 달에 자료가 있으면 그 달을 그대로 쓴다")

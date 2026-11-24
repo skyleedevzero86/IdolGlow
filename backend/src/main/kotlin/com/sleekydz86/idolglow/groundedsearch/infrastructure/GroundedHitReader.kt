@@ -20,10 +20,7 @@ class GroundedHitReader(
         return fused.mapNotNull { rank -> hit(chunks[rank.chunkId], rank) }
     }
 
-    private fun hit(
-        chunk: RagChunk?,
-        rank: FusedRank,
-    ): GroundedSearchHit? {
+    private fun hit(chunk: RagChunk?, rank: FusedRank): GroundedSearchHit? {
         if (chunk == null) {
             return null
         }

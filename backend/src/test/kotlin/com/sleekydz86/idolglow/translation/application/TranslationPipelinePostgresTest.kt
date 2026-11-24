@@ -265,12 +265,10 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
         reportService.report(translationId)
         val duplicate = reportService.report(translationId)
         val last =
-            reporters
-                .drop(1)
-                .map { reporter ->
-                    authenticate(reporter)
-                    reportService.report(translationId)
-                }.last()
+            reporters.drop(1).map { reporter ->
+                authenticate(reporter)
+                reportService.report(translationId)
+            }.last()
         val shown = lookup("en", TranslationContentType.GLOW_COMMUNITY_POST, post.id.toString())
 
         // then
@@ -362,14 +360,13 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
 
     private fun worker(): TranslationWorkerService =
         TranslationWorkerService(contentTranslationPort, txService, engine, props).also { worker ->
-            worker.clock =
-                object : Clock() {
-                    override fun getZone(): ZoneId = ZoneId.of("Asia/Seoul")
+            worker.clock = object : Clock() {
+                override fun getZone(): ZoneId = ZoneId.of("Asia/Seoul")
 
-                    override fun withZone(zone: ZoneId): Clock = this
+                override fun withZone(zone: ZoneId): Clock = this
 
-                    override fun instant(): Instant = instant
-                }
+                override fun instant(): Instant = instant
+            }
         }
 
     private fun advance(duration: Duration) {
@@ -393,7 +390,8 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
         locale: String,
     ): ContentTranslation = rows(type, key).single { it.locale == locale }
 
-    private fun product(): Product = productRepository.saveAndFlush(Product(name = "서울 야경 투어", description = "남산타워 2시간 코스, 가격 55,000원"))
+    private fun product(): Product =
+        productRepository.saveAndFlush(Product(name = "서울 야경 투어", description = "남산타워 2시간 코스, 가격 55,000원"))
 
     private fun post(
         title: String,
@@ -404,12 +402,7 @@ class TranslationPipelinePostgresTest : PostgresIntegrationTest() {
         )
 
     private fun user(role: UserRole): User {
-        val token =
-            UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "")
-                .take(8)
+        val token = UUID.randomUUID().toString().replace("-", "").take(8)
         return userRepository.save(User.of("tr$token@test.com", "t$token", role))
     }
 

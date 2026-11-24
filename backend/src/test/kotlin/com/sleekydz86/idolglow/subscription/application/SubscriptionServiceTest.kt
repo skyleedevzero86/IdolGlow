@@ -56,6 +56,7 @@ class SubscriptionServiceTest {
     @DisplayName("이메일과 수신 대상이 없으면 구독에 실패한다")
     @Test
     fun failsWhenEmailAndTargetsMissing() {
+
         // given
         val command =
             RegisterSubscriptionCommand(
@@ -74,6 +75,7 @@ class SubscriptionServiceTest {
     @DisplayName("신규 이메일 구독을 등록한다")
     @Test
     fun registersNewEmailSubscription() {
+
         // given
         val savedSlot = slot<EmailSubscription>()
         every { emailSubscriptionPort.findByEmail("fan@example.com") } returns null
@@ -115,6 +117,7 @@ class SubscriptionServiceTest {
     @DisplayName("기존 구독자는 재구독한다")
     @Test
     fun resubscribesExistingSubscriber() {
+
         // given
         val existing =
             EmailSubscription(

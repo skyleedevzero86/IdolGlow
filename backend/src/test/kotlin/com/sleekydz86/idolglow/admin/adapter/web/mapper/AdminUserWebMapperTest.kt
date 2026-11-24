@@ -13,6 +13,7 @@ class AdminUserWebMapperTest {
     @DisplayName("summary result를 기존 API 응답 형식으로 변환한다")
     @Test
     fun mapsSummaryResultToExistingApiShape() {
+
         // given
         val result =
             AdminUserSummaryResult(
