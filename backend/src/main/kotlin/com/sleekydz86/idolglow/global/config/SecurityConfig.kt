@@ -77,8 +77,6 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/api/grounded-search", "/api/grounded-search/answer").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tourist-attractions").permitAll()
-                auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/idolglow/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, *PUBLIC_GET).permitAll()
@@ -232,6 +230,7 @@ class SecurityConfig(
                 "/search-keywords",
                 "/api/translations/lookup",
                 "/visits",
+                "/auth/account/find-id",
             )
 
         private val PERMIT_LIST =

@@ -108,14 +108,12 @@ class AuthController(
         @Valid @RequestBody request: TemporaryPasswordRequest,
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<TemporaryPasswordResponse> {
-        val ip = ClientIp.of(httpServletRequest)
-        val sent = passwordRecoveryService.sendAccountIdReminder(request.email, ip)
-        val message =
-            if (sent) {
-                "등록된 이메일로 아이디 안내 메일을 발송했습니다."
-            } else {
-                "가입된 이메일을 찾을 수 없습니다."
-            }
-        return ResponseEntity.ok(TemporaryPasswordResponse(sent = sent, message = message))
+        passwordRecoveryService.sendAccountIdReminder(request.email, ClientIp.of(httpServletRequest))
+        return ResponseEntity.ok(
+            TemporaryPasswordResponse(
+                sent = true,
+                message = "입력한 이메일로 가입된 계정이 있으면 아이디 안내 메일을 보냈습니다.",
+            ),
+        )
     }
 }

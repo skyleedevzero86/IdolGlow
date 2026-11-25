@@ -37,21 +37,23 @@ class GlowAlertController(
                 status = status,
                 category = category,
                 keyword = q,
-                userId = authenticatedUserIdResolver.resolveOrNull(),
+                userId = authenticatedUserIdResolver.resolveRequired(),
             ),
         )
 
     @Operation(summary = "읽지 않은 Glow 알림 수 조회")
     @GetMapping("/api/glow-alerts/unread-count", "/glow-alerts/unread-count", "/mypage/glow-alerts/unread-count")
-    fun countUnread(): ResponseEntity<GlowAlertUnreadCountResponse> =
-        ResponseEntity.ok(GlowAlertUnreadCountResponse(glowAlertQueryService.countUnread(authenticatedUserIdResolver.resolveOrNull())))
+    fun countUnread(): ResponseEntity<GlowAlertUnreadCountResponse> {
+        val userId = authenticatedUserIdResolver.resolveRequired()
+        return ResponseEntity.ok(GlowAlertUnreadCountResponse(glowAlertQueryService.countUnread(userId)))
+    }
 
     @Operation(summary = "Glow 알림 읽음 처리")
     @PostMapping("/api/glow-alerts/{alertId}/read", "/glow-alerts/{alertId}/read", "/mypage/glow-alerts/{alertId}/read")
     fun markRead(
         @PathVariable alertId: Long,
     ): ResponseEntity<GlowAlertUnreadCountResponse> {
-        val userId = authenticatedUserIdResolver.resolveOrNull()
+        val userId = authenticatedUserIdResolver.resolveRequired()
         glowAlertQueryService.markRead(alertId, userId)
         return ResponseEntity.ok(GlowAlertUnreadCountResponse(glowAlertQueryService.countUnread(userId)))
     }

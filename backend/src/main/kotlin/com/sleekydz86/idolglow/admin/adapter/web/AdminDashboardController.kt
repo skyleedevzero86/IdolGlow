@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.math.BigInteger
 
 @Tag(name = "관리자 대시보드", description = "관리자 마이페이지에 보여 줄 회원·방문·매출·서버 추이 집계 API")
 @PreAuthorize("hasRole('ADMIN')")
@@ -38,7 +39,7 @@ class AdminDashboardController(
     @GetMapping("/recent-members")
     fun recentMembers(
         @RequestParam(required = false) limit: String?,
-    ): List<AdminRecentMember> = adminDashboardService.recentMembers(limit?.trim()?.toIntOrNull())
+    ): List<AdminRecentMember> = adminDashboardService.recentMembers(toIntWithinRange(limit))
 
     @Operation(
         summary = "서버 상태 추이",
@@ -50,5 +51,17 @@ class AdminDashboardController(
     @GetMapping("/server-metrics")
     fun serverMetrics(
         @RequestParam(required = false) hours: String?,
-    ): ServerMetricTrend = adminDashboardService.serverMetrics(hours?.trim()?.toIntOrNull())
+    ): ServerMetricTrend = adminDashboardService.serverMetrics(toIntWithinRange(hours))
+
+    companion object {
+        private val INT_MIN: BigInteger = BigInteger.valueOf(Int.MIN_VALUE.toLong())
+        private val INT_MAX: BigInteger = BigInteger.valueOf(Int.MAX_VALUE.toLong())
+
+        fun toIntWithinRange(raw: String?): Int? =
+            raw
+                ?.trim()
+                ?.toBigIntegerOrNull()
+                ?.coerceIn(INT_MIN, INT_MAX)
+                ?.toInt()
+    }
 }
