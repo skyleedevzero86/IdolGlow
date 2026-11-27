@@ -35,7 +35,8 @@ class ProductEventSale(
     ): BigDecimal =
         when (priceType) {
             ProductEventPriceType.DISCOUNT_RATE -> discounted(regularBasePrice + optionsPrice)
-            ProductEventPriceType.FIXED_BASE_PRICE -> (requireNotNull(eventBasePrice) + optionsPrice).setScale(MONEY_SCALE)
+            ProductEventPriceType.FIXED_BASE_PRICE ->
+                requireNotNull(eventBasePrice).setScale(MONEY_SCALE)
         }
 
     private fun discounted(amount: BigDecimal): BigDecimal =

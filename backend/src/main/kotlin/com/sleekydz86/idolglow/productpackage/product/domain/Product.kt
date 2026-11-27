@@ -35,7 +35,8 @@ import kotlin.collections.asSequence
             constraint =
                 "(event_starts_on IS NULL AND event_ends_on IS NULL AND event_price_type IS NULL " +
                     "AND event_discount_rate IS NULL AND event_base_price IS NULL) " +
-                    "OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL AND event_ends_on >= event_starts_on " +
+                    "OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL " +
+                    "AND event_ends_on >= event_starts_on " +
                     "AND ((event_price_type = 'DISCOUNT_RATE' AND event_discount_rate BETWEEN 1 AND 99 " +
                     "AND event_base_price IS NULL) " +
                     "OR (event_price_type = 'FIXED_BASE_PRICE' AND event_base_price >= 0 " +
@@ -121,17 +122,6 @@ class Product(
     fun clearEventSale() {
         eventSale = null
     }
-
-    fun eventStatus(today: LocalDate): ProductEventStatus = eventSale?.status(today) ?: ProductEventStatus.NONE
-
-    fun eventMinPrice(today: LocalDate): BigDecimal? = activeEventSale(today)?.price(basePrice, optionsMinPrice)
-
-    fun eventTotalPrice(today: LocalDate): BigDecimal? = activeEventSale(today)?.price(basePrice, optionsTotalPrice)
-
-    fun reservationStartPrice(today: LocalDate): BigDecimal = eventTotalPrice(today) ?: totalPrice
-
-    private fun activeEventSale(today: LocalDate): ProductEventSale? =
-        eventSale?.takeIf { it.status(today) == ProductEventStatus.ACTIVE }
 
     fun validateTotalPrice(requestedTotalPrice: BigDecimal) {
         if (totalPrice.compareTo(requestedTotalPrice) != 0) {

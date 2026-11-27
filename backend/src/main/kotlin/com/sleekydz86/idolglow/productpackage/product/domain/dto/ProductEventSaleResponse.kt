@@ -3,6 +3,9 @@ package com.sleekydz86.idolglow.productpackage.product.domain.dto
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductEventPriceType
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductEventStatus
+import com.sleekydz86.idolglow.productpackage.product.domain.eventMinPrice
+import com.sleekydz86.idolglow.productpackage.product.domain.eventStatus
+import com.sleekydz86.idolglow.productpackage.product.domain.eventTotalPrice
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 import java.time.LocalDate

@@ -6,6 +6,8 @@ import com.sleekydz86.idolglow.payment.domain.TossBillingSubscription
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscriptionStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
+import com.sleekydz86.idolglow.productpackage.option.domain.Option
+import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
 import com.sleekydz86.idolglow.productpackage.product.application.ProductEventCalendar
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductEventPriceType
@@ -35,6 +37,8 @@ class ReservationEventPricingPostgresTest : PostgresIntegrationTest() {
     @Autowired private lateinit var productCommandRepository: ProductCommandRepository
 
     @Autowired private lateinit var productEventCalendar: ProductEventCalendar
+
+    @Autowired private lateinit var optionRepository: OptionRepository
 
     @Autowired private lateinit var methodRepository: TossBillingMethodJpaRepository
 
@@ -143,24 +147,97 @@ class ReservationEventPricingPostgresTest : PostgresIntegrationTest() {
         assertEquals(BigDecimal("7000.00"), paymentAmount(created.id))
     }
 
+    @DisplayName("이벤트 기본가 방식은 이벤트 기본가에 모든 옵션 가격을 더한 금액으로 예약·결제한다")
+    @Test
+    fun fixedBasePriceAddsAllOptions() {
+        // given
+        val options = listOf(persistOption("3000.00"), persistOption("2000.00"))
+        val slot =
+            persistEventSlot(today(), today(), BigDecimal("10000.00"), options) {
+                it.changeEventSale(today(), today(), ProductEventPriceType.FIXED_BASE_PRICE, null, BigDecimal("6000"))
+            }
+        val userId = fixture.persistUser().id
+
+        // when
+        val created = reserve(userId, slot, BigDecimal("11000.00"))
+
+        // then
+        assertEquals(BigDecimal("15000.00"), slot.totalPrice)
+        assertEquals(BigDecimal("11000.00"), reservationTotal(created.id))
+        assertEquals(BigDecimal("11000.00"), paymentAmount(created.id))
+    }
+
+    @DisplayName("회원 금액은 할인율 금액을 원 미만 버린 뒤 멤버십 0.9 를 곱해 반올림한다")
+    @Test
+    fun membershipRoundsAfterFlooredEventPrice() {
+        // given
+        val slot =
+            persistEventSlot(today(), today(), BigDecimal("13809.00")) {
+                it.changeEventSale(today(), today(), ProductEventPriceType.DISCOUNT_RATE, 50, null)
+            }
+        val userId = persistMember()
+
+        // when
+        val created = reserve(userId, slot, BigDecimal("6214.00"))
+
+        // then
+        assertEquals(BigDecimal("6214.00"), reservationTotal(created.id))
+        assertEquals(BigDecimal("690.00"), membershipDiscount(created.id))
+        assertEquals(BigDecimal("6214.00"), paymentAmount(created.id))
+    }
+
+    @DisplayName("예약 뒤 관리자가 할인율을 바꿔도 이미 만든 예약·결제 금액은 바뀌지 않는다")
+    @Test
+    fun existingReservationKeepsPriceAfterRateChanged() {
+        // given
+        val slot = persistEventSlot(today().minusDays(1), today().plusDays(1))
+        val created = reserve(fixture.persistUser().id, slot, BigDecimal("7000.00"))
+
+        // when
+        transaction {
+            val product = requireNotNull(productCommandRepository.findById(slot.productId))
+            product.changeEventSale(today(), today(), ProductEventPriceType.DISCOUNT_RATE, 50, null)
+            productCommandRepository.save(product)
+        }
+
+        // then
+        assertEquals(BigDecimal("7000.00"), reservationTotal(created.id))
+        assertEquals(BigDecimal("7000.00"), paymentAmount(created.id))
+    }
+
     private fun today(): LocalDate = productEventCalendar.today()
+
+    private fun persistOption(price: String): Option =
+        optionRepository.save(
+            Option(
+                name = "옵션${UUID.randomUUID().toString().take(6)}",
+                description = "설명",
+                price = BigDecimal(price),
+                location = "서울",
+            ),
+        )
 
     private fun persistEventSlot(
         startsOn: LocalDate,
         endsOn: LocalDate,
+        basePrice: BigDecimal = BigDecimal("10000.00"),
+        options: List<Option> = emptyList(),
+        applyEvent: (Product) -> Unit = {
+            it.changeEventSale(startsOn, endsOn, ProductEventPriceType.DISCOUNT_RATE, 30, null)
+        },
     ): PostgresReservationFixture.OpenSlot {
         val visitDate = LocalDate.now().plusDays(3)
         val product =
             Product.createWithTimeSlots(
                 name = "이벤트${UUID.randomUUID().toString().take(8)}",
                 description = "설명",
-                basePrice = BigDecimal("10000.00"),
-                options = emptyList(),
+                basePrice = basePrice,
+                options = options,
                 tagNames = emptyList(),
                 slotStartDate = visitDate,
                 slotEndDate = visitDate,
             )
-        product.changeEventSale(startsOn, endsOn, ProductEventPriceType.DISCOUNT_RATE, 30, null)
+        applyEvent(product)
         val saved = productCommandRepository.save(product)
         return PostgresReservationFixture.OpenSlot(saved.id, saved.reservationSlots.first().id, saved.totalPrice)
     }
@@ -203,30 +280,40 @@ class ReservationEventPricingPostgresTest : PostgresIntegrationTest() {
     )
 
     private fun reservationTotal(reservationId: Long): BigDecimal =
-        jdbcTemplate.queryForObject("select total_price from reservations where id = ?", BigDecimal::class.java, reservationId)!!
+        decimal("select total_price from reservations where id = ?", reservationId)
 
     private fun membershipDiscount(reservationId: Long): BigDecimal =
-        jdbcTemplate.queryForObject(
-            "select membership_discount from reservations where id = ?",
-            BigDecimal::class.java,
-            reservationId,
-        )!!
+        decimal("select membership_discount from reservations where id = ?", reservationId)
 
     private fun paymentAmount(reservationId: Long): BigDecimal =
-        jdbcTemplate.queryForObject("select amount from payments where reservation_id = ?", BigDecimal::class.java, reservationId)!!
+        decimal("select amount from payments where reservation_id = ?", reservationId)
+
+    private fun decimal(
+        sql: String,
+        id: Long,
+    ): BigDecimal = jdbcTemplate.queryForObject(sql, BigDecimal::class.java, id)!!
 
     private fun countReservations(slotId: Long): Int =
-        jdbcTemplate.queryForObject("select count(*) from reservations where reservation_slot_id = ?", Int::class.java, slotId)!!
+        jdbcTemplate.queryForObject(
+            "select count(*) from reservations where reservation_slot_id = ?",
+            Int::class.java,
+            slotId,
+        )!!
 
     private fun countPayments(slotId: Long): Int =
         jdbcTemplate.queryForObject(
-            "select count(*) from payments p join reservations r on r.id = p.reservation_id where r.reservation_slot_id = ?",
+            "select count(*) from payments p join reservations r on r.id = p.reservation_id " +
+                "where r.reservation_slot_id = ?",
             Int::class.java,
             slotId,
         )!!
 
     private fun holdReservationId(slotId: Long): Long? =
-        jdbcTemplate.queryForObject("select hold_reservation_id from reservation_slots where id = ?", Long::class.javaObjectType, slotId)
+        jdbcTemplate.queryForObject(
+            "select hold_reservation_id from reservation_slots where id = ?",
+            Long::class.javaObjectType,
+            slotId,
+        )
 
     private fun transaction(block: () -> Unit) {
         TransactionTemplate(transactionManager).executeWithoutResult { block() }

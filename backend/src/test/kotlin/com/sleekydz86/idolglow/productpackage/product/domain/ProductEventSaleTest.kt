@@ -131,7 +131,14 @@ class ProductEventSaleTest {
         // when
         val error =
             assertThrows<IllegalArgumentException> {
-                ProductEventSale.of(start, end, ProductEventPriceType.FIXED_BASE_PRICE, 30, BigDecimal("5000"), basePrice)
+                ProductEventSale.of(
+                    start,
+                    end,
+                    ProductEventPriceType.FIXED_BASE_PRICE,
+                    30,
+                    BigDecimal("5000"),
+                    basePrice,
+                )
             }
 
         // then
@@ -280,7 +287,8 @@ class ProductEventSaleTest {
         startsOn: LocalDate? = start,
         endsOn: LocalDate? = end,
         rate: Int?,
-    ): ProductEventSale = ProductEventSale.of(startsOn, endsOn, ProductEventPriceType.DISCOUNT_RATE, rate, null, basePrice)
+    ): ProductEventSale =
+        ProductEventSale.of(startsOn, endsOn, ProductEventPriceType.DISCOUNT_RATE, rate, null, basePrice)
 
     private fun fixed(value: BigDecimal?): ProductEventSale =
         ProductEventSale.of(start, end, ProductEventPriceType.FIXED_BASE_PRICE, null, value, basePrice)
@@ -289,7 +297,13 @@ class ProductEventSaleTest {
         val product = Product(name = "상품", description = "설명", basePrice = basePrice)
         product.addOptions(
             optionPrices.mapIndexed { index, price ->
-                Option(id = index + 1L, name = "옵션$index", description = "설명", price = BigDecimal(price), location = "서울")
+                Option(
+                    id = index + 1L,
+                    name = "옵션$index",
+                    description = "설명",
+                    price = BigDecimal(price),
+                    location = "서울",
+                )
             },
         )
         return product

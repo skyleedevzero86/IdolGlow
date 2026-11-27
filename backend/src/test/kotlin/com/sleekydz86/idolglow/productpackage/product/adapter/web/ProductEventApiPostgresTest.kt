@@ -169,7 +169,10 @@ class ProductEventApiPostgresTest : PostgresIntegrationTest() {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.errorCode").value("BAD_REQUEST"))
             .andExpect(jsonPath("$.message").value("이벤트 종료일은 시작일과 같거나 뒤여야 합니다."))
-        assertEquals(0, jdbcTemplate.queryForObject("select count(*) from products where name = ?", Int::class.java, name))
+        assertEquals(
+            0,
+            jdbcTemplate.queryForObject("select count(*) from products where name = ?", Int::class.java, name),
+        )
     }
 
     @DisplayName("수정 요청에서 상품 기본가를 내리면 이벤트 기본가는 새 기본가로 검사한다")
@@ -204,7 +207,12 @@ class ProductEventApiPostgresTest : PostgresIntegrationTest() {
         startsOn: LocalDate,
         endsOn: LocalDate,
     ): Map<String, Any> =
-        mapOf("startsOn" to startsOn.toString(), "endsOn" to endsOn.toString(), "priceType" to "DISCOUNT_RATE", "discountRate" to 30)
+        mapOf(
+            "startsOn" to startsOn.toString(),
+            "endsOn" to endsOn.toString(),
+            "priceType" to "DISCOUNT_RATE",
+            "discountRate" to 30,
+        )
 
     private fun fixedEvent(
         startsOn: LocalDate,
