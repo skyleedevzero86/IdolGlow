@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.application.LoginFacade
 import com.sleekydz86.idolglow.user.auth.application.LoginRequest
+import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import jakarta.servlet.http.HttpServletRequest
@@ -44,18 +45,12 @@ class OAuth2SuccessHandler(
         val provider = AuthProvider.fromRegistrationId(oauthToken.authorizedClientRegistrationId)
         val attributes = oauthAttributes(principal)
 
-        val tokenResponse =
-            try {
-                loginFacade.login(
-                    provider = provider,
-                    request = LoginRequest(attributes = attributes),
-                )
-            } catch (exception: CustomException) {
-                if (exception.getExceptionType() != AuthExceptionType.KAKAO_EMAIL_REQUIRED) throw exception
-                log.warn("카카오 이메일 없음으로 로그인 거절 providerId={}", oauthToken.name)
-                response.sendRedirect(errorRedirect(KAKAO_EMAIL_ERROR))
-                return
-            }
+        val tokenResponse = loginOrNull(provider, attributes)
+        if (tokenResponse == null) {
+            log.warn("카카오 이메일 없음으로 로그인 거절 providerId={}", oauthToken.name)
+            response.sendRedirect(errorRedirect(KAKAO_EMAIL_ERROR))
+            return
+        }
 
         refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
         response.sendRedirect(AUTH_CALLBACK_PATH)
@@ -70,6 +65,17 @@ class OAuth2SuccessHandler(
         principal.attributes.forEach { (k, v) -> out.putIfAbsent(k, v as Any) }
         return out
     }
+
+    private fun loginOrNull(
+        provider: AuthProvider,
+        attributes: Map<String, Any>,
+    ): TokenResponse? =
+        try {
+            loginFacade.login(provider = provider, request = LoginRequest(attributes = attributes))
+        } catch (exception: CustomException) {
+            if (exception.getExceptionType() != AuthExceptionType.KAKAO_EMAIL_REQUIRED) throw exception
+            null
+        }
 
     private fun errorRedirect(code: String): String {
         val base = redirectUri.trim()

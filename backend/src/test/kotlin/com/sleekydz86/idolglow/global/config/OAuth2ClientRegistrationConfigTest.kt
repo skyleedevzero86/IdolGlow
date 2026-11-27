@@ -17,7 +17,8 @@ class OAuth2ClientRegistrationConfigTest {
     @Test
     fun addsKakaoWhenConfigured() {
         // when
-        val repository = config.clientRegistrationRepository(googleProperties(), KakaoOAuthProperties("rest-key", "secret"))
+        val repository =
+            config.clientRegistrationRepository(googleProperties(), KakaoOAuthProperties("rest-key", "secret"))
 
         // then
         val kakao = repository.findByRegistrationId("kakao")

@@ -76,7 +76,8 @@ class UserOAuthProviderMigrationTest {
         provider: String,
         providerId: String,
     ) {
-        connection.prepareStatement("insert into user_oauths (user_id, provider, provider_id, email) values (1, ?, ?, ?)").use {
+        val sql = "insert into user_oauths (user_id, provider, provider_id, email) values (1, ?, ?, ?)"
+        connection.prepareStatement(sql).use {
             it.setString(1, provider)
             it.setString(2, providerId)
             it.setString(3, "$providerId@idolglow.test")

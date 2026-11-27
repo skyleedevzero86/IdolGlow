@@ -20,7 +20,8 @@ class OAuth2ClientRegistrationConfig {
         oAuth2ClientProperties: OAuth2ClientProperties,
         kakaoOAuthProperties: KakaoOAuthProperties,
     ): ClientRegistrationRepository {
-        val registrations = OAuth2ClientPropertiesMapper(oAuth2ClientProperties).asClientRegistrations().values.toMutableList()
+        val registrations =
+            OAuth2ClientPropertiesMapper(oAuth2ClientProperties).asClientRegistrations().values.toMutableList()
         if (kakaoOAuthProperties.configured) {
             registrations += kakaoRegistration(kakaoOAuthProperties)
         }

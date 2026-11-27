@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository
 
 @DisplayName("로그인 제공자 사용 가능 여부")
@@ -30,9 +31,10 @@ class OAuthProviderAvailabilityTest {
     fun kakaoWithoutRegistrationIsRejected() {
         // given
         val google =
-            OAuth2ClientRegistrationConfig
-                .kakaoRegistration(KakaoOAuthProperties("google-id", "google-secret"))
-                .let { org.springframework.security.oauth2.client.registration.ClientRegistration.withClientRegistration(it).registrationId("google").build() }
+            ClientRegistration
+                .withClientRegistration(kakao)
+                .registrationId("google")
+                .build()
         val availability = OAuthProviderAvailability(InMemoryClientRegistrationRepository(google))
 
         // when
