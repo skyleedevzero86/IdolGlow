@@ -19,7 +19,7 @@ enum class AuthProvider(
 
     companion object {
         private val allowedRegistrationIds: Set<String> =
-            setOf(GOOGLE.registrationId, KAKAO.registrationId, TEST.registrationId)
+            setOf(GOOGLE.registrationId, KAKAO.registrationId, NAVER.registrationId, TEST.registrationId)
 
         fun isAllowedRegistrationId(registrationId: String): Boolean = registrationId in allowedRegistrationIds
 

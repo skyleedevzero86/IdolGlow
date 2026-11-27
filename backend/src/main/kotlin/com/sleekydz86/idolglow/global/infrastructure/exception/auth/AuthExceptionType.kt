@@ -48,6 +48,12 @@ enum class AuthExceptionType(
         "카카오 이메일 제공에 동의하고 인증된 이메일이 있어야 가입할 수 있습니다.",
         BAD_REQUEST_STATUS,
     ),
+
+    NAVER_EMAIL_REQUIRED(
+        "NAVER_EMAIL_REQUIRED",
+        "네이버 이메일 제공에 동의해야 가입할 수 있습니다.",
+        BAD_REQUEST_STATUS,
+    ),
 }
 
 private const val BAD_REQUEST_STATUS = 400

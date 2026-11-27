@@ -1307,3 +1307,11 @@ ALTER TABLE user_oauths DROP CONSTRAINT IF EXISTS chk_user_oauths_provider;
 ALTER TABLE user_oauths ADD CONSTRAINT chk_user_oauths_provider CHECK (
     provider IN ('GOOGLE', 'TEST', 'KAKAO')
 );
+
+-- 네이버 로그인 제공자 허용
+-- 네이버 로그인 연결을 user_oauths 에 저장할 수 있게 검사를 다시 만든다
+ALTER TABLE user_oauths DROP CONSTRAINT IF EXISTS chk_user_oauths_provider;
+
+ALTER TABLE user_oauths ADD CONSTRAINT chk_user_oauths_provider CHECK (
+    provider IN ('GOOGLE', 'TEST', 'KAKAO', 'NAVER')
+);

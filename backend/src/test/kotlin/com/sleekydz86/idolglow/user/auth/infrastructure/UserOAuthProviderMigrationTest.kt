@@ -14,7 +14,7 @@ import java.sql.SQLException
 
 @DisplayName("user_oauths 제공자 검사 마이그레이션")
 class UserOAuthProviderMigrationTest {
-    @DisplayName("K12 PostgreSQL 마이그레이션은 KAKAO 를 받고 NAVER 는 막는다")
+    @DisplayName("K12 PostgreSQL 마이그레이션은 KAKAO·NAVER 를 받고 등록되지 않은 제공자는 막는다")
     @Test
     fun postgresAllowsKakao() {
         // given
@@ -25,16 +25,18 @@ class UserOAuthProviderMigrationTest {
             // when
             connect(container).use { connection ->
                 insert(connection, "KAKAO", "k-1")
-                val naver = assertThrows(SQLException::class.java) { insert(connection, "NAVER", "n-1") }
+                insert(connection, "NAVER", "n-1")
+                val github = assertThrows(SQLException::class.java) { insert(connection, "GITHUB", "g-1") }
 
                 // then
-                assertEquals(CHECK_STATE, naver.sqlState)
+                assertEquals(CHECK_STATE, github.sqlState)
                 assertEquals(1, count(connection, "KAKAO"))
+                assertEquals(1, count(connection, "NAVER"))
             }
         }
     }
 
-    @DisplayName("K12 MySQL 마이그레이션은 KAKAO 를 받고 NAVER 는 막는다")
+    @DisplayName("K12 MySQL 마이그레이션은 KAKAO·NAVER 를 받고 등록되지 않은 제공자는 막는다")
     @Test
     fun mysqlAllowsKakao() {
         // given
@@ -45,11 +47,13 @@ class UserOAuthProviderMigrationTest {
             // when
             connect(container).use { connection ->
                 insert(connection, "KAKAO", "k-1")
-                assertThrows(SQLException::class.java) { insert(connection, "NAVER", "n-1") }
+                insert(connection, "NAVER", "n-1")
+                assertThrows(SQLException::class.java) { insert(connection, "GITHUB", "g-1") }
 
                 // then
                 assertEquals(1, count(connection, "KAKAO"))
-                assertEquals(0, count(connection, "NAVER"))
+                assertEquals(1, count(connection, "NAVER"))
+                assertEquals(0, count(connection, "GITHUB"))
             }
         }
     }

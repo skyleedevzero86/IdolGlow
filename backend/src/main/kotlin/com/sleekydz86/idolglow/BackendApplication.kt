@@ -32,6 +32,7 @@ import com.sleekydz86.idolglow.global.llm.LocalLlmProperties
 import com.sleekydz86.idolglow.translation.application.TranslationProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import com.sleekydz86.idolglow.user.auth.application.KakaoOAuthProperties
+import com.sleekydz86.idolglow.user.auth.application.NaverOAuthProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.cache.annotation.EnableCaching
@@ -41,6 +42,7 @@ import org.springframework.cache.annotation.EnableCaching
 @EnableConfigurationProperties(
     MinioStorageProperties::class,
     KakaoOAuthProperties::class,
+    NaverOAuthProperties::class,
     AppPublicUrlProperties::class,
     AppCalendarProperties::class,
     AppMailProperties::class,

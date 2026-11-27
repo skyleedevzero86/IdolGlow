@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.global.config
 
 import com.sleekydz86.idolglow.user.auth.application.KakaoOAuthProperties
+import com.sleekydz86.idolglow.user.auth.application.NaverOAuthProperties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -18,7 +19,7 @@ class OAuth2ClientRegistrationConfigTest {
     fun addsKakaoWhenConfigured() {
         // when
         val repository =
-            config.clientRegistrationRepository(googleProperties(), KakaoOAuthProperties("rest-key", "secret"))
+            repository(KakaoOAuthProperties("rest-key", "secret"), NaverOAuthProperties())
 
         // then
         val kakao = repository.findByRegistrationId("kakao")
@@ -36,14 +37,40 @@ class OAuth2ClientRegistrationConfigTest {
     @Test
     fun skipsKakaoWhenAnyKeyMissing() {
         // when
-        val noSecret = config.clientRegistrationRepository(googleProperties(), KakaoOAuthProperties("rest-key", " "))
-        val noId = config.clientRegistrationRepository(googleProperties(), KakaoOAuthProperties("", "secret"))
+        val noSecret = repository(KakaoOAuthProperties("rest-key", " "), NaverOAuthProperties())
+        val noId = repository(KakaoOAuthProperties("", "secret"), NaverOAuthProperties())
 
         // then
         assertNull(noSecret.findByRegistrationId("kakao"))
         assertNull(noId.findByRegistrationId("kakao"))
         assertNotNull(noSecret.findByRegistrationId("google"))
     }
+
+    @DisplayName("네이버 키가 둘 다 있으면 네이버 등록을 더하고, 하나라도 비면 더하지 않는다")
+    @Test
+    fun addsNaverOnlyWhenConfigured() {
+        // when
+        val withNaver =
+            repository(KakaoOAuthProperties(), NaverOAuthProperties("naver-id", "naver-secret"))
+        val withoutSecret =
+            repository(KakaoOAuthProperties(), NaverOAuthProperties("naver-id", ""))
+
+        // then
+        val naver = withNaver.findByRegistrationId("naver")
+        assertNotNull(naver)
+        assertEquals("https://nid.naver.com/oauth2.0/authorize", naver!!.providerDetails.authorizationUri)
+        assertEquals("https://nid.naver.com/oauth2.0/token", naver.providerDetails.tokenUri)
+        assertEquals("https://openapi.naver.com/v1/nid/me", naver.providerDetails.userInfoEndpoint.uri)
+        assertEquals("response", naver.providerDetails.userInfoEndpoint.userNameAttributeName)
+        assertEquals(ClientAuthenticationMethod.CLIENT_SECRET_POST, naver.clientAuthenticationMethod)
+        assertNull(withNaver.findByRegistrationId("kakao"))
+        assertNull(withoutSecret.findByRegistrationId("naver"))
+    }
+
+    private fun repository(
+        kakao: KakaoOAuthProperties,
+        naver: NaverOAuthProperties,
+    ) = config.clientRegistrationRepository(googleProperties(), kakao, naver)
 
     private fun googleProperties(): OAuth2ClientProperties {
         val properties = OAuth2ClientProperties()

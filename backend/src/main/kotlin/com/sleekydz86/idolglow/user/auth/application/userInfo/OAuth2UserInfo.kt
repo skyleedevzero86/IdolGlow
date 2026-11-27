@@ -16,6 +16,7 @@ interface OAuth2UserInfo {
             when (provider) {
                 AuthProvider.GOOGLE -> GoogleUserInfo(attributes)
                 AuthProvider.KAKAO -> KakaoUserInfo(attributes)
+                AuthProvider.NAVER -> NaverUserInfo(attributes)
                 else -> throw IllegalArgumentException("지원하지 않는 로그인 제공자입니다: $provider")
             }
     }

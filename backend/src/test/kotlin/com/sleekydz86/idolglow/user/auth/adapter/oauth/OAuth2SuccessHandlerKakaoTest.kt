@@ -39,6 +39,23 @@ class OAuth2SuccessHandlerKakaoTest {
         verify(exactly = 0) { cookies.addRefreshTokenCookie(any(), any()) }
     }
 
+    @DisplayName("NAVER_EMAIL_REQUIRED 면 쿠키 없이 콜백 주소에 oauth_error=naver_email 을 붙여 보낸다")
+    @Test
+    fun redirectsWithNaverEmailError() {
+        // given
+        every { loginFacade.login(any(), any()) } throws CustomException(AuthExceptionType.NAVER_EMAIL_REQUIRED)
+        val response = MockHttpServletResponse()
+        val naverPrincipal = DefaultOAuth2User(emptyList(), mapOf("response" to mapOf("id" to "n-1")), "response")
+        val naverToken = OAuth2AuthenticationToken(naverPrincipal, emptyList(), "naver")
+
+        // when
+        handler.onAuthenticationSuccess(MockHttpServletRequest(), response, naverToken)
+
+        // then
+        assertEquals("http://localhost:3000/auth/callback?oauth_error=naver_email", response.redirectedUrl)
+        verify(exactly = 0) { cookies.addRefreshTokenCookie(any(), any()) }
+    }
+
     @DisplayName("K11 다른 오류는 그대로 던진다")
     @Test
     fun otherErrorsPropagate() {
