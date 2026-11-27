@@ -1856,3 +1856,11 @@ ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
         'LUCKY_DRAW_WON'
     )
 );
+
+-- 카카오 로그인 제공자 허용
+-- 카카오 로그인 연결을 user_oauths 에 저장할 수 있게 검사를 다시 만든다
+ALTER TABLE user_oauths DROP CHECK chk_user_oauths_provider;
+
+ALTER TABLE user_oauths ADD CONSTRAINT chk_user_oauths_provider CHECK (
+    provider IN ('GOOGLE', 'TEST', 'KAKAO')
+);

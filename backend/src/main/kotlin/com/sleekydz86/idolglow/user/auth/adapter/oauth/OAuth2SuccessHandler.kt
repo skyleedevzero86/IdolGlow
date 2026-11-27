@@ -1,11 +1,15 @@
 package com.sleekydz86.idolglow.user.auth.adapter.oauth
 
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.application.LoginFacade
 import com.sleekydz86.idolglow.user.auth.application.LoginRequest
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
@@ -17,7 +21,10 @@ import org.springframework.stereotype.Component
 class OAuth2SuccessHandler(
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
     private val loginFacade: LoginFacade,
+    @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
 ) : AuthenticationSuccessHandler {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -38,10 +45,17 @@ class OAuth2SuccessHandler(
         val attributes = oauthAttributes(principal)
 
         val tokenResponse =
-            loginFacade.login(
-                provider = provider,
-                request = LoginRequest(attributes = attributes),
-            )
+            try {
+                loginFacade.login(
+                    provider = provider,
+                    request = LoginRequest(attributes = attributes),
+                )
+            } catch (exception: CustomException) {
+                if (exception.getExceptionType() != AuthExceptionType.KAKAO_EMAIL_REQUIRED) throw exception
+                log.warn("카카오 이메일 없음으로 로그인 거절 providerId={}", oauthToken.name)
+                response.sendRedirect(errorRedirect(KAKAO_EMAIL_ERROR))
+                return
+            }
 
         refreshTokenCookieSupporter.addRefreshTokenCookie(response, tokenResponse.refreshToken)
         response.sendRedirect(AUTH_CALLBACK_PATH)
@@ -57,7 +71,14 @@ class OAuth2SuccessHandler(
         return out
     }
 
+    private fun errorRedirect(code: String): String {
+        val base = redirectUri.trim()
+        val separator = if (base.contains("?")) "&" else "?"
+        return "$base${separator}oauth_error=$code"
+    }
+
     companion object {
         private const val AUTH_CALLBACK_PATH = "/auth/callback"
+        private const val KAKAO_EMAIL_ERROR = "kakao_email"
     }
 }

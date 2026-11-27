@@ -167,6 +167,16 @@ tasks.register<Test>("surveyLlmEval") {
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     jvmArgs("--enable-native-access=ALL-UNNAMED", "-Duser.timezone=Asia/Seoul")
+    val infraEnv = rootProject.file("../infra/.env")
+    if (infraEnv.isFile) {
+        infraEnv
+            .readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
+            .map { it.substringBefore("=").trim() to it.substringAfter("=").trim().removeSurrounding("\"") }
+            .filter { (key, value) -> key.isNotEmpty() && value.isNotEmpty() && System.getenv(key) == null }
+            .forEach { (key, value) -> environment(key, value) }
+    }
 }
 
 detekt {

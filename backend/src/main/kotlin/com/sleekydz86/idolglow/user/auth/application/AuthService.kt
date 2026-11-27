@@ -19,6 +19,12 @@ class AuthService(
     private val userOAuthRepository: UserOAuthRepository,
     private val jwtProvider: JwtProvider,
 ) {
+    @Transactional(readOnly = true)
+    fun isLinked(
+        provider: AuthProvider,
+        providerId: String,
+    ): Boolean = userOAuthRepository.findByProviderAndProviderId(provider, providerId) != null
+
     @Transactional
     fun login(
         provider: AuthProvider,

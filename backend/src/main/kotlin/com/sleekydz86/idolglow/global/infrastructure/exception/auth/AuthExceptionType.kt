@@ -42,4 +42,10 @@ enum class AuthExceptionType(
         "사용자를 찾을 수 없습니다.",
         404,
     ),
+
+    KAKAO_EMAIL_REQUIRED(
+        "KAKAO_EMAIL_REQUIRED",
+        "카카오 이메일 제공에 동의하고 인증된 이메일이 있어야 가입할 수 있습니다.",
+        400,
+    ),
 }

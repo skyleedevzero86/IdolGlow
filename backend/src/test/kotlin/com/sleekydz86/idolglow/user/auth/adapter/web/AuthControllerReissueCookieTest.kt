@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.user.auth.adapter.web
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.auth.AuthExceptionType
 import com.sleekydz86.idolglow.user.auth.application.AuthService
+import com.sleekydz86.idolglow.user.auth.application.OAuthProviderAvailability
 import com.sleekydz86.idolglow.user.auth.application.PasswordRecoveryService
 import com.sleekydz86.idolglow.user.auth.infrastructure.support.RefreshTokenCookieSupporter
 import io.mockk.every
@@ -22,6 +23,7 @@ class AuthControllerReissueCookieTest {
             authService,
             mockk<PasswordRecoveryService>(relaxed = true),
             refreshTokenCookieSupporter,
+            mockk<OAuthProviderAvailability>(relaxed = true),
         )
 
     @Test

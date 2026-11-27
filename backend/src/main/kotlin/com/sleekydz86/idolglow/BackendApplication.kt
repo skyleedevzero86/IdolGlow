@@ -31,6 +31,7 @@ import com.sleekydz86.idolglow.global.llm.LlmGatewayProperties
 import com.sleekydz86.idolglow.global.llm.LocalLlmProperties
 import com.sleekydz86.idolglow.translation.application.TranslationProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import com.sleekydz86.idolglow.user.auth.application.KakaoOAuthProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.cache.annotation.EnableCaching
@@ -39,6 +40,7 @@ import org.springframework.cache.annotation.EnableCaching
 @EnableCaching
 @EnableConfigurationProperties(
     MinioStorageProperties::class,
+    KakaoOAuthProperties::class,
     AppPublicUrlProperties::class,
     AppCalendarProperties::class,
     AppMailProperties::class,

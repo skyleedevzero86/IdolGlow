@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.user.auth.adapter.web.dto.TemporaryPasswordRespon
 import com.sleekydz86.idolglow.user.auth.adapter.web.request.PasswordLoginRequest
 import com.sleekydz86.idolglow.user.auth.adapter.web.request.TemporaryPasswordRequest
 import com.sleekydz86.idolglow.user.auth.application.AuthService
+import com.sleekydz86.idolglow.user.auth.application.OAuthProviderAvailability
 import com.sleekydz86.idolglow.user.auth.application.PasswordRecoveryService
 import com.sleekydz86.idolglow.user.auth.domain.dto.AccessTokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
@@ -31,15 +32,14 @@ class AuthController(
     private val authService: AuthService,
     private val passwordRecoveryService: PasswordRecoveryService,
     private val refreshTokenCookieSupporter: RefreshTokenCookieSupporter,
+    private val oAuthProviderAvailability: OAuthProviderAvailability,
 ) : AuthApi {
     @GetMapping("/login/{provider}")
     override fun login(
         response: HttpServletResponse,
         @PathVariable("provider") provider: String,
     ) {
-        if (!AuthProvider.isAllowedRegistrationId(provider)) {
-            throw IllegalArgumentException("지원하지 않는 로그인 제공자입니다: $provider")
-        }
+        oAuthProviderAvailability.assertLoginAvailable(provider)
         response.sendRedirect("/oauth2/authorization/$provider")
     }
 
