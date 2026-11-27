@@ -1813,3 +1813,46 @@ PREPARE event_period_index_stmt FROM @add_event_period_index;
 EXECUTE event_period_index_stmt;
 
 DEALLOCATE PREPARE event_period_index_stmt;
+
+-- 응모 당첨 알림 타입 추가
+ALTER TABLE notifications DROP CHECK chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CHECK chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);

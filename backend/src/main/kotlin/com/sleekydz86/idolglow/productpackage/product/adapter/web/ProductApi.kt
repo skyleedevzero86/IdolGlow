@@ -75,6 +75,25 @@ interface ProductApi {
     ): ResponseEntity<List<ProductPagingQueryResponse>>
 
     @Operation(
+        summary = "다음 주 미리 공개 이벤트 상품 조회",
+        description = "이벤트 시작일이 내일부터 7일 뒤까지(Asia/Seoul, 두 날짜 포함)인 상품을 시작일이 빠른 순으로 돌려줍니다.",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "조회 성공"),
+            ApiResponse(
+                responseCode = "400",
+                description = "size 가 1 이상 30 이하가 아님",
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
+    )
+    fun findUpcomingEventProducts(
+        @Parameter(description = "조회 개수(기본 12, 1 이상 30 이하)", example = "12")
+        size: Int?,
+    ): ResponseEntity<List<ProductPagingQueryResponse>>
+
+    @Operation(
         summary = "상품 상세 조회",
         description = "특정 상품의 상세 정보와 포함 옵션, 예약 가능 범위를 조회합니다.",
     )

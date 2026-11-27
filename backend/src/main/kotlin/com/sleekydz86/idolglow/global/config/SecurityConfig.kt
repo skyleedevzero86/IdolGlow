@@ -201,9 +201,11 @@ class SecurityConfig(
                 "/actuator/prometheus",
             )
 
+        private val LUCKY_DRAW_PUBLIC_GET = arrayOf("/lucky-draws/current")
+
         private val PUBLIC_GET =
             COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET +
-                MONITORING_PUBLIC_GET
+                MONITORING_PUBLIC_GET + LUCKY_DRAW_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(

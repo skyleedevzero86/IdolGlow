@@ -162,6 +162,7 @@ private fun NotificationType.categoryId(): String =
         NotificationType.ADMIN_POST_REPORTED,
         NotificationType.ADMIN_POST_AUTO_BLINDED,
         NotificationType.EVENT_INTEREST_CHANGED,
+        NotificationType.LUCKY_DRAW_WON,
         -> "activity"
     }
 
@@ -186,6 +187,7 @@ private fun NotificationType.channelLabel(): String =
         NotificationType.REPLY_TO_MY_COMMENT,
         -> "커뮤니티"
         NotificationType.EVENT_INTEREST_CHANGED -> "관심 공연"
+        NotificationType.LUCKY_DRAW_WON -> "응모"
         NotificationType.ADMIN_POST_REPORTED,
         NotificationType.ADMIN_POST_AUTO_BLINDED,
         NotificationType.ADMIN_PAYMENT_COMPLETED,

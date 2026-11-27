@@ -1733,3 +1733,74 @@ CREATE TABLE IF NOT EXISTS server_metric_snapshots (
     updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
     index idx_server_metric_snapshots_measured (measured_at)
 ) comment='5분마다 남기는 서버 점검 기록. 7일 지나면 지운다';
+
+-- =============================================================================
+-- 목적
+-- - 예약 판매 화면의 응모 행사를 저장한다
+-- 대상
+-- - 마이에스큐엘 / lucky_draws, lucky_draw_entries, lucky_draw_tickets, lucky_draw_winners
+-- 주의
+-- - 시각은 Asia/Seoul 값으로 저장한다
+-- - 응모는 같은 추첨, 같은 회원, 같은 날에 한 줄만 남는다
+-- - 응모권과 당첨자는 추첨할 때 한 번만 만든다
+-- 연관
+-- - LuckyDraw, LuckyDrawEntry, LuckyDrawTicket, LuckyDrawWinner, LuckyDrawRunTxService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS lucky_draws (
+    id bigint auto_increment primary key,
+    title varchar(100) not null comment '행사 제목. 1~100자',
+    prize_name varchar(100) not null comment '경품 이름. 1~100자',
+    prize_description varchar(1000) not null comment '경품 설명. 1~1000자',
+    winner_count int not null comment '당첨자 수. 1~10',
+    entry_starts_at datetime(6) not null comment '응모 시작 시각 Asia/Seoul, 이 시각을 포함한다',
+    entry_ends_at datetime(6) not null comment '응모 종료 시각 Asia/Seoul, 이 시각은 포함하지 않는다',
+    draw_at datetime(6) not null comment '추첨 시각 Asia/Seoul. 응모 종료와 같거나 뒤',
+    draw_seed bigint null comment '추첨에 쓴 난수 씨앗. 같은 씨앗과 응모권으로 결과를 다시 계산할 수 있다',
+    drawn_at datetime(6) null comment '추첨을 마친 시각. 비어 있으면 아직 추첨 전',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint chk_lucky_draws_shape check (winner_count between 1 and 10
+        and entry_starts_at < entry_ends_at
+        and entry_ends_at <= draw_at
+        and ((draw_seed is null and drawn_at is null) or (draw_seed is not null and drawn_at is not null))),
+    index idx_lucky_draws_pending (drawn_at, draw_at),
+    index idx_lucky_draws_period (entry_starts_at, entry_ends_at)
+) comment='예약 판매 화면의 응모 행사. 정한 시각에 서버가 자동으로 추첨한다';
+
+CREATE TABLE IF NOT EXISTS lucky_draw_entries (
+    id bigint auto_increment primary key,
+    lucky_draw_id bigint not null comment 'lucky_draws.id',
+    user_id bigint not null comment '응모한 회원 users.id',
+    entry_date date not null comment '응모한 날짜 Asia/Seoul',
+    entered_at datetime(6) not null comment '응모한 시각 Asia/Seoul',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_lucky_draw_entry_daily unique (lucky_draw_id, user_id, entry_date),
+    constraint fk_lucky_draw_entries_draw foreign key (lucky_draw_id) references lucky_draws (id)
+) comment='회원의 하루 한 번 응모 기록';
+
+CREATE TABLE IF NOT EXISTS lucky_draw_tickets (
+    id bigint auto_increment primary key,
+    lucky_draw_id bigint not null comment 'lucky_draws.id',
+    user_id bigint not null comment '회원 users.id',
+    entry_count int not null comment '응모 수',
+    purchase_count int not null comment '응모 기간에 결제를 마친 이벤트 상품 예약 수',
+    tickets bigint not null comment '응모권. 응모 수 + 가산 결제 수 × 10',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_lucky_draw_ticket unique (lucky_draw_id, user_id),
+    constraint chk_lucky_draw_tickets_non_negative check (entry_count >= 0 and purchase_count >= 0 and tickets >= 0),
+    constraint fk_lucky_draw_tickets_draw foreign key (lucky_draw_id) references lucky_draws (id)
+) comment='추첨 순간의 회원별 응모권. 결과를 다시 계산할 때 쓴다';
+
+CREATE TABLE IF NOT EXISTS lucky_draw_winners (
+    id bigint auto_increment primary key,
+    lucky_draw_id bigint not null comment 'lucky_draws.id',
+    user_id bigint not null comment '당첨 회원 users.id',
+    winner_order int not null comment '뽑힌 순서. 1부터',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_lucky_draw_winner unique (lucky_draw_id, user_id),
+    constraint uk_lucky_draw_winner_order unique (lucky_draw_id, winner_order),
+    constraint fk_lucky_draw_winners_draw foreign key (lucky_draw_id) references lucky_draws (id)
+) comment='추첨 당첨자';

@@ -1201,3 +1201,101 @@ END $$;
 
 -- 진행 중 이벤트를 종료일 순으로 찾을 때 쓴다
 CREATE INDEX IF NOT EXISTS idx_products_event_period ON products (event_ends_on, event_starts_on);
+
+-- ----------------------------------------------------------------------------
+-- [L1] 응모 행사 제약과 인덱스
+-- ----------------------------------------------------------------------------
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_lucky_draws_shape') THEN
+        ALTER TABLE lucky_draws
+            ADD CONSTRAINT chk_lucky_draws_shape
+                CHECK (winner_count BETWEEN 1 AND 10
+                    AND entry_starts_at < entry_ends_at
+                    AND entry_ends_at <= draw_at
+                    AND ((draw_seed IS NULL AND drawn_at IS NULL) OR (draw_seed IS NOT NULL AND drawn_at IS NOT NULL)));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_entry_daily') THEN
+        ALTER TABLE lucky_draw_entries
+            ADD CONSTRAINT uk_lucky_draw_entry_daily UNIQUE (lucky_draw_id, user_id, entry_date);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lucky_draw_entries_draw') THEN
+        ALTER TABLE lucky_draw_entries
+            ADD CONSTRAINT fk_lucky_draw_entries_draw FOREIGN KEY (lucky_draw_id) REFERENCES lucky_draws (id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_ticket') THEN
+        ALTER TABLE lucky_draw_tickets
+            ADD CONSTRAINT uk_lucky_draw_ticket UNIQUE (lucky_draw_id, user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_lucky_draw_tickets_non_negative') THEN
+        ALTER TABLE lucky_draw_tickets
+            ADD CONSTRAINT chk_lucky_draw_tickets_non_negative
+                CHECK (entry_count >= 0 AND purchase_count >= 0 AND tickets >= 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lucky_draw_tickets_draw') THEN
+        ALTER TABLE lucky_draw_tickets
+            ADD CONSTRAINT fk_lucky_draw_tickets_draw FOREIGN KEY (lucky_draw_id) REFERENCES lucky_draws (id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_winner') THEN
+        ALTER TABLE lucky_draw_winners
+            ADD CONSTRAINT uk_lucky_draw_winner UNIQUE (lucky_draw_id, user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_winner_order') THEN
+        ALTER TABLE lucky_draw_winners
+            ADD CONSTRAINT uk_lucky_draw_winner_order UNIQUE (lucky_draw_id, winner_order);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lucky_draw_winners_draw') THEN
+        ALTER TABLE lucky_draw_winners
+            ADD CONSTRAINT fk_lucky_draw_winners_draw FOREIGN KEY (lucky_draw_id) REFERENCES lucky_draws (id);
+    END IF;
+END $$;
+
+-- 추첨할 행사를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_lucky_draws_pending ON lucky_draws (drawn_at, draw_at);
+
+-- 응모 기간으로 현재 행사를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_lucky_draws_period ON lucky_draws (entry_starts_at, entry_ends_at);
+
+-- 응모 당첨 알림 타입 추가
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CONSTRAINT IF EXISTS chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);

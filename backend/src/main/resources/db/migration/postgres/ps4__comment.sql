@@ -1916,3 +1916,41 @@ COMMENT ON COLUMN products.event_price_type IS '이벤트 가격 방식 DISCOUNT
 COMMENT ON COLUMN products.event_discount_rate IS '이벤트 할인율 1~99 정수. DISCOUNT_RATE 일 때만 있다. 원 미만은 버린다';
 
 COMMENT ON COLUMN products.event_base_price IS '이벤트 기본가 원. FIXED_BASE_PRICE 일 때만 있다. 0 이상, 상품 기본가보다 작다';
+
+COMMENT ON TABLE lucky_draws IS '예약 판매 화면의 응모 행사. 정한 시각에 서버가 자동으로 추첨한다';
+
+COMMENT ON COLUMN lucky_draws.title IS '행사 제목. 1~100자';
+
+COMMENT ON COLUMN lucky_draws.prize_name IS '경품 이름. 1~100자';
+
+COMMENT ON COLUMN lucky_draws.prize_description IS '경품 설명. 1~1000자';
+
+COMMENT ON COLUMN lucky_draws.winner_count IS '당첨자 수. 1~10';
+
+COMMENT ON COLUMN lucky_draws.entry_starts_at IS '응모 시작 시각 Asia/Seoul, 이 시각을 포함한다';
+
+COMMENT ON COLUMN lucky_draws.entry_ends_at IS '응모 종료 시각 Asia/Seoul, 이 시각은 포함하지 않는다';
+
+COMMENT ON COLUMN lucky_draws.draw_at IS '추첨 시각 Asia/Seoul. 응모 종료와 같거나 뒤';
+
+COMMENT ON COLUMN lucky_draws.draw_seed IS '추첨에 쓴 난수 씨앗. 같은 씨앗과 응모권으로 결과를 다시 계산할 수 있다';
+
+COMMENT ON COLUMN lucky_draws.drawn_at IS '추첨을 마친 시각. 비어 있으면 아직 추첨 전';
+
+COMMENT ON TABLE lucky_draw_entries IS '회원의 하루 한 번 응모 기록';
+
+COMMENT ON COLUMN lucky_draw_entries.entry_date IS '응모한 날짜 Asia/Seoul';
+
+COMMENT ON COLUMN lucky_draw_entries.entered_at IS '응모한 시각 Asia/Seoul';
+
+COMMENT ON TABLE lucky_draw_tickets IS '추첨 순간의 회원별 응모권. 결과를 다시 계산할 때 쓴다';
+
+COMMENT ON COLUMN lucky_draw_tickets.entry_count IS '응모 수';
+
+COMMENT ON COLUMN lucky_draw_tickets.purchase_count IS '응모 기간에 결제를 마친 이벤트 상품 예약 수';
+
+COMMENT ON COLUMN lucky_draw_tickets.tickets IS '응모권. 응모 수 + 가산 결제 수 × 10';
+
+COMMENT ON TABLE lucky_draw_winners IS '추첨 당첨자';
+
+COMMENT ON COLUMN lucky_draw_winners.winner_order IS '뽑힌 순서. 1부터';

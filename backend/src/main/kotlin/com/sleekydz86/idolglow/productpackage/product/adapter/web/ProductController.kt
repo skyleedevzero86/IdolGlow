@@ -77,6 +77,14 @@ class ProductController(
             productEventQueryService.findActiveEvents(size ?: ProductEventQueryService.DEFAULT_SIZE, tag),
         )
 
+    @GetMapping("/events/upcoming")
+    override fun findUpcomingEventProducts(
+        @RequestParam(required = false) size: Int?,
+    ): ResponseEntity<List<ProductPagingQueryResponse>> =
+        ResponseEntity.ok(
+            productEventQueryService.findUpcomingEvents(size ?: ProductEventQueryService.DEFAULT_UPCOMING_SIZE),
+        )
+
     @GetMapping("/{productId}")
     override fun findProduct(
         @PathVariable productId: Long,

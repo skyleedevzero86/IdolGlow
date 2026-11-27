@@ -199,6 +199,54 @@ class ProductEventApiPostgresTest : PostgresIntegrationTest() {
         assertEquals(0, eventColumnsFilled(id))
     }
 
+    @DisplayName("D29 미리 공개는 내일과 7일 뒤 시작을 포함하고 오늘과 8일 뒤 시작은 빼며, 시작일 오름차순·같으면 ID 내림차순")
+    @Test
+    fun upcomingEventsWindow() {
+        // given
+        val tomorrowFirst = create(uniqueTag(), rateEvent(today().plusDays(1), today().plusDays(9)))
+        val seventh = create(uniqueTag(), rateEvent(today().plusDays(7), today().plusDays(9)))
+        val tomorrowSecond = create(uniqueTag(), rateEvent(today().plusDays(1), today().plusDays(2)))
+        val startsToday = create(uniqueTag(), rateEvent(today(), today().plusDays(9)))
+        val eighth = create(uniqueTag(), rateEvent(today().plusDays(8), today().plusDays(9)))
+
+        // when
+        val ids = upcomingIds(30)
+
+        // then
+        val mine = ids.filter { it in setOf(tomorrowFirst, seventh, tomorrowSecond, startsToday, eighth) }
+        assertEquals(listOf(tomorrowSecond, tomorrowFirst, seventh), mine)
+    }
+
+    @DisplayName("D31 미리 공개 size 0·31 은 400 BAD_REQUEST, 1·30 은 받는다")
+    @ParameterizedTest
+    @ValueSource(ints = [0, 31, 1, 30])
+    fun upcomingSizeBoundary(size: Int) {
+        // when
+        val result = mockMvc.perform(get("/products/events/upcoming").param("size", size.toString()))
+
+        // then
+        if (size in 1..30) {
+            result.andExpect(status().isOk)
+        } else {
+            result
+                .andExpect(status().isBadRequest)
+                .andExpect(jsonPath("$.errorCode").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("조회 개수는 1 이상 30 이하여야 합니다."))
+        }
+    }
+
+    private fun upcomingIds(size: Int): List<Long> {
+        val response =
+            mockMvc
+                .perform(get("/products/events/upcoming").param("size", size.toString()))
+                .andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+        val items = objectMapper.readTree(response)
+        return (0 until items.size()).map { items.get(it).get("id").asLong() }
+    }
+
     private fun today(): LocalDate = productEventCalendar.today()
 
     private fun uniqueTag(): String = "tag${UUID.randomUUID().toString().take(8)}"

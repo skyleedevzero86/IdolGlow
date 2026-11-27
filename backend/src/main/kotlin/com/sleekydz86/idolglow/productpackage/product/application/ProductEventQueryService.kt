@@ -30,8 +30,23 @@ class ProductEventQueryService(
         return productPagingResponseAssembler.assemble(products)
     }
 
+    fun findUpcomingEvents(size: Int): List<ProductPagingQueryResponse> {
+        require(size in MIN_SIZE..MAX_UPCOMING_SIZE) { "조회 개수는 1 이상 30 이하여야 합니다." }
+        val today = productEventCalendar.today()
+        val products =
+            productEventJpaRepository.findUpcomingEvents(
+                from = today.plusDays(1),
+                to = today.plusDays(UPCOMING_DAYS),
+                pageable = PageRequest.of(0, size),
+            )
+        return productPagingResponseAssembler.assemble(products)
+    }
+
     companion object {
         const val DEFAULT_SIZE = 20
+        const val DEFAULT_UPCOMING_SIZE = 12
+        private const val MAX_UPCOMING_SIZE = 30
+        private const val UPCOMING_DAYS = 7L
         private const val MIN_SIZE = 1
         private const val MAX_SIZE = 100
     }

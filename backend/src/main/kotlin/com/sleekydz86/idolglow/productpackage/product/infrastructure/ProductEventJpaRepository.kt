@@ -38,4 +38,19 @@ interface ProductEventJpaRepository : JpaRepository<Product, Long> {
         @Param("tag") tag: String,
         pageable: Pageable,
     ): List<Product>
+
+    @Query(
+        """
+        select p
+        from Product p
+        where p.eventSale.startsOn >= :from
+          and p.eventSale.startsOn <= :to
+        order by p.eventSale.startsOn asc, p.id desc
+        """,
+    )
+    fun findUpcomingEvents(
+        @Param("from") from: LocalDate,
+        @Param("to") to: LocalDate,
+        pageable: Pageable,
+    ): List<Product>
 }
