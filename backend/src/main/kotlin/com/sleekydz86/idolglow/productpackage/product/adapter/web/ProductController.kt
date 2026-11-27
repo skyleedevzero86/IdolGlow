@@ -3,9 +3,11 @@ package com.sleekydz86.idolglow.productpackage.product.adapter.web
 import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
 import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.toCommand
 import com.sleekydz86.idolglow.productpackage.product.application.ProductCommandService
+import com.sleekydz86.idolglow.productpackage.product.application.ProductEventQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.ProductQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -26,6 +28,7 @@ import java.net.URI
 class ProductController(
     private val productQueryService: ProductQueryService,
     private val productCommandService: ProductCommandService,
+    private val productEventQueryService: ProductEventQueryService,
 ) : ProductApi {
     @GetMapping
     override fun findProducts(
@@ -64,6 +67,15 @@ class ProductController(
             )
         return ResponseEntity.ok(productQueryService.browseProducts(params))
     }
+
+    @GetMapping("/events")
+    override fun findEventProducts(
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) tag: String?,
+    ): ResponseEntity<List<ProductPagingQueryResponse>> =
+        ResponseEntity.ok(
+            productEventQueryService.findActiveEvents(size ?: ProductEventQueryService.DEFAULT_SIZE, tag),
+        )
 
     @GetMapping("/{productId}")
     override fun findProduct(

@@ -41,6 +41,8 @@ data class CreateProductRequest(
     val location: ProductLocationPayload? = null,
     @field:Schema(description = "저장할 Tour 관광지 다중 선택")
     val tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
+    @field:Schema(description = "이벤트(예약 판매) 설정. 없으면 이벤트를 끈다")
+    val event: ProductEventSaleRequest? = null,
 )
 
 fun CreateProductRequest.toCommand(): CreateProductCommand =
@@ -56,6 +58,7 @@ fun CreateProductRequest.toCommand(): CreateProductCommand =
         tagNames = tagNames,
         location = location,
         tourAttractionPicks = tourAttractionPicks,
+        event = event?.toInput(),
     )
 
 private fun parseTimeOrNull(value: String?): LocalTime? {

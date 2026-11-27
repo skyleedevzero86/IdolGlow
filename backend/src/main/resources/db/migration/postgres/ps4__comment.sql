@@ -1906,3 +1906,13 @@ COMMENT ON COLUMN server_metric_snapshots.minio_response_ms IS 'MinIO 버킷 확
 COMMENT ON COLUMN server_metric_snapshots.http_request_count IS '직전 점검 뒤 이 서버가 보낸 HTTP 응답 수';
 
 COMMENT ON COLUMN server_metric_snapshots.http_error_count IS '그 가운데 상태 코드 500 이상 응답 수';
+
+COMMENT ON COLUMN products.event_starts_on IS '이벤트 시작일 Asia/Seoul 기준, 이 날짜를 포함한다. 이벤트를 끄면 비어 있다';
+
+COMMENT ON COLUMN products.event_ends_on IS '이벤트 종료일 Asia/Seoul 기준, 이 날짜를 포함한다. 시작일과 같거나 뒤';
+
+COMMENT ON COLUMN products.event_price_type IS '이벤트 가격 방식 DISCOUNT_RATE 할인율 또는 FIXED_BASE_PRICE 이벤트 기본가';
+
+COMMENT ON COLUMN products.event_discount_rate IS '이벤트 할인율 1~99 정수. DISCOUNT_RATE 일 때만 있다. 원 미만은 버린다';
+
+COMMENT ON COLUMN products.event_base_price IS '이벤트 기본가 원. FIXED_BASE_PRICE 일 때만 있다. 0 이상, 상품 기본가보다 작다';

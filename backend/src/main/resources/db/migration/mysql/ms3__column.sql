@@ -1679,3 +1679,137 @@ PREPARE users_joined_at_index_stmt FROM @add_users_joined_at_index;
 EXECUTE users_joined_at_index_stmt;
 
 DEALLOCATE PREPARE users_joined_at_index_stmt;
+
+-- ----------------------------------------------------------------------------
+-- [A3] products — 이벤트 예약 판매
+-- ----------------------------------------------------------------------------
+
+-- 이벤트를 끈 상품은 다섯 칸이 모두 비어 있다
+
+SET @add_event_starts_on := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_starts_on DATE NULL COMMENT ''이벤트 시작일 Asia/Seoul 기준, 이 날짜를 포함한다. 이벤트를 끄면 비어 있다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_starts_on'
+);
+
+PREPARE event_starts_on_stmt FROM @add_event_starts_on;
+
+EXECUTE event_starts_on_stmt;
+
+DEALLOCATE PREPARE event_starts_on_stmt;
+
+SET @add_event_ends_on := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_ends_on DATE NULL COMMENT ''이벤트 종료일 Asia/Seoul 기준, 이 날짜를 포함한다. 시작일과 같거나 뒤''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_ends_on'
+);
+
+PREPARE event_ends_on_stmt FROM @add_event_ends_on;
+
+EXECUTE event_ends_on_stmt;
+
+DEALLOCATE PREPARE event_ends_on_stmt;
+
+SET @add_event_price_type := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_price_type VARCHAR(20) NULL COMMENT ''이벤트 가격 방식 DISCOUNT_RATE 할인율 또는 FIXED_BASE_PRICE 이벤트 기본가''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_price_type'
+);
+
+PREPARE event_price_type_stmt FROM @add_event_price_type;
+
+EXECUTE event_price_type_stmt;
+
+DEALLOCATE PREPARE event_price_type_stmt;
+
+SET @add_event_discount_rate := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_discount_rate INT NULL COMMENT ''이벤트 할인율 1~99 정수. DISCOUNT_RATE 일 때만 있다. 원 미만은 버린다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_discount_rate'
+);
+
+PREPARE event_discount_rate_stmt FROM @add_event_discount_rate;
+
+EXECUTE event_discount_rate_stmt;
+
+DEALLOCATE PREPARE event_discount_rate_stmt;
+
+SET @add_event_base_price := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_base_price DECIMAL(19, 2) NULL COMMENT ''이벤트 기본가 원. FIXED_BASE_PRICE 일 때만 있다. 0 이상, 상품 기본가보다 작다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_base_price'
+);
+
+PREPARE event_base_price_stmt FROM @add_event_base_price;
+
+EXECUTE event_base_price_stmt;
+
+DEALLOCATE PREPARE event_base_price_stmt;
+
+-- 다섯 칸이 모두 비었거나, 기간과 방식이 있고 방식에 맞는 값 하나만 있어야 한다
+SET @add_event_sale_check := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD CONSTRAINT chk_products_event_sale_shape CHECK ((event_starts_on IS NULL AND event_ends_on IS NULL AND event_price_type IS NULL AND event_discount_rate IS NULL AND event_base_price IS NULL) OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL AND event_ends_on >= event_starts_on AND ((event_price_type = ''DISCOUNT_RATE'' AND event_discount_rate BETWEEN 1 AND 99 AND event_base_price IS NULL) OR (event_price_type = ''FIXED_BASE_PRICE'' AND event_base_price >= 0 AND event_discount_rate IS NULL))))',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND constraint_name = 'chk_products_event_sale_shape'
+);
+
+PREPARE event_sale_check_stmt FROM @add_event_sale_check;
+
+EXECUTE event_sale_check_stmt;
+
+DEALLOCATE PREPARE event_sale_check_stmt;
+
+-- 진행 중 이벤트를 종료일 순으로 찾을 때 쓴다
+SET @add_event_period_index := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'CREATE INDEX idx_products_event_period ON products (event_ends_on, event_starts_on)',
+        'SELECT 1'
+    )
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND index_name = 'idx_products_event_period'
+);
+
+PREPARE event_period_index_stmt FROM @add_event_period_index;
+
+EXECUTE event_period_index_stmt;
+
+DEALLOCATE PREPARE event_period_index_stmt;

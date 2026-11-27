@@ -1165,3 +1165,39 @@ CREATE INDEX IF NOT EXISTS idx_site_daily_visits_user_date ON site_daily_visits 
 
 -- 기간별 서버 점검 기록을 찾고 오래된 줄을 지울 때 쓴다
 CREATE INDEX IF NOT EXISTS idx_server_metric_snapshots_measured ON server_metric_snapshots (measured_at);
+
+-- ----------------------------------------------------------------------------
+-- [A3] products — 이벤트 예약 판매
+-- ----------------------------------------------------------------------------
+
+-- 이벤트를 끈 상품은 다섯 칸이 모두 비어 있다
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_starts_on DATE;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_ends_on DATE;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_price_type VARCHAR(20);
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_discount_rate INT;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_base_price NUMERIC(19, 2);
+
+-- 다섯 칸이 모두 비었거나, 기간과 방식이 있고 방식에 맞는 값 하나만 있어야 한다
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_products_event_sale_shape') THEN
+        ALTER TABLE products
+            ADD CONSTRAINT chk_products_event_sale_shape
+                CHECK (
+                    (event_starts_on IS NULL AND event_ends_on IS NULL AND event_price_type IS NULL
+                        AND event_discount_rate IS NULL AND event_base_price IS NULL)
+                    OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL AND event_ends_on >= event_starts_on
+                        AND ((event_price_type = 'DISCOUNT_RATE' AND event_discount_rate BETWEEN 1 AND 99
+                                AND event_base_price IS NULL)
+                            OR (event_price_type = 'FIXED_BASE_PRICE' AND event_base_price >= 0
+                                AND event_discount_rate IS NULL)))
+                );
+    END IF;
+END $$;
+
+-- 진행 중 이벤트를 종료일 순으로 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_products_event_period ON products (event_ends_on, event_starts_on);

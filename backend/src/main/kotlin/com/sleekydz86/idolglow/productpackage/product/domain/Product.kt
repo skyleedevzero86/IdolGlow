@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import jakarta.persistence.CascadeType
 import jakarta.persistence.CheckConstraint
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
@@ -28,6 +29,17 @@ import kotlin.collections.asSequence
         CheckConstraint(
             name = "chk_products_aggregate_non_negative",
             constraint = "wish_count >= 0 AND review_count >= 0 AND rating_sum >= 0",
+        ),
+        CheckConstraint(
+            name = "chk_products_event_sale_shape",
+            constraint =
+                "(event_starts_on IS NULL AND event_ends_on IS NULL AND event_price_type IS NULL " +
+                    "AND event_discount_rate IS NULL AND event_base_price IS NULL) " +
+                    "OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL AND event_ends_on >= event_starts_on " +
+                    "AND ((event_price_type = 'DISCOUNT_RATE' AND event_discount_rate BETWEEN 1 AND 99 " +
+                    "AND event_base_price IS NULL) " +
+                    "OR (event_price_type = 'FIXED_BASE_PRICE' AND event_base_price >= 0 " +
+                    "AND event_discount_rate IS NULL)))",
         ),
     ],
 )
@@ -71,6 +83,10 @@ class Product(
     var ratingSum: Long = 0L
         protected set
 
+    @Embedded
+    var eventSale: ProductEventSale? = null
+        protected set
+
     @get:Transient
     val optionsMinPrice: BigDecimal
         get() =
@@ -91,6 +107,31 @@ class Product(
     @get:Transient
     val totalPrice: BigDecimal
         get() = basePrice + optionsTotalPrice
+
+    fun changeEventSale(
+        startsOn: LocalDate?,
+        endsOn: LocalDate?,
+        priceType: ProductEventPriceType?,
+        discountRate: Int?,
+        eventBasePrice: BigDecimal?,
+    ) {
+        eventSale = ProductEventSale.of(startsOn, endsOn, priceType, discountRate, eventBasePrice, basePrice)
+    }
+
+    fun clearEventSale() {
+        eventSale = null
+    }
+
+    fun eventStatus(today: LocalDate): ProductEventStatus = eventSale?.status(today) ?: ProductEventStatus.NONE
+
+    fun eventMinPrice(today: LocalDate): BigDecimal? = activeEventSale(today)?.price(basePrice, optionsMinPrice)
+
+    fun eventTotalPrice(today: LocalDate): BigDecimal? = activeEventSale(today)?.price(basePrice, optionsTotalPrice)
+
+    fun reservationStartPrice(today: LocalDate): BigDecimal = eventTotalPrice(today) ?: totalPrice
+
+    private fun activeEventSale(today: LocalDate): ProductEventSale? =
+        eventSale?.takeIf { it.status(today) == ProductEventStatus.ACTIVE }
 
     fun validateTotalPrice(requestedTotalPrice: BigDecimal) {
         if (totalPrice.compareTo(requestedTotalPrice) != 0) {

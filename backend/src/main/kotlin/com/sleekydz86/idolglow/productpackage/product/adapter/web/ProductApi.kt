@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.productpackage.product.adapter.web
 import com.sleekydz86.idolglow.productpackage.product.adapter.web.request.CreateProductRequest
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductCreatedResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductBrowseResult
+import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSpecificResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -51,6 +52,27 @@ interface ProductApi {
         @Parameter(description = "반경(미터). 위경도가 있을 때만 적용, 최대 200000")
         radiusMeters: Int?,
     ): ResponseEntity<ProductBrowseResult>
+
+    @Operation(
+        summary = "진행 중 이벤트(예약 판매) 상품 조회",
+        description = "오늘(Asia/Seoul)이 이벤트 기간 안인 상품만 이벤트 종료일이 가까운 순, 같으면 상품 ID 내림차순으로 돌려줍니다.",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "조회 성공"),
+            ApiResponse(
+                responseCode = "400",
+                description = "size 가 1 이상 100 이하가 아님",
+                content = [Content(schema = Schema(hidden = true))],
+            ),
+        ],
+    )
+    fun findEventProducts(
+        @Parameter(description = "조회 개수(기본 20, 1 이상 100 이하)", example = "20")
+        size: Int?,
+        @Parameter(description = "태그 필터(대소문자 구분 없이 같은 이름)", example = "케이팝")
+        tag: String?,
+    ): ResponseEntity<List<ProductPagingQueryResponse>>
 
     @Operation(
         summary = "상품 상세 조회",
