@@ -4,9 +4,13 @@ import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.luckydraw.LuckyDrawExceptionType
 import com.sleekydz86.idolglow.luckydraw.application.dto.LuckyDrawAdminResponse
 import com.sleekydz86.idolglow.luckydraw.domain.LuckyDraw
+import com.sleekydz86.idolglow.luckydraw.domain.LuckyDrawAdminLock
 import com.sleekydz86.idolglow.luckydraw.domain.LuckyDrawDraft
+import com.sleekydz86.idolglow.luckydraw.infrastructure.LuckyDrawAdminLockJpaRepository
 import com.sleekydz86.idolglow.luckydraw.infrastructure.LuckyDrawEntryJpaRepository
 import com.sleekydz86.idolglow.luckydraw.infrastructure.LuckyDrawJpaRepository
+import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,9 +23,14 @@ class LuckyDrawAdminService(
     private val luckyDrawTicketCalculator: LuckyDrawTicketCalculator,
     private val luckyDrawWinnerReader: LuckyDrawWinnerReader,
     private val luckyDrawClock: LuckyDrawClock,
+    private val luckyDrawAdminLockJpaRepository: LuckyDrawAdminLockJpaRepository,
+    private val luckyDrawAdminLockTxService: LuckyDrawAdminLockTxService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     fun create(draft: LuckyDrawDraft): LuckyDrawAdminResponse {
         draft.validate()
+        lockAdminChanges()
         assertNoOverlap(draft, NEW_DRAW_ID)
         return toResponse(luckyDrawJpaRepository.save(LuckyDraw.create(draft)))
     }
@@ -33,6 +42,7 @@ class LuckyDrawAdminService(
         val draw = find(drawId)
         draw.assertEditable(luckyDrawClock.now())
         draft.validate()
+        lockAdminChanges()
         assertNoOverlap(draft, drawId)
         draw.update(draft, luckyDrawClock.now())
         return toResponse(draw)
@@ -59,6 +69,17 @@ class LuckyDrawAdminService(
 
     private fun find(drawId: Long): LuckyDraw =
         luckyDrawJpaRepository.findById(drawId).orElseThrow { CustomException(LuckyDrawExceptionType.NOT_FOUND) }
+
+    private fun lockAdminChanges() {
+        try {
+            luckyDrawAdminLockTxService.ensureLockRow()
+        } catch (exception: DataIntegrityViolationException) {
+            log.debug("응모 관리자 잠금 행을 다른 요청이 먼저 만들었습니다", exception)
+        }
+        checkNotNull(luckyDrawAdminLockJpaRepository.findByIdForUpdate(LuckyDrawAdminLock.SINGLE_ID)) {
+            "응모 관리자 잠금 행이 없습니다."
+        }
+    }
 
     private fun assertNoOverlap(
         draft: LuckyDrawDraft,

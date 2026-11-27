@@ -1954,3 +1954,7 @@ COMMENT ON COLUMN lucky_draw_tickets.tickets IS '응모권. 응모 수 + 가산 
 COMMENT ON TABLE lucky_draw_winners IS '추첨 당첨자';
 
 COMMENT ON COLUMN lucky_draw_winners.winner_order IS '뽑힌 순서. 1부터';
+
+COMMENT ON TABLE lucky_draw_admin_locks IS '응모 추첨 관리자 등록·수정 잠금';
+
+COMMENT ON COLUMN lucky_draw_admin_locks.id IS '잠금 행 번호. 항상 1';

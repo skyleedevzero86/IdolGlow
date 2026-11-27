@@ -1,8 +1,11 @@
 package com.sleekydz86.idolglow.luckydraw.adapter.web
 
 import com.sleekydz86.idolglow.global.adapter.security.JwtProvider
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.luckydraw.LuckyDrawTestFixture
+import com.sleekydz86.idolglow.luckydraw.application.LuckyDrawAdminService
 import com.sleekydz86.idolglow.luckydraw.application.LuckyDrawRunTxService
+import com.sleekydz86.idolglow.luckydraw.domain.LuckyDrawDraft
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
 import com.sleekydz86.idolglow.support.PostgresReservationFixture
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
@@ -28,6 +31,10 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 import java.time.LocalDateTime
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @DisplayName("응모 관리 API와 공개 조회")
 class LuckyDrawAdminApiPostgresTest : PostgresIntegrationTest() {
@@ -42,6 +49,8 @@ class LuckyDrawAdminApiPostgresTest : PostgresIntegrationTest() {
     @Autowired private lateinit var jdbcTemplate: JdbcTemplate
 
     @Autowired private lateinit var luckyDrawRunTxService: LuckyDrawRunTxService
+
+    @Autowired private lateinit var luckyDrawAdminService: LuckyDrawAdminService
 
     private lateinit var mockMvc: MockMvc
 
@@ -195,6 +204,40 @@ class LuckyDrawAdminApiPostgresTest : PostgresIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("DRAWN"))
             .andExpect(jsonPath("$.winners[0]").value(user.nickname.value.take(4) + "***"))
+    }
+
+    @DisplayName("R7 관리자 8명이 겹치는 기간을 동시에 등록해도 1건만 저장되고 나머지 7건은 LUCKY_DRAW_PERIOD_OVERLAP")
+    @Test
+    fun concurrentOverlappingCreates() {
+        // given
+        val pool = Executors.newFixedThreadPool(8)
+        val ready = CountDownLatch(1)
+        val done = CountDownLatch(8)
+        val rejected = AtomicInteger()
+
+        // when
+        repeat(8) { index ->
+            pool.submit {
+                ready.await()
+                val startsAt = now.plusDays(1).plusMinutes(index.toLong())
+                val draft = LuckyDrawDraft("동시 등록", "경품", "설명", 1, startsAt, now.plusDays(3), now.plusDays(3))
+                runCatching { luckyDrawAdminService.create(draft) }
+                    .onFailure { error ->
+                        val code = (error as? CustomException)?.getExceptionType()?.errorCode
+                        if (code == "LUCKY_DRAW_PERIOD_OVERLAP") {
+                            rejected.incrementAndGet()
+                        }
+                    }
+                done.countDown()
+            }
+        }
+        ready.countDown()
+        done.await(30, TimeUnit.SECONDS)
+        pool.shutdownNow()
+
+        // then
+        assertEquals(1, drawRows())
+        assertEquals(7, rejected.get())
     }
 
     private fun send(

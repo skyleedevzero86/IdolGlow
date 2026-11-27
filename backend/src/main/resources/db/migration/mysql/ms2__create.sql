@@ -1738,7 +1738,7 @@ CREATE TABLE IF NOT EXISTS server_metric_snapshots (
 -- 목적
 -- - 예약 판매 화면의 응모 행사를 저장한다
 -- 대상
--- - 마이에스큐엘 / lucky_draws, lucky_draw_entries, lucky_draw_tickets, lucky_draw_winners
+-- - 마이에스큐엘 / lucky_draws, lucky_draw_entries, lucky_draw_tickets, lucky_draw_winners, lucky_draw_admin_locks
 -- 주의
 -- - 시각은 Asia/Seoul 값으로 저장한다
 -- - 응모는 같은 추첨, 같은 회원, 같은 날에 한 줄만 남는다
@@ -1804,3 +1804,9 @@ CREATE TABLE IF NOT EXISTS lucky_draw_winners (
     constraint uk_lucky_draw_winner_order unique (lucky_draw_id, winner_order),
     constraint fk_lucky_draw_winners_draw foreign key (lucky_draw_id) references lucky_draws (id)
 ) comment='추첨 당첨자';
+
+-- 관리자가 추첨을 등록하거나 고칠 때 잠그는 한 줄짜리 표다
+-- 응모 기간 겹침 검사를 한 번에 하나씩만 하게 한다
+CREATE TABLE IF NOT EXISTS lucky_draw_admin_locks (
+    id bigint not null primary key comment '잠금 행 번호. 항상 1'
+) comment='응모 추첨 관리자 등록·수정 잠금';

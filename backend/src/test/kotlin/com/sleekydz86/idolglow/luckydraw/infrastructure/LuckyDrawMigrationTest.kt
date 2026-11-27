@@ -29,6 +29,7 @@ class LuckyDrawMigrationTest {
                 insertEntry(connection, drawId, "2026-12-01")
                 insertEntry(connection, drawId, "2026-12-02")
                 insertWinner(connection, drawId, 10L, 1)
+                insertAdminLock(connection)
                 val failures = violations(connection, drawId)
 
                 // then
@@ -55,6 +56,7 @@ class LuckyDrawMigrationTest {
                 insertEntry(connection, drawId, "2026-12-01")
                 insertEntry(connection, drawId, "2026-12-02")
                 insertWinner(connection, drawId, 10L, 1)
+                insertAdminLock(connection)
                 val failures = violations(connection, drawId)
 
                 // then
@@ -78,7 +80,14 @@ class LuckyDrawMigrationTest {
             { insertWinner(connection, drawId, 10L, 2) },
             { insertWinner(connection, drawId, 11L, 1) },
             { insertTicket(connection, drawId, -1) },
+            { insertAdminLock(connection) },
         ).map { action -> assertThrows(SQLException::class.java) { action() }.sqlState }
+
+    private fun insertAdminLock(connection: Connection) {
+        connection.createStatement().use { statement ->
+            statement.executeUpdate("insert into lucky_draw_admin_locks (id) values (1)")
+        }
+    }
 
     private fun migrate(
         container: JdbcDatabaseContainer<*>,
@@ -191,7 +200,7 @@ class LuckyDrawMigrationTest {
     companion object {
         private const val CHECK_STATE = "23514"
         private const val UNIQUE_STATE = "23505"
-        private const val VIOLATION_COUNT = 9
+        private const val VIOLATION_COUNT = 10
         private val VALID = DrawRow(1, "2026-12-01 11:00:00", "2026-12-08 11:00:00", "2026-12-08 13:00:00", null)
     }
 }
