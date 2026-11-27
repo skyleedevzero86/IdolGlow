@@ -10,6 +10,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.EventMasterStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventMatchStatus
 import com.sleekydz86.idolglow.eventinfo.domain.EventSourceRef
 import com.sleekydz86.idolglow.eventinfo.domain.EventTextLookup
+import com.sleekydz86.idolglow.eventinfo.domain.EventTitleTarget
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
@@ -48,32 +49,28 @@ class EventTranslationFallbackTest {
     }
 
     @Test
-    fun machineOriginIsNotServed() {
+    fun machineTranslationInRequestedLanguageComesBeforeEnglishProvider() {
+        // given
         val translations = InMemoryEventTranslationPort()
-        translations.save(
-            EventTranslation(
-                globalId = "g-1",
-                locale = "ja",
-                title = "機械翻訳",
-                synopsis = null,
-                origin = EventTranslationOrigin.MACHINE,
-            ),
-        )
+        translations.save(EventTranslation.machine("g-1", "ja", "機械翻訳（한국어 제목）"))
         translations.save(EventTranslation.provider("g-1", "en", "English title", null))
         val masters = InMemoryEventMasterPort()
         masters.save(master("g-1", "한국어 제목"))
         val service = EventLocalizedTextService(translations, InMemoryEventSourceRefPort(), masters)
 
+        // when
         val resolved = service.title("g-1", "ja")
 
-        assertEquals("en", resolved?.locale)
-        assertEquals("English title", resolved?.title)
+        // then
+        assertEquals("ja", resolved?.locale)
+        assertEquals("機械翻訳（한국어 제목）", resolved?.title)
+        assertEquals(EventTranslationOrigin.MACHINE, resolved?.origin)
     }
 
     @Test
     fun providerTranslationChangeReplacesStoredText() {
         val translations = InMemoryEventTranslationPort()
-        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true))
+        val tx = txService(translations)
 
         tx.upsertProvider("g-1", "en", "Old title", "old synopsis")
         tx.upsertProvider("g-1", "en", "New title", "new synopsis")
@@ -97,7 +94,7 @@ class EventTranslationFallbackTest {
                 origin = EventTranslationOrigin.MANUAL,
             ),
         )
-        val tx = EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true))
+        val tx = txService(translations)
 
         tx.upsertProvider("g-1", "en", "Provider title", "provider synopsis")
         val saved = translations.findByGlobalIdAndLocale("g-1", "en")
@@ -129,7 +126,7 @@ class EventTranslationFallbackTest {
                 tourLocaleFestivalPort = tour,
                 eventSourceRefPort = refs,
                 eventTranslationTxService =
-                    EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true)),
+                    txService(translations),
             )
 
         collector.collect(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31))
@@ -157,7 +154,7 @@ class EventTranslationFallbackTest {
                 tourLocaleFestivalPort = FakeTourLocaleFestivalPort(mapOf("ja" to listOf(festival("99", "후보 공연")))),
                 eventSourceRefPort = refs,
                 eventTranslationTxService =
-                    EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true)),
+                    txService(translations),
             )
 
         // when
@@ -210,6 +207,9 @@ class EventTranslationFallbackTest {
         assertEquals("en", EventLocale.requested(null, "en-US,en;q=0.9"))
         assertEquals("ko", EventLocale.requested(" ", null))
     }
+
+    private fun txService(translations: EventTranslationPort): EventTranslationTxService =
+        EventTranslationTxService(translations, InMemoryEventMasterPort(), mockk(relaxed = true), mockk(relaxed = true))
 }
 
 private class InMemoryEventTranslationPort : EventTranslationPort {
@@ -230,6 +230,14 @@ private class InMemoryEventTranslationPort : EventTranslationPort {
 
     override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventTranslation> =
         rows.values.filter { it.globalId in globalIds }
+
+    override fun findUntranslatedFestivals(
+        source: String,
+        locale: String,
+        from: LocalDate,
+        to: LocalDate,
+        limit: Int,
+    ): List<EventTitleTarget> = emptyList()
 }
 
 private class InMemoryEventSourceRefPort : EventSourceRefPort {

@@ -14,8 +14,12 @@ import com.sleekydz86.idolglow.notification.infrastructure.NotificationJpaReposi
 import com.sleekydz86.idolglow.support.PostgresIntegrationTest
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.infrastructure.UserJpaRepository
+import org.apache.kafka.clients.admin.Admin
+import org.apache.kafka.clients.admin.AdminClientConfig
+import org.apache.kafka.clients.admin.OffsetSpec
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.jupiter.api.AfterEach
@@ -25,6 +29,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.support.TransactionTemplate
@@ -67,6 +72,8 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
     @Autowired private lateinit var transactionTemplate: TransactionTemplate
 
     @Autowired private lateinit var jdbcTemplate: JdbcTemplate
+
+    @Autowired private lateinit var kafkaListenerEndpointRegistry: KafkaListenerEndpointRegistry
 
     @AfterEach
     fun clean() {
@@ -161,6 +168,38 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
         assertEquals(emptyList<EventMetaDeadLetterView>(), eventMetaDeadLetterService.list(pendingOnly = true))
     }
 
+    @DisplayName("T9 소비자가 DB 에 반영한 뒤 offset 을 커밋하기 전에 죽어 Kafka 가 같은 이벤트를 다시 보내도, 읽기 모델과 알림은 한 번만 반영된다")
+    @Test
+    fun redeliveryAfterCrashBeforeOffsetCommitIsAppliedOnce() {
+        // given
+        val user = userJpaRepository.save(User.of(email = "t9${UUID.randomUUID().toString().take(8)}@idolglow.test"))
+        val globalId = 공연_변경()
+        eventInterestService.register(user.id, globalId)
+        eventOutboxRelay.relayOnce()
+        처리될_때까지(createdEventId(globalId))
+        val offsetsBeforeChange = latestOffsets()
+        val scheduleEventId = 변경_기록(globalId, setOf("startDate"))
+        eventOutboxRelay.relayOnce()
+        처리될_때까지(scheduleEventId)
+
+        // when
+        val rewound = rewindConsumerGroups(offsetsBeforeChange)
+        val markerEventId = 변경_기록(globalId, setOf("translation"))
+        eventOutboxRelay.relayOnce()
+        처리될_때까지(markerEventId)
+        val latest = latestOffsets()
+        val committedAfter = CONSUMER_GROUPS.associateWith { committedOffsetsReaching(it, latest) }
+
+        // then
+        assertEquals(CONSUMER_GROUPS.associateWith { offsetsBeforeChange }, rewound)
+        assertEquals(CONSUMER_GROUPS.associateWith { latest }, committedAfter)
+        assertEquals(CONSUMER_COUNT, 처리_건수(scheduleEventId))
+        assertEquals(3L, eventMetaProjectionJpaRepository.findById(globalId).get().metaVersion)
+        val alerts = notificationJpaRepository.findAllByUserIdOrderByCreatedAtDesc(user.id)
+        assertEquals(listOf(NotificationType.EVENT_INTEREST_CHANGED), alerts.map { it.type })
+        assertEquals(null, 실패_목록(scheduleEventId))
+    }
+
     @DisplayName("T7 다른 인스턴스가 중계 잠금을 잡고 있으면 이번 중계는 건너뛰고, 잠금이 풀리면 보낸다")
     @Test
     fun skipsWhileAnotherInstanceHoldsLock() {
@@ -237,6 +276,71 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
             }
             eventIds
         }
+
+    private fun createdEventId(globalId: String): String =
+        jdbcTemplate.queryForObject(
+            "select event_id from event_outbox where aggregate_id = ? and event_type = 'CREATED'",
+            String::class.java,
+            globalId,
+        )!!
+
+    private fun <T> withAdmin(block: (Admin) -> T): T =
+        Admin.create(mapOf(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers)).use(block)
+
+    private fun topicPartitions(admin: Admin): List<TopicPartition> =
+        admin
+            .describeTopics(listOf(TOPIC))
+            .allTopicNames()
+            .get()
+            .getValue(TOPIC)
+            .partitions()
+            .map { TopicPartition(TOPIC, it.partition()) }
+
+    private fun latestOffsets(): Map<TopicPartition, Long> =
+        withAdmin { admin ->
+            val request = topicPartitions(admin).associateWith { OffsetSpec.latest() }
+            admin
+                .listOffsets(request)
+                .all()
+                .get()
+                .mapValues { it.value.offset() }
+        }
+
+    private fun committedOffsets(group: String): Map<TopicPartition, Long> =
+        withAdmin { admin ->
+            admin
+                .listConsumerGroupOffsets(group)
+                .partitionsToOffsetAndMetadata()
+                .get()
+                .filterKeys { it.topic() == TOPIC }
+                .mapValues { it.value.offset() }
+        }
+
+    private fun committedOffsetsReaching(
+        group: String,
+        target: Map<TopicPartition, Long>,
+    ): Map<TopicPartition, Long> {
+        val deadline = Instant.now().plus(WAIT)
+        var committed = committedOffsets(group)
+        while (committed != target && Instant.now().isBefore(deadline)) {
+            Thread.sleep(POLL_MILLIS)
+            committed = committedOffsets(group)
+        }
+        return committed
+    }
+
+    private fun rewindConsumerGroups(offsets: Map<TopicPartition, Long>): Map<String, Map<TopicPartition, Long>> {
+        val containers = kafkaListenerEndpointRegistry.allListenerContainers.filter { it.groupId in CONSUMER_GROUPS }
+        containers.forEach { it.stop() }
+        withAdmin { admin ->
+            CONSUMER_GROUPS.forEach { group ->
+                admin.alterConsumerGroupOffsets(group, offsets.mapValues { OffsetAndMetadata(it.value) }).all().get()
+            }
+        }
+        val rewound = CONSUMER_GROUPS.associateWith { committedOffsets(it) }
+        containers.forEach { it.start() }
+        return rewound
+    }
 
     private fun 읽기_모델을_잠근_채로(
         globalId: String,
@@ -360,6 +464,8 @@ class EventMetaKafkaPostgresTest : PostgresIntegrationTest() {
     companion object {
         private const val EVENT_COUNT: Int = 5
         private const val CONSUMER_COUNT: Int = 2
+        private val CONSUMER_GROUPS: List<String> =
+            listOf(EventMetaProjectionService.CONSUMER, EventInterestAlertService.CONSUMER)
         private const val CONCURRENT_EVENT_COUNT: Int = 30
         private const val TOPIC: String = "event-meta.changed.test"
         private const val RELAY_LOCK: String = "eventOutboxRelay"

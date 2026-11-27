@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.user.user.domain
 
 import com.sleekydz86.idolglow.user.user.domain.vo.UserRole
+import java.time.LocalDateTime
 
 interface UserRepository {
     fun findById(userId: Long): User?
@@ -22,6 +23,13 @@ interface UserRepository {
     fun countByRole(role: UserRole): Long
 
     fun countByAccountStatus(status: UserAccountStatus): Long
+
+    fun countJoinedBetween(
+        from: LocalDateTime,
+        toExclusive: LocalDateTime,
+    ): Long
+
+    fun findRecentJoined(limit: Int): List<User>
 
     fun save(user: User): User
 

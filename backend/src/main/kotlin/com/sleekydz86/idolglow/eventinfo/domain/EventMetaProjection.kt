@@ -17,7 +17,7 @@ class EventMetaProjection(
     var metaVersion: Long,
     @Column(nullable = false, length = 20)
     var status: String,
-    @Column(name = "merged_into", length = 36)
+    @Column(name = "`merged_into`", length = 36)
     var mergedInto: String?,
     @Column(nullable = false, length = 255)
     var title: String,

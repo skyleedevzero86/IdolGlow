@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.reservation.domain
 
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.reservation.ReservationExceptionType
 import com.sleekydz86.idolglow.global.infrastructure.persistence.BaseEntity
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import jakarta.persistence.Column
@@ -79,10 +81,10 @@ class ReservationSlot(
     ) {
         clearExpiredHold(now)
         if (isStatusBooked) {
-            throw IllegalStateException("이미 예약된 슬롯입니다.")
+            throw CustomException(ReservationExceptionType.SLOT_ALREADY_BOOKED)
         }
         if (isHeld(now) && holdReservationId != reservationId) {
-            throw IllegalStateException("이미 선점 중인 슬롯입니다.")
+            throw CustomException(ReservationExceptionType.SLOT_HELD)
         }
         holdReservationId = reservationId
         holdExpiresAt = expiresAt

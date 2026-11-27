@@ -36,6 +36,8 @@ spec:
               value: "optional:file:/config/"
             - name: LLM_LOCAL_ENABLED
               value: "false"
+            - name: SERVER_FORWARD_HEADERS_STRATEGY
+              value: "native"
           volumeMounts:
             - name: backend-config
               mountPath: /config

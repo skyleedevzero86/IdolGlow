@@ -17,8 +17,8 @@ class EventTranslationCoverageMcpTools(
     @McpTool(
         name = "translationCoverage",
         description =
-            "운영 중인 공연의 언어별(en, ja, zh) 번역 현황을 센다. visible은 화면에 보이는 번역(PROVIDER·MANUAL), " +
-                "machineOnly는 기계 번역만 있는 수, missing은 번역이 없는 수다.",
+            "운영 중인 공연의 언어별(en, ja, zh) 번역 현황을 센다. visible은 검수된 번역(PROVIDER·MANUAL), " +
+                "machineOnly는 AI 번역(MACHINE)만 있는 수, missing은 번역이 없는 수다. AI 번역도 화면에 보인다.",
     )
     fun translationCoverage(
         @McpToolParam(description = "언어별로 돌려줄 번역 없는 공연 수. 비우면 20", required = false) sampleLimit: Int?,

@@ -15,6 +15,8 @@ import com.sleekydz86.idolglow.payment.domain.PaymentRepository
 import com.sleekydz86.idolglow.payment.domain.PaymentStatus
 import com.sleekydz86.idolglow.payment.domain.RefundRequestedBy
 import com.sleekydz86.idolglow.payment.infrastructure.PaymentRefundJpaRepository
+import com.sleekydz86.idolglow.productpackage.product.application.ProductEventCalendar
+import com.sleekydz86.idolglow.productpackage.product.domain.reservationStartPrice
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductCommandRepository
 import com.sleekydz86.idolglow.productpackage.reservation.application.dto.CreateReservationCommand
@@ -53,6 +55,7 @@ class ReservationCommandService(
     private val membershipQuery: MembershipQuery,
     private val glowPassBenefitPolicy: GlowPassBenefitPolicy,
     private val paymentViewPolicyService: PaymentViewPolicyService,
+    private val productEventCalendar: ProductEventCalendar,
     @Value("\${reservation.pending-timeout-seconds:900}")
     private val pendingTimeoutSeconds: Long,
 ) {
@@ -384,16 +387,16 @@ class ReservationCommandService(
         requestedTotalPrice: BigDecimal,
         at: LocalDateTime,
     ): MembershipPricing {
-        val fullPrice = product.totalPrice
+        val startPrice = product.reservationStartPrice(productEventCalendar.today())
         val member = membershipQuery.isActive(userId, at)
         val expectedTotal =
             if (member) {
-                fullPrice
+                startPrice
                     .multiply(MEMBER_PRICE_RATE)
                     .setScale(0, RoundingMode.HALF_UP)
                     .setScale(2)
             } else {
-                fullPrice
+                startPrice
             }
         if (expectedTotal.compareTo(requestedTotalPrice) != 0) {
             throw IllegalArgumentException(
@@ -401,7 +404,7 @@ class ReservationCommandService(
                     "requested=$requestedTotalPrice expected=$expectedTotal member=$member",
             )
         }
-        val discount = fullPrice.subtract(expectedTotal).max(BigDecimal.ZERO).setScale(2)
+        val discount = startPrice.subtract(expectedTotal).max(BigDecimal.ZERO).setScale(2)
         return MembershipPricing(expectedTotal = expectedTotal, discount = discount)
     }
 

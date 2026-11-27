@@ -5,11 +5,18 @@ import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductSearchCr
 import jakarta.persistence.EntityManager
 import org.hibernate.query.UnknownParameterException
 import org.springframework.stereotype.Repository
+import javax.sql.DataSource
 
 @Repository
 class ProductSearchQueryRepository(
     private val entityManager: EntityManager,
+    private val dataSource: DataSource,
 ) {
+    private val doubleType: String by lazy {
+        val productName = dataSource.connection.use { it.metaData.databaseProductName.lowercase() }
+        if (productName.contains("mysql") || productName.contains("mariadb")) "DOUBLE" else "DOUBLE PRECISION"
+    }
+
     fun findOrderedProductIds(criteria: ProductSearchCriteria): List<Long> {
         val sql =
             when (criteria.sort) {
@@ -140,13 +147,9 @@ class ProductSearchQueryRepository(
             """
             SELECT t.pid FROM (
                 SELECT p.id AS pid,
-                    (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id) AS wc,
-                    COALESCE((
-                        SELECT AVG(CAST(pr.rating AS DOUBLE)) FROM product_reviews pr WHERE pr.product_id = p.id AND pr.hidden_at IS NULL
-                    ), 0) AS ar,
-                    COALESCE((
-                        SELECT COUNT(*) FROM product_reviews pr2 WHERE pr2.product_id = p.id AND pr2.hidden_at IS NULL
-                    ), 0) AS rc
+                    p.wish_count AS wc,
+                    (CASE WHEN p.review_count = 0 THEN 0 ELSE CAST(p.rating_sum AS $doubleType) / p.review_count END) AS ar,
+                    p.review_count AS rc
                 FROM products p
                 $join
                 WHERE 1 = 1
@@ -292,11 +295,11 @@ class ProductSearchQueryRepository(
 
     private fun escapeLike(raw: String): String =
         raw
-            .replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
+            .replace("$LIKE_ESCAPE_CHAR", "$LIKE_ESCAPE_CHAR$LIKE_ESCAPE_CHAR")
+            .replace("%", "$LIKE_ESCAPE_CHAR%")
+            .replace("_", "${LIKE_ESCAPE_CHAR}_")
 
     companion object {
-        private const val LIKE_ESCAPE_CHAR = '\\'
+        private const val LIKE_ESCAPE_CHAR = '!'
     }
 }

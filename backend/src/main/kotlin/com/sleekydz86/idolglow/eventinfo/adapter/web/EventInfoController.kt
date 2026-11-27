@@ -695,7 +695,12 @@ class EventInfoController(
         response: FestivalEventResponse,
         text: EventLocalizedText,
     ): FestivalEventResponse =
-        response.copy(title = text.title, synopsis = text.synopsis, resolvedLocale = text.locale)
+        response.copy(
+            title = text.title,
+            synopsis = text.synopsis,
+            resolvedLocale = text.locale,
+            translationOrigin = text.origin?.name,
+        )
 
     private fun FestivalEventResponse.inRequestedLanguage(): FestivalEventResponse =
         listOf(this).inRequestedLanguage().first()

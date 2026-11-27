@@ -17,4 +17,5 @@ data class CreateProductCommand(
     val tagNames: List<String> = emptyList(),
     val location: ProductLocationPayload? = null,
     val tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
+    val event: ProductEventSaleInput? = null,
 )

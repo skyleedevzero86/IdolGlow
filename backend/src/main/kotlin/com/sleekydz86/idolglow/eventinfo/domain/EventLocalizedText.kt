@@ -4,6 +4,7 @@ data class EventLocalizedText(
     val title: String,
     val synopsis: String?,
     val locale: String,
+    val origin: EventTranslationOrigin? = null,
 )
 
 data class EventTextLookup(

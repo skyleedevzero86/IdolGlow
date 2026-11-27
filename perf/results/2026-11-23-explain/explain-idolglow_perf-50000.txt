@@ -1,0 +1,201 @@
+Pager usage is off.
+===== Q1. 기본 정렬, 최신순 첫 페이지 =====
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.29..0.86 rows=20 width=8) (actual time=0.061..0.066 rows=20 loops=1)
+   Buffers: shared hit=3
+   ->  Index Only Scan Backward using products_pkey on products p  (cost=0.29..1431.29 rows=50000 width=8) (actual time=0.060..0.062 rows=20 loops=1)
+         Index Cond: (id < '9223372036854775807'::bigint)
+         Heap Fetches: 0
+         Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=22
+ Planning Time: 0.294 ms
+ Execution Time: 0.121 ms
+(10 rows)
+
+===== Q2. 키워드 검색, 걸리는 상품이 많은 말 =====
+                                                                      QUERY PLAN                                                                       
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.29..182.07 rows=20 width=8) (actual time=164.147..164.442 rows=20 loops=1)
+   Buffers: shared hit=7 read=1328 written=776
+   ->  Index Scan Backward using products_pkey on products p  (cost=0.29..227373.29 rows=25016 width=8) (actual time=164.145..164.437 rows=20 loops=1)
+         Index Cond: (id < '9223372036854775807'::bigint)
+         Filter: ((lower((name)::text) ~~ '%성수%'::text) OR (lower(description) ~~ '%성수%'::text) OR (ANY (id = (hashed SubPlan 2).col1)))
+         Rows Removed by Filter: 140
+         Buffers: shared hit=7 read=1328 written=776
+         SubPlan 2
+           ->  Seq Scan on product_tag ptk  (cost=0.00..3578.00 rows=48 width=8) (actual time=157.497..157.497 rows=0 loops=1)
+                 Filter: (lower((tag_name)::text) ~~ '%성수%'::text)
+                 Rows Removed by Filter: 150000
+                 Buffers: shared read=1328 written=776
+ Planning:
+   Buffers: shared hit=108
+ Planning Time: 25.183 ms
+ Execution Time: 165.548 ms
+(16 rows)
+
+===== Q3. 키워드 검색, 아무 상품에도 없는 말 =====
+                                                                       QUERY PLAN                                                                        
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.29..182.15 rows=20 width=8) (actual time=333.000..333.002 rows=0 loops=1)
+   Buffers: shared hit=2668
+   ->  Index Scan Backward using products_pkey on products p  (cost=0.29..227373.29 rows=25005 width=8) (actual time=332.998..333.000 rows=0 loops=1)
+         Index Cond: (id < '9223372036854775807'::bigint)
+         Filter: ((lower((name)::text) ~~ '%없는검색어%'::text) OR (lower(description) ~~ '%없는검색어%'::text) OR (ANY (id = (hashed SubPlan 2).col1)))
+         Rows Removed by Filter: 50000
+         Buffers: shared hit=2668
+         SubPlan 2
+           ->  Seq Scan on product_tag ptk  (cost=0.00..3578.00 rows=15 width=8) (actual time=157.228..157.228 rows=0 loops=1)
+                 Filter: (lower((tag_name)::text) ~~ '%없는검색어%'::text)
+                 Rows Removed by Filter: 150000
+                 Buffers: shared hit=1328
+ Planning:
+   Buffers: shared hit=39
+ Planning Time: 0.539 ms
+ Execution Time: 333.033 ms
+(16 rows)
+
+===== Q4. 인기순 정렬 첫 페이지 =====
+                                                                              QUERY PLAN                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=4605700.18..4605700.23 rows=20 width=32) (actual time=5226.879..5226.886 rows=20 loops=1)
+   Buffers: shared hit=1440623 read=9523 written=4549
+   ->  Sort  (cost=4605700.18..4605825.18 rows=50000 width=32) (actual time=4201.574..4201.578 rows=20 loops=1)
+         Sort Key: ((SubPlan 1)) DESC, (COALESCE((SubPlan 2), '0'::double precision)) DESC, (COALESCE((SubPlan 3), '0'::bigint)) DESC, p.id DESC
+         Sort Method: top-N heapsort  Memory: 27kB
+         Buffers: shared hit=1440623 read=9523 written=4549
+         ->  Index Only Scan using products_pkey on products p  (cost=0.29..4604369.69 rows=50000 width=32) (actual time=1.434..4142.903 rows=50000 loops=1)
+               Heap Fetches: 0
+               Buffers: shared hit=1440617 read=9523 written=4549
+               SubPlan 1
+                 ->  Aggregate  (cost=5.03..5.04 rows=1 width=8) (actual time=0.030..0.030 rows=1 loops=50000)
+                       Buffers: shared hit=147795 read=2206 written=764
+                       ->  Index Only Scan using idx_wishes_product_id on wishes w  (cost=0.43..4.95 rows=30 width=0) (actual time=0.022..0.026 rows=30 loops=50000)
+                             Index Cond: (product_id = p.id)
+                             Heap Fetches: 0
+                             Buffers: shared hit=147795 read=2206 written=764
+               SubPlan 2
+                 ->  Aggregate  (cost=43.52..43.53 rows=1 width=8) (actual time=0.033..0.033 rows=1 loops=50000)
+                       Buffers: shared hit=642683 read=7317 written=3785
+                       ->  Bitmap Heap Scan on product_reviews pr  (cost=4.50..43.46 rows=10 width=4) (actual time=0.009..0.030 rows=10 loops=50000)
+                             Recheck Cond: (product_id = p.id)
+                             Filter: (hidden_at IS NULL)
+                             Heap Blocks: exact=500000
+                             Buffers: shared hit=642683 read=7317 written=3785
+                             ->  Bitmap Index Scan on idx_product_reviews_product_id  (cost=0.00..4.50 rows=10 width=0) (actual time=0.004..0.004 rows=10 loops=50000)
+                                   Index Cond: (product_id = p.id)
+                                   Buffers: shared hit=149412 read=588 written=207
+               SubPlan 3
+                 ->  Aggregate  (cost=43.49..43.50 rows=1 width=8) (actual time=0.017..0.017 rows=1 loops=50000)
+                       Buffers: shared hit=650000
+                       ->  Bitmap Heap Scan on product_reviews pr2  (cost=4.50..43.46 rows=10 width=0) (actual time=0.006..0.014 rows=10 loops=50000)
+                             Recheck Cond: (product_id = p.id)
+                             Filter: (hidden_at IS NULL)
+                             Heap Blocks: exact=500000
+                             Buffers: shared hit=650000
+                             ->  Bitmap Index Scan on idx_product_reviews_product_id  (cost=0.00..4.50 rows=10 width=0) (actual time=0.003..0.003 rows=10 loops=50000)
+                                   Index Cond: (product_id = p.id)
+                                   Buffers: shared hit=150000
+ Planning:
+   Buffers: shared hit=231 read=2
+ Planning Time: 2.008 ms
+ JIT:
+   Functions: 27
+   Options: Inlining true, Optimization true, Expressions true, Deforming true
+   Timing: Generation 3.039 ms (Deform 0.743 ms), Inlining 419.317 ms, Optimization 377.155 ms, Emission 228.928 ms, Total 1028.439 ms
+ Execution Time: 5289.323 ms
+(46 rows)
+
+===== Q5. 찜 수와 리뷰 점수, 20개 상품 =====
+                                                                                      QUERY PLAN                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=2050.30..2056.20 rows=590 width=16) (actual time=7.440..7.450 rows=20 loops=1)
+   Group Key: product_id
+   Batches: 1  Memory Usage: 49kB
+   Buffers: shared hit=4 read=600 written=539
+   ->  Bitmap Heap Scan on wishes w  (cost=93.25..2047.34 rows=593 width=16) (actual time=0.229..7.072 rows=600 loops=1)
+         Recheck Cond: (product_id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+         Heap Blocks: exact=600
+         Buffers: shared hit=4 read=600 written=539
+         ->  Bitmap Index Scan on idx_wishes_product_id  (cost=0.00..93.05 rows=593 width=0) (actual time=0.088..0.089 rows=600 loops=1)
+               Index Cond: (product_id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+               Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=29 read=4
+ Planning Time: 1.153 ms
+ Execution Time: 7.531 ms
+(15 rows)
+
+                                                                                      QUERY PLAN                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=784.18..786.68 rows=200 width=48) (actual time=0.873..0.888 rows=20 loops=1)
+   Group Key: product_id
+   Batches: 1  Memory Usage: 40kB
+   Buffers: shared hit=203
+   ->  Bitmap Heap Scan on product_reviews r  (cost=90.05..782.68 rows=200 width=20) (actual time=0.063..0.382 rows=200 loops=1)
+         Recheck Cond: (product_id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+         Filter: (hidden_at IS NULL)
+         Heap Blocks: exact=200
+         Buffers: shared hit=203
+         ->  Bitmap Index Scan on idx_product_reviews_product_id  (cost=0.00..89.95 rows=200 width=0) (actual time=0.033..0.034 rows=200 loops=1)
+               Index Cond: (product_id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+               Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=26 read=2 written=2
+ Planning Time: 1.675 ms
+ Execution Time: 0.934 ms
+(16 rows)
+
+===== Q6. 20개 상품 내용 채우기, 옵션과 위치를 함께 =====
+                                                                                                                                                                                                                            QUERY PLAN                                                                                                                                                                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique  (cost=21.78..423.11 rows=40 width=1368) (actual time=0.328..0.407 rows=41 loops=1)
+   Buffers: shared hit=139 read=3 written=3
+   ->  Incremental Sort  (cost=21.78..420.01 rows=40 width=1368) (actual time=0.327..0.368 rows=41 loops=1)
+         Sort Key: p.id, p.name, p.description, p.created_at, p.updated_at, p.tour_attraction_picks_json, p.base_price, p.is_recommended, p.recommendation_score, po.id, po.product_id, po.option_id, po.created_at, po.updated_at, o.id, o.name, o.description, o.price, o.location, o.created_at, o.updated_at, pl.id, pl.product_id, pl.name, pl.latitude, pl.longitude, pl.road_address_name, pl.address_name, pl.kakao_place_id, pl.created_at, pl.updated_at
+         Presorted Key: p.id
+         Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 35kB  Peak Memory: 35kB
+         Buffers: shared hit=139 read=3 written=3
+         ->  Nested Loop Left Join  (cost=0.87..418.91 rows=40 width=1368) (actual time=0.091..0.225 rows=41 loops=1)
+               Join Filter: (o.id = po.option_id)
+               Rows Removed by Join Filter: 28
+               Buffers: shared hit=122 read=3 written=3
+               ->  Nested Loop Left Join  (cost=0.87..415.25 rows=40 width=1304) (actual time=0.077..0.187 rows=41 loops=1)
+                     Buffers: shared hit=121 read=3 written=3
+                     ->  Nested Loop Left Join  (cost=0.58..248.30 rows=20 width=1264) (actual time=0.036..0.096 rows=20 loops=1)
+                           Buffers: shared hit=62 read=2 written=2
+                           ->  Index Scan using products_pkey on products p  (cost=0.29..86.15 rows=20 width=158) (actual time=0.016..0.026 rows=20 loops=1)
+                                 Index Cond: (id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+                                 Buffers: shared hit=4
+                           ->  Index Scan using uk_product_locations_product on product_locations pl  (cost=0.29..8.11 rows=1 width=1106) (actual time=0.003..0.003 rows=1 loops=20)
+                                 Index Cond: (product_id = p.id)
+                                 Buffers: shared hit=58 read=2 written=2
+                     ->  Index Scan using idx_product_option_product_id on product_option po  (cost=0.29..8.33 rows=2 width=40) (actual time=0.003..0.004 rows=2 loops=20)
+                           Index Cond: (product_id = p.id)
+                           Buffers: shared hit=59 read=1 written=1
+               ->  Materialize  (cost=0.00..1.07 rows=5 width=64) (actual time=0.000..0.000 rows=2 loops=41)
+                     Buffers: shared hit=1
+                     ->  Seq Scan on options o  (cost=0.00..1.05 rows=5 width=64) (actual time=0.008..0.008 rows=3 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=317 read=20 written=20
+ Planning Time: 5.309 ms
+ Execution Time: 0.638 ms
+(32 rows)
+
+                                                                                   QUERY PLAN                                                                                   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on product_tag pt  (cost=88.92..288.51 rows=60 width=40) (actual time=0.734..0.832 rows=60 loops=1)
+   Recheck Cond: (product_id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+   Heap Blocks: exact=3
+   Buffers: shared read=6 written=6
+   ->  Bitmap Index Scan on idx_product_tag_product_id  (cost=0.00..88.85 rows=60 width=0) (actual time=0.711..0.712 rows=60 loops=1)
+         Index Cond: (product_id = ANY ('{50000,49999,49998,49997,49996,49995,49994,49993,49992,49991,49990,49989,49988,49987,49986,49985,49984,49983,49982,49981}'::bigint[]))
+         Buffers: shared read=3 written=3
+ Planning:
+   Buffers: shared hit=26
+ Planning Time: 0.301 ms
+ Execution Time: 0.850 ms
+(11 rows)
+

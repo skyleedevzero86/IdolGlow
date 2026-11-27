@@ -1579,6 +1579,20 @@ COMMENT ON COLUMN event_translation.origin IS '출처. PROVIDER, MANUAL, MACHINE
 
 COMMENT ON COLUMN event_translation.updated_at IS '마지막으로 번역을 바꾼 시각';
 
+COMMENT ON TABLE event_translation_attempt IS '공연 AI 제목 번역 실패 기록';
+
+COMMENT ON COLUMN event_translation_attempt.global_id IS '글로벌 공연 ID';
+
+COMMENT ON COLUMN event_translation_attempt.locale IS '언어 코드. en, ja, zh';
+
+COMMENT ON COLUMN event_translation_attempt.fail_count IS '연속 실패 횟수. 번역 행이 저장되면 기록째 지운다';
+
+COMMENT ON COLUMN event_translation_attempt.last_reason IS '마지막 실패 이유. 검사 코드를 쉼표로 이은 값, 응답이 없으면 NO_RESPONSE. 200자까지';
+
+COMMENT ON COLUMN event_translation_attempt.last_failed_at IS '마지막 실패 시각. 실패한 공연끼리 오래된 순서로 다시 시도한다';
+
+COMMENT ON COLUMN event_translation_attempt.updated_at IS '마지막으로 바꾼 시각';
+
 COMMENT ON COLUMN users.role IS '권한 역할. USER 일반, ADMIN 관리자, OPERATOR 운영 변경 요청, APPROVER 승인';
 
 COMMENT ON TABLE ops_change_request IS '운영 변경 요청. 승인 뒤에만 적용하고 되돌릴 수 있다';
@@ -1846,3 +1860,97 @@ COMMENT ON COLUMN event_source_ref.schedule_hash IS '공연 시간 안내를 읽
 COMMENT ON COLUMN event_source_ref.session_horizon IS '회차를 어느 날짜까지 만들어 두었는지';
 
 COMMENT ON INDEX idx_event_session_starts IS '회차를 날짜 순서로 찾을 때 쓴다';
+
+COMMENT ON COLUMN products.wish_count IS '이 상품을 찜한 수. 찜 추가·취소·회원 탈퇴 때 서버가 함께 바꾼다. 0 이상';
+
+COMMENT ON COLUMN products.review_count IS '숨기지 않은 리뷰 수. 리뷰 작성·삭제·숨김·숨김 해제 때 서버가 함께 바꾼다. 0 이상';
+
+COMMENT ON COLUMN products.rating_sum IS '숨기지 않은 리뷰 별점(1~5)의 합. 평균 별점은 rating_sum / review_count 로 계산한다. 0 이상';
+
+COMMENT ON INDEX idx_products_popularity IS '상품 인기순 정렬(찜 수, 평균 별점, 리뷰 수, ID)에 쓴다';
+
+COMMENT ON COLUMN users.joined_at IS '회원 가입 시각. 처음 저장할 때 정하고 바꾸지 않는다. 이 칸이 생기기 전 가입한 회원은 비어 있고 신규 가입 집계에서 빠진다';
+
+COMMENT ON TABLE site_visitors IS '사이트 방문자. 서버가 준 무작위 식별값 하나가 한 줄이다';
+
+COMMENT ON COLUMN site_visitors.visitor_id IS '방문자 식별값. 쿠키 ig_vid 에 담은 소문자 UUID 36자. 사람을 알아보는 정보와 이어지지 않는다';
+
+COMMENT ON COLUMN site_visitors.first_visit_date IS '처음 방문한 서울 날짜. 바꾸지 않는다. 신규 방문자 판단에 쓴다';
+
+COMMENT ON COLUMN site_visitors.last_visit_date IS '마지막으로 방문한 서울 날짜. 365일 지나면 이 줄을 지운다';
+
+COMMENT ON TABLE site_daily_visits IS '하루 방문. 방문자 하나의 서울 날짜 하루가 한 줄이다. 90일 지나면 지운다';
+
+COMMENT ON COLUMN site_daily_visits.visitor_id IS '방문자 식별값';
+
+COMMENT ON COLUMN site_daily_visits.visit_date IS '방문한 서울 날짜';
+
+COMMENT ON COLUMN site_daily_visits.user_id IS '그날 로그인 상태로 들어온 회원 번호. 처음 채운 값은 바꾸지 않는다. 비로그인 방문이면 비어 있다';
+
+COMMENT ON COLUMN site_daily_visits.ip_address IS '그날 처음 들어온 요청의 IP. 믿는 프록시가 넘긴 값만 따른다. IPv6 까지 45자';
+
+COMMENT ON TABLE server_metric_snapshots IS '5분마다 남기는 서버 점검 기록. 7일 지나면 지운다';
+
+COMMENT ON COLUMN server_metric_snapshots.measured_at IS '점검한 시각';
+
+COMMENT ON COLUMN server_metric_snapshots.overall_status IS '전체 상태. UP, DEGRADED, DOWN';
+
+COMMENT ON COLUMN server_metric_snapshots.db_status IS '데이터베이스 상태. UP, DOWN';
+
+COMMENT ON COLUMN server_metric_snapshots.db_response_ms IS '데이터베이스 연결 확인에 걸린 밀리초';
+
+COMMENT ON COLUMN server_metric_snapshots.minio_status IS 'MinIO 상태. UP, DOWN, NOT_CONFIGURED';
+
+COMMENT ON COLUMN server_metric_snapshots.minio_response_ms IS 'MinIO 버킷 확인에 걸린 밀리초. 설정이 없으면 비어 있다';
+
+COMMENT ON COLUMN server_metric_snapshots.http_request_count IS '직전 점검 뒤 이 서버가 보낸 HTTP 응답 수';
+
+COMMENT ON COLUMN server_metric_snapshots.http_error_count IS '그 가운데 상태 코드 500 이상 응답 수';
+
+COMMENT ON COLUMN products.event_starts_on IS '이벤트 시작일 Asia/Seoul 기준, 이 날짜를 포함한다. 이벤트를 끄면 비어 있다';
+
+COMMENT ON COLUMN products.event_ends_on IS '이벤트 종료일 Asia/Seoul 기준, 이 날짜를 포함한다. 시작일과 같거나 뒤';
+
+COMMENT ON COLUMN products.event_price_type IS '이벤트 가격 방식 DISCOUNT_RATE 할인율 또는 FIXED_BASE_PRICE 이벤트 기본가';
+
+COMMENT ON COLUMN products.event_discount_rate IS '이벤트 할인율 1~99 정수. DISCOUNT_RATE 일 때만 있다. 원 미만은 버린다';
+
+COMMENT ON COLUMN products.event_base_price IS '이벤트 기본가 원. FIXED_BASE_PRICE 일 때만 있다. 0 이상, 상품 기본가보다 작다';
+
+COMMENT ON TABLE lucky_draws IS '예약 판매 화면의 응모 행사. 정한 시각에 서버가 자동으로 추첨한다';
+
+COMMENT ON COLUMN lucky_draws.title IS '행사 제목. 1~100자';
+
+COMMENT ON COLUMN lucky_draws.prize_name IS '경품 이름. 1~100자';
+
+COMMENT ON COLUMN lucky_draws.prize_description IS '경품 설명. 1~1000자';
+
+COMMENT ON COLUMN lucky_draws.winner_count IS '당첨자 수. 1~10';
+
+COMMENT ON COLUMN lucky_draws.entry_starts_at IS '응모 시작 시각 Asia/Seoul, 이 시각을 포함한다';
+
+COMMENT ON COLUMN lucky_draws.entry_ends_at IS '응모 종료 시각 Asia/Seoul, 이 시각은 포함하지 않는다';
+
+COMMENT ON COLUMN lucky_draws.draw_at IS '추첨 시각 Asia/Seoul. 응모 종료와 같거나 뒤';
+
+COMMENT ON COLUMN lucky_draws.draw_seed IS '추첨에 쓴 난수 씨앗. 같은 씨앗과 응모권으로 결과를 다시 계산할 수 있다';
+
+COMMENT ON COLUMN lucky_draws.drawn_at IS '추첨을 마친 시각. 비어 있으면 아직 추첨 전';
+
+COMMENT ON TABLE lucky_draw_entries IS '회원의 하루 한 번 응모 기록';
+
+COMMENT ON COLUMN lucky_draw_entries.entry_date IS '응모한 날짜 Asia/Seoul';
+
+COMMENT ON COLUMN lucky_draw_entries.entered_at IS '응모한 시각 Asia/Seoul';
+
+COMMENT ON TABLE lucky_draw_tickets IS '추첨 순간의 회원별 응모권. 결과를 다시 계산할 때 쓴다';
+
+COMMENT ON COLUMN lucky_draw_tickets.entry_count IS '응모 수';
+
+COMMENT ON COLUMN lucky_draw_tickets.purchase_count IS '응모 기간에 결제를 마친 이벤트 상품 예약 수';
+
+COMMENT ON COLUMN lucky_draw_tickets.tickets IS '응모권. 응모 수 + 가산 결제 수 × 10';
+
+COMMENT ON TABLE lucky_draw_winners IS '추첨 당첨자';
+
+COMMENT ON COLUMN lucky_draw_winners.winner_order IS '뽑힌 순서. 1부터';

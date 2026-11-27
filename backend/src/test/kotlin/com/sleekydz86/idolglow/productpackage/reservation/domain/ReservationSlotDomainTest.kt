@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.reservation.domain
 
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
+import com.sleekydz86.idolglow.global.infrastructure.exception.reservation.ReservationExceptionType
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -27,19 +29,100 @@ class ReservationSlotDomainTest {
         assertTrue(isCurrentlyHeld(slot))
     }
 
-    @DisplayName("다른 예약이 선점 중이면 hold 를 거부한다")
+    @DisplayName("T6 다른 예약이 선점 중이면 hold 를 RESERVATION_SLOT_HELD로 거부한다")
     @Test
     fun rejectsHoldWhenSlotHeldByOther() {
         // given
         val slot = sampleSlot()
         val expiresAt = LocalDateTime.now().plusMinutes(15)
-        // when
         slot.hold(reservationId = 1L, expiresAt = expiresAt)
 
+        // when
+        val error =
+            assertThrows(CustomException::class.java) {
+                slot.hold(reservationId = 2L, expiresAt = expiresAt)
+            }
+
         // then
-        assertThrows(IllegalStateException::class.java) {
-            slot.hold(reservationId = 2L, expiresAt = expiresAt)
-        }
+        assertEquals(ReservationExceptionType.SLOT_HELD, error.getExceptionType())
+        assertEquals(1L, slot.holdReservationId)
+    }
+
+    @DisplayName("T6 예약이 확정된 슬롯은 hold 를 RESERVATION_SLOT_ALREADY_BOOKED로 거부한다")
+    @Test
+    fun rejectsHoldWhenSlotBooked() {
+        // given
+        val slot = sampleSlot()
+        slot.hold(reservationId = 1L, expiresAt = LocalDateTime.now().plusMinutes(15))
+        slot.confirmBooking(reservationId = 1L)
+
+        // when
+        val error =
+            assertThrows(CustomException::class.java) {
+                slot.hold(reservationId = 2L, expiresAt = LocalDateTime.now().plusMinutes(15))
+            }
+
+        // then
+        assertEquals(ReservationExceptionType.SLOT_ALREADY_BOOKED, error.getExceptionType())
+        assertTrue(slot.isStatusBooked)
+    }
+
+    @DisplayName("T7 예약 확정이면서 선점 정보가 남은 슬롯은 RESERVATION_SLOT_ALREADY_BOOKED로 거부한다")
+    @Test
+    fun bookedCheckComesBeforeHeldCheck() {
+        // given
+        val now = LocalDateTime.now()
+        val state = ReservationSlotState(PRODUCT_ID, true, 1L, now.plusMinutes(15))
+
+        // when
+        val error = assertThrows(CustomException::class.java) { state.validateAvailability(PRODUCT_ID, now) }
+
+        // then
+        assertEquals(ReservationExceptionType.SLOT_ALREADY_BOOKED, error.getExceptionType())
+    }
+
+    @DisplayName("T7 다른 예약이 만료 전 선점 중이면 RESERVATION_SLOT_HELD로 거부한다")
+    @Test
+    fun heldSlotIsRejected() {
+        // given
+        val now = LocalDateTime.now()
+        val state = ReservationSlotState(PRODUCT_ID, false, 1L, now.plusMinutes(15))
+
+        // when
+        val error = assertThrows(CustomException::class.java) { state.validateAvailability(PRODUCT_ID, now) }
+
+        // then
+        assertEquals(ReservationExceptionType.SLOT_HELD, error.getExceptionType())
+    }
+
+    @DisplayName("T7 선점 만료 시각이 지금과 같으면 선점 중으로 보지 않는다")
+    @Test
+    fun holdExpiringNowIsNotHeld() {
+        // given
+        val now = LocalDateTime.now()
+        val state = ReservationSlotState(PRODUCT_ID, false, 1L, now)
+
+        // when
+        state.validateAvailability(PRODUCT_ID, now)
+
+        // then
+        assertEquals(1L, state.holdReservationId)
+    }
+
+    @DisplayName("T7 다른 상품의 슬롯이면 충돌이 아니라 IllegalArgumentException으로 거부한다")
+    @Test
+    fun otherProductIsBadRequest() {
+        // given
+        val state = ReservationSlotState(PRODUCT_ID, false, null, null)
+
+        // when
+        val error =
+            assertThrows(IllegalArgumentException::class.java) {
+                state.validateAvailability(PRODUCT_ID + 1, LocalDateTime.now())
+            }
+
+        // then
+        assertTrue(error.message!!.contains("속하지 않습니다"))
     }
 
     @DisplayName("선점 후 결제 확정 시 슬롯이 예약 완료된다")
@@ -107,5 +190,9 @@ class ReservationSlotDomainTest {
                 slotEndDate = visitDate,
             )
         return product.reservationSlots.first()
+    }
+
+    companion object {
+        private const val PRODUCT_ID: Long = 10L
     }
 }

@@ -67,14 +67,18 @@ class PasswordRecoveryService(
         return true
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun sendAccountIdReminder(
         email: String,
         ipAddress: String,
     ): Boolean {
-        val normalized = email.trim().lowercase()
-        if (normalized.isBlank()) return false
-        val user = userRepository.findByEmail(normalized) ?: return false
+        val user =
+            email
+                .trim()
+                .lowercase()
+                .takeIf { it.isNotBlank() }
+                ?.let { userRepository.findByEmail(it) }
+                ?: return false
 
         sendMail(
             to = user.email,

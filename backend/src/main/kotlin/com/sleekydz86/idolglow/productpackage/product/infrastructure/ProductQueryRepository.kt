@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.product.infrastructure
 
+import com.sleekydz86.idolglow.productpackage.product.application.ProductEventCalendar
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductTag
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductLocationSummaryResponse
@@ -14,6 +15,7 @@ import java.math.BigDecimal
 class ProductQueryRepository(
     private val entityManager: EntityManager,
     private val objectMapper: ObjectMapper,
+    private val productEventCalendar: ProductEventCalendar,
 ) {
     fun hydrateForBrowse(
         orderedIds: List<Long>,
@@ -53,6 +55,7 @@ class ProductQueryRepository(
                 .mapValues { (_, values) -> values.map { it.tagName }.distinct() }
 
         val productById = products.associateBy { it.id }
+        val today = productEventCalendar.today()
         return orderedIds.mapNotNull { id ->
             val product = productById[id] ?: return@mapNotNull null
             val loc = product.productLocation
@@ -73,6 +76,7 @@ class ProductQueryRepository(
                 TourAttractionPicksJsonCodec.decode(product.tourAttractionPicksJson, objectMapper).size
             ProductPagingQueryResponse.from(
                 product = product,
+                today = today,
                 tagNames = tagNamesByProductId[product.id].orEmpty(),
                 location = locDto,
                 distanceMeters = distanceMeters,
@@ -87,7 +91,7 @@ class ProductQueryRepository(
     fun findProductSpecificById(productId: Long): ProductSpecificResponse? {
         val product = entityManager.find(Product::class.java, productId) ?: return null
         val picks = TourAttractionPicksJsonCodec.decode(product.tourAttractionPicksJson, objectMapper)
-        return ProductSpecificResponse.from(product, picks)
+        return ProductSpecificResponse.from(product, productEventCalendar.today(), picks)
     }
 
     data class ReviewMetricRow(

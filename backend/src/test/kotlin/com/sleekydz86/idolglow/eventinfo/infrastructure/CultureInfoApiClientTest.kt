@@ -131,6 +131,29 @@ class CultureInfoApiClientTest {
         assertTrue(result.events.isEmpty())
     }
 
+    @DisplayName("하루치 조회의 연속 호출은 공급처 초당 한도 아래로 150ms 이상 간격을 두고 보낸다")
+    @Test
+    fun pacesConsecutiveCallsBelowProviderRateLimit() {
+        // given
+        val startedAt = mutableListOf<Long>()
+        val webClient =
+            WebClient
+                .builder()
+                .exchangeFunction {
+                    synchronized(startedAt) { startedAt += System.nanoTime() }
+                    Mono.just(ClientResponse.create(HttpStatus.OK).body(EMPTY_RESPONSE).build())
+                }.build()
+        val client = CultureInfoApiClient(webClient, CultureInfoApiProperties(serviceKey = "abc"))
+
+        // when
+        client.listEventsForCalendarDayWithCompleteness("20260616", pageNo = 1, numOfRows = 3)
+
+        // then
+        val gapsMillis = startedAt.zipWithNext { previous, next -> (next - previous) / NANOS_PER_MILLI }
+        assertTrue(gapsMillis.size >= MIN_CALLS, "호출 수 ${gapsMillis.size + 1}")
+        assertTrue(gapsMillis.min() >= MIN_GAP_MILLIS, "가장 짧은 간격 ${gapsMillis.min()}ms")
+    }
+
     @DisplayName("서비스키가 비어 있으면 불완전한 결과로 표시한다")
     @Test
     fun marksCalendarDayIncompleteWhenServiceKeyIsBlank() {
@@ -256,5 +279,13 @@ class CultureInfoApiClientTest {
             webClient = webClient,
             properties = CultureInfoApiProperties(serviceKey = serviceKey),
         )
+    }
+
+    companion object {
+        private const val EMPTY_RESPONSE: String =
+            "<response><header><resultCode>00</resultCode></header><body><items></items></body></response>"
+        private const val NANOS_PER_MILLI: Long = 1_000_000
+        private const val MIN_CALLS: Int = 10
+        private const val MIN_GAP_MILLIS: Long = 140
     }
 }

@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPo
 import com.sleekydz86.idolglow.eventinfo.domain.EventLocale
 import com.sleekydz86.idolglow.eventinfo.domain.EventMaster
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
+import com.sleekydz86.idolglow.eventinfo.domain.EventTranslationOrigin
 import com.sleekydz86.idolglow.eventinfo.domain.ExternalIdScheme
 import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.global.infrastructure.exception.partner.PartnerExceptionType
@@ -139,7 +140,7 @@ class PartnerEventFeedService(
         translations: List<EventTranslation>,
         externalIds: List<ExternalIdView>,
     ): PartnerEventItem {
-        val visible = translations.filter { it.origin.visible }
+        val visible = translations.filter { it.origin in EventTranslationOrigin.REVIEWED }
         val picked = order.firstNotNullOfOrNull { locale -> visible.find { it.locale == locale } }
         return PartnerEventItem(
             globalId = master.globalId,

@@ -14,4 +14,5 @@ enum class NotificationType {
     ADMIN_PAYMENT_COMPLETED,
     ADMIN_PAYMENT_ISSUE,
     EVENT_INTEREST_CHANGED,
+    LUCKY_DRAW_WON,
 }

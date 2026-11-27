@@ -86,6 +86,36 @@ class EventScheduleTest {
         assertEquals(listOf(true, true, false), listOf(christmas, substitute, weekday))
     }
 
+    @DisplayName("공휴일 달력은 2027년 월력요항의 음력 공휴일·노동절·제헌절과 그 대체공휴일을 알고, 연휴 다음 평일은 공휴일이 아니다")
+    @Test
+    fun knowsLunarAndNewHolidaysOf2027() {
+        // given
+        val holidays =
+            listOf(
+                "2027-02-06",
+                "2027-02-07",
+                "2027-02-08",
+                "2027-02-09",
+                "2027-05-01",
+                "2027-05-03",
+                "2027-05-13",
+                "2027-07-17",
+                "2027-07-19",
+                "2027-09-14",
+                "2027-09-15",
+                "2027-09-16",
+            ).map(LocalDate::parse)
+        val weekdays = listOf("2027-02-10", "2027-05-14", "2027-09-17").map(LocalDate::parse)
+
+        // when
+        val missing = holidays.filterNot(KoreanPublicHolidays::contains)
+        val wrong = weekdays.filter(KoreanPublicHolidays::contains)
+
+        // then
+        assertEquals(emptyList<LocalDate>(), missing)
+        assertEquals(emptyList<LocalDate>(), wrong)
+    }
+
     @DisplayName("형식이 전혀 다른 문장은 회차 없이 통째로 건너뛴다")
     @Test
     fun skipsUnknownSentence() {

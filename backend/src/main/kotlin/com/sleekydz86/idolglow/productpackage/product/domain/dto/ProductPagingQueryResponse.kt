@@ -3,6 +3,7 @@ package com.sleekydz86.idolglow.productpackage.product.domain.dto
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
+import java.time.LocalDate
 
 @Schema(description = "상품 목록 조회 응답 DTO")
 data class ProductPagingQueryResponse(
@@ -36,10 +37,13 @@ data class ProductPagingQueryResponse(
     val thumbnailUrl: String? = null,
     @field:Schema(description = "저장된 Tour 관광지 연계 선택 개수")
     val tourAttractionPickCount: Int = 0,
+    @field:Schema(description = "이벤트(예약 판매) 정보. 이벤트를 끈 상품은 null")
+    val event: ProductEventSaleResponse? = null,
 ) {
     companion object {
         fun from(
             product: Product,
+            today: LocalDate,
             tagNames: List<String> = product.productTags.map { it.tagName }.distinct(),
             location: ProductLocationSummaryResponse? = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },
             distanceMeters: Double? = null,
@@ -65,6 +69,7 @@ data class ProductPagingQueryResponse(
                 reviewCount = reviewCount,
                 thumbnailUrl = thumbnailUrl,
                 tourAttractionPickCount = tourAttractionPickCount,
+                event = ProductEventSaleResponse.of(product, today),
             )
     }
 }

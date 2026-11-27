@@ -44,10 +44,13 @@ data class ProductSpecificResponse(
     val imageUrls: List<String> = emptyList(),
     @field:Schema(description = "저장된 Tour 관광지 다중 선택")
     val tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
+    @field:Schema(description = "이벤트(예약 판매) 정보. 이벤트를 끈 상품은 null")
+    val event: ProductEventSaleResponse? = null,
 ) {
     companion object {
         fun from(
             product: Product,
+            today: LocalDate,
             tourAttractionPicks: List<TourAttractionPickPayload> = emptyList(),
         ): ProductSpecificResponse {
             val slotStartDate: LocalDate? = product.reservationSlots.minOfOrNull { it.reservationDate }
@@ -72,6 +75,7 @@ data class ProductSpecificResponse(
                 totalPrice = product.totalPrice,
                 location = product.productLocation?.let { ProductLocationSummaryResponse.from(it) },
                 tourAttractionPicks = tourAttractionPicks,
+                event = ProductEventSaleResponse.of(product, today),
             )
         }
     }

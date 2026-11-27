@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 
 interface UserJpaRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): User?
@@ -49,4 +50,13 @@ interface UserJpaRepository : JpaRepository<User, Long> {
     fun countByRole(role: UserRole): Long
 
     fun countByAccountStatus(accountStatus: UserAccountStatus): Long
+
+    @Query("SELECT count(u) FROM User u WHERE u.joinedAt >= :from AND u.joinedAt < :toExclusive")
+    fun countJoinedBetween(
+        @Param("from") from: LocalDateTime,
+        @Param("toExclusive") toExclusive: LocalDateTime,
+    ): Long
+
+    @Query("SELECT u FROM User u WHERE u.joinedAt IS NOT NULL ORDER BY u.joinedAt DESC, u.id DESC")
+    fun findRecentJoined(pageable: Pageable): List<User>
 }

@@ -5,6 +5,7 @@ import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.option.domain.Option
 import com.sleekydz86.idolglow.productpackage.option.domain.OptionRepository
 import com.sleekydz86.idolglow.productpackage.product.application.dto.CreateProductCommand
+import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductEventSaleInput
 import com.sleekydz86.idolglow.productpackage.product.application.event.ProductCreateEvent
 import com.sleekydz86.idolglow.productpackage.product.application.event.ProductLocationCommandService
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
@@ -48,6 +49,7 @@ class ProductCommandService(
             )
         product.tourAttractionPicksJson =
             TourAttractionPicksJsonCodec.encode(command.tourAttractionPicks, objectMapper)
+        applyEventSale(product, command.event)
         val saved = productCommandRepository.save(product)
 
         eventPublisher.publishEvent(
@@ -73,6 +75,7 @@ class ProductCommandService(
             description = command.description,
             basePrice = command.basePrice,
         )
+        applyEventSale(product, command.event)
         product.replaceOptions(options)
         product.replaceTags(command.tagNames)
         product.tourAttractionPicksJson =
@@ -97,6 +100,23 @@ class ProductCommandService(
         imageEventPublisher.publishDelete(
             aggregateType = ImageAggregateType.PRODUCT,
             aggregateId = productId,
+        )
+    }
+
+    private fun applyEventSale(
+        product: Product,
+        event: ProductEventSaleInput?,
+    ) {
+        if (event == null) {
+            product.clearEventSale()
+            return
+        }
+        product.changeEventSale(
+            startsOn = event.startsOn,
+            endsOn = event.endsOn,
+            priceType = event.priceType,
+            discountRate = event.discountRate,
+            eventBasePrice = event.eventBasePrice,
         )
     }
 

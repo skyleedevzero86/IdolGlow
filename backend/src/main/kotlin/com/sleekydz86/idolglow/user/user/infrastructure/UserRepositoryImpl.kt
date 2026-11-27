@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 class UserRepositoryImpl(
@@ -56,6 +57,13 @@ class UserRepositoryImpl(
     override fun countByRole(role: UserRole): Long = userJpaRepository.countByRole(role)
 
     override fun countByAccountStatus(status: UserAccountStatus): Long = userJpaRepository.countByAccountStatus(status)
+
+    override fun countJoinedBetween(
+        from: LocalDateTime,
+        toExclusive: LocalDateTime,
+    ): Long = userJpaRepository.countJoinedBetween(from, toExclusive)
+
+    override fun findRecentJoined(limit: Int): List<User> = userJpaRepository.findRecentJoined(PageRequest.of(0, limit))
 
     override fun save(user: User): User = userJpaRepository.save(user)
 

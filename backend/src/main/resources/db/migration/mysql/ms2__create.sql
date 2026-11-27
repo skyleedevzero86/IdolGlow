@@ -1240,6 +1240,36 @@ CREATE TABLE IF NOT EXISTS event_translation (
         foreign key (global_id) references event_master (global_id)
 ) comment='공연 언어별 제목·소개';
 
+-- =============================================================================
+-- 공연 AI 제목 번역 실패 기록
+-- -----
+-- 목적
+-- - AI 제목 번역이 검사에 걸리거나 응답이 없던 공연을 언어별로 남긴다
+-- - 다음 실행에서 실패한 공연을 처음 시도하는 공연 뒤로 보낸다
+-- 대상
+-- - 마이에스큐엘 / event_translation_attempt
+-- 주의
+-- - global_id, locale 은 언어당 한 행
+-- - 같은 공연·언어에 번역 행이 저장되면 출처와 상관없이 이 행을 지운다
+-- 연관
+-- - EventMachineTitleService, EventTranslationTxService
+-- =============================================================================
+
+-- 공연 AI 제목 번역 실패 기록. 실패할 때마다 횟수를 늘리고 마지막 실패를 덮어쓴다.
+CREATE TABLE IF NOT EXISTS event_translation_attempt (
+    id bigint auto_increment primary key,
+    global_id varchar(36) not null comment '글로벌 공연 ID',
+    locale varchar(8) not null comment '언어 코드. en, ja, zh',
+    fail_count int not null comment '연속 실패 횟수. 번역 행이 저장되면 기록째 지운다',
+    last_reason varchar(200) not null comment '마지막 실패 이유. 검사 코드를 쉼표로 이은 값, 응답이 없으면 NO_RESPONSE. 200자까지',
+    last_failed_at timestamp(6) not null comment '마지막 실패 시각. 실패한 공연끼리 오래된 순서로 다시 시도한다',
+    created_at timestamp not null default current_timestamp comment '생성 시각',
+    updated_at timestamp not null default current_timestamp on update current_timestamp comment '마지막으로 바꾼 시각',
+    constraint uk_event_translation_attempt_global_locale unique (global_id, locale),
+    constraint fk_event_translation_attempt_master
+        foreign key (global_id) references event_master (global_id)
+) comment='공연 AI 제목 번역 실패 기록';
+
 -- 운영 변경 한 건. 적용 시점에 이전 상태를 남기고 되돌리기에서 복구한다.
 CREATE TABLE IF NOT EXISTS ops_change_request (
     id bigint auto_increment primary key,
@@ -1260,14 +1290,14 @@ CREATE TABLE IF NOT EXISTS ops_change_request (
 -- GLOW 지역사회 게시판, 콘텐츠 댓글, 최근 본 콘텐츠
 -- -----
 -- 목적
--- - 회원 게시글(토크, 질문, 나의 여행 계획)과 좋아요, 신고, 블라인드
+-- - 회원 게시글인 토크, 질문, 나의 여행 계획과 좋아요, 신고, 블라인드
 -- - 모든 콘텐츠 화면이 함께 쓰는 댓글과 5단계까지의 답글
 -- - 회원별 최근 본 콘텐츠
 -- 대상
 -- - 마이에스큐엘 / glow_community_posts, glow_community_likes, glow_community_reports, content_comments, user_content_views
 -- 주의
 -- - 게시글과 댓글은 deleted_at 으로만 지운다
--- - 공지사항(NOTICE)과 이벤트(EVENT)는 댓글과 최근 본 콘텐츠 대상이 아니다
+-- - 공지사항 NOTICE 와 이벤트 EVENT 는 댓글과 최근 본 콘텐츠 대상이 아니다
 -- 연관
 -- - GlowCommunityPostCommandService, ContentCommentService, ContentViewService
 -- =============================================================================
@@ -1398,7 +1428,7 @@ CREATE TABLE IF NOT EXISTS content_likes (
 -- 콘텐츠 번역
 -- -----
 -- 목적
--- - 공지·이벤트·상품·기사·지역사회 게시글·댓글을 화면 언어(en, ja, zh)로 번역해 보관한다
+-- - 공지·이벤트·상품·기사·지역사회 게시글·댓글을 화면 언어 en, ja, zh 로 번역해 보관한다
 -- - AI 번역은 기계 검사와 검수를 거친 것만 화면에 보인다
 -- 대상
 -- - 마이에스큐엘 / content_translation, translation_glossary_term, translation_report
@@ -1437,7 +1467,7 @@ CREATE TABLE IF NOT EXISTS content_translation (
     INDEX idx_content_translation_due (status, next_attempt_at)
 ) COMMENT='콘텐츠 언어별 번역. 검사와 검수를 거친 것만 화면에 보인다';
 
--- 번역 용어집. 고정 번역어(FIXED)와 번역 금지어(KEEP).
+-- 번역 용어집. 고정 번역어 FIXED 와 번역 금지어 KEEP.
 CREATE TABLE IF NOT EXISTS translation_glossary_term (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     source_term VARCHAR(100) NOT NULL COMMENT '원문 용어',
@@ -1504,11 +1534,11 @@ CREATE TABLE IF NOT EXISTS partner_call_log (
 ) comment='파트너 호출 기록';
 
 -- =============================================================================
--- 공연 메타 변경 이벤트 공급 (Outbox → Kafka → 소비자)
+-- 공연 메타 변경 이벤트 공급 - Outbox → Kafka → 소비자
 -- -----
 -- 목적
 -- - 공연 메타가 바뀌면 같은 트랜잭션에서 outbox 행을 남기고, 중계가 Kafka 토픽 event-meta.changed 로 보낸다
--- - 소비자: 검색·파트너용 읽기 모델(event_meta_projection), 관심 공연 알림(event_interest)
+-- - 소비자: 검색·파트너용 읽기 모델 event_meta_projection, 관심 공연 알림 event_interest
 -- 대상
 -- - 마이에스큐엘 / event_outbox, consumed_event, event_meta_projection, event_interest, event_meta_dead_letter
 -- 주의
@@ -1636,3 +1666,141 @@ CREATE TABLE IF NOT EXISTS event_session (
     constraint fk_event_session_source_ref foreign key (source_ref_id) references event_source_ref (id),
     constraint ck_event_session_status check (status in ('SCHEDULED', 'CANCELLED'))
 ) comment='대표 공연 아래 날짜와 시각 단위 회차';
+
+-- =============================================================================
+-- 사이트 방문 기록: 방문자와 하루 방문
+-- -----
+-- 목적
+-- - 마이페이지 대시보드에서 오늘 방문자, 신규 방문자, 최근 7일 추이, 회원의 방문한 날 수를 센다
+-- - 로그인하지 않은 방문자도 서버가 준 무작위 식별값 쿠키 ig_vid 로 하루 한 번만 센다
+-- 대상
+-- - 마이에스큐엘 / site_visitors, site_daily_visits
+-- 주의
+-- - 같은 방문자의 같은 서울 날짜는 한 줄만 있다
+-- - IP 는 그날 첫 요청 값만 남기고 90일 뒤 줄과 함께 지운다
+-- - 365일 동안 오지 않은 방문자는 지운다
+-- 연관
+-- - SiteVisitor, SiteDailyVisit, SiteVisitService, SiteVisitTxService, SiteVisitQueryService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS site_visitors (
+    visitor_id varchar(36) primary key comment '방문자 식별값. 쿠키 ig_vid 에 담은 소문자 UUID 36자. 사람을 알아보는 정보와 이어지지 않는다',
+    first_visit_date date not null comment '처음 방문한 서울 날짜. 바꾸지 않는다. 신규 방문자 판단에 쓴다',
+    last_visit_date date not null comment '마지막으로 방문한 서울 날짜. 365일 지나면 이 줄을 지운다',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    index idx_site_visitors_first_visit (first_visit_date),
+    index idx_site_visitors_last_visit (last_visit_date)
+) comment='사이트 방문자. 서버가 준 무작위 식별값 하나가 한 줄이다';
+
+CREATE TABLE IF NOT EXISTS site_daily_visits (
+    id bigint auto_increment primary key,
+    visitor_id varchar(36) not null comment '방문자 식별값',
+    visit_date date not null comment '방문한 서울 날짜',
+    user_id bigint null comment '그날 로그인 상태로 들어온 회원 번호. 처음 채운 값은 바꾸지 않는다. 비로그인 방문이면 비어 있다',
+    ip_address varchar(45) null comment '그날 처음 들어온 요청의 IP. 믿는 프록시가 넘긴 값만 따른다. IPv6 까지 45자',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_site_daily_visits_visitor_date unique (visitor_id, visit_date),
+    index idx_site_daily_visits_date (visit_date),
+    index idx_site_daily_visits_user_date (user_id, visit_date)
+) comment='하루 방문. 방문자 하나의 서울 날짜 하루가 한 줄이다. 90일 지나면 지운다';
+
+-- =============================================================================
+-- 서버 점검 기록: 5분마다 남기는 서버 상태
+-- -----
+-- 목적
+-- - 마이페이지 대시보드의 응답시간 추이, 가용성, 성공률을 보여 준다
+-- 대상
+-- - 마이에스큐엘 / server_metric_snapshots
+-- 주의
+-- - 여러 서버 가운데 한 대만 5분마다 한 줄을 남긴다
+-- - 7일이 지난 줄은 지운다
+-- - HTTP 응답 수는 그 서버가 직전 점검 뒤 받은 응답 수다
+-- 연관
+-- - ServerMetricSnapshot, DashboardScheduler, ServerMetricRecorder, ServerMetricQueryService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS server_metric_snapshots (
+    id bigint auto_increment primary key,
+    measured_at datetime(6) not null comment '점검한 시각',
+    overall_status varchar(20) not null comment '전체 상태. UP, DEGRADED, DOWN',
+    db_status varchar(20) not null comment '데이터베이스 상태. UP, DOWN',
+    db_response_ms bigint null comment '데이터베이스 연결 확인에 걸린 밀리초',
+    minio_status varchar(20) not null comment 'MinIO 상태. UP, DOWN, NOT_CONFIGURED',
+    minio_response_ms bigint null comment 'MinIO 버킷 확인에 걸린 밀리초. 설정이 없으면 비어 있다',
+    http_request_count bigint not null default 0 comment '직전 점검 뒤 이 서버가 보낸 HTTP 응답 수',
+    http_error_count bigint not null default 0 comment '그 가운데 상태 코드 500 이상 응답 수',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    index idx_server_metric_snapshots_measured (measured_at)
+) comment='5분마다 남기는 서버 점검 기록. 7일 지나면 지운다';
+
+-- =============================================================================
+-- 목적
+-- - 예약 판매 화면의 응모 행사를 저장한다
+-- 대상
+-- - 마이에스큐엘 / lucky_draws, lucky_draw_entries, lucky_draw_tickets, lucky_draw_winners
+-- 주의
+-- - 시각은 Asia/Seoul 값으로 저장한다
+-- - 응모는 같은 추첨, 같은 회원, 같은 날에 한 줄만 남는다
+-- - 응모권과 당첨자는 추첨할 때 한 번만 만든다
+-- 연관
+-- - LuckyDraw, LuckyDrawEntry, LuckyDrawTicket, LuckyDrawWinner, LuckyDrawRunTxService
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS lucky_draws (
+    id bigint auto_increment primary key,
+    title varchar(100) not null comment '행사 제목. 1~100자',
+    prize_name varchar(100) not null comment '경품 이름. 1~100자',
+    prize_description varchar(1000) not null comment '경품 설명. 1~1000자',
+    winner_count int not null comment '당첨자 수. 1~10',
+    entry_starts_at datetime(6) not null comment '응모 시작 시각 Asia/Seoul, 이 시각을 포함한다',
+    entry_ends_at datetime(6) not null comment '응모 종료 시각 Asia/Seoul, 이 시각은 포함하지 않는다',
+    draw_at datetime(6) not null comment '추첨 시각 Asia/Seoul. 응모 종료와 같거나 뒤',
+    draw_seed bigint null comment '추첨에 쓴 난수 씨앗. 같은 씨앗과 응모권으로 결과를 다시 계산할 수 있다',
+    drawn_at datetime(6) null comment '추첨을 마친 시각. 비어 있으면 아직 추첨 전',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint chk_lucky_draws_shape check (winner_count between 1 and 10
+        and entry_starts_at < entry_ends_at
+        and entry_ends_at <= draw_at
+        and ((draw_seed is null and drawn_at is null) or (draw_seed is not null and drawn_at is not null))),
+    index idx_lucky_draws_pending (drawn_at, draw_at),
+    index idx_lucky_draws_period (entry_starts_at, entry_ends_at)
+) comment='예약 판매 화면의 응모 행사. 정한 시각에 서버가 자동으로 추첨한다';
+
+CREATE TABLE IF NOT EXISTS lucky_draw_entries (
+    id bigint auto_increment primary key,
+    lucky_draw_id bigint not null comment 'lucky_draws.id',
+    user_id bigint not null comment '응모한 회원 users.id',
+    entry_date date not null comment '응모한 날짜 Asia/Seoul',
+    entered_at datetime(6) not null comment '응모한 시각 Asia/Seoul',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_lucky_draw_entry_daily unique (lucky_draw_id, user_id, entry_date),
+    constraint fk_lucky_draw_entries_draw foreign key (lucky_draw_id) references lucky_draws (id)
+) comment='회원의 하루 한 번 응모 기록';
+
+CREATE TABLE IF NOT EXISTS lucky_draw_tickets (
+    id bigint auto_increment primary key,
+    lucky_draw_id bigint not null comment 'lucky_draws.id',
+    user_id bigint not null comment '회원 users.id',
+    entry_count int not null comment '응모 수',
+    purchase_count int not null comment '응모 기간에 결제를 마친 이벤트 상품 예약 수',
+    tickets bigint not null comment '응모권. 응모 수 + 가산 결제 수 × 10',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_lucky_draw_ticket unique (lucky_draw_id, user_id),
+    constraint chk_lucky_draw_tickets_non_negative check (entry_count >= 0 and purchase_count >= 0 and tickets >= 0),
+    constraint fk_lucky_draw_tickets_draw foreign key (lucky_draw_id) references lucky_draws (id)
+) comment='추첨 순간의 회원별 응모권. 결과를 다시 계산할 때 쓴다';
+
+CREATE TABLE IF NOT EXISTS lucky_draw_winners (
+    id bigint auto_increment primary key,
+    lucky_draw_id bigint not null comment 'lucky_draws.id',
+    user_id bigint not null comment '당첨 회원 users.id',
+    winner_order int not null comment '뽑힌 순서. 1부터',
+    created_at timestamp(6) not null default current_timestamp(6) comment '처음 적은 시각',
+    updated_at timestamp(6) not null default current_timestamp(6) on update current_timestamp(6) comment '마지막으로 바뀐 시각',
+    constraint uk_lucky_draw_winner unique (lucky_draw_id, user_id),
+    constraint uk_lucky_draw_winner_order unique (lucky_draw_id, winner_order),
+    constraint fk_lucky_draw_winners_draw foreign key (lucky_draw_id) references lucky_draws (id)
+) comment='추첨 당첨자';

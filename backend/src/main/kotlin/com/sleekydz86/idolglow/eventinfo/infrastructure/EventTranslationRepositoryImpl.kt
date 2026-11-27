@@ -1,8 +1,11 @@
 package com.sleekydz86.idolglow.eventinfo.infrastructure
 
 import com.sleekydz86.idolglow.eventinfo.application.port.out.EventTranslationPort
+import com.sleekydz86.idolglow.eventinfo.domain.EventTitleTarget
 import com.sleekydz86.idolglow.eventinfo.domain.EventTranslation
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 
 @Repository
 class EventTranslationRepositoryImpl(
@@ -21,4 +24,20 @@ class EventTranslationRepositoryImpl(
 
     override fun findByGlobalIdIn(globalIds: Collection<String>): List<EventTranslation> =
         eventTranslationJpaRepository.findByGlobalIdIn(globalIds)
+
+    override fun findUntranslatedFestivals(
+        source: String,
+        locale: String,
+        from: LocalDate,
+        to: LocalDate,
+        limit: Int,
+    ): List<EventTitleTarget> =
+        eventTranslationJpaRepository
+            .findUntranslatedMasters(
+                source = source,
+                locale = locale,
+                from = from,
+                to = to,
+                pageable = PageRequest.of(0, limit),
+            )
 }

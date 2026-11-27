@@ -1,15 +1,15 @@
 package com.sleekydz86.idolglow.eventinfo.domain
 
-enum class EventTranslationOrigin(
-    val visible: Boolean,
-) {
-    PROVIDER(true),
-    MANUAL(true),
-    MACHINE(false),
+enum class EventTranslationOrigin {
+    MACHINE,
+    PROVIDER,
+    MANUAL,
     ;
 
+    fun canReplace(existing: EventTranslationOrigin): Boolean =
+        ordinal > existing.ordinal || (this == existing && this != MACHINE)
+
     companion object {
-        val VISIBLE: List<EventTranslationOrigin> = entries.filter { it.visible }
-        val HIDDEN: List<EventTranslationOrigin> = entries.filterNot { it.visible }
+        val REVIEWED: List<EventTranslationOrigin> = listOf(PROVIDER, MANUAL)
     }
 }

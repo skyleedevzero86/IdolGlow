@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.recommendation.application
 
-import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
+import com.sleekydz86.idolglow.productpackage.product.application.ProductPagingResponseAssembler
+import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.dto.ProductPagingQueryResponse
 import com.sleekydz86.idolglow.productpackage.recommendation.application.dto.ProductAdminRecommendationUpdateResponse
 import com.sleekydz86.idolglow.productpackage.recommendation.application.dto.ProductRecommendationScoreUpdateResponse
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 class ProductRecommendationService(
     private val latestKoreaRepository: ProductLatestKoreaRecommendationJpaRepository,
     private val productRepository: RecommendationProductJpaRepository,
-    private val aggregateImageQueryService: AggregateImageQueryService,
+    private val productPagingResponseAssembler: ProductPagingResponseAssembler,
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
@@ -144,20 +145,6 @@ class ProductRecommendationService(
         }
     }
 
-    private fun toPagingResponses(
-        products: List<com.sleekydz86.idolglow.productpackage.product.domain.Product>,
-    ): List<ProductPagingQueryResponse> {
-        if (products.isEmpty()) return emptyList()
-        val thumbnailById = aggregateImageQueryService.firstProductImageUrlByProductIds(products.map { it.id })
-        return products.map { product ->
-            ProductPagingQueryResponse.from(
-                product = product,
-                thumbnailUrl = thumbnailById[product.id],
-                tourAttractionPickCount =
-                    runCatching {
-                        if (product.tourAttractionPicksJson.isNullOrBlank()) 0 else 1
-                    }.getOrDefault(0),
-            )
-        }
-    }
+    private fun toPagingResponses(products: List<Product>): List<ProductPagingQueryResponse> =
+        productPagingResponseAssembler.assemble(products)
 }

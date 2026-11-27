@@ -26,4 +26,6 @@ interface GlowCommunityReactionPort {
     fun saveReport(report: GlowCommunityReport): GlowCommunityReport
 
     fun findReportsByPostIds(postIds: Collection<Long>): List<GlowCommunityReport>
+
+    fun countReportsByUser(userId: Long): Long
 }

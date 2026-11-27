@@ -35,4 +35,6 @@ class GlowCommunityReactionAdapter(
 
     override fun findReportsByPostIds(postIds: Collection<Long>): List<GlowCommunityReport> =
         if (postIds.isEmpty()) emptyList() else glowCommunityReportJpaRepository.findAllByPostIdIn(postIds)
+
+    override fun countReportsByUser(userId: Long): Long = glowCommunityReportJpaRepository.countByUserId(userId)
 }

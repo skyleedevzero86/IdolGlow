@@ -488,7 +488,7 @@ class CultureInfoApiClient(
         private const val HTTP_TOO_MANY_REQUESTS = 429
         private val CALENDAR_DAY_CACHE_TTL: Duration = Duration.ofMinutes(10)
         private const val CALENDAR_DAY_CACHE_MAX_ENTRIES = 200
-        private val MIN_REQUEST_INTERVAL: Duration = Duration.ofMillis(70)
+        private val MIN_REQUEST_INTERVAL: Duration = Duration.ofMillis(150)
         private const val MAX_SERVICE_KEY_DECODE_PASSES = 3
         private val PERCENT_ENCODED_REGEX = Regex("%[0-9A-Fa-f]{2}")
         private val SERVICE_TYPES = listOf("A", "B", "C")

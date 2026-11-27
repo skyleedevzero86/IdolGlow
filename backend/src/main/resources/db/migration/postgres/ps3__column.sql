@@ -975,7 +975,7 @@ COMMENT ON COLUMN subscription_dispatch_histories.content_type IS '콘텐츠 유
 
 COMMENT ON COLUMN admin_audit_logs.target_type IS '대상 도메인 유형. 예: RESERVATION, IDOLGLOW_ISSUE';
 
--- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+-- 공연 매칭 후보 CANDIDATE 는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
 UPDATE event_source_ref
 SET global_id = NULL
 WHERE match_status = 'CANDIDATE'
@@ -984,13 +984,13 @@ WHERE match_status = 'CANDIDATE'
 -- 콘텐츠 번역 처리 대기열 조회
 CREATE INDEX IF NOT EXISTS idx_content_translation_due ON content_translation (status, next_attempt_at);
 
--- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+-- 파트너 변경분 피드. 수정 시각, 글로벌 ID 순서로 커서를 넘긴다
 CREATE INDEX IF NOT EXISTS idx_event_master_updated_global ON event_master (updated_at, global_id);
 
 -- 파트너별 최근 호출 조회
 CREATE INDEX IF NOT EXISTS idx_partner_call_log_partner_called ON partner_call_log (partner_id, called_at);
 
--- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 공급처가 &lt; 같은 HTML 기호로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
 -- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
 UPDATE event_master
 SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
@@ -1096,3 +1096,206 @@ ALTER TABLE event_source_ref ADD COLUMN IF NOT EXISTS session_horizon date;
 
 -- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
 CREATE INDEX IF NOT EXISTS idx_event_session_starts ON event_session (starts_at);
+
+-- =============================================================================
+-- 상품 집계 칸 - 찜 수·공개 리뷰 수·공개 별점 합계
+-- -----
+-- 목적
+-- - 인기순·별점순·리뷰 많은 순 정렬이 상품마다 찜·리뷰를 다시 세지 않고 상품 표의 숫자만 읽게 한다
+-- 대상
+-- - 포스트그레스 / products 표
+-- 주의
+-- - 숫자는 찜·리뷰를 바꾸는 트랜잭션 안에서 서버가 칸 = 칸 + 변화량 으로만 바꾼다
+-- - 공개 리뷰는 hidden_at 이 비어 있는 리뷰다. 숨긴 리뷰는 수와 합계에 넣지 않는다
+-- - 기본값이 있는 칸 추가는 기존 행을 다시 쓰지 않지만, 아래 채우기 UPDATE 는 상품 행을 모두 다시 쓴다
+-- - 이미 만들어진 DB 에는 이 파일이 다시 돌지 않으므로 같은 문장을 따로 실행해야 한다
+-- 연관
+-- - Product, ProductAggregateCounter, ProductSearchQueryRepository, docs/spec/product-aggregate-sort.md
+-- =============================================================================
+ALTER TABLE products ADD COLUMN IF NOT EXISTS wish_count BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS review_count BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS rating_sum BIGINT NOT NULL DEFAULT 0;
+
+-- 집계 숫자가 0 밑으로 내려가면 그 트랜잭션을 실패시켜 어긋남을 드러낸다
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_products_aggregate_non_negative') THEN
+        ALTER TABLE products
+            ADD CONSTRAINT chk_products_aggregate_non_negative
+                CHECK (wish_count >= 0 AND review_count >= 0 AND rating_sum >= 0);
+    END IF;
+END $$;
+
+-- 기존 찜·공개 리뷰로 집계 숫자를 채운다
+-- 상품 집계 채우기 시작
+UPDATE products p
+SET wish_count   = (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id),
+    review_count = (SELECT COUNT(*) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL),
+    rating_sum   = COALESCE((SELECT SUM(r.rating) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL), 0);
+-- 상품 집계 채우기 끝
+
+-- 인기순 정렬을 찜 수, 평균 별점, 공개 리뷰 수, ID 순서로 정렬 없이 앞에서부터 읽는다. 평균 별점 식은 정렬 SQL 과 글자까지 같아야 쓰인다
+CREATE INDEX IF NOT EXISTS idx_products_popularity
+    ON products (
+        wish_count DESC,
+        (CASE WHEN review_count = 0 THEN 0 ELSE CAST(rating_sum AS DOUBLE PRECISION) / review_count END) DESC,
+        review_count DESC,
+        id DESC
+    );
+
+-- 회원 가입 시각. 이 칸을 더하기 전에 가입한 회원은 비워 둔다
+ALTER TABLE users ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP(6) NULL;
+
+-- 최근 가입 회원과 기간별 신규 가입 수를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_users_joined_at ON users (joined_at);
+
+-- 신규 방문자 수를 날짜로 셀 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_visitors_first_visit ON site_visitors (first_visit_date);
+
+-- 오래 오지 않은 방문자를 지울 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_visitors_last_visit ON site_visitors (last_visit_date);
+
+-- 날짜별 방문자 수를 세고 오래된 줄을 지울 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_daily_visits_date ON site_daily_visits (visit_date);
+
+-- 회원의 방문한 날 수를 셀 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_site_daily_visits_user_date ON site_daily_visits (user_id, visit_date);
+
+-- 기간별 서버 점검 기록을 찾고 오래된 줄을 지울 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_server_metric_snapshots_measured ON server_metric_snapshots (measured_at);
+
+-- ----------------------------------------------------------------------------
+-- [A3] products — 이벤트 예약 판매
+-- ----------------------------------------------------------------------------
+
+-- 이벤트를 끈 상품은 다섯 칸이 모두 비어 있다
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_starts_on DATE;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_ends_on DATE;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_price_type VARCHAR(20);
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_discount_rate INT;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS event_base_price NUMERIC(19, 2);
+
+-- 다섯 칸이 모두 비었거나, 기간과 방식이 있고 방식에 맞는 값 하나만 있어야 한다
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_products_event_sale_shape') THEN
+        ALTER TABLE products
+            ADD CONSTRAINT chk_products_event_sale_shape
+                CHECK (
+                    (event_starts_on IS NULL AND event_ends_on IS NULL AND event_price_type IS NULL
+                        AND event_discount_rate IS NULL AND event_base_price IS NULL)
+                    OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL AND event_ends_on >= event_starts_on
+                        AND ((event_price_type = 'DISCOUNT_RATE' AND event_discount_rate BETWEEN 1 AND 99
+                                AND event_base_price IS NULL)
+                            OR (event_price_type = 'FIXED_BASE_PRICE' AND event_base_price >= 0
+                                AND event_discount_rate IS NULL)))
+                );
+    END IF;
+END $$;
+
+-- 진행 중 이벤트를 종료일 순으로 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_products_event_period ON products (event_ends_on, event_starts_on);
+
+-- ----------------------------------------------------------------------------
+-- [L1] 응모 행사 제약과 인덱스
+-- ----------------------------------------------------------------------------
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_lucky_draws_shape') THEN
+        ALTER TABLE lucky_draws
+            ADD CONSTRAINT chk_lucky_draws_shape
+                CHECK (winner_count BETWEEN 1 AND 10
+                    AND entry_starts_at < entry_ends_at
+                    AND entry_ends_at <= draw_at
+                    AND ((draw_seed IS NULL AND drawn_at IS NULL) OR (draw_seed IS NOT NULL AND drawn_at IS NOT NULL)));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_entry_daily') THEN
+        ALTER TABLE lucky_draw_entries
+            ADD CONSTRAINT uk_lucky_draw_entry_daily UNIQUE (lucky_draw_id, user_id, entry_date);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lucky_draw_entries_draw') THEN
+        ALTER TABLE lucky_draw_entries
+            ADD CONSTRAINT fk_lucky_draw_entries_draw FOREIGN KEY (lucky_draw_id) REFERENCES lucky_draws (id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_ticket') THEN
+        ALTER TABLE lucky_draw_tickets
+            ADD CONSTRAINT uk_lucky_draw_ticket UNIQUE (lucky_draw_id, user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_lucky_draw_tickets_non_negative') THEN
+        ALTER TABLE lucky_draw_tickets
+            ADD CONSTRAINT chk_lucky_draw_tickets_non_negative
+                CHECK (entry_count >= 0 AND purchase_count >= 0 AND tickets >= 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lucky_draw_tickets_draw') THEN
+        ALTER TABLE lucky_draw_tickets
+            ADD CONSTRAINT fk_lucky_draw_tickets_draw FOREIGN KEY (lucky_draw_id) REFERENCES lucky_draws (id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_winner') THEN
+        ALTER TABLE lucky_draw_winners
+            ADD CONSTRAINT uk_lucky_draw_winner UNIQUE (lucky_draw_id, user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_lucky_draw_winner_order') THEN
+        ALTER TABLE lucky_draw_winners
+            ADD CONSTRAINT uk_lucky_draw_winner_order UNIQUE (lucky_draw_id, winner_order);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lucky_draw_winners_draw') THEN
+        ALTER TABLE lucky_draw_winners
+            ADD CONSTRAINT fk_lucky_draw_winners_draw FOREIGN KEY (lucky_draw_id) REFERENCES lucky_draws (id);
+    END IF;
+END $$;
+
+-- 추첨할 행사를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_lucky_draws_pending ON lucky_draws (drawn_at, draw_at);
+
+-- 응모 기간으로 현재 행사를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_lucky_draws_period ON lucky_draws (entry_starts_at, entry_ends_at);
+
+-- 응모 당첨 알림 타입 추가
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CONSTRAINT IF EXISTS chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);

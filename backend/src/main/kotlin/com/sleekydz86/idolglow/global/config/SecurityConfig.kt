@@ -72,13 +72,11 @@ class SecurityConfig(
                 auth.requestMatchers(HttpMethod.GET, "/site-content/home").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/site-content/assets").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/search-keywords/popular").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/search-keywords", "/api/translations/lookup").permitAll()
+                auth.requestMatchers(HttpMethod.POST, *PUBLIC_POST).permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/api/grounded-search", "/api/grounded-search/answer").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tour-attractions").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/products/*/tourist-attractions").permitAll()
-                auth.requestMatchers(HttpMethod.GET, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
-                auth.requestMatchers(HttpMethod.POST, "/api/glow-alerts/**", "/glow-alerts/**", "/mypage/glow-alerts/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/profile-avatars/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, "/uploads/idolglow/**").permitAll()
                 auth.requestMatchers(HttpMethod.GET, *PUBLIC_GET).permitAll()
@@ -203,9 +201,11 @@ class SecurityConfig(
                 "/actuator/prometheus",
             )
 
+        private val LUCKY_DRAW_PUBLIC_GET = arrayOf("/lucky-draws/current")
+
         private val PUBLIC_GET =
             COMMUNITY_PUBLIC_GET + EVENT_INFO_PUBLIC_GET + IDOLGLOW_PUBLIC_GET + GLOW_FEED_PUBLIC_GET +
-                MONITORING_PUBLIC_GET
+                MONITORING_PUBLIC_GET + LUCKY_DRAW_PUBLIC_GET
 
         private val ADMIN_ONLY =
             arrayOf(
@@ -225,6 +225,14 @@ class SecurityConfig(
                 "/v3/api-docs/**",
                 "/v3/api-docs.yaml",
                 "/swagger-ui.html",
+            )
+
+        private val PUBLIC_POST =
+            arrayOf(
+                "/search-keywords",
+                "/api/translations/lookup",
+                "/visits",
+                "/auth/account/find-id",
             )
 
         private val PERMIT_LIST =

@@ -9,6 +9,7 @@ import com.sleekydz86.idolglow.eventinfo.domain.FestivalCommonDetail
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalEvent
 import com.sleekydz86.idolglow.eventinfo.domain.FestivalImage
 import com.sleekydz86.idolglow.eventinfo.domain.TourNearbyPlace
+import com.sleekydz86.idolglow.global.config.TourApiProperties
 import com.sleekydz86.idolglow.global.config.TourKorApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
@@ -25,6 +26,7 @@ class TourFestivalApiClient(
     private val webClient: WebClient,
     private val objectMapper: ObjectMapper,
     private val tourKorApiProperties: TourKorApiProperties,
+    private val tourApiProperties: TourApiProperties,
 ) : FestivalEventExternalQueryPort {
     private val log = LoggerFactory.getLogger(this::class.java)
     private val requestedServiceLocale = ThreadLocal<String>()
@@ -36,7 +38,7 @@ class TourFestivalApiClient(
         pageNo: Int,
         numOfRows: Int,
     ): List<FestivalEvent> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) {
             log.warn("한국관광공사(TourKor) API 서비스키가 비어 있습니다.")
             markFailedCall()
@@ -84,7 +86,7 @@ class TourFestivalApiClient(
     }
 
     override fun detailCommon(contentId: String): FestivalCommonDetail? {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return null
         return fetchList<DetailCommonItem>(
             endpoint = "detailCommon2",
@@ -102,7 +104,7 @@ class TourFestivalApiClient(
         contentId: String,
         imageYn: String,
     ): List<FestivalImage> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return emptyList()
         return fetchList<DetailImageItem>(
             endpoint = "detailImage2",
@@ -127,7 +129,7 @@ class TourFestivalApiClient(
         lclsSystm2: String?,
         lclsSystm3: String?,
     ): List<FestivalEvent> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return emptyList()
         return fetchList<FestivalItem>(
             endpoint = "searchKeyword2",
@@ -156,7 +158,7 @@ class TourFestivalApiClient(
         lclsSystm2: String?,
         lclsSystm3: String?,
     ): List<FestivalEvent> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return emptyList()
         return fetchList<FestivalItem>(
             endpoint = "areaBasedList2",
@@ -181,7 +183,7 @@ class TourFestivalApiClient(
         radiusMeters: Int,
         numOfRows: Int,
     ): List<TourNearbyPlace> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return emptyList()
         return fetchList<NearbyItem>(
             endpoint = "locationBasedList2",
@@ -202,7 +204,7 @@ class TourFestivalApiClient(
         lDongRegnCd: String?,
         lDongListYn: String,
     ): List<CodeEntry> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return emptyList()
         val parentRegnCd = lDongRegnCd?.trim()?.takeIf { it.isNotEmpty() }
         return fetchList<CodeItem>(
@@ -224,7 +226,7 @@ class TourFestivalApiClient(
         lclsSystm3: String?,
         lclsSystmListYn: String,
     ): List<CodeEntry> {
-        val encodedKey = resolveEncodedServiceKey(tourKorApiProperties.serviceKey)
+        val encodedKey = resolveEncodedServiceKey(serviceKeyForRequest())
         if (encodedKey.isEmpty()) return emptyList()
         return fetchList<CodeItem>(
             endpoint = "lclsSystmCode2",
@@ -359,7 +361,14 @@ class TourFestivalApiClient(
 
     companion object {
         private const val KOREAN_SERVICE = "KorService2"
+        private val LANGUAGE_KEY_LOCALES = setOf("ja", "zh")
         private val SERVICE_SUFFIX = Regex("/(?:Kor|Eng|Jpn|Chs|Cht)Service2$")
+    }
+
+    private fun serviceKeyForRequest(): String {
+        val usesLanguageKey = requestedServiceLocale.get() in LANGUAGE_KEY_LOCALES
+        val languageKey = tourApiProperties.serviceKey
+        return if (usesLanguageKey && languageKey.isNotBlank()) languageKey else tourKorApiProperties.serviceKey
     }
 
     private fun resolveEncodedServiceKey(rawServiceKey: String): String {

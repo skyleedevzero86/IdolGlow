@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.review.application
 
+import com.sleekydz86.idolglow.productpackage.product.domain.ProductAggregateCounter
 import com.sleekydz86.idolglow.review.domain.ProductReviewHelpfulVote
 import com.sleekydz86.idolglow.review.domain.ProductReviewReport
 import com.sleekydz86.idolglow.review.domain.ProductReviewRepository
@@ -16,6 +17,7 @@ class ProductReviewTrustCommandService(
     private val productReviewRepository: ProductReviewRepository,
     private val helpfulVoteJpaRepository: ProductReviewHelpfulVoteJpaRepository,
     private val reportJpaRepository: ProductReviewReportJpaRepository,
+    private val productAggregateCounter: ProductAggregateCounter,
 ) {
     fun toggleHelpful(
         productId: Long,
@@ -74,11 +76,13 @@ class ProductReviewTrustCommandService(
 
         val total = reportJpaRepository.countByReviewId(reviewId)
         if (total >= REPORTS_TO_AUTO_HIDE && !review.isHidden()) {
+            val before = review.contribution()
             review.hide(
                 LocalDateTime.now(ZoneOffset.UTC),
                 "신고 누적 자동 비공개",
             )
             productReviewRepository.save(review)
+            productAggregateCounter.applyReviewChange(productId, before, review.contribution())
         }
     }
 

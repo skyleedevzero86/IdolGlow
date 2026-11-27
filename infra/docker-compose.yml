@@ -151,6 +151,7 @@ services:
     environment:
       TZ: Asia/Seoul
       SERVER_PORT: 9090
+      SERVER_FORWARD_HEADERS_STRATEGY: native
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod,select}
       JASYPT_ENCRYPTOR_PASSWORD: "${JASYPT_ENCRYPTOR_PASSWORD:?infra/.env에 JASYPT_ENCRYPTOR_PASSWORD를 설정하세요}"
       DB_URL: jdbc:postgresql://postgres:5432/idolglow

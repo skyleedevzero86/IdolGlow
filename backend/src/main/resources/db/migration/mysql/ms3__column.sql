@@ -1293,13 +1293,13 @@ EXECUTE idolglow_stmt;
 
 DEALLOCATE PREPARE idolglow_stmt;
 
--- 공연 매칭 후보(CANDIDATE)는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
+-- 공연 매칭 후보 CANDIDATE 는 사람이 승인하기 전까지 대표 공연에 붙이지 않는다
 UPDATE event_source_ref
 SET global_id = NULL
 WHERE match_status = 'CANDIDATE'
   AND global_id IS NOT NULL;
 
--- 파트너 변경분 피드. (수정 시각, 글로벌 ID) 순서로 커서를 넘긴다
+-- 파트너 변경분 피드. 수정 시각, 글로벌 ID 순서로 커서를 넘긴다
 CREATE INDEX idx_event_master_updated_global
     ON event_master (updated_at, global_id);
 
@@ -1307,7 +1307,7 @@ CREATE INDEX idx_event_master_updated_global
 CREATE INDEX idx_partner_call_log_partner_called
     ON partner_call_log (partner_id, called_at);
 
--- 공급처가 HTML 기호(&lt; 등)로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
+-- 공급처가 &lt; 같은 HTML 기호로 보낸 제목·장소를 원래 글자로 바꾼다. 매칭용 제목은 다음 수집 때 다시 계산된다
 -- 대표 공연은 수정 시각도 올려 파트너 변경분 피드에 다시 나오게 한다
 UPDATE event_master
 SET title = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(title, '&lt;', '<'), '&gt;', '>'), '&quot;', '"'), '&#39;', ''''), '&apos;', ''''), '&middot;', '·'), '&nbsp;', ' '), '&ldquo;', '“'), '&rdquo;', '”'), '&lsquo;', '‘'), '&rsquo;', '’'), '&mdash;', '—'), '&ndash;', '–'), '&bull;', '•'), '&times;', '×'), '&sum;', '∑'), '&amp;', '&'),
@@ -1499,3 +1499,360 @@ DEALLOCATE PREPARE session_horizon_stmt;
 -- 대표 공연 아래 회차를 날짜 순서로 빨리 찾는다
 CREATE INDEX idx_event_session_starts
     ON event_session (starts_at);
+
+-- =============================================================================
+-- 상품 집계 칸 - 찜 수·공개 리뷰 수·공개 별점 합계
+-- -----
+-- 목적
+-- - 인기순·별점순·리뷰 많은 순 정렬이 상품마다 찜·리뷰를 다시 세지 않고 상품 표의 숫자만 읽게 한다
+-- 대상
+-- - MySQL / products 표
+-- 주의
+-- - 숫자는 찜·리뷰를 바꾸는 트랜잭션 안에서 서버가 칸 = 칸 + 변화량 으로만 바꾼다
+-- - 공개 리뷰는 hidden_at 이 비어 있는 리뷰다. 숨긴 리뷰는 수와 합계에 넣지 않는다
+-- - 아래 채우기 UPDATE 는 상품 행을 모두 다시 쓴다
+-- - 이미 만들어진 DB 에는 이 파일이 다시 돌지 않으므로 같은 문장을 따로 실행해야 한다
+-- 연관
+-- - Product, ProductAggregateCounter, ProductSearchQueryRepository, docs/spec/product-aggregate-sort.md
+-- =============================================================================
+SET @add_wish_count := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN wish_count BIGINT NOT NULL DEFAULT 0 COMMENT ''이 상품을 찜한 수. 찜 추가·취소·회원 탈퇴 때 서버가 함께 바꾼다. 0 이상''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'wish_count'
+);
+
+PREPARE wish_count_stmt FROM @add_wish_count;
+
+EXECUTE wish_count_stmt;
+
+DEALLOCATE PREPARE wish_count_stmt;
+
+SET @add_review_count := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN review_count BIGINT NOT NULL DEFAULT 0 COMMENT ''숨기지 않은 리뷰 수. 리뷰 작성·삭제·숨김·숨김 해제 때 서버가 함께 바꾼다. 0 이상''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'review_count'
+);
+
+PREPARE review_count_stmt FROM @add_review_count;
+
+EXECUTE review_count_stmt;
+
+DEALLOCATE PREPARE review_count_stmt;
+
+SET @add_rating_sum := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN rating_sum BIGINT NOT NULL DEFAULT 0 COMMENT ''숨기지 않은 리뷰 별점(1~5)의 합. 평균 별점은 rating_sum / review_count 로 계산한다. 0 이상''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'rating_sum'
+);
+
+PREPARE rating_sum_stmt FROM @add_rating_sum;
+
+EXECUTE rating_sum_stmt;
+
+DEALLOCATE PREPARE rating_sum_stmt;
+
+-- 집계 숫자가 0 밑으로 내려가면 그 트랜잭션을 실패시켜 어긋남을 드러낸다
+SET @add_aggregate_check := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD CONSTRAINT chk_products_aggregate_non_negative CHECK (wish_count >= 0 AND review_count >= 0 AND rating_sum >= 0)',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND constraint_name = 'chk_products_aggregate_non_negative'
+);
+
+PREPARE aggregate_check_stmt FROM @add_aggregate_check;
+
+EXECUTE aggregate_check_stmt;
+
+DEALLOCATE PREPARE aggregate_check_stmt;
+
+-- 기존 찜·공개 리뷰로 집계 숫자를 채운다
+-- 상품 집계 채우기 시작
+UPDATE products p
+SET p.wish_count   = (SELECT COUNT(*) FROM wishes w WHERE w.product_id = p.id),
+    p.review_count = (SELECT COUNT(*) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL),
+    p.rating_sum   = COALESCE((SELECT SUM(r.rating) FROM product_reviews r WHERE r.product_id = p.id AND r.hidden_at IS NULL), 0);
+-- 상품 집계 채우기 끝
+
+-- 인기순 정렬을 찜 수, 평균 별점, 공개 리뷰 수, ID 순서로 정렬 없이 앞에서부터 읽는다. 평균 별점 식은 정렬 SQL 과 글자까지 같아야 쓰인다
+CREATE INDEX idx_products_popularity
+    ON products (
+        wish_count DESC,
+        ((CASE WHEN review_count = 0 THEN 0 ELSE CAST(rating_sum AS DOUBLE) / review_count END)) DESC,
+        review_count DESC,
+        id DESC
+    );
+
+-- 설문의 방문 희망 시각. 포스트그레스 ps3 에는 있었으나 MySQL 에 빠져 있어 엔티티 검증 validate 단계에서 서버가 뜨지 않던 칸을 맞춘다
+SET @add_survey_visit_start := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE user_survey ADD COLUMN visit_start_time VARCHAR(5) NULL COMMENT ''방문 희망 시작 시각 HH:mm, 예: 09:00''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'user_survey'
+      AND column_name = 'visit_start_time'
+);
+
+PREPARE survey_visit_start_stmt FROM @add_survey_visit_start;
+
+EXECUTE survey_visit_start_stmt;
+
+DEALLOCATE PREPARE survey_visit_start_stmt;
+
+SET @add_survey_visit_end := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE user_survey ADD COLUMN visit_end_time VARCHAR(5) NULL COMMENT ''방문 희망 종료 시각 HH:mm, 예: 24:00''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'user_survey'
+      AND column_name = 'visit_end_time'
+);
+
+PREPARE survey_visit_end_stmt FROM @add_survey_visit_end;
+
+EXECUTE survey_visit_end_stmt;
+
+DEALLOCATE PREPARE survey_visit_end_stmt;
+
+-- 회원 가입 시각. 이 칸을 더하기 전에 가입한 회원은 비워 둔다
+SET @add_users_joined_at := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE users ADD COLUMN joined_at DATETIME(6) NULL COMMENT ''회원 가입 시각. 처음 저장할 때 정하고 바꾸지 않는다. 이 칸이 생기기 전 가입한 회원은 비어 있고 신규 가입 집계에서 빠진다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'joined_at'
+);
+
+PREPARE users_joined_at_stmt FROM @add_users_joined_at;
+
+EXECUTE users_joined_at_stmt;
+
+DEALLOCATE PREPARE users_joined_at_stmt;
+
+-- 최근 가입 회원과 기간별 신규 가입 수를 찾을 때 쓴다
+SET @add_users_joined_at_index := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'CREATE INDEX idx_users_joined_at ON users (joined_at)',
+        'SELECT 1'
+    )
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND index_name = 'idx_users_joined_at'
+);
+
+PREPARE users_joined_at_index_stmt FROM @add_users_joined_at_index;
+
+EXECUTE users_joined_at_index_stmt;
+
+DEALLOCATE PREPARE users_joined_at_index_stmt;
+
+-- ----------------------------------------------------------------------------
+-- [A3] products — 이벤트 예약 판매
+-- ----------------------------------------------------------------------------
+
+-- 이벤트를 끈 상품은 다섯 칸이 모두 비어 있다
+
+SET @add_event_starts_on := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_starts_on DATE NULL COMMENT ''이벤트 시작일 Asia/Seoul 기준, 이 날짜를 포함한다. 이벤트를 끄면 비어 있다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_starts_on'
+);
+
+PREPARE event_starts_on_stmt FROM @add_event_starts_on;
+
+EXECUTE event_starts_on_stmt;
+
+DEALLOCATE PREPARE event_starts_on_stmt;
+
+SET @add_event_ends_on := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_ends_on DATE NULL COMMENT ''이벤트 종료일 Asia/Seoul 기준, 이 날짜를 포함한다. 시작일과 같거나 뒤''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_ends_on'
+);
+
+PREPARE event_ends_on_stmt FROM @add_event_ends_on;
+
+EXECUTE event_ends_on_stmt;
+
+DEALLOCATE PREPARE event_ends_on_stmt;
+
+SET @add_event_price_type := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_price_type VARCHAR(20) NULL COMMENT ''이벤트 가격 방식 DISCOUNT_RATE 할인율 또는 FIXED_BASE_PRICE 이벤트 기본가''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_price_type'
+);
+
+PREPARE event_price_type_stmt FROM @add_event_price_type;
+
+EXECUTE event_price_type_stmt;
+
+DEALLOCATE PREPARE event_price_type_stmt;
+
+SET @add_event_discount_rate := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_discount_rate INT NULL COMMENT ''이벤트 할인율 1~99 정수. DISCOUNT_RATE 일 때만 있다. 원 미만은 버린다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_discount_rate'
+);
+
+PREPARE event_discount_rate_stmt FROM @add_event_discount_rate;
+
+EXECUTE event_discount_rate_stmt;
+
+DEALLOCATE PREPARE event_discount_rate_stmt;
+
+SET @add_event_base_price := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD COLUMN event_base_price DECIMAL(19, 2) NULL COMMENT ''이벤트 기본가 원. FIXED_BASE_PRICE 일 때만 있다. 0 이상, 상품 기본가보다 작다''',
+        'SELECT 1'
+    )
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND column_name = 'event_base_price'
+);
+
+PREPARE event_base_price_stmt FROM @add_event_base_price;
+
+EXECUTE event_base_price_stmt;
+
+DEALLOCATE PREPARE event_base_price_stmt;
+
+-- 다섯 칸이 모두 비었거나, 기간과 방식이 있고 방식에 맞는 값 하나만 있어야 한다
+SET @add_event_sale_check := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE products ADD CONSTRAINT chk_products_event_sale_shape CHECK ((event_starts_on IS NULL AND event_ends_on IS NULL AND event_price_type IS NULL AND event_discount_rate IS NULL AND event_base_price IS NULL) OR (event_starts_on IS NOT NULL AND event_ends_on IS NOT NULL AND event_ends_on >= event_starts_on AND ((event_price_type = ''DISCOUNT_RATE'' AND event_discount_rate BETWEEN 1 AND 99 AND event_base_price IS NULL) OR (event_price_type = ''FIXED_BASE_PRICE'' AND event_base_price >= 0 AND event_discount_rate IS NULL))))',
+        'SELECT 1'
+    )
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND constraint_name = 'chk_products_event_sale_shape'
+);
+
+PREPARE event_sale_check_stmt FROM @add_event_sale_check;
+
+EXECUTE event_sale_check_stmt;
+
+DEALLOCATE PREPARE event_sale_check_stmt;
+
+-- 진행 중 이벤트를 종료일 순으로 찾을 때 쓴다
+SET @add_event_period_index := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'CREATE INDEX idx_products_event_period ON products (event_ends_on, event_starts_on)',
+        'SELECT 1'
+    )
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'products'
+      AND index_name = 'idx_products_event_period'
+);
+
+PREPARE event_period_index_stmt FROM @add_event_period_index;
+
+EXECUTE event_period_index_stmt;
+
+DEALLOCATE PREPARE event_period_index_stmt;
+
+-- 응모 당첨 알림 타입 추가
+ALTER TABLE notifications DROP CHECK chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CHECK chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON'
+    )
+);
