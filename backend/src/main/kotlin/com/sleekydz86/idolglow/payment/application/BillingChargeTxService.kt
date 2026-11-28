@@ -2,10 +2,12 @@ package com.sleekydz86.idolglow.payment.application
 
 import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.notification.application.AdminNotificationPublisher
+import com.sleekydz86.idolglow.payment.domain.BillingPlanChangeCalculator
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeAttempt
 import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
 import com.sleekydz86.idolglow.payment.domain.TossBillingMethod
+import com.sleekydz86.idolglow.payment.domain.TossBillingSubscription
 import com.sleekydz86.idolglow.payment.domain.TossBillingSubscriptionStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
@@ -28,6 +30,7 @@ class BillingChargeTxService(
     private val attemptRepository: TossBillingChargeAttemptJpaRepository,
     private val methodRepository: TossBillingMethodJpaRepository,
     private val userRepository: UserRepository,
+    private val settlement: BillingChargeSettlement,
     private val adminNotificationPublisher: AdminNotificationPublisher = AdminNotificationPublisher.NONE,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -49,22 +52,7 @@ class BillingChargeTxService(
         val orderId = BillingChargeExecutor.periodOrderId(subscription.id, dueAt)
         val existing = chargeRepository.findByOrderId(orderId)
         return when {
-            existing == null ->
-                PreparedBillingCharge(
-                    charge =
-                        chargeRepository.save(
-                            TossBillingCharge(
-                                userId = subscription.userId,
-                                subscriptionId = subscription.id,
-                                billingMethod = subscription.billingMethod,
-                                orderId = orderId,
-                                orderName = subscription.orderName,
-                                amount = subscription.amount,
-                                status = TossBillingChargeStatus.PENDING,
-                            ),
-                        ),
-                    alreadyDone = false,
-                )
+            existing == null -> newPeriodCharge(subscription, orderId)
             existing.status == TossBillingChargeStatus.DONE ->
                 PreparedBillingCharge(charge = existing, alreadyDone = true)
             else -> {
@@ -75,6 +63,35 @@ class BillingChargeTxService(
                 PreparedBillingCharge(charge = existing, alreadyDone = false)
             }
         }
+    }
+
+    private fun newPeriodCharge(
+        subscription: TossBillingSubscription,
+        orderId: String,
+    ): PreparedBillingCharge {
+        val creditUsed = minOf(subscription.creditAmount, subscription.amount)
+        val cardAmount = BillingPlanChangeCalculator.chargeableAmount(subscription.amount - creditUsed)
+        val charge =
+            chargeRepository.save(
+                TossBillingCharge(
+                    userId = subscription.userId,
+                    subscriptionId = subscription.id,
+                    billingMethod = subscription.billingMethod,
+                    orderId = orderId,
+                    orderName = subscription.orderName,
+                    amount = cardAmount,
+                    status = TossBillingChargeStatus.PENDING,
+                    creditUsed = creditUsed,
+                ),
+            )
+        if (cardAmount > 0) {
+            return PreparedBillingCharge(charge = charge, alreadyDone = false)
+        }
+        val now = LocalDateTime.now()
+        charge.markDone(paymentKey = null, raw = null, approvedAt = now)
+        settlement.onDone(charge, now)
+        log.info("적립금으로 회차를 냈습니다. subscriptionId={} creditUsed={}", subscription.id, creditUsed)
+        return PreparedBillingCharge(charge = charge, alreadyDone = true)
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -160,15 +177,13 @@ class BillingChargeTxService(
             }
         if (confirmed != null) {
             val paymentKey = confirmed.path("paymentKey").asText(null)
-            val approvedAt = parseDateTime(confirmed.path("approvedAt").asText(null)) ?: now
+            val approvedAt = IdolGlowDateTimes.parseDateTime(confirmed.path("approvedAt").asText(null)) ?: now
             val latest = attemptRepository.findTopByChargeIdOrderByAttemptNoDesc(charge.id)
             latest
                 ?.takeIf { it.tossOrderId == orderId && it.status == TossBillingChargeStatus.PENDING }
                 ?.markDone(paymentKey, remote.rawBody, approvedAt)
             charge.markDone(paymentKey, remote.rawBody, approvedAt)
-            charge.subscriptionId
-                ?.let { subscriptionRepository.findWithBillingMethodById(it) }
-                ?.markCharged(now)
+            settlement.onDone(charge, now)
             adminNotificationPublisher.publish(PaymentAdminNotifications.completed(charge))
             log.info("PENDING 회차를 토스 조회로 확정했습니다. orderId={}", orderId)
         }
@@ -258,7 +273,6 @@ class BillingChargeTxService(
             val stillPending = charge.status == TossBillingChargeStatus.PENDING
             return BillingChargeFinalizeResult(charge = charge, pending = stillPending)
         }
-        val subscription = charge.subscriptionId?.let { subscriptionRepository.findWithBillingMethodById(it) }
         val json = remote.json
         val expectedAmount = BigDecimal.valueOf(charge.amount)
         return when {
@@ -274,10 +288,10 @@ class BillingChargeTxService(
                 json != null &&
                 TossPaymentResponseMapper.isDoneWithMatchingAmount(json, expectedAmount) -> {
                 val paymentKey = json.path("paymentKey").asText(null)
-                val approvedAt = parseDateTime(json.path("approvedAt").asText(null)) ?: now
+                val approvedAt = IdolGlowDateTimes.parseDateTime(json.path("approvedAt").asText(null)) ?: now
                 attempt.markDone(paymentKey, remote.rawBody, approvedAt)
                 charge.markDone(paymentKey, remote.rawBody, approvedAt)
-                subscription?.markCharged(now)
+                settlement.onDone(charge, now)
                 adminNotificationPublisher.publish(PaymentAdminNotifications.completed(charge))
                 BillingChargeFinalizeResult(charge = charge)
             }
@@ -293,7 +307,7 @@ class BillingChargeTxService(
                 val message = json?.path("message")?.asText(null) ?: remote.rawBody ?: "자동결제 승인 실패"
                 attempt.markFailed(message, remote.rawBody)
                 charge.markFailed(message, remote.rawBody)
-                subscription?.markChargeFailed(now)
+                settlement.onFailed(charge, now)
                 BillingChargeFinalizeResult(charge = charge, failureMessage = message)
             }
         }
@@ -308,8 +322,6 @@ class BillingChargeTxService(
     private fun lockCharge(chargeId: Long): TossBillingCharge =
         chargeRepository.findByIdForUpdate(chargeId)
             ?: throw IllegalArgumentException("결제 회차를 찾을 수 없습니다. chargeId=$chargeId")
-
-    private fun parseDateTime(raw: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(raw)
 }
 
 data class PreparedBillingCharge(

@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.payment.infrastructure
 
 import com.sleekydz86.idolglow.payment.domain.TossBillingCharge
+import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -11,6 +12,11 @@ interface TossBillingChargeJpaRepository : JpaRepository<TossBillingCharge, Long
     fun findAllByUserIdOrderByIdDesc(userId: Long): List<TossBillingCharge>
 
     fun findByOrderId(orderId: String): TossBillingCharge?
+
+    fun existsBySubscriptionIdAndStatus(
+        subscriptionId: Long,
+        status: TossBillingChargeStatus,
+    ): Boolean
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from TossBillingCharge c where c.id = :id")

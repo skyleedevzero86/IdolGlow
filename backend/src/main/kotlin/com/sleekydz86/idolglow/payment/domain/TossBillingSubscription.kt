@@ -12,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Entity
@@ -48,6 +49,8 @@ class TossBillingSubscription(
     var cycleMonths: Int = BillingCycle.MONTHLY.months,
     @Column(name = "auto_renew", nullable = false)
     var autoRenew: Boolean = true,
+    @Column(name = "credit_amount", nullable = false)
+    var creditAmount: Long = 0L,
 ) : BaseEntity() {
     fun markCharged(now: LocalDateTime = LocalDateTime.now()) {
         val billedPeriodStart = nextBillingAt ?: now
@@ -121,6 +124,48 @@ class TossBillingSubscription(
             TossBillingSubscriptionStatus.PAUSED,
             TossBillingSubscriptionStatus.CANCELED,
             -> false
+        }
+    }
+
+    fun addCredit(amount: Long) {
+        require(amount >= 0) { "적립금은 0 이상만 더할 수 있습니다. amount=$amount" }
+        creditAmount += amount
+    }
+
+    fun useCredit(amount: Long) {
+        require(amount in 0..creditAmount) {
+            "적립금보다 많이 쓸 수 없습니다. amount=$amount creditAmount=$creditAmount"
+        }
+        creditAmount -= amount
+    }
+
+    fun planChangeBlock(
+        targetCycleMonths: Int,
+        today: LocalDate,
+    ): PlanChangeBlock? {
+        val end = nextBillingAt
+        return when {
+            status != TossBillingSubscriptionStatus.ACTIVE || !autoRenew -> PlanChangeBlock.NOT_ACTIVE
+            failCount > 0 -> PlanChangeBlock.HAS_FAILURE
+            lastChargedAt == null || end == null -> PlanChangeBlock.NOT_CHARGED_YET
+            targetCycleMonths == cycleMonths -> PlanChangeBlock.SAME_CYCLE
+            BillingPlanChangeCalculator.remainingDays(today, end.toLocalDate()) < 1 -> PlanChangeBlock.TOO_CLOSE
+            else -> null
+        }
+    }
+
+    fun changePlan(
+        cycle: BillingCycle,
+        newOrderName: String,
+        now: LocalDateTime,
+        charged: Boolean,
+    ) {
+        cycleMonths = cycle.months
+        amount = cycle.amount
+        orderName = newOrderName
+        nextBillingAt = now.plusMonths(cycle.months.toLong())
+        if (charged) {
+            lastChargedAt = now
         }
     }
 

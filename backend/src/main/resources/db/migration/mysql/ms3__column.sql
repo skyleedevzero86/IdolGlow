@@ -1885,3 +1885,25 @@ ALTER TABLE user_oauths
 ALTER TABLE user_oauths
     DROP INDEX idx_user_oauths_provider_provider_id,
     ADD CONSTRAINT uk_user_oauths_provider_provider_id UNIQUE (provider, provider_id);
+
+-- 글로우패스 적립금
+-- 이용권을 짧은 기간으로 바꿀 때 남은 돈을 구독에 쌓고 다음 결제에서 먼저 쓴다
+ALTER TABLE toss_billing_subscriptions
+    ADD COLUMN credit_amount BIGINT NOT NULL DEFAULT 0 COMMENT '남은 적립금 원 단위. 다음 정기결제에서 먼저 뺌',
+    ADD CONSTRAINT chk_toss_billing_subscriptions_credit CHECK (credit_amount >= 0);
+
+-- 회차 결제가 쓴 적립금
+-- 결제가 성공한 뒤 구독 적립금에서 이 값만큼 뺀다
+ALTER TABLE toss_billing_charges
+    ADD COLUMN credit_used BIGINT NOT NULL DEFAULT 0 COMMENT '이 회차가 쓴 적립금 원 단위. 결제 성공 뒤 구독 적립금에서 뺌',
+    ADD CONSTRAINT chk_toss_billing_charges_credit_used CHECK (credit_used >= 0);
+
+-- 이용권 변경 중복 방지와 금액·상태 검사
+-- 같은 구독의 같은 회차에서 같은 기간으로의 변경은 한 줄만 둔다
+ALTER TABLE toss_billing_plan_changes
+    ADD CONSTRAINT uk_toss_billing_plan_changes_period_cycle UNIQUE (subscription_id, period_end_at, to_cycle_months),
+    ADD INDEX idx_toss_billing_plan_changes_charge (charge_id),
+    ADD CONSTRAINT chk_toss_billing_plan_changes_amounts CHECK (
+        remaining_value >= 0 AND new_amount >= 0 AND credit_used >= 0 AND credit_added >= 0 AND card_amount >= 0
+    ),
+    ADD CONSTRAINT chk_toss_billing_plan_changes_status CHECK (status IN ('PENDING', 'DONE', 'FAILED'));

@@ -1810,3 +1810,39 @@ CREATE TABLE IF NOT EXISTS lucky_draw_winners (
 CREATE TABLE IF NOT EXISTS lucky_draw_admin_locks (
     id bigint not null primary key comment '잠금 행 번호. 항상 1'
 ) comment='응모 추첨 관리자 등록·수정 잠금';
+
+-- =============================================================================
+-- 글로우패스 이용권 변경 기록
+-- -----
+-- 목적
+-- - 구독 중 이용권 기간을 바로 바꿀 때 계산한 차액과 결과를 남긴다
+-- - 같은 회차에서 같은 기간으로의 변경이 두 번 결제되지 않게 한다
+-- 대상
+-- - 마이에스큐엘 / toss_billing_plan_changes
+-- 연관
+-- - BillingPlanChangeService, BillingPlanChangeTxService
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS toss_billing_plan_changes (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '이용권 변경 기본키',
+    user_id BIGINT NOT NULL COMMENT '회원 아이디',
+    subscription_id BIGINT NOT NULL COMMENT '바꾼 구독 아이디 외래키',
+    from_cycle_months INT NOT NULL COMMENT '바꾸기 전 이용 기간 개월 수',
+    to_cycle_months INT NOT NULL COMMENT '바꾼 뒤 이용 기간 개월 수. 3, 6, 12',
+    period_end_at DATETIME(6) NOT NULL COMMENT '바꾸기 전 다음 결제일. 같은 회차의 중복 변경을 막는 기준',
+    period_days INT NOT NULL COMMENT '바꾸기 전 회차의 전체 일수. 한국 시각 날짜 기준',
+    remaining_days INT NOT NULL COMMENT '바꾸는 날을 뺀 남은 일수',
+    remaining_value BIGINT NOT NULL COMMENT '현재 회차 이용권 금액 중 남은 값. 원 단위, 원 아래 버림',
+    new_amount BIGINT NOT NULL COMMENT '새 이용권 금액. 원 단위',
+    credit_used BIGINT NOT NULL DEFAULT 0 COMMENT '상향 변경에서 먼저 쓴 적립금',
+    credit_added BIGINT NOT NULL DEFAULT 0 COMMENT '하향 변경에서 새로 쌓은 적립금',
+    card_amount BIGINT NOT NULL DEFAULT 0 COMMENT '카드로 결제한 정산 금액. 100원 미만이면 0',
+    charge_id BIGINT NULL COMMENT '카드 결제 회차 아이디. 카드 결제가 없으면 비움',
+    status VARCHAR(30) NOT NULL COMMENT '변경 상태. PENDING 결제 결과 대기, DONE 완료, FAILED 결제 실패로 변경 안 함',
+    created_at DATETIME(6) NOT NULL COMMENT '변경 요청 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '행 수정 시각',
+    CONSTRAINT fk_toss_billing_plan_changes_subscription
+        FOREIGN KEY (subscription_id) REFERENCES toss_billing_subscriptions (id),
+    CONSTRAINT fk_toss_billing_plan_changes_charge
+        FOREIGN KEY (charge_id) REFERENCES toss_billing_charges (id)
+) COMMENT='글로우패스 이용권 즉시 변경 기록. 차액 계산 값과 카드 결제·적립 결과를 남김';

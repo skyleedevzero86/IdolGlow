@@ -1329,3 +1329,42 @@ ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS age_range VARCHAR(20);
 DROP INDEX IF EXISTS idx_user_oauths_provider_provider_id;
 
 ALTER TABLE user_oauths ADD CONSTRAINT uk_user_oauths_provider_provider_id UNIQUE (provider, provider_id);
+
+-- 글로우패스 적립금
+-- 이용권을 짧은 기간으로 바꿀 때 남은 돈을 구독에 쌓고 다음 결제에서 먼저 쓴다
+ALTER TABLE toss_billing_subscriptions ADD COLUMN IF NOT EXISTS credit_amount BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE toss_billing_subscriptions DROP CONSTRAINT IF EXISTS chk_toss_billing_subscriptions_credit;
+
+ALTER TABLE toss_billing_subscriptions ADD CONSTRAINT chk_toss_billing_subscriptions_credit CHECK (credit_amount >= 0);
+
+-- 회차 결제가 쓴 적립금
+-- 결제가 성공한 뒤 구독 적립금에서 이 값만큼 뺀다
+ALTER TABLE toss_billing_charges ADD COLUMN IF NOT EXISTS credit_used BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE toss_billing_charges DROP CONSTRAINT IF EXISTS chk_toss_billing_charges_credit_used;
+
+ALTER TABLE toss_billing_charges ADD CONSTRAINT chk_toss_billing_charges_credit_used CHECK (credit_used >= 0);
+
+-- 이용권 변경 중복 방지
+-- 같은 구독의 같은 회차에서 같은 기간으로의 변경은 한 줄만 둔다
+ALTER TABLE toss_billing_plan_changes DROP CONSTRAINT IF EXISTS uk_toss_billing_plan_changes_period_cycle;
+
+ALTER TABLE toss_billing_plan_changes ADD CONSTRAINT uk_toss_billing_plan_changes_period_cycle UNIQUE (subscription_id, period_end_at, to_cycle_months);
+
+-- 결제 회차로 이용권 변경 기록 찾기
+CREATE INDEX IF NOT EXISTS idx_toss_billing_plan_changes_charge ON toss_billing_plan_changes (charge_id);
+
+-- 이용권 변경 금액은 0 이상만 둔다
+ALTER TABLE toss_billing_plan_changes DROP CONSTRAINT IF EXISTS chk_toss_billing_plan_changes_amounts;
+
+ALTER TABLE toss_billing_plan_changes ADD CONSTRAINT chk_toss_billing_plan_changes_amounts CHECK (
+    remaining_value >= 0 AND new_amount >= 0 AND credit_used >= 0 AND credit_added >= 0 AND card_amount >= 0
+);
+
+-- 이용권 변경 상태는 세 가지만 둔다
+ALTER TABLE toss_billing_plan_changes DROP CONSTRAINT IF EXISTS chk_toss_billing_plan_changes_status;
+
+ALTER TABLE toss_billing_plan_changes ADD CONSTRAINT chk_toss_billing_plan_changes_status CHECK (
+    status IN ('PENDING', 'DONE', 'FAILED')
+);

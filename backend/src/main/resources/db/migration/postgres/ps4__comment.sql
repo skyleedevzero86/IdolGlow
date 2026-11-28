@@ -1966,3 +1966,34 @@ COMMENT ON COLUMN user_oauths.gender IS '네이버 성별 코드. M 남, F 여, 
 COMMENT ON COLUMN user_oauths.age_range IS '네이버 연령대. 예: 20-29';
 
 COMMENT ON CONSTRAINT uk_user_oauths_provider_provider_id ON user_oauths IS '같은 제공자의 같은 회원번호는 SNS 연결 한 줄만 허용';
+
+-- 글로우패스 이용권 변경과 적립금 설명
+COMMENT ON TABLE toss_billing_plan_changes IS '글로우패스 이용권 즉시 변경 기록. 차액 계산 값과 카드 결제·적립 결과를 남김';
+
+COMMENT ON COLUMN toss_billing_plan_changes.from_cycle_months IS '바꾸기 전 이용 기간 개월 수';
+
+COMMENT ON COLUMN toss_billing_plan_changes.to_cycle_months IS '바꾼 뒤 이용 기간 개월 수. 3, 6, 12';
+
+COMMENT ON COLUMN toss_billing_plan_changes.period_end_at IS '바꾸기 전 다음 결제일. 같은 회차의 중복 변경을 막는 기준';
+
+COMMENT ON COLUMN toss_billing_plan_changes.period_days IS '바꾸기 전 회차의 전체 일수. 한국 시각 날짜 기준';
+
+COMMENT ON COLUMN toss_billing_plan_changes.remaining_days IS '바꾸는 날을 뺀 남은 일수';
+
+COMMENT ON COLUMN toss_billing_plan_changes.remaining_value IS '현재 회차 이용권 금액 중 남은 값. 원 단위, 원 아래 버림';
+
+COMMENT ON COLUMN toss_billing_plan_changes.new_amount IS '새 이용권 금액. 원 단위';
+
+COMMENT ON COLUMN toss_billing_plan_changes.credit_used IS '상향 변경에서 먼저 쓴 적립금';
+
+COMMENT ON COLUMN toss_billing_plan_changes.credit_added IS '하향 변경에서 새로 쌓은 적립금';
+
+COMMENT ON COLUMN toss_billing_plan_changes.card_amount IS '카드로 결제한 정산 금액. 100원 미만이면 0';
+
+COMMENT ON COLUMN toss_billing_plan_changes.charge_id IS '카드 결제 회차 아이디. 카드 결제가 없으면 비움';
+
+COMMENT ON COLUMN toss_billing_plan_changes.status IS '변경 상태. PENDING 결제 결과 대기, DONE 완료, FAILED 결제 실패로 변경 안 함';
+
+COMMENT ON COLUMN toss_billing_subscriptions.credit_amount IS '남은 적립금 원 단위. 다음 정기결제에서 먼저 뺌';
+
+COMMENT ON COLUMN toss_billing_charges.credit_used IS '이 회차가 쓴 적립금 원 단위. 결제 성공 뒤 구독 적립금에서 뺌';

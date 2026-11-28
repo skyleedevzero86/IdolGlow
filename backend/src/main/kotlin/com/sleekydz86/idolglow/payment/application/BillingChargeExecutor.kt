@@ -29,7 +29,7 @@ class BillingChargeExecutor(
         if (prepared.alreadyDone) {
             return prepared.charge
         }
-        return complete(finalize(prepared.charge.id, now, null))
+        return complete(finalizeCharge(prepared.charge.id, now, null))
     }
 
     fun chargeOneOff(
@@ -39,7 +39,7 @@ class BillingChargeExecutor(
         orderName: String,
     ): TossBillingCharge {
         val charge = billingChargeTxService.createOneOffPending(userId, methodId, amount, orderName)
-        return complete(finalize(charge.id, LocalDateTime.now(), null))
+        return complete(finalizeCharge(charge.id, LocalDateTime.now(), null))
     }
 
     fun retryFailedCharge(
@@ -48,10 +48,10 @@ class BillingChargeExecutor(
         now: LocalDateTime = LocalDateTime.now(),
     ): TossBillingCharge {
         billingChargeTxService.prepareRetry(chargeId, method)
-        return complete(finalize(chargeId, now, method.id))
+        return complete(finalizeCharge(chargeId, now, method.id))
     }
 
-    private fun finalize(
+    fun finalizeCharge(
         chargeId: Long,
         now: LocalDateTime,
         methodId: Long?,
@@ -203,7 +203,7 @@ class BillingChargeExecutor(
     }
 
     companion object {
-        private val PERIOD_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+        val PERIOD_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
         fun periodOrderId(
             subscriptionId: Long,

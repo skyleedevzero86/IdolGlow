@@ -7,7 +7,6 @@ import com.sleekydz86.idolglow.payment.domain.TossBillingChargeStatus
 import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
-import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +17,7 @@ import java.time.LocalDateTime
 class BillingChargeReconcileTxService(
     private val chargeRepository: TossBillingChargeJpaRepository,
     private val attemptRepository: TossBillingChargeAttemptJpaRepository,
-    private val subscriptionRepository: TossBillingSubscriptionJpaRepository,
+    private val settlement: BillingChargeSettlement,
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun apply(
@@ -72,9 +71,7 @@ class BillingChargeReconcileTxService(
         val approvedAt = IdolGlowDateTimes.parseDateTime(json?.path("approvedAt")?.asText(null)) ?: now
         attempt.markDone(paymentKey, remote.rawBody, approvedAt)
         charge.markDone(paymentKey, remote.rawBody, approvedAt)
-        charge.subscriptionId
-            ?.let { subscriptionRepository.findWithBillingMethodById(it) }
-            ?.markCharged(now)
+        settlement.onDone(charge, now)
         return BillingReconcileApplyResult(BillingReconcileOutcome.DONE)
     }
 
@@ -87,9 +84,7 @@ class BillingChargeReconcileTxService(
         val message = failureMessage(remote)
         attempt.markFailed(message, remote.rawBody)
         charge.markFailed(message, remote.rawBody)
-        charge.subscriptionId
-            ?.let { subscriptionRepository.findWithBillingMethodById(it) }
-            ?.markChargeFailed(now)
+        settlement.onFailed(charge, now)
         return BillingReconcileApplyResult(
             outcome = BillingReconcileOutcome.FAILED,
             userId = charge.userId,

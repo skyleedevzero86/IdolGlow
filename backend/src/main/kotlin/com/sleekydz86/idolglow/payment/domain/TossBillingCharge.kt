@@ -46,6 +46,8 @@ class TossBillingCharge(
     var approvedAt: LocalDateTime? = null,
     @Column(name = "canceled_at")
     var canceledAt: LocalDateTime? = null,
+    @Column(name = "credit_used", nullable = false)
+    val creditUsed: Long = 0L,
 ) : BaseEntity() {
     fun cancelDeadline(): LocalDateTime? =
         approvedAt?.takeIf { status == TossBillingChargeStatus.DONE }?.plusDays(CANCEL_WINDOW_DAYS)

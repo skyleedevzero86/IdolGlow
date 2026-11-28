@@ -12,6 +12,7 @@ import com.sleekydz86.idolglow.payment.infrastructure.TossApiResponse
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeAttemptJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingChargeJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingMethodJpaRepository
+import com.sleekydz86.idolglow.payment.infrastructure.TossBillingPlanChangeJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossBillingSubscriptionJpaRepository
 import com.sleekydz86.idolglow.payment.infrastructure.TossPaymentsApiClient
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
@@ -36,6 +37,7 @@ class BillingChargeExecutorTest {
     private val methodRepository = mockk<TossBillingMethodJpaRepository>()
     private val tossPaymentsApiClient = mockk<TossPaymentsApiClient>()
     private val userRepository = mockk<UserRepository>(relaxed = true)
+    private val planChangeRepository = mockk<TossBillingPlanChangeJpaRepository>(relaxed = true)
     private val notificationCommandService = mockk<NotificationCommandService>(relaxed = true)
     private val objectMapper = ObjectMapper()
 
@@ -51,6 +53,7 @@ class BillingChargeExecutorTest {
                 attemptRepository = attemptRepository,
                 methodRepository = methodRepository,
                 userRepository = userRepository,
+                settlement = BillingChargeSettlement(subscriptionRepository, planChangeRepository),
             )
         executor = BillingChargeExecutor(txService, tossPaymentsApiClient, notificationCommandService)
     }

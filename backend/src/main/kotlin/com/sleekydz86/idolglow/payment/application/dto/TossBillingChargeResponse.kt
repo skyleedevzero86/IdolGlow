@@ -18,6 +18,7 @@ data class TossBillingChargeResponse(
     val attempts: List<TossBillingChargeAttemptResponse> = emptyList(),
     val canceledAt: LocalDateTime? = null,
     val cancelDeadlineAt: LocalDateTime? = null,
+    val creditUsed: Long = 0L,
 ) {
     companion object {
         fun from(
@@ -36,6 +37,7 @@ data class TossBillingChargeResponse(
             attempts = attempts.map(TossBillingChargeAttemptResponse::from),
             canceledAt = entity.canceledAt,
             cancelDeadlineAt = entity.cancelDeadline(),
+            creditUsed = entity.creditUsed,
         )
     }
 }

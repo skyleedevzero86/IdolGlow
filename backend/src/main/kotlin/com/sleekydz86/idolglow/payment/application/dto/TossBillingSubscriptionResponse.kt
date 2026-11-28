@@ -17,6 +17,7 @@ data class TossBillingSubscriptionResponse(
     val failCount: Int,
     val retryAt: LocalDateTime?,
     val endsAt: LocalDateTime?,
+    val creditAmount: Long,
     val billingMethod: TossBillingMethodResponse,
 ) {
     companion object {
@@ -34,6 +35,7 @@ data class TossBillingSubscriptionResponse(
                 failCount = entity.failCount,
                 retryAt = entity.retryAt,
                 endsAt = entity.endsAt,
+                creditAmount = entity.creditAmount,
                 billingMethod = TossBillingMethodResponse.from(entity.billingMethod),
             )
     }

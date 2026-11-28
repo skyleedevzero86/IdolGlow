@@ -437,6 +437,6 @@ class TossBillingService(
     private fun parseDateTime(raw: String?): LocalDateTime? = IdolGlowDateTimes.parseDateTime(raw)
 
     companion object {
-        private const val PLAN_MONTHLY = "MONTHLY"
+        const val PLAN_MONTHLY = "MONTHLY"
     }
 }

@@ -1984,3 +1984,39 @@ CREATE TABLE IF NOT EXISTS lucky_draw_winners (
 CREATE TABLE IF NOT EXISTS lucky_draw_admin_locks (
     id bigint primary key
 );
+
+-- =============================================================================
+-- 글로우패스 이용권 변경 기록
+-- -----
+-- 목적
+-- - 구독 중 이용권 기간을 바로 바꿀 때 계산한 차액과 결과를 남긴다
+-- - 같은 회차에서 같은 기간으로의 변경이 두 번 결제되지 않게 한다
+-- 대상
+-- - 포스트그레스 / toss_billing_plan_changes
+-- 연관
+-- - BillingPlanChangeService, BillingPlanChangeTxService
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS toss_billing_plan_changes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    subscription_id BIGINT NOT NULL,
+    from_cycle_months INT NOT NULL,
+    to_cycle_months INT NOT NULL,
+    period_end_at TIMESTAMP(6) NOT NULL,
+    period_days INT NOT NULL,
+    remaining_days INT NOT NULL,
+    remaining_value BIGINT NOT NULL,
+    new_amount BIGINT NOT NULL,
+    credit_used BIGINT NOT NULL DEFAULT 0,
+    credit_added BIGINT NOT NULL DEFAULT 0,
+    card_amount BIGINT NOT NULL DEFAULT 0,
+    charge_id BIGINT,
+    status VARCHAR(30) NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    CONSTRAINT fk_toss_billing_plan_changes_subscription
+        FOREIGN KEY (subscription_id) REFERENCES toss_billing_subscriptions (id),
+    CONSTRAINT fk_toss_billing_plan_changes_charge
+        FOREIGN KEY (charge_id) REFERENCES toss_billing_charges (id)
+);
