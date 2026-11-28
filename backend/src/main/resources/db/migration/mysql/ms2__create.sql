@@ -1846,3 +1846,50 @@ CREATE TABLE IF NOT EXISTS toss_billing_plan_changes (
     CONSTRAINT fk_toss_billing_plan_changes_charge
         FOREIGN KEY (charge_id) REFERENCES toss_billing_charges (id)
 ) COMMENT='글로우패스 이용권 즉시 변경 기록. 차액 계산 값과 카드 결제·적립 결과를 남김';
+
+-- =============================================================================
+-- 설문 추천 자동 담기
+-- 목적
+-- - 회원이 고른 추천 상품 슬롯이 회원 오픈되면 결제 10분 전에 알리고 기본 카드로 자동 예약한다
+-- 대상
+-- - 마이에스큐엘 / survey_auto_pick_settings, survey_auto_pick_products, survey_auto_pick_candidates
+-- 연관
+-- - SurveyAutoPickService, SurveyAutoPickScheduler
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS survey_auto_pick_settings (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '자동 담기 설정 기본키',
+    user_id BIGINT NOT NULL COMMENT '회원 아이디. 회원당 한 줄',
+    enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT '자동 담기 켜짐 여부',
+    max_price DECIMAL(15, 2) NOT NULL COMMENT '자동 예약 예산 상한 원 단위. 회원 가격이 이 값 이하일 때만 결제',
+    created_at DATETIME(6) NOT NULL COMMENT '설정 생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '설정 수정 시각'
+) COMMENT='설문 추천 자동 담기 회원 설정';
+
+CREATE TABLE IF NOT EXISTS survey_auto_pick_products (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '자동 담기 대상 상품 기본키',
+    setting_id BIGINT NOT NULL COMMENT '자동 담기 설정 아이디 외래키',
+    product_id BIGINT NOT NULL COMMENT '대상 상품 아이디 외래키. 설정당 1개 이상 10개 이하',
+    CONSTRAINT fk_survey_auto_pick_products_setting
+        FOREIGN KEY (setting_id) REFERENCES survey_auto_pick_settings (id) ON DELETE CASCADE,
+    CONSTRAINT fk_survey_auto_pick_products_product
+        FOREIGN KEY (product_id) REFERENCES products (id)
+) COMMENT='자동 담기 대상 추천 상품';
+
+CREATE TABLE IF NOT EXISTS survey_auto_pick_candidates (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '자동 담기 후보 기본키',
+    user_id BIGINT NOT NULL COMMENT '회원 아이디',
+    product_id BIGINT NOT NULL COMMENT '상품 아이디',
+    reservation_slot_id BIGINT NOT NULL COMMENT '예약 슬롯 아이디 외래키',
+    status VARCHAR(20) NOT NULL COMMENT '후보 상태. SCHEDULED 결제 예정, PROCESSING 결제 중, SKIPPED 건너뜀, BOOKED 예약 완료, FAILED 결제 안 함',
+    member_open_at DATETIME(6) NOT NULL COMMENT '슬롯 회원 오픈 시각',
+    scheduled_charge_at DATETIME(6) NOT NULL COMMENT '결제 예정 시각. 회원 오픈 시각 + 10분',
+    fail_reason VARCHAR(30) NULL COMMENT '결제하지 않은 이유. DISABLED, NOT_MEMBER, NO_BILLING_METHOD, OVER_BUDGET, MONTHLY_LIMIT, SLOT_UNAVAILABLE, PAYMENT_FAILED',
+    reservation_id BIGINT NULL COMMENT '자동 예약 아이디. 예약이 생기면 채움',
+    created_at DATETIME(6) NOT NULL COMMENT '후보 생성 시각',
+    updated_at DATETIME(6) NOT NULL COMMENT '후보 수정 시각',
+    CONSTRAINT fk_survey_auto_pick_candidates_slot
+        FOREIGN KEY (reservation_slot_id) REFERENCES reservation_slots (id),
+    CONSTRAINT fk_survey_auto_pick_candidates_reservation
+        FOREIGN KEY (reservation_id) REFERENCES reservations (id)
+) COMMENT='자동 담기 결제 예정 후보. 회원과 슬롯마다 한 줄';

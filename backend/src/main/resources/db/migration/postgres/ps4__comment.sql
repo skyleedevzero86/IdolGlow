@@ -1997,3 +1997,22 @@ COMMENT ON COLUMN toss_billing_plan_changes.status IS '변경 상태. PENDING �
 COMMENT ON COLUMN toss_billing_subscriptions.credit_amount IS '남은 적립금 원 단위. 다음 정기결제에서 먼저 뺌';
 
 COMMENT ON COLUMN toss_billing_charges.credit_used IS '이 회차가 쓴 적립금 원 단위. 결제 성공 뒤 구독 적립금에서 뺌';
+
+COMMENT ON COLUMN reservations.booking_channel IS '예약 경로. NORMAL 일반 결제창, QUICK_BOOK 기본 카드 바로 예약(결제 뒤 30분 바로 취소), AUTO_PICK 자동 담기(결제 뒤 2시간 바로 취소)';
+
+COMMENT ON TABLE survey_auto_pick_settings IS '설문 추천 자동 담기 회원 설정';
+COMMENT ON COLUMN survey_auto_pick_settings.user_id IS '회원 아이디. 회원당 한 줄';
+COMMENT ON COLUMN survey_auto_pick_settings.enabled IS '자동 담기 켜짐 여부';
+COMMENT ON COLUMN survey_auto_pick_settings.max_price IS '자동 예약 예산 상한 원 단위. 회원 가격이 이 값 이하일 때만 결제';
+COMMENT ON TABLE survey_auto_pick_products IS '자동 담기 대상 추천 상품';
+COMMENT ON COLUMN survey_auto_pick_products.setting_id IS '자동 담기 설정 아이디 외래키';
+COMMENT ON COLUMN survey_auto_pick_products.product_id IS '대상 상품 아이디 외래키. 설정당 1개 이상 10개 이하';
+COMMENT ON TABLE survey_auto_pick_candidates IS '자동 담기 결제 예정 후보. 회원과 슬롯마다 한 줄';
+COMMENT ON COLUMN survey_auto_pick_candidates.user_id IS '회원 아이디';
+COMMENT ON COLUMN survey_auto_pick_candidates.product_id IS '상품 아이디';
+COMMENT ON COLUMN survey_auto_pick_candidates.reservation_slot_id IS '예약 슬롯 아이디 외래키';
+COMMENT ON COLUMN survey_auto_pick_candidates.status IS '후보 상태. SCHEDULED 결제 예정, PROCESSING 결제 중, SKIPPED 건너뜀, BOOKED 예약 완료, FAILED 결제 안 함';
+COMMENT ON COLUMN survey_auto_pick_candidates.member_open_at IS '슬롯 회원 오픈 시각';
+COMMENT ON COLUMN survey_auto_pick_candidates.scheduled_charge_at IS '결제 예정 시각. 회원 오픈 시각 + 10분';
+COMMENT ON COLUMN survey_auto_pick_candidates.fail_reason IS '결제하지 않은 이유. DISABLED, NOT_MEMBER, NO_BILLING_METHOD, OVER_BUDGET, MONTHLY_LIMIT, SLOT_UNAVAILABLE, PAYMENT_FAILED';
+COMMENT ON COLUMN survey_auto_pick_candidates.reservation_id IS '자동 예약 아이디. 예약이 생기면 채움';

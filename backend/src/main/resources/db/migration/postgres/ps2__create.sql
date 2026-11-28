@@ -2020,3 +2020,50 @@ CREATE TABLE IF NOT EXISTS toss_billing_plan_changes (
     CONSTRAINT fk_toss_billing_plan_changes_charge
         FOREIGN KEY (charge_id) REFERENCES toss_billing_charges (id)
 );
+
+-- =============================================================================
+-- 설문 추천 자동 담기
+-- 목적
+-- - 회원이 고른 추천 상품 슬롯이 회원 오픈되면 결제 10분 전에 알리고 기본 카드로 자동 예약한다
+-- 대상
+-- - 포스트그레스 / survey_auto_pick_settings, survey_auto_pick_products, survey_auto_pick_candidates
+-- 연관
+-- - SurveyAutoPickService, SurveyAutoPickScheduler
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS survey_auto_pick_settings (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    max_price NUMERIC(15, 2) NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS survey_auto_pick_products (
+    id BIGSERIAL PRIMARY KEY,
+    setting_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    CONSTRAINT fk_survey_auto_pick_products_setting
+        FOREIGN KEY (setting_id) REFERENCES survey_auto_pick_settings (id) ON DELETE CASCADE,
+    CONSTRAINT fk_survey_auto_pick_products_product
+        FOREIGN KEY (product_id) REFERENCES products (id)
+);
+
+CREATE TABLE IF NOT EXISTS survey_auto_pick_candidates (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    reservation_slot_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    member_open_at TIMESTAMP(6) NOT NULL,
+    scheduled_charge_at TIMESTAMP(6) NOT NULL,
+    fail_reason VARCHAR(30),
+    reservation_id BIGINT,
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    CONSTRAINT fk_survey_auto_pick_candidates_slot
+        FOREIGN KEY (reservation_slot_id) REFERENCES reservation_slots (id),
+    CONSTRAINT fk_survey_auto_pick_candidates_reservation
+        FOREIGN KEY (reservation_id) REFERENCES reservations (id)
+);

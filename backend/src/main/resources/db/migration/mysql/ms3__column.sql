@@ -1907,3 +1907,76 @@ ALTER TABLE toss_billing_plan_changes
         remaining_value >= 0 AND new_amount >= 0 AND credit_used >= 0 AND credit_added >= 0 AND card_amount >= 0
     ),
     ADD CONSTRAINT chk_toss_billing_plan_changes_status CHECK (status IN ('PENDING', 'DONE', 'FAILED'));
+
+-- 예약이 만들어진 경로 일반 결제창 바로 예약 자동 담기
+ALTER TABLE reservations
+    ADD COLUMN booking_channel VARCHAR(20) NOT NULL DEFAULT 'NORMAL' COMMENT '예약 경로. NORMAL 일반 결제창, QUICK_BOOK 기본 카드 바로 예약(결제 뒤 30분 바로 취소), AUTO_PICK 자동 담기(결제 뒤 2시간 바로 취소)',
+    ADD CONSTRAINT chk_reservations_booking_channel CHECK (booking_channel IN ('NORMAL', 'QUICK_BOOK', 'AUTO_PICK'));
+
+
+-- 자동 담기 설정 회원당 하나, 예산 0 이상
+ALTER TABLE survey_auto_pick_settings
+    ADD CONSTRAINT uk_survey_auto_pick_settings_user UNIQUE (user_id),
+    ADD CONSTRAINT chk_survey_auto_pick_settings_max_price CHECK (max_price >= 0);
+
+-- 한 설정에 같은 상품은 한 번만 둔다
+ALTER TABLE survey_auto_pick_products
+    ADD CONSTRAINT uk_survey_auto_pick_products_setting_product UNIQUE (setting_id, product_id);
+
+-- 같은 회원과 같은 슬롯의 후보는 한 줄, 상태와 실패 이유 값 검사, 결제 대상 찾기 색인
+ALTER TABLE survey_auto_pick_candidates
+    ADD CONSTRAINT uk_survey_auto_pick_candidates_user_slot UNIQUE (user_id, reservation_slot_id),
+    ADD CONSTRAINT chk_survey_auto_pick_candidates_status CHECK (
+        status IN ('SCHEDULED', 'PROCESSING', 'SKIPPED', 'BOOKED', 'FAILED')
+    ),
+    ADD CONSTRAINT chk_survey_auto_pick_candidates_fail_reason CHECK (
+        fail_reason IS NULL OR fail_reason IN (
+            'DISABLED', 'NOT_MEMBER', 'NO_BILLING_METHOD', 'OVER_BUDGET', 'MONTHLY_LIMIT', 'SLOT_UNAVAILABLE', 'PAYMENT_FAILED'
+        )
+    ),
+    ADD INDEX idx_survey_auto_pick_candidates_due (status, scheduled_charge_at);
+
+-- 자동 담기 결제 예정 알림 타입 추가
+ALTER TABLE notifications DROP CHECK chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON',
+        'AUTO_PICK_SCHEDULED'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CHECK chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON',
+        'AUTO_PICK_SCHEDULED'
+    )
+);

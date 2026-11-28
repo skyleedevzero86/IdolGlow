@@ -18,6 +18,8 @@ interface TossBillingSubscriptionJpaRepository : JpaRepository<TossBillingSubscr
 
     fun findByUserIdOrderByIdDesc(userId: Long): List<TossBillingSubscription>
 
+    fun findAllByStatusIn(statuses: Collection<TossBillingSubscriptionStatus>): List<TossBillingSubscription>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(
         "select s from TossBillingSubscription s join fetch s.billingMethod " +

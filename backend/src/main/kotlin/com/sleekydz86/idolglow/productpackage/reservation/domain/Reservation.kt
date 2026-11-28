@@ -52,6 +52,9 @@ class Reservation(
     var cancelReason: ReservationCancelReason? = null,
     @Column(name = "admin_memo", columnDefinition = "TEXT")
     var adminMemo: String? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_channel", nullable = false, length = 20)
+    val bookingChannel: ReservationBookingChannel = ReservationBookingChannel.NORMAL,
 ) : BaseEntity() {
     init {
         alignWithSlot(reservationSlot)

@@ -11,6 +11,15 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface PaymentJpaRepository : JpaRepository<Payment, Long> {
+    @Query(
+        "select p from Payment p join fetch p.reservation r join fetch r.reservationSlot " +
+            "where r.userId = :userId and p.status in :paymentStatuses",
+    )
+    fun findWithReservationByUserIdAndStatusIn(
+        @Param("userId") userId: Long,
+        @Param("paymentStatuses") paymentStatuses: Collection<PaymentStatus>,
+    ): List<Payment>
+
     fun findByPaymentReference(paymentReference: String): Payment?
 
     fun findByReservationId(reservationId: Long): Payment?

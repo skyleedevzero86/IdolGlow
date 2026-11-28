@@ -11,4 +11,9 @@ interface TossBillingRenewalNoticeJpaRepository : JpaRepository<TossBillingRenew
         subscriptionId: Long,
         periodEnd: LocalDateTime,
     ): Boolean
+
+    fun findAllBySentAtBetween(
+        from: LocalDateTime,
+        to: LocalDateTime,
+    ): List<TossBillingRenewalNotice>
 }

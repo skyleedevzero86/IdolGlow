@@ -22,6 +22,11 @@ class ReservationCancelFacade(
         cancelReasonText: String? = null,
     ): Long = settle(reservationCommandService.cancelReservationByUser(reservationId, userId, cancelReasonText))
 
+    fun quickCancelByUser(
+        reservationId: Long,
+        userId: Long,
+    ): Long = settle(reservationCommandService.quickCancelByUser(reservationId, userId))
+
     fun cancelMyPagePayment(
         userId: Long,
         paymentId: Long,

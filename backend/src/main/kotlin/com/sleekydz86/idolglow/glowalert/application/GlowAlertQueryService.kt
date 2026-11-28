@@ -157,6 +157,7 @@ private fun NotificationType.categoryId(): String =
         NotificationType.RESERVATION_CANCELED,
         NotificationType.RESERVATION_SLOT_AVAILABLE,
         NotificationType.RESERVATION_EXPIRING_SOON,
+        NotificationType.AUTO_PICK_SCHEDULED,
         NotificationType.COMMENT_ON_MY_POST,
         NotificationType.REPLY_TO_MY_COMMENT,
         NotificationType.ADMIN_POST_REPORTED,
@@ -182,6 +183,7 @@ private fun NotificationType.channelLabel(): String =
         NotificationType.RESERVATION_CANCELED,
         NotificationType.RESERVATION_SLOT_AVAILABLE,
         NotificationType.RESERVATION_EXPIRING_SOON,
+        NotificationType.AUTO_PICK_SCHEDULED,
         -> "예약"
         NotificationType.COMMENT_ON_MY_POST,
         NotificationType.REPLY_TO_MY_COMMENT,

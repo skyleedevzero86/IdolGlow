@@ -4,6 +4,7 @@ import com.sleekydz86.idolglow.productpackage.reservation.domain.Reservation
 import com.sleekydz86.idolglow.productpackage.reservation.domain.ReservationSlot
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.time.Duration
 import java.time.LocalDateTime
 
 @Component
@@ -55,6 +56,20 @@ class GlowPassBenefitPolicy(
             "무료 취소는 방문 ${minDays}일 전까지만 가능합니다. deadline=$deadline now=$now member=$member"
         }
     }
+
+    fun isEarlyBooking(reservation: Reservation): Boolean {
+        val confirmedAt = reservation.confirmedAt ?: return false
+        return confirmedAt.isBefore(publicOpensAt(reservation.reservationSlot))
+    }
+
+    fun isFreeOnlyForMember(reservation: Reservation): Boolean {
+        val canceledAt = reservation.canceledAt ?: return false
+        val visitAt = LocalDateTime.of(reservation.visitDate, reservation.visitStartTime)
+        return canceledAt.isAfter(visitAt.minusDays(freeCancelDaysNormal)) &&
+            !canceledAt.isAfter(visitAt.minusDays(freeCancelDaysMember))
+    }
+
+    fun memberOpenLead(): Duration = Duration.ofDays(publicOpenDaysBefore).plusHours(earlyBookingHours)
 
     fun publicOpensAt(slot: ReservationSlot): LocalDateTime =
         LocalDateTime.of(slot.reservationDate, slot.startTime).minusDays(publicOpenDaysBefore)

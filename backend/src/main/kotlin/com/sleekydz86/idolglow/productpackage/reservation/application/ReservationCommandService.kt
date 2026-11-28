@@ -1,6 +1,8 @@
 package com.sleekydz86.idolglow.productpackage.reservation.application
 
 import com.sleekydz86.idolglow.global.config.TossPaymentProperties
+import com.sleekydz86.idolglow.global.infrastructure.exception.billing.QuickBookExceptionType
+import com.sleekydz86.idolglow.global.infrastructure.exception.CustomException
 import com.sleekydz86.idolglow.notification.application.NotificationCommandService
 import com.sleekydz86.idolglow.notification.domain.NotificationRepository
 import com.sleekydz86.idolglow.notification.domain.NotificationType
@@ -80,6 +82,7 @@ class ReservationCommandService(
                 visitEndTime = reservationSlot.endTime,
                 totalPrice = pricing.expectedTotal,
                 membershipDiscount = pricing.discount,
+                bookingChannel = command.bookingChannel,
             ).request(expiresAt)
 
         val savedReservation = reservationRepository.save(reservation)
@@ -138,6 +141,44 @@ class ReservationCommandService(
         )
     }
 
+    fun quickCancelByUser(
+        reservationId: Long,
+        userId: Long,
+        now: LocalDateTime = LocalDateTime.now(),
+    ): ReservationCancelOutcome {
+        val reservation = findReservationByReservationIdForUpdate(reservationId)
+        reservation.validateOwner(userId)
+        val payment = paymentRepository.findByReservationIdForUpdate(reservationId)
+        rejectIfPaymentConfirming(payment)
+        if (!isQuickCancelOpen(reservation, payment, now)) {
+            throw CustomException(QuickBookExceptionType.QUICK_CANCEL_EXPIRED)
+        }
+        return finishCancel(
+            reservation = reservation,
+            payment = payment,
+            cancelReason = "결제 직후 바로 취소했습니다.",
+            requestedBy = RefundRequestedBy.USER,
+            userId = userId,
+            reservationCancelReason = ReservationCancelReason.USER_REQUESTED,
+            notificationTitle = "예약 취소",
+            notificationMessage = "예약 #${reservation.id} 이(가) 취소되었습니다.",
+            checkFreeCancel = false,
+        )
+    }
+
+    private fun isQuickCancelOpen(
+        reservation: Reservation,
+        payment: Payment?,
+        now: LocalDateTime,
+    ): Boolean {
+        val window = reservation.bookingChannel.quickCancelWindow
+        val approvedAt = payment?.approvedAt
+        return window != null &&
+            approvedAt != null &&
+            payment.status == PaymentStatus.SUCCEEDED &&
+            !now.isAfter(approvedAt.plus(window))
+    }
+
     fun cancelAdminPayment(
         paymentId: Long,
         cancelReasonText: String? = null,
@@ -179,10 +220,11 @@ class ReservationCommandService(
         reservationCancelReason: ReservationCancelReason,
         notificationTitle: String,
         notificationMessage: String,
+        checkFreeCancel: Boolean = true,
     ): ReservationCancelOutcome {
         val refund =
             if (reservation.status == ReservationStatus.BOOKED && payment?.status == PaymentStatus.SUCCEEDED) {
-                if (requestedBy == RefundRequestedBy.USER) {
+                if (requestedBy == RefundRequestedBy.USER && checkFreeCancel) {
                     glowPassBenefitPolicy.assertFreeCancelAllowed(userId!!, reservation)
                 }
                 paymentRefundService.refundBeforeReservationCancel(payment, reservation, cancelReason, requestedBy)
@@ -389,15 +431,7 @@ class ReservationCommandService(
     ): MembershipPricing {
         val startPrice = product.reservationStartPrice(productEventCalendar.today())
         val member = membershipQuery.isActive(userId, at)
-        val expectedTotal =
-            if (member) {
-                startPrice
-                    .multiply(MEMBER_PRICE_RATE)
-                    .setScale(0, RoundingMode.HALF_UP)
-                    .setScale(2)
-            } else {
-                startPrice
-            }
+        val expectedTotal = priceFor(startPrice, member)
         if (expectedTotal.compareTo(requestedTotalPrice) != 0) {
             throw IllegalArgumentException(
                 "상품 ${product.id}의 총금액이 일치하지 않습니다. " +
@@ -407,6 +441,25 @@ class ReservationCommandService(
         val discount = startPrice.subtract(expectedTotal).max(BigDecimal.ZERO).setScale(2)
         return MembershipPricing(expectedTotal = expectedTotal, discount = discount)
     }
+
+    fun expectedTotalPrice(
+        productId: Long,
+        userId: Long,
+        at: LocalDateTime = LocalDateTime.now(),
+    ): BigDecimal {
+        val startPrice = findProductByProductId(productId).reservationStartPrice(productEventCalendar.today())
+        return priceFor(startPrice, membershipQuery.isActive(userId, at))
+    }
+
+    private fun priceFor(
+        startPrice: BigDecimal,
+        member: Boolean,
+    ): BigDecimal =
+        if (member) {
+            startPrice.multiply(MEMBER_PRICE_RATE).setScale(0, RoundingMode.HALF_UP).setScale(2)
+        } else {
+            startPrice
+        }
 
     private data class MembershipPricing(
         val expectedTotal: BigDecimal,

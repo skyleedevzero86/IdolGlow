@@ -1368,3 +1368,96 @@ ALTER TABLE toss_billing_plan_changes DROP CONSTRAINT IF EXISTS chk_toss_billing
 ALTER TABLE toss_billing_plan_changes ADD CONSTRAINT chk_toss_billing_plan_changes_status CHECK (
     status IN ('PENDING', 'DONE', 'FAILED')
 );
+
+-- 예약이 만들어진 경로 일반 결제창 바로 예약 자동 담기
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS booking_channel VARCHAR(20) NOT NULL DEFAULT 'NORMAL';
+
+ALTER TABLE reservations DROP CONSTRAINT IF EXISTS chk_reservations_booking_channel;
+
+ALTER TABLE reservations ADD CONSTRAINT chk_reservations_booking_channel CHECK (
+    booking_channel IN ('NORMAL', 'QUICK_BOOK', 'AUTO_PICK')
+);
+
+
+-- 자동 담기 설정은 회원당 하나만 둔다
+ALTER TABLE survey_auto_pick_settings DROP CONSTRAINT IF EXISTS uk_survey_auto_pick_settings_user;
+
+ALTER TABLE survey_auto_pick_settings ADD CONSTRAINT uk_survey_auto_pick_settings_user UNIQUE (user_id);
+
+-- 예산 상한은 0 이상만 둔다
+ALTER TABLE survey_auto_pick_settings DROP CONSTRAINT IF EXISTS chk_survey_auto_pick_settings_max_price;
+
+ALTER TABLE survey_auto_pick_settings ADD CONSTRAINT chk_survey_auto_pick_settings_max_price CHECK (max_price >= 0);
+
+-- 한 설정에 같은 상품은 한 번만 둔다
+ALTER TABLE survey_auto_pick_products DROP CONSTRAINT IF EXISTS uk_survey_auto_pick_products_setting_product;
+
+ALTER TABLE survey_auto_pick_products ADD CONSTRAINT uk_survey_auto_pick_products_setting_product UNIQUE (setting_id, product_id);
+
+-- 같은 회원과 같은 슬롯의 후보는 한 줄만 둔다
+ALTER TABLE survey_auto_pick_candidates DROP CONSTRAINT IF EXISTS uk_survey_auto_pick_candidates_user_slot;
+
+ALTER TABLE survey_auto_pick_candidates ADD CONSTRAINT uk_survey_auto_pick_candidates_user_slot UNIQUE (user_id, reservation_slot_id);
+
+-- 후보 상태와 실패 이유 값 검사
+ALTER TABLE survey_auto_pick_candidates DROP CONSTRAINT IF EXISTS chk_survey_auto_pick_candidates_status;
+
+ALTER TABLE survey_auto_pick_candidates ADD CONSTRAINT chk_survey_auto_pick_candidates_status CHECK (
+    status IN ('SCHEDULED', 'PROCESSING', 'SKIPPED', 'BOOKED', 'FAILED')
+);
+
+ALTER TABLE survey_auto_pick_candidates DROP CONSTRAINT IF EXISTS chk_survey_auto_pick_candidates_fail_reason;
+
+ALTER TABLE survey_auto_pick_candidates ADD CONSTRAINT chk_survey_auto_pick_candidates_fail_reason CHECK (
+    fail_reason IS NULL OR fail_reason IN (
+        'DISABLED', 'NOT_MEMBER', 'NO_BILLING_METHOD', 'OVER_BUDGET', 'MONTHLY_LIMIT', 'SLOT_UNAVAILABLE', 'PAYMENT_FAILED'
+    )
+);
+
+-- 결제 작업이 결제 예정 시각이 지난 후보를 찾을 때 쓴다
+CREATE INDEX IF NOT EXISTS idx_survey_auto_pick_candidates_due ON survey_auto_pick_candidates (status, scheduled_charge_at);
+
+-- 자동 담기 결제 예정 알림 타입 추가
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS chk_notifications_type;
+
+ALTER TABLE notifications ADD CONSTRAINT chk_notifications_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON',
+        'AUTO_PICK_SCHEDULED'
+    )
+);
+
+ALTER TABLE notification_preferences DROP CONSTRAINT IF EXISTS chk_np_type;
+
+ALTER TABLE notification_preferences ADD CONSTRAINT chk_np_type CHECK (
+    type IN (
+        'RESERVATION_CONFIRMED',
+        'RESERVATION_CANCELED',
+        'PAYMENT_FAILED',
+        'PAYMENT_EXPIRED',
+        'RESERVATION_SLOT_AVAILABLE',
+        'RESERVATION_EXPIRING_SOON',
+        'COMMENT_ON_MY_POST',
+        'REPLY_TO_MY_COMMENT',
+        'ADMIN_POST_REPORTED',
+        'ADMIN_POST_AUTO_BLINDED',
+        'ADMIN_PAYMENT_COMPLETED',
+        'ADMIN_PAYMENT_ISSUE',
+        'EVENT_INTEREST_CHANGED',
+        'LUCKY_DRAW_WON',
+        'AUTO_PICK_SCHEDULED'
+    )
+);

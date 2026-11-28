@@ -68,6 +68,10 @@ type Query {
     adminPaymentDetail(paymentId: ID!): AdminPaymentDetail!
     myPayments(size: Int = 100): [MyPaymentSummary!]!
     myPaymentDetail(paymentId: ID!): MyPaymentSummary!
+    adminBillingStats: AdminBillingStats!
+    myGlowPassStats: MyGlowPassStats!
+    openReservationSlots(productId: ID!): [OpenReservationSlot!]!
+    mySurveyAutoPick: SurveyAutoPick!
     eventContent(globalId: ID!): EventContent
 }
 
@@ -876,4 +880,66 @@ input SubscribeRecommendationMailInput {
     agreedToAdvertising: Boolean!
     preferredBasis: RecommendationMailPreferredBasis
     consentSource: RecommendationMailConsentSource
+}
+
+type AdminBillingStats {
+    activeCount: Int!
+    cancelScheduledCount: Int!
+    pausedCount: Int!
+    retryingCount: Int!
+    byCycle: [BillingCycleCount!]!
+    monthlyRevenue: String!
+    renewalNotice: RenewalNoticeStats!
+}
+
+type BillingCycleCount {
+    cycleMonths: Int!
+    count: Int!
+}
+
+type RenewalNoticeStats {
+    sent: Int!
+    continued: Int!
+    stopped: Int!
+    noAnswer: Int!
+}
+
+type MyGlowPassStats {
+    membershipSince: String
+    totalPaid: String!
+    paidCount: Int!
+    savedByDiscount: String!
+    earlyBookings: Int!
+    freeCancels: Int!
+}
+
+type OpenReservationSlot {
+    reservationSlotId: ID!
+    reservationDate: String!
+    startTime: String!
+    endTime: String!
+    available: Boolean!
+    memberOpenAt: String!
+    publicOpenAt: String!
+    totalPrice: String!
+}
+
+type SurveyAutoPick {
+    enabled: Boolean!
+    productIds: [ID!]!
+    maxPrice: String
+    monthlyLimit: Int!
+    bookedThisMonth: Int!
+    candidates: [SurveyAutoPickCandidate!]!
+}
+
+type SurveyAutoPickCandidate {
+    id: ID!
+    productId: ID!
+    reservationSlotId: ID!
+    status: String!
+    memberOpenAt: String!
+    scheduledChargeAt: String!
+    failReason: String
+    reservationId: ID
 }
