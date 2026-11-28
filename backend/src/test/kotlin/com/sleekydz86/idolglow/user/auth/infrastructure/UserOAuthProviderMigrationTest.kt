@@ -14,7 +14,7 @@ import java.sql.SQLException
 
 @DisplayName("user_oauths 제공자 검사 마이그레이션")
 class UserOAuthProviderMigrationTest {
-    @DisplayName("K12 PostgreSQL 마이그레이션은 KAKAO·NAVER 를 받고 다른 제공자는 막으며, 네이버 추가 정보 칸이 있다")
+    @DisplayName("K12 PostgreSQL 마이그레이션은 KAKAO·NAVER 를 받고 다른 제공자는 막으며, 네이버 추가 정보 칸과 SNS 연결 중복 금지가 있다")
     @Test
     fun postgresAllowsKakao() {
         // given
@@ -34,11 +34,12 @@ class UserOAuthProviderMigrationTest {
                 assertEquals(1, count(connection, "NAVER"))
                 assertEquals("홍길동|F|20-29", accountDetailsRoundTrip(connection))
                 assertEquals(LONGEST_NAME, longestNameRoundTrip(connection))
+                assertDuplicateLinkRejected(connection, PG_UNIQUE_STATE)
             }
         }
     }
 
-    @DisplayName("K12 MySQL 마이그레이션은 KAKAO·NAVER 를 받고 다른 제공자는 막으며, 네이버 추가 정보 칸이 있다")
+    @DisplayName("K12 MySQL 마이그레이션은 KAKAO·NAVER 를 받고 다른 제공자는 막으며, 네이버 추가 정보 칸과 SNS 연결 중복 금지가 있다")
     @Test
     fun mysqlAllowsKakao() {
         // given
@@ -57,6 +58,7 @@ class UserOAuthProviderMigrationTest {
                 assertEquals(1, count(connection, "NAVER"))
                 assertEquals("홍길동|F|20-29", accountDetailsRoundTrip(connection))
                 assertEquals(LONGEST_NAME, longestNameRoundTrip(connection))
+                assertDuplicateLinkRejected(connection, MYSQL_UNIQUE_STATE)
                 assertEquals(0, count(connection, "GITHUB"))
             }
         }
@@ -123,6 +125,17 @@ class UserOAuthProviderMigrationTest {
         }
     }
 
+    private fun assertDuplicateLinkRejected(
+        connection: Connection,
+        uniqueState: String,
+    ) {
+        val duplicate = assertThrows(SQLException::class.java) { insert(connection, "NAVER", "n-1") }
+        assertEquals(uniqueState, duplicate.sqlState)
+        insert(connection, "KAKAO", "n-1")
+        assertEquals(1, count(connection, "NAVER"))
+        assertEquals(2, count(connection, "KAKAO"))
+    }
+
     private fun count(
         connection: Connection,
         provider: String,
@@ -137,6 +150,8 @@ class UserOAuthProviderMigrationTest {
 
     companion object {
         private const val CHECK_STATE = "23514"
+        private const val PG_UNIQUE_STATE = "23505"
+        private const val MYSQL_UNIQUE_STATE = "23000"
         private val LONGEST_NAME = "😀".repeat(97) + "あ汉가"
     }
 }

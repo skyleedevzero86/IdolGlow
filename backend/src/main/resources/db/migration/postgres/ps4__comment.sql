@@ -1964,3 +1964,5 @@ COMMENT ON COLUMN user_oauths.account_name IS '네이버 회원이름. 네이버
 COMMENT ON COLUMN user_oauths.gender IS '네이버 성별 코드. M 남, F 여, U 알 수 없음';
 
 COMMENT ON COLUMN user_oauths.age_range IS '네이버 연령대. 예: 20-29';
+
+COMMENT ON CONSTRAINT uk_user_oauths_provider_provider_id ON user_oauths IS '같은 제공자의 같은 회원번호는 SNS 연결 한 줄만 허용';

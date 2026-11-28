@@ -1323,3 +1323,9 @@ ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS account_name VARCHAR(100);
 ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS gender VARCHAR(10);
 
 ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS age_range VARCHAR(20);
+
+-- 같은 SNS 계정이 두 줄로 연결되지 않게 제공자와 제공자 회원번호를 고유로 묶는다
+-- 고유 제약이 같은 열의 색인을 만들므로 기존 찾기용 색인은 지운다
+DROP INDEX IF EXISTS idx_user_oauths_provider_provider_id;
+
+ALTER TABLE user_oauths ADD CONSTRAINT uk_user_oauths_provider_provider_id UNIQUE (provider, provider_id);

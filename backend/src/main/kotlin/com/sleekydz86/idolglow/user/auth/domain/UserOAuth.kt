@@ -10,9 +10,15 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "user_oauths")
+@Table(
+    name = "user_oauths",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_user_oauths_provider_provider_id", columnNames = ["provider", "provider_id"]),
+    ],
+)
 class UserOAuth(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,

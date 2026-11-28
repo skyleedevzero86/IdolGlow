@@ -1879,3 +1879,9 @@ ALTER TABLE user_oauths
     ADD COLUMN account_name VARCHAR(100) NULL COMMENT '네이버 회원이름. 네이버 로그인 때마다 최신 값으로 덮어씀',
     ADD COLUMN gender VARCHAR(10) NULL COMMENT '네이버 성별 코드. M 남, F 여, U 알 수 없음',
     ADD COLUMN age_range VARCHAR(20) NULL COMMENT '네이버 연령대. 예: 20-29';
+
+-- 같은 SNS 계정이 두 줄로 연결되지 않게 제공자와 제공자 회원번호를 고유로 묶는다
+-- 고유 제약이 같은 열의 색인을 만들므로 기존 찾기용 색인은 지운다
+ALTER TABLE user_oauths
+    DROP INDEX idx_user_oauths_provider_provider_id,
+    ADD CONSTRAINT uk_user_oauths_provider_provider_id UNIQUE (provider, provider_id);
