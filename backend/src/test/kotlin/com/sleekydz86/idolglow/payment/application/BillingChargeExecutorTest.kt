@@ -113,7 +113,7 @@ class BillingChargeExecutorTest {
                 billingKey = "bk",
                 customerKey = storedKey,
                 amount = BillingDefaults.MONTHLY_AMOUNT,
-                orderId = "sub-12-202611-a1",
+                orderId = "$orderId-a1",
                 orderName = any(),
                 customerEmail = any(),
                 customerName = any(),
@@ -145,7 +145,7 @@ class BillingChargeExecutorTest {
                 billingKey = "bk",
                 customerKey = storedKey,
                 amount = BillingDefaults.MONTHLY_AMOUNT,
-                orderId = "sub-12-202611-a1",
+                orderId = "$orderId-a1",
                 orderName = any(),
                 customerEmail = any(),
                 customerName = any(),
@@ -154,15 +154,21 @@ class BillingChargeExecutorTest {
         }
     }
 
-    @DisplayName("회차 orderId 는 구독과 연월로 고정된다")
+    @DisplayName("회차 orderId 는 구독과 결제 예정 시각으로 고정된다")
     @Test
-    fun periodOrderIdUsesSubscriptionAndYearMonth() {
+    fun periodOrderIdUsesSubscriptionAndDueTime() {
         // given
+        val due = LocalDateTime.of(2026, 11, 15, 10, 0, 5)
+        val sameMonthLater = LocalDateTime.of(2026, 11, 28, 17, 30)
+
         // when
-        val due = LocalDateTime.of(2026, 11, 15, 10, 0)
+        val orderId = BillingChargeExecutor.periodOrderId(12L, due)
+
         // then
-        assertEquals("sub-12-202611", BillingChargeExecutor.periodOrderId(12L, due))
-        assertEquals("sub-12-202611-a2", BillingChargeExecutor.attemptOrderId("sub-12-202611", 2))
+        assertEquals("sub-12-20261115100005", orderId)
+        assertEquals(orderId, BillingChargeExecutor.periodOrderId(12L, due))
+        assertEquals("sub-12-20261128173000", BillingChargeExecutor.periodOrderId(12L, sameMonthLater))
+        assertEquals("sub-12-20261115100005-a2", BillingChargeExecutor.attemptOrderId(orderId, 2))
     }
 
     @DisplayName("결제 실패 3회면 구독이 PAUSED 된다")
@@ -180,7 +186,7 @@ class BillingChargeExecutorTest {
                 billingKey = "bk",
                 customerKey = "idolglow-user-1",
                 amount = BillingDefaults.MONTHLY_AMOUNT,
-                orderId = "sub-12-202611-a1",
+                orderId = "$orderId-a1",
                 orderName = any(),
                 customerEmail = any(),
                 customerName = any(),
@@ -202,7 +208,7 @@ class BillingChargeExecutorTest {
         assertEquals("한도초과", thrown.exceptionOrNull()?.message)
         assertEquals(TossBillingSubscriptionStatus.PAUSED, subscription.status)
         assertTrue(pending.status == TossBillingChargeStatus.FAILED)
-        assertEquals("sub-12-202611-a1", attemptSlot.captured.tossOrderId)
+        assertEquals("$orderId-a1", attemptSlot.captured.tossOrderId)
         assertEquals(TossBillingChargeStatus.FAILED, attemptSlot.captured.status)
         verify(exactly = 1) {
             notificationCommandService.create(any(), NotificationType.PAYMENT_FAILED, any(), any(), any())

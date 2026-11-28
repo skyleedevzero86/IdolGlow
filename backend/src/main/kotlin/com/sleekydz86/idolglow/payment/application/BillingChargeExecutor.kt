@@ -203,7 +203,7 @@ class BillingChargeExecutor(
     }
 
     companion object {
-        private val PERIOD_FORMAT = DateTimeFormatter.ofPattern("yyyyMM")
+        private val PERIOD_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
         fun periodOrderId(
             subscriptionId: Long,

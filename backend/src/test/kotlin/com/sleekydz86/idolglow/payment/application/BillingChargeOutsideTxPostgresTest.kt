@@ -232,6 +232,38 @@ class BillingChargeOutsideTxPostgresTest : PostgresIntegrationTest() {
         }
     }
 
+    @DisplayName("같은 달에 다시 시작한 구독은 새 회차로 결제하고 다음 결제일을 넘긴다")
+    @Test
+    fun restartInSameMonthChargesNewPeriod() {
+        // given
+        val firstDue = LocalDateTime.of(2026, 11, 1, 9, 0)
+        val restartAt = LocalDateTime.of(2026, 11, 20, 9, 0)
+        val subscriptionId = persistActiveSubscription(firstDue)
+        val approvals = listOf(donePayment("pay-first"), donePayment("pay-restart"))
+        every {
+            tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any())
+        } returnsMany approvals
+        executor.chargeSubscription(subscriptionId, firstDue)
+        val restarted = subscriptionRepository.findById(subscriptionId).orElseThrow()
+        restarted.nextBillingAt = restartAt
+        subscriptionRepository.saveAndFlush(restarted)
+
+        // when
+        val result = executor.chargeSubscription(subscriptionId, restartAt)
+
+        // then
+        val charges = chargeRepository.findAll().filter { it.subscriptionId == subscriptionId }
+        val subscription = subscriptionRepository.findById(subscriptionId).orElseThrow()
+        assertEquals(TossBillingChargeStatus.DONE, result.status)
+        assertEquals("pay-restart", result.paymentKey)
+        assertEquals(2, charges.size)
+        assertTrue(charges.all { it.status == TossBillingChargeStatus.DONE })
+        assertEquals(restartAt.plusMonths(1), subscription.nextBillingAt)
+        verify(exactly = 2) {
+            tossPaymentsApiClient.chargeBilling(any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
     private fun donePayment(paymentKey: String): TossApiResponse {
         val body = """{"status":"DONE","totalAmount":4900,"paymentKey":"$paymentKey"}"""
         return TossApiResponse(200, objectMapper.readTree(body), body)
