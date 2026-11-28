@@ -32,3 +32,19 @@ kubectl -n "${NAMESPACE}" create secret generic "${SECRET_NAME}" "${args[@]}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "Secret ${NAMESPACE}/${SECRET_NAME} 적용 완료 (키 ${#args[@]}개)"
+
+OAUTH_SECRET_NAME="${OAUTH_SECRET_NAME:-idolglow-backend-oauth}"
+oauth_args=()
+for key in KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET NAVER_CLIENT_ID NAVER_CLIENT_SECRET; do
+  if [[ -n "${!key:-}" ]]; then
+    oauth_args+=("--from-literal=${key}=${!key}")
+  fi
+done
+
+if [[ ${#oauth_args[@]} -eq 0 ]]; then
+  echo "건너뜀: 카카오·네이버 키 환경 변수가 없어 ${OAUTH_SECRET_NAME} 를 만들지 않습니다" >&2
+else
+  kubectl -n "${NAMESPACE}" create secret generic "${OAUTH_SECRET_NAME}" "${oauth_args[@]}"     --dry-run=client -o yaml | kubectl apply -f -
+  echo "Secret ${NAMESPACE}/${OAUTH_SECRET_NAME} 적용 완료 (키 ${#oauth_args[@]}개)"
+fi
+

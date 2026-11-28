@@ -38,6 +38,30 @@ spec:
               value: "false"
             - name: SERVER_FORWARD_HEADERS_STRATEGY
               value: "native"
+            - name: KAKAO_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: idolglow-backend-oauth
+                  key: KAKAO_CLIENT_ID
+                  optional: true
+            - name: KAKAO_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: idolglow-backend-oauth
+                  key: KAKAO_CLIENT_SECRET
+                  optional: true
+            - name: NAVER_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: idolglow-backend-oauth
+                  key: NAVER_CLIENT_ID
+                  optional: true
+            - name: NAVER_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: idolglow-backend-oauth
+                  key: NAVER_CLIENT_SECRET
+                  optional: true
           volumeMounts:
             - name: backend-config
               mountPath: /config
