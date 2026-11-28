@@ -1,17 +1,22 @@
 package com.sleekydz86.idolglow.productpackage.discovery.application
 
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
 import com.sleekydz86.idolglow.productpackage.discovery.infrastructure.ProductDiscoveryQueryRepository
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.user.user.domain.UserSurveyRepository
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @DisplayName("개인화 추천 상품 조회")
 class ProductDiscoveryServiceTest {
@@ -89,5 +94,35 @@ class ProductDiscoveryServiceTest {
                 any(),
             )
         }
+    }
+
+    @Test
+    @DisplayName("추천 후보와 여행 가능 일수 조회는 한국 현재 시각을 넘긴다")
+    fun discoveryPassesKoreaNow() {
+        // given
+        val candidateNow = slot<LocalDateTime>()
+        val tripNow = slot<LocalDateTime>()
+        val signals =
+            RecommendationSignals(
+                extraTags = setOf("태그"),
+                visitStart = LocalDate.of(2026, 12, 1),
+                visitEnd = LocalDate.of(2026, 12, 2),
+            )
+        every {
+            repository.findPersonalizedCandidateProductIds(any(), any(), any(), any(), capture(candidateNow), any())
+        } returns listOf(popular.id)
+        every { repository.countAvailableTripDaysByProduct(any(), any(), any(), capture(tripNow)) } returns emptyMap()
+
+        // when
+        service.findRecommendedProducts(signals, 5)
+
+        // then
+        assertKoreaNow(candidateNow.captured)
+        assertKoreaNow(tripNow.captured)
+    }
+
+    private fun assertKoreaNow(actual: LocalDateTime) {
+        val gap = Duration.between(actual, LocalDateTime.now(IdolGlowDateTimes.ZONE)).abs()
+        assertTrue(gap < Duration.ofMinutes(1), "한국 시각과 차이=$gap")
     }
 }

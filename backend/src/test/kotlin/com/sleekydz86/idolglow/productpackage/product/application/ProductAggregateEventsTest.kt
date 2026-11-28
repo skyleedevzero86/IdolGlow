@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.productpackage.product.application
 
 import com.sleekydz86.idolglow.admin.application.AdminProductReviewService
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.productpackage.product.domain.Product
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductAggregateCounter
 import com.sleekydz86.idolglow.productpackage.product.infrastructure.ProductJpaRepository
@@ -17,6 +18,7 @@ import com.sleekydz86.idolglow.wish.application.event.WishDeleteEvent
 import com.sleekydz86.idolglow.wish.domain.vo.WishAggregateType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.Duration
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -165,6 +168,35 @@ class ProductAggregateEventsTest {
         assertEquals(recount(product.id), aggregates(product.id))
     }
 
+    @DisplayName("관리자 숨김 시각은 한국 시각으로 남는다")
+    @Test
+    fun adminHideRecordsKoreaTime() {
+        // given
+        val product = product()
+        val review = review(product, user(1), rating = 4, hidden = false)
+        loginAsAdmin(user(9))
+
+        // when
+        adminProductReviewService.hideReview(review.id, "관리자 숨김")
+
+        // then
+        assertKoreaNow(hiddenAt(review.id))
+    }
+
+    @DisplayName("신고 누적 자동 숨김 시각은 한국 시각으로 남는다")
+    @Test
+    fun autoHideRecordsKoreaTime() {
+        // given
+        val product = product()
+        val review = review(product, user(1), rating = 3, hidden = false)
+
+        // when
+        (2..4).forEach { productReviewTrustCommandService.reportReview(product.id, review.id, user(it).id, "부적절한 내용") }
+
+        // then
+        assertKoreaNow(hiddenAt(review.id))
+    }
+
     @DisplayName("회원 탈퇴로 그 회원의 찜이 지워지면 찜한 상품마다 찜 수가 줄고, 다른 회원의 찜은 남는다 (E3)")
     @Test
     fun userWithdrawalDecreasesWishCountsPerProduct() {
@@ -207,6 +239,14 @@ class ProductAggregateEventsTest {
         // then
         assertEquals(Triple(1L, 0L, 0L), aggregates(product.id))
         assertEquals("고친 상품 $token", productJpaRepository.findById(product.id).orElseThrow().name)
+    }
+
+    private fun hiddenAt(reviewId: Long): LocalDateTime =
+        checkNotNull(productReviewJpaRepository.findById(reviewId).get().hiddenAt)
+
+    private fun assertKoreaNow(actual: LocalDateTime) {
+        val gap = Duration.between(actual, LocalDateTime.now(IdolGlowDateTimes.ZONE)).abs()
+        assertTrue(gap < Duration.ofMinutes(1), "한국 시각과 차이=$gap")
     }
 
     private fun product(): Product =

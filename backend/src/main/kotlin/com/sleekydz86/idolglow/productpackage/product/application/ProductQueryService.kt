@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.product.application
 
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
 import com.sleekydz86.idolglow.productpackage.product.application.dto.ProductBrowseParams
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductRepository
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 @Transactional(readOnly = true)
 @Service
@@ -66,8 +66,8 @@ class ProductQueryService(
                 nearLatitude = params.nearLatitude,
                 nearLongitude = params.nearLongitude,
                 radiusMeters = radius,
-                now = LocalDateTime.now(ZoneOffset.UTC),
-                today = LocalDate.now(ZoneOffset.UTC),
+                now = LocalDateTime.now(IdolGlowDateTimes.ZONE),
+                today = LocalDate.now(IdolGlowDateTimes.ZONE),
             )
         val slice = productRepository.browseProducts(criteria)
         val thumbs = aggregateImageQueryService.firstProductImageUrlByProductIds(slice.items.map { it.id })

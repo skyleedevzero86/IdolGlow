@@ -2,6 +2,7 @@ package com.sleekydz86.idolglow.admin.application
 
 import com.sleekydz86.idolglow.admin.application.dto.AdminProductReviewPageResult
 import com.sleekydz86.idolglow.admin.application.dto.AdminProductReviewSummaryResult
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.image.domain.ImageRepository
 import com.sleekydz86.idolglow.image.domain.vo.ImageAggregateType
 import com.sleekydz86.idolglow.productpackage.admin.application.AdminAuditService
@@ -20,7 +21,6 @@ import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 @Service
 @Transactional(readOnly = true)
@@ -86,7 +86,7 @@ class AdminProductReviewService(
         val trimmed = reason?.trim().orEmpty()
         val resolved = trimmed.ifBlank { "관리자 비공개 처리" }
         val before = review.contribution()
-        review.hide(LocalDateTime.now(ZoneOffset.UTC), resolved)
+        review.hide(LocalDateTime.now(IdolGlowDateTimes.ZONE), resolved)
         val saved = productReviewJpaRepository.save(review)
         productAggregateCounter.applyReviewChange(saved.product.id, before, saved.contribution())
         adminAuditService.log("REVIEW_HIDE", "PRODUCT_REVIEW", saved.id, "reason=${saved.hiddenReason}")

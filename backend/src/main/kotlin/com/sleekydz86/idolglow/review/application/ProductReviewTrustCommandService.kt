@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.review.application
 
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.productpackage.product.domain.ProductAggregateCounter
 import com.sleekydz86.idolglow.review.domain.ProductReviewHelpfulVote
 import com.sleekydz86.idolglow.review.domain.ProductReviewReport
@@ -9,7 +10,6 @@ import com.sleekydz86.idolglow.review.infrastructure.ProductReviewReportJpaRepos
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 @Transactional
 @Service
@@ -78,7 +78,7 @@ class ProductReviewTrustCommandService(
         if (total >= REPORTS_TO_AUTO_HIDE && !review.isHidden()) {
             val before = review.contribution()
             review.hide(
-                LocalDateTime.now(ZoneOffset.UTC),
+                LocalDateTime.now(IdolGlowDateTimes.ZONE),
                 "신고 누적 자동 비공개",
             )
             productReviewRepository.save(review)

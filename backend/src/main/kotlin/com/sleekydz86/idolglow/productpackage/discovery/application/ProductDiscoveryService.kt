@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.productpackage.discovery.application
 
+import com.sleekydz86.idolglow.global.support.IdolGlowDateTimes
 import com.sleekydz86.idolglow.image.application.AggregateImageQueryService
 import com.sleekydz86.idolglow.productpackage.discovery.application.dto.ProductRankingResponse
 import com.sleekydz86.idolglow.productpackage.discovery.infrastructure.ProductDiscoveryQueryRepository
@@ -7,7 +8,6 @@ import com.sleekydz86.idolglow.user.user.domain.UserSurveyRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 @Transactional(readOnly = true)
 @Service
@@ -56,7 +56,7 @@ class ProductDiscoveryService(
                 visitStart = signals.visitStart,
                 visitEnd = signals.visitEnd,
                 placeKeywords = signals.placeKeywords,
-                now = LocalDateTime.now(ZoneOffset.UTC),
+                now = LocalDateTime.now(IdolGlowDateTimes.ZONE),
                 limit = CANDIDATE_LIMIT,
             )
         if (candidateIds.isNotEmpty() || signalTags.isEmpty()) {
@@ -126,7 +126,7 @@ class ProductDiscoveryService(
             productIds = candidateIds,
             visitStart = visitStart,
             visitEnd = visitEnd,
-            now = LocalDateTime.now(ZoneOffset.UTC),
+            now = LocalDateTime.now(IdolGlowDateTimes.ZONE),
         )
     }
 
