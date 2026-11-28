@@ -6,6 +6,7 @@ import com.sleekydz86.idolglow.user.auth.application.AuthService
 import com.sleekydz86.idolglow.user.auth.application.LoginRequest
 import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
+import com.sleekydz86.idolglow.user.auth.domain.vo.OAuthAccountDetails
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -20,6 +21,7 @@ class NaverLoginStrategyTest {
     private val authService = mockk<AuthService>()
     private val strategy = NaverLoginStrategy(authService)
     private val token = mockk<TokenResponse>()
+    private val details = OAuthAccountDetails(accountName = "홍길동", gender = "F", ageRange = "20-29")
 
     @DisplayName("연결이 없고 이메일도 없으면 NAVER_EMAIL_REQUIRED 로 거절하고 회원을 만들지 않는다")
     @Test
@@ -32,7 +34,7 @@ class NaverLoginStrategyTest {
 
         // then
         assertEquals(AuthExceptionType.NAVER_EMAIL_REQUIRED, error.getExceptionType())
-        verify(exactly = 0) { authService.login(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { authService.login(any(), any(), any(), any(), any(), any()) }
     }
 
     @DisplayName("이미 연결된 네이버 회원은 이메일이 없어도 로그인한다")
@@ -40,7 +42,7 @@ class NaverLoginStrategyTest {
     fun linkedUserLogsInWithoutEmail() {
         // given
         every { authService.isLinked(AuthProvider.NAVER, "n-1") } returns true
-        every { authService.login(AuthProvider.NAVER, "n-1", "", "네이버회원", null) } returns token
+        every { authService.login(AuthProvider.NAVER, "n-1", "", "네이버회원", null, details) } returns token
 
         // when
         val result = strategy.login(request(email = null))
@@ -54,7 +56,9 @@ class NaverLoginStrategyTest {
     fun emailGoesToLogin() {
         // given
         every { authService.isLinked(AuthProvider.NAVER, "n-1") } returns false
-        every { authService.login(AuthProvider.NAVER, "n-1", "naver@idolglow.test", "네이버회원", null) } returns token
+        every {
+            authService.login(AuthProvider.NAVER, "n-1", "naver@idolglow.test", "네이버회원", null, details)
+        } returns token
 
         // when
         val result = strategy.login(request())
@@ -69,6 +73,9 @@ class NaverLoginStrategyTest {
                 put("id", "n-1")
                 email?.let { put("email", it) }
                 put("nickname", "네이버회원")
+                put("name", "홍길동")
+                put("gender", "F")
+                put("age", "20-29")
             }
         return LoginRequest(attributes = mapOf("resultcode" to "00", "response" to response))
     }

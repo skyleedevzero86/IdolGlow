@@ -1872,3 +1872,10 @@ ALTER TABLE user_oauths DROP CHECK chk_user_oauths_provider;
 ALTER TABLE user_oauths ADD CONSTRAINT chk_user_oauths_provider CHECK (
     provider IN ('GOOGLE', 'TEST', 'KAKAO', 'NAVER')
 );
+
+-- 네이버 계정 추가 정보
+-- 네이버 로그인에서 받은 회원이름, 성별, 연령대를 SNS 계정 정보로 둔다
+ALTER TABLE user_oauths
+    ADD COLUMN account_name VARCHAR(100) NULL COMMENT '네이버 회원이름. 네이버 로그인 때마다 최신 값으로 덮어씀',
+    ADD COLUMN gender VARCHAR(10) NULL COMMENT '네이버 성별 코드. M 남, F 여, U 알 수 없음',
+    ADD COLUMN age_range VARCHAR(20) NULL COMMENT '네이버 연령대. 예: 20-29';

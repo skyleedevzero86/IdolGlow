@@ -1,5 +1,6 @@
 package com.sleekydz86.idolglow.user.auth.application.userInfo
 
+import com.sleekydz86.idolglow.user.auth.domain.vo.OAuthAccountDetails
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -52,6 +53,33 @@ class NaverUserInfoTest {
         assertEquals("naver-id-1", info.id)
         assertEquals("네이버회원", info.name)
         assertEquals("https://phinf.pstatic.net/profile.png", info.picture)
+    }
+
+    @DisplayName("회원이름·성별·연령대는 response 의 name·gender·age 에서 읽는다")
+    @Test
+    fun accountDetailsFromResponse() {
+        // given
+        val response = mapOf("id" to "n-1", "name" to "홍길동", "gender" to "F", "age" to "20-29")
+        val info = NaverUserInfo(mapOf("response" to response))
+
+        // when
+        val details = info.accountDetails
+
+        // then
+        assertEquals(OAuthAccountDetails(accountName = "홍길동", gender = "F", ageRange = "20-29"), details)
+    }
+
+    @DisplayName("회원이름·성별·연령대를 주지 않으면 모두 null 이다")
+    @Test
+    fun accountDetailsMissing() {
+        // given
+        val info = NaverUserInfo(attributes())
+
+        // when
+        val details = info.accountDetails
+
+        // then
+        assertEquals(OAuthAccountDetails(accountName = null, gender = null, ageRange = null), details)
     }
 
     @DisplayName("response 가 없거나 회원번호가 없으면 한국어 오류로 거절한다")

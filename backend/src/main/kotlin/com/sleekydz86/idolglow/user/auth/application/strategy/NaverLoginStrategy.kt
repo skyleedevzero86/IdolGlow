@@ -31,6 +31,7 @@ class NaverLoginStrategy(
             email = email.orEmpty(),
             name = userInfo.name,
             picture = userInfo.picture,
+            accountDetails = userInfo.accountDetails,
         )
     }
 }

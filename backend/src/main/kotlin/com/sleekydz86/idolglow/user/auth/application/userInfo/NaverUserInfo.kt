@@ -1,5 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.application.userInfo
 
+import com.sleekydz86.idolglow.user.auth.domain.vo.OAuthAccountDetails
+
 class NaverUserInfo(
     attributes: Map<String, Any>,
 ) : OAuth2UserInfo {
@@ -21,4 +23,12 @@ class NaverUserInfo(
 
     override val picture: String?
         get() = profile["profile_image"] as? String
+
+    val accountDetails: OAuthAccountDetails
+        get() =
+            OAuthAccountDetails(
+                accountName = profile["name"] as? String,
+                gender = profile["gender"] as? String,
+                ageRange = profile["age"] as? String,
+            )
 }

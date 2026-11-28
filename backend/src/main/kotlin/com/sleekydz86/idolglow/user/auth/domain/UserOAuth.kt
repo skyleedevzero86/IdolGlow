@@ -1,6 +1,7 @@
 package com.sleekydz86.idolglow.user.auth.domain
 
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
+import com.sleekydz86.idolglow.user.auth.domain.vo.OAuthAccountDetails
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -28,6 +29,12 @@ class UserOAuth(
     var profileName: String? = null,
     @Column(name = "profile_image_url", length = 500)
     var profileImageUrl: String? = null,
+    @Column(name = "account_name", length = 100)
+    var accountName: String? = null,
+    @Column(name = "gender", length = 10)
+    var gender: String? = null,
+    @Column(name = "age_range", length = 20)
+    var ageRange: String? = null,
 ) {
     fun updateProfile(
         name: String?,
@@ -37,7 +44,26 @@ class UserOAuth(
         profileImageUrl = picture?.trim()?.takeIf { it.isNotEmpty() }
     }
 
+    fun updateAccountDetails(details: OAuthAccountDetails) {
+        accountName = normalized(details.accountName, ACCOUNT_NAME_MAX)
+        gender = normalized(details.gender, GENDER_MAX)
+        ageRange = normalized(details.ageRange, AGE_RANGE_MAX)
+    }
+
+    private fun normalized(
+        value: String?,
+        maxCodePoints: Int,
+    ): String? {
+        val trimmed = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val fits = trimmed.codePointCount(0, trimmed.length) <= maxCodePoints
+        return if (fits) trimmed else trimmed.substring(0, trimmed.offsetByCodePoints(0, maxCodePoints))
+    }
+
     companion object {
+        private const val ACCOUNT_NAME_MAX = 100
+        private const val GENDER_MAX = 10
+        private const val AGE_RANGE_MAX = 20
+
         fun of(
             userId: Long,
             provider: AuthProvider,

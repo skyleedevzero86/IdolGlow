@@ -1315,3 +1315,11 @@ ALTER TABLE user_oauths DROP CONSTRAINT IF EXISTS chk_user_oauths_provider;
 ALTER TABLE user_oauths ADD CONSTRAINT chk_user_oauths_provider CHECK (
     provider IN ('GOOGLE', 'TEST', 'KAKAO', 'NAVER')
 );
+
+-- 네이버 계정 추가 정보
+-- 네이버 로그인에서 받은 회원이름, 성별, 연령대를 SNS 계정 정보로 둔다
+ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS account_name VARCHAR(100);
+
+ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS gender VARCHAR(10);
+
+ALTER TABLE user_oauths ADD COLUMN IF NOT EXISTS age_range VARCHAR(20);

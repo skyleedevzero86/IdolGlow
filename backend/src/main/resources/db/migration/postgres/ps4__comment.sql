@@ -1958,3 +1958,9 @@ COMMENT ON COLUMN lucky_draw_winners.winner_order IS '뽑힌 순서. 1부터';
 COMMENT ON TABLE lucky_draw_admin_locks IS '응모 추첨 관리자 등록·수정 잠금';
 
 COMMENT ON COLUMN lucky_draw_admin_locks.id IS '잠금 행 번호. 항상 1';
+
+COMMENT ON COLUMN user_oauths.account_name IS '네이버 회원이름. 네이버 로그인 때마다 최신 값으로 덮어씀';
+
+COMMENT ON COLUMN user_oauths.gender IS '네이버 성별 코드. M 남, F 여, U 알 수 없음';
+
+COMMENT ON COLUMN user_oauths.age_range IS '네이버 연령대. 예: 20-29';

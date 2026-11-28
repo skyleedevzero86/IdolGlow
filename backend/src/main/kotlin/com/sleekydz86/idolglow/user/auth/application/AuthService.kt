@@ -8,6 +8,7 @@ import com.sleekydz86.idolglow.user.auth.application.dto.TokenResponse
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuth
 import com.sleekydz86.idolglow.user.auth.domain.UserOAuthRepository
 import com.sleekydz86.idolglow.user.auth.domain.vo.AuthProvider
+import com.sleekydz86.idolglow.user.auth.domain.vo.OAuthAccountDetails
 import com.sleekydz86.idolglow.user.user.domain.User
 import com.sleekydz86.idolglow.user.user.domain.UserRepository
 import org.springframework.stereotype.Service
@@ -32,9 +33,11 @@ class AuthService(
         email: String,
         name: String? = null,
         picture: String? = null,
+        accountDetails: OAuthAccountDetails? = null,
     ): TokenResponse {
         val oauthUser = userOAuthRepository.findByProviderAndProviderId(provider, providerId)
         oauthUser?.updateProfile(name = name, picture = picture)
+        if (oauthUser != null && accountDetails != null) oauthUser.updateAccountDetails(accountDetails)
 
         val userId: Long =
             oauthUser?.userId
@@ -51,7 +54,8 @@ class AuthService(
                             email = email,
                             profileName = name,
                             profileImageUrl = picture,
-                        ).let { userOAuthRepository.save(it) }
+                        ).also { link -> accountDetails?.let(link::updateAccountDetails) }
+                        .let { userOAuthRepository.save(it) }
                     user.id
                 }
 
